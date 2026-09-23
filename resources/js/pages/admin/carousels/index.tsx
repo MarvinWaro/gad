@@ -28,6 +28,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { FormSelect } from '@/components/ui/form-select';
 import { Label } from '@/components/ui/label';
 
 type CarouselSlide = {
@@ -509,20 +510,18 @@ function SlideDialog({
                             >
                                 Status
                             </Label>
-                            <select
+                            <FormSelect
                                 id={`${mode}-${slide?.id ?? 'new'}-status`}
                                 value={form.data.is_active ? '1' : '0'}
-                                onChange={(event) =>
-                                    form.setData(
-                                        'is_active',
-                                        event.target.value === '1',
-                                    )
+                                onChange={(value) =>
+                                    form.setData('is_active', value === '1')
                                 }
-                                className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                            >
-                                <option value="1">Active</option>
-                                <option value="0">Inactive</option>
-                            </select>
+                                placeholder="Select status"
+                                options={[
+                                    { value: '1', label: 'Active' },
+                                    { value: '0', label: 'Inactive' },
+                                ]}
+                            />
                             <InputError message={form.errors.is_active} />
                         </div>
                     </div>

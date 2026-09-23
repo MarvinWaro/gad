@@ -47,6 +47,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { FormSelect } from '@/components/ui/form-select';
 import { Label } from '@/components/ui/label';
 import {
     Tooltip,
@@ -1005,14 +1006,13 @@ export default function SurveyBuilder({
                                                                         label="Default answer"
                                                                         hint="Pre-selected when the form opens. Use it when a law addresses one group."
                                                                     >
-                                                                        <select
-                                                                            className="h-9 w-full rounded-md border bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                                        <FormSelect
                                                                             value={
                                                                                 question.default ??
                                                                                 ''
                                                                             }
                                                                             onChange={(
-                                                                                event,
+                                                                                value,
                                                                             ) =>
                                                                                 changeDefinition(
                                                                                     (
@@ -1027,50 +1027,24 @@ export default function SurveyBuilder({
                                                                                                 questionIndex
                                                                                             ];
                                                                                         if (
-                                                                                            event
-                                                                                                .target
-                                                                                                .value ===
+                                                                                            value ===
                                                                                             ''
                                                                                         ) {
                                                                                             delete target.default;
                                                                                         } else {
                                                                                             target.default =
-                                                                                                event.target.value;
+                                                                                                value;
                                                                                         }
                                                                                     },
                                                                                 )
                                                                             }
-                                                                        >
-                                                                            <option value="">
-                                                                                No
-                                                                                default
-                                                                                —
-                                                                                the
-                                                                                respondent
-                                                                                chooses
-                                                                            </option>
-                                                                            {(
+                                                                            placeholder="No default; respondent chooses"
+                                                                            options={
                                                                                 question.options ??
                                                                                 []
-                                                                            ).map(
-                                                                                (
-                                                                                    option,
-                                                                                ) => (
-                                                                                    <option
-                                                                                        key={
-                                                                                            option.value
-                                                                                        }
-                                                                                        value={
-                                                                                            option.value
-                                                                                        }
-                                                                                    >
-                                                                                        {
-                                                                                            option.label
-                                                                                        }
-                                                                                    </option>
-                                                                                ),
-                                                                            )}
-                                                                        </select>
+                                                                            }
+                                                                            allowEmpty
+                                                                        />
                                                                     </Field>
                                                                     <Label
                                                                         htmlFor={`question-${sectionIndex}-${questionIndex}-locked`}

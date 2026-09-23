@@ -138,59 +138,6 @@ export function Stories({ stories }: { stories: ContentRecord[] }) {
     );
 }
 
-export function Campaign() {
-    return (
-        <section
-            className="public-container campaign-section"
-            aria-labelledby="campaign-title"
-        >
-            <div className="campaign">
-                <div>
-                    <p className="section-label">
-                        <span />
-                        Awareness into action
-                        <span className="campaign-sample">Sample campaign</span>
-                    </p>
-                    <h2 id="campaign-title">
-                        A future free
-                        <br />
-                        from violence.
-                    </h2>
-                    <p className="campaign-name">
-                        18-Day Campaign to End Violence Against Women
-                    </p>
-                    <p className="campaign-description">
-                        Make space for awareness, solidarity, and a shared
-                        commitment to safer communities.
-                    </p>
-                    <PreviewDialog
-                        title="18-Day Campaign to End Violence Against Women"
-                        description="Sample campaign feature. Official dates, activities, and campaign materials will be added when verified."
-                    >
-                        <Button variant="outline">
-                            Explore the campaign
-                            <ArrowUpRight />
-                        </Button>
-                    </PreviewDialog>
-                </div>
-                <div
-                    className="campaign-art"
-                    role="img"
-                    aria-label="Campaign artwork placeholder"
-                >
-                    <span className="campaign-ring" />
-                    <span className="campaign-big-number">
-                        18<span>days of action</span>
-                    </span>
-                    <span className="campaign-art-label">
-                        Campaign artwork placeholder
-                    </span>
-                </div>
-            </div>
-        </section>
-    );
-}
-
 const resourceIcons = [FileText, BookOpen, Scale, Sparkles];
 export function Resources({ resources }: { resources: ResourceRecord[] }) {
     return (

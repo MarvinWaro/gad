@@ -104,6 +104,24 @@ test('respondent detail fields are reachable by their visible labels', async ({
     }
 });
 
+test('survey choices open in a rounded accessible menu', async ({ page }) => {
+    await page.goto('/surveys/ra-7877');
+    await page.getByRole('checkbox').first().check();
+    await page.getByRole('button', { name: /Continue/ }).click();
+
+    const sex = page.getByRole('combobox', { name: /^Sex/ });
+    await sex.click();
+    const menu = page.getByRole('listbox');
+    await expect(menu).toBeVisible();
+    expect(
+        await page
+            .locator('[data-slot="select-content"]')
+            .evaluate((element) => getComputedStyle(element).borderRadius),
+    ).toBe('10px');
+    await page.getByRole('option', { name: 'Female', exact: true }).click();
+    await expect(sex).toContainText('Female');
+});
+
 // A cluster with no institutions used to leave a required, empty, enabled
 // dropdown with no way forward.
 test('a cluster with no institutions explains itself instead of dead-ending', async ({
@@ -114,29 +132,29 @@ test('a cluster with no institutions explains itself instead of dead-ending', as
 
     await page.getByRole('checkbox').first().check();
     await page.getByRole('button', { name: /Continue/ }).click();
-    await page.getByLabel(/^Region/).selectOption({ index: 1 });
+    await page.getByLabel(/^Region/).click();
+    await page.getByRole('option').nth(1).click();
 
-    const clusters = await page
-        .getByLabel(/^Cluster/)
-        .locator('option')
-        .count();
+    const cluster = page.getByLabel(/^Cluster/);
+    await cluster.click();
+    const clusterCount = await page.getByRole('option').count();
+    await page.keyboard.press('Escape');
     const hei = page.getByLabel(/^Name of HEI/);
 
-    for (let index = 1; index < clusters; index += 1) {
-        await page.getByLabel(/^Cluster/).selectOption({ index });
-        const choices = await hei.locator('option').count();
+    for (let index = 1; index < clusterCount; index += 1) {
+        await cluster.click();
+        await page.getByRole('option').nth(index).click();
 
-        if (choices <= 1) {
+        if (await hei.isDisabled()) {
             // Empty: locked, and the reason plus a route forward is on screen.
-            await expect(hei).toBeDisabled();
-            await expect(hei.locator('option')).toHaveText([
-                'No institutions available',
-            ]);
+            await expect(hei).toContainText('No institutions available');
             await expect(
                 page.getByText('No institutions are listed for this cluster'),
             ).toBeVisible();
         } else {
-            await expect(hei).toBeEnabled();
+            await hei.click();
+            expect(await page.getByRole('option').count()).toBeGreaterThan(1);
+            await page.keyboard.press('Escape');
         }
     }
 });

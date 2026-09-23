@@ -20,12 +20,47 @@ for (const width of [375, 768, 1280, 1536]) {
             await page
                 .getByRole('link', { name: 'Explore GAD data' })
                 .evaluate((el) => getComputedStyle(el).backgroundColor),
-        ).toBe('rgb(249, 115, 22)');
+        ).toBe('rgb(24, 29, 38)');
         expect(
             await page.evaluate(
                 () => document.documentElement.scrollWidth <= window.innerWidth,
             ),
         ).toBeTruthy();
+        await expect(page.locator('.campaign-section')).toHaveCount(0);
+        await expect(page.locator('.hero-bottom')).toHaveCount(0);
+        const previews = page.locator('.hero-thumbnail');
+        await expect(previews).toHaveCount(2);
+        const previewBoxes = await previews.evaluateAll((elements) =>
+            elements.map((element) => {
+                const box = element.getBoundingClientRect();
+                return { top: box.top, height: box.height };
+            }),
+        );
+        expect(
+            Math.abs(previewBoxes[0].top - previewBoxes[1].top),
+        ).toBeLessThan(2);
+        expect(
+            Math.abs(previewBoxes[0].height - previewBoxes[1].height),
+        ).toBeLessThan(2);
+
+        for (const section of await page
+            .locator('main > section:not(.hero), main > nav.quick-access')
+            .all()) {
+            await section.scrollIntoViewIfNeeded();
+            await expect(section).not.toHaveClass(
+                /reveal-pending(?!.*is-revealed)/,
+            );
+        }
+        await page.locator('main').evaluate(async (element) => {
+            await Promise.all(
+                element
+                    .getAnimations({ subtree: true })
+                    .map((animation) => animation.finished),
+            );
+        });
+        await page.evaluate(() =>
+            window.scrollTo({ top: 0, behavior: 'instant' }),
+        );
         await page.screenshot({
             path: testInfo.outputPath(`homepage-${width}.png`),
             fullPage: true,
@@ -60,7 +95,7 @@ for (const width of [375, 768, 1280, 1536]) {
     });
 }
 
-test('hero thumbnails crossfade the featured visual and expose playback control', async ({
+test('hero previews crossfade the featured visual and autoplay resumes after focus leaves', async ({
     page,
 }) => {
     await page.clock.install();
@@ -80,11 +115,13 @@ test('hero thumbnails crossfade the featured visual and expose playback control'
     await carousel.locator('.hero-thumbnail').first().click();
     await expect(firstSlide).toHaveClass(/is-active/);
     await expect(secondSlide).not.toHaveClass(/is-active/);
-    await expect(carousel.locator('.hero-image-caption')).toHaveCount(0);
-    await expect(carousel.locator('.hero-carousel-meta > p')).toHaveCount(0);
-    await expect(
-        carousel.getByRole('button', { name: 'Play hero carousel' }),
-    ).toBeVisible();
+    await expect(carousel.locator('.hero-carousel-meta')).toHaveCount(0);
+    await expect(carousel).toHaveAttribute('data-autoplay', 'false');
+    await page.mouse.move(0, 0);
+    await page.locator('header .brand').focus();
+    await expect(carousel).toHaveAttribute('data-autoplay', 'true');
+    await page.clock.fastForward(6000);
+    await expect(secondSlide).toHaveClass(/is-active/);
     expect(
         await firstSlide.evaluate(
             (element) => getComputedStyle(element).transitionProperty,
@@ -106,6 +143,39 @@ test('hero thumbnails crossfade the featured visual and expose playback control'
     ).not.toBeEmpty();
     await page.keyboard.press('Escape');
     await expect(readMore).toBeFocused();
+});
+
+test('landing page anchors scroll smoothly to their sections', async ({
+    page,
+}) => {
+    await page.goto('/');
+    expect(
+        await page.evaluate(
+            () => getComputedStyle(document.documentElement).scrollBehavior,
+        ),
+    ).toBe('auto');
+    await page
+        .getByRole('navigation', { name: 'Main navigation' })
+        .getByRole('link', { name: 'Data & statistics' })
+        .click();
+    await expect(page).toHaveURL(/#statistics$/);
+    await expect
+        .poll(() =>
+            page
+                .locator('#statistics')
+                .evaluate((element) =>
+                    Math.round(element.getBoundingClientRect().top),
+                ),
+        )
+        .toBeLessThanOrEqual(135);
+    expect(
+        await page
+            .locator('#statistics')
+            .evaluate((element) =>
+                Math.round(element.getBoundingClientRect().top),
+            ),
+    ).toBeGreaterThanOrEqual(85);
+    await expect(page.locator('#statistics')).toHaveClass(/is-revealed/);
 });
 
 test('statistics reconcile through dataset, sex, chart and table controls', async ({
@@ -161,11 +231,17 @@ test('public theme remains light with dark preference and reduced motion', async
         page.getByRole('region', { name: 'Featured PHLGADIS visuals' }),
     ).toHaveAttribute('data-autoplay', 'false');
     expect(
+        await page.evaluate(
+            () => getComputedStyle(document.documentElement).scrollBehavior,
+        ),
+    ).toBe('auto');
+    await expect(page.locator('#stories')).not.toHaveClass(/reveal-pending/);
+    expect(
         await page
             .locator('.public-theme')
             .first()
             .evaluate((el) => getComputedStyle(el).backgroundColor),
-    ).toBe('rgb(250, 250, 250)');
+    ).toBe('rgb(255, 255, 255)');
     const login = page.getByRole('link', { name: 'Log in', exact: true });
     await expect(login).toHaveAttribute('href', /\/login$/);
     await expect(
@@ -307,6 +383,21 @@ test('homepage and preview dialog meet automated WCAG AA checks', async ({
     page,
 }) => {
     await page.goto('/');
+    for (const section of await page
+        .locator('main > section:not(.hero), main > nav.quick-access')
+        .all()) {
+        await section.scrollIntoViewIfNeeded();
+        await expect(section).not.toHaveClass(
+            /reveal-pending(?!.*is-revealed)/,
+        );
+    }
+    await page.locator('main').evaluate(async (element) => {
+        await Promise.all(
+            element
+                .getAnimations({ subtree: true })
+                .map((animation) => animation.finished),
+        );
+    });
     const scan = () =>
         new AxeBuilder({ page })
             .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])

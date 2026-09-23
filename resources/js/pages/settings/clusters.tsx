@@ -15,6 +15,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { FormSelect } from '@/components/ui/form-select';
 import { Label } from '@/components/ui/label';
 
 type Region = { id: number; name: string };
@@ -195,24 +196,20 @@ function ClusterDialog({ regions }: { regions: Region[] }) {
                     </div>
                     <div>
                         <Label htmlFor="cluster-region">Region</Label>
-                        <select
+                        <FormSelect
                             id="cluster-region"
-                            className="mt-1.5 h-9 w-full rounded-md border bg-background px-3 text-sm"
+                            className="mt-1.5"
                             value={form.data.survey_region_id}
-                            onChange={(event) =>
-                                form.setData(
-                                    'survey_region_id',
-                                    event.target.value,
-                                )
+                            onChange={(value) =>
+                                form.setData('survey_region_id', value)
                             }
-                        >
-                            <option value="">Select region</option>
-                            {regions.map((region) => (
-                                <option key={region.id} value={region.id}>
-                                    {region.name}
-                                </option>
-                            ))}
-                        </select>
+                            placeholder="Select region"
+                            options={regions.map((region) => ({
+                                value: String(region.id),
+                                label: region.name,
+                            }))}
+                            allowEmpty
+                        />
                         <InputError message={form.errors.survey_region_id} />
                     </div>
                     <DialogFooter>

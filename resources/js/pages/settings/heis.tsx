@@ -16,6 +16,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { FormSelect } from '@/components/ui/form-select';
 import { Label } from '@/components/ui/label';
 
 type Region = { id: number; name: string };
@@ -317,55 +318,50 @@ function HeiDialog({
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div>
                             <Label htmlFor="hei-region">Region</Label>
-                            <select
+                            <FormSelect
                                 id="hei-region"
-                                className="mt-1.5 h-9 w-full rounded-md border bg-background px-3 text-sm"
+                                className="mt-1.5"
                                 value={form.data.survey_region_id}
-                                onChange={(event) =>
+                                onChange={(value) =>
                                     form.setData((data) => ({
                                         ...data,
-                                        survey_region_id: event.target.value,
+                                        survey_region_id: value,
                                         survey_cluster_id: '',
                                     }))
                                 }
-                            >
-                                <option value="">Select region</option>
-                                {regions.map((region) => (
-                                    <option key={region.id} value={region.id}>
-                                        {region.name}
-                                    </option>
-                                ))}
-                            </select>
+                                placeholder="Select region"
+                                options={regions.map((region) => ({
+                                    value: String(region.id),
+                                    label: region.name,
+                                }))}
+                                allowEmpty
+                            />
                         </div>
                         <div>
                             <Label htmlFor="hei-cluster">Cluster</Label>
-                            <select
+                            <FormSelect
                                 id="hei-cluster"
-                                className="mt-1.5 h-9 w-full rounded-md border bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                                className="mt-1.5"
                                 value={form.data.survey_cluster_id}
                                 disabled={
                                     !form.data.survey_region_id ||
                                     available.length === 0
                                 }
-                                onChange={(event) =>
-                                    form.setData(
-                                        'survey_cluster_id',
-                                        event.target.value,
-                                    )
+                                onChange={(value) =>
+                                    form.setData('survey_cluster_id', value)
                                 }
-                            >
-                                <option value="">
-                                    {form.data.survey_region_id &&
+                                placeholder={
+                                    form.data.survey_region_id &&
                                     available.length === 0
                                         ? 'No clusters in this region'
-                                        : 'Select cluster'}
-                                </option>
-                                {available.map((cluster) => (
-                                    <option key={cluster.id} value={cluster.id}>
-                                        {cluster.name}
-                                    </option>
-                                ))}
-                            </select>
+                                        : 'Select cluster'
+                                }
+                                options={available.map((cluster) => ({
+                                    value: String(cluster.id),
+                                    label: cluster.name,
+                                }))}
+                                allowEmpty
+                            />
                             <InputError
                                 message={form.errors.survey_cluster_id}
                             />
@@ -377,22 +373,23 @@ function HeiDialog({
                     </p>
                     <div>
                         <Label htmlFor="hei-ownership">Ownership</Label>
-                        <select
+                        <FormSelect
                             id="hei-ownership"
-                            className="mt-1.5 h-9 w-full rounded-md border bg-background px-3 text-sm"
+                            className="mt-1.5"
                             value={form.data.ownership}
-                            onChange={(event) =>
+                            onChange={(value) =>
                                 form.setData(
                                     'ownership',
-                                    event.target.value as Hei['ownership'] &
-                                        string,
+                                    value as Hei['ownership'] & string,
                                 )
                             }
-                        >
-                            <option value="">Not set</option>
-                            <option value="public">Public</option>
-                            <option value="private">Private</option>
-                        </select>
+                            placeholder="Not set"
+                            options={[
+                                { value: 'public', label: 'Public' },
+                                { value: 'private', label: 'Private' },
+                            ]}
+                            allowEmpty
+                        />
                         <InputError message={form.errors.ownership} />
                     </div>
                     <DialogFooter>

@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-    ArrowDown,
     ArrowUpRight,
     BarChart3,
     BookOpen,
     ClipboardList,
-    Pause,
-    Play,
     Scale,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,7 +25,6 @@ const carouselInterval = 6000;
 export function Hero({ slides }: { slides: HeroSlideRecord[] }) {
     const carouselRef = useRef<HTMLElement>(null);
     const [activeIndex, setActiveIndex] = useState(0);
-    const [isPlaying, setIsPlaying] = useState(true);
     const [isInteracting, setIsInteracting] = useState(false);
     const [isVisible, setIsVisible] = useState(true);
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -40,7 +36,6 @@ export function Hero({ slides }: { slides: HeroSlideRecord[] }) {
     );
     const autoplayEnabled =
         slides.length > 1 &&
-        isPlaying &&
         !isInteracting &&
         !detailsOpen &&
         !prefersReducedMotion &&
@@ -51,7 +46,6 @@ export function Hero({ slides }: { slides: HeroSlideRecord[] }) {
             const nextIndex = slides.findIndex((slide) => slide.id === slideId);
             if (nextIndex < 0) return;
             setActiveIndex(nextIndex);
-            setIsPlaying(false);
         },
         [slides],
     );
@@ -142,34 +136,13 @@ export function Hero({ slides }: { slides: HeroSlideRecord[] }) {
                             />
                         </button>
                     ))}
-                    <div className="hero-carousel-meta">
-                        <button
-                            type="button"
-                            className="hero-playback"
-                            onClick={() => setIsPlaying((current) => !current)}
-                            aria-label={
-                                isPlaying
-                                    ? 'Pause hero carousel'
-                                    : 'Play hero carousel'
-                            }
-                        >
-                            {isPlaying ? (
-                                <Pause aria-hidden="true" />
-                            ) : (
-                                <Play aria-hidden="true" />
-                            )}
-                            <span>
-                                {activeIndex + 1} / {slides.length}
-                            </span>
-                        </button>
-                    </div>
                 </div>
             </div>
             <div className="hero-visual">
                 <div
                     id="hero-carousel-stage"
                     className="hero-carousel-stage"
-                    aria-live={isPlaying ? 'off' : 'polite'}
+                    aria-live={autoplayEnabled ? 'off' : 'polite'}
                 >
                     {slides.map((slide, index) => (
                         <div
@@ -208,9 +181,9 @@ export function Hero({ slides }: { slides: HeroSlideRecord[] }) {
                     </div>
                     <div
                         className="hero-slide-summary"
-                        aria-live={isPlaying ? 'off' : 'polite'}
+                        aria-live={autoplayEnabled ? 'off' : 'polite'}
                     >
-                        <p>{activeSlide.title}</p>
+                        <p key={activeSlide.id}>{activeSlide.title}</p>
                         {activeSlide.description && (
                             <Dialog
                                 open={detailsOpen}
@@ -253,16 +226,6 @@ export function Hero({ slides }: { slides: HeroSlideRecord[] }) {
                         )}
                     </div>
                 </div>
-            </div>
-            <div className="hero-bottom">
-                <p>
-                    Philippine Higher Education Gender and Development
-                    Information System
-                </p>
-                <a href="#quick-access">
-                    Discover PHLGADIS
-                    <ArrowDown size={14} />
-                </a>
             </div>
         </section>
     );

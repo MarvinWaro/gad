@@ -1,6 +1,18 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
+async function chooseSelect(page: Page, id: string, value: string) {
+    await page.locator(`#${id}`).click();
+    await page
+        .locator(`[data-slot="select-item"][data-value="${value}"]`)
+        .click();
+}
+
+async function chooseSelectIndex(page: Page, id: string, index: number) {
+    await page.locator(`#${id}`).click();
+    await page.getByRole('option').nth(index).click();
+}
+
 async function consent(page: Page) {
     await page.goto('/surveys/ra-9262');
     await expect(page.getByRole('heading', { level: 1 })).toContainText(
@@ -11,15 +23,17 @@ async function consent(page: Page) {
 }
 
 async function details(page: Page, minor = false) {
-    await page
-        .getByLabel(/Are you answering/)
-        .selectOption(minor ? 'minor-under-legal-care' : 'self');
+    await chooseSelect(
+        page,
+        'answering_for',
+        minor ? 'minor-under-legal-care' : 'self',
+    );
     await page.locator('#age').fill(minor ? '15' : '25');
-    await page.locator('#sex').selectOption('female');
-    await page.locator('#respondent_group').selectOption('student');
-    await page.locator('#region_id').selectOption({ index: 1 });
-    await page.locator('#cluster_id').selectOption({ index: 1 });
-    await page.locator('#hei_id').selectOption({ index: 1 });
+    await chooseSelect(page, 'sex', 'female');
+    await chooseSelect(page, 'respondent_group', 'student');
+    await chooseSelectIndex(page, 'region_id', 1);
+    await chooseSelectIndex(page, 'cluster_id', 1);
+    await chooseSelectIndex(page, 'hei_id', 1);
     if (minor)
         await page.getByLabel(/this minor is under my legal care/).check();
     await page.getByRole('button', { name: 'Continue' }).click();
@@ -88,9 +102,7 @@ test('RA 9262 validates minor details and links experience errors to controls', 
         .getByRole('link', { name: 'Choose who you are answering for.' })
         .click();
     await expect(page.getByLabel(/Are you answering/)).toBeFocused();
-    await page
-        .getByLabel(/Are you answering/)
-        .selectOption('minor-under-legal-care');
+    await chooseSelect(page, 'answering_for', 'minor-under-legal-care');
     await page.getByLabel("Minor's age").fill('18');
     await expect(page.locator('.survey-error-summary')).toContainText(
         'Enter an age between 1 and 17.',

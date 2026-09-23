@@ -21,6 +21,7 @@ import InputError from '@/components/input-error';
 import { SiteFooter, SiteHeader } from '@/components/public/site-layout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { FormSelect } from '@/components/ui/form-select';
 import { laws } from '@/data/phlgadis-demo';
 import '../../../css/public.css';
 
@@ -1328,33 +1329,36 @@ function PublicSelect({
     placeholder,
     options,
     disabled = false,
-    ...rest
+    id,
+    'aria-describedby': describedBy,
+    'aria-required': required,
+    'aria-invalid': invalid,
 }: {
     value: string;
     onChange: (value: string) => void;
     placeholder: string;
     options: Option[];
     disabled?: boolean;
-} & Omit<
-    React.ComponentProps<'select'>,
-    'value' | 'onChange' | 'disabled' | 'children'
->) {
+    id?: string;
+    'aria-describedby'?: string;
+    'aria-required'?: boolean;
+    'aria-invalid'?: boolean;
+}) {
     return (
-        <select
+        <FormSelect
+            id={id}
+            aria-describedby={describedBy}
+            aria-required={required}
+            aria-invalid={invalid}
             className="survey-input"
+            contentClassName="public-theme"
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={onChange}
             disabled={disabled}
-            {...rest}
-        >
-            {/* A fixed answer cannot be cleared, so it needs no placeholder. */}
-            {!(disabled && value) && <option value="">{placeholder}</option>}
-            {options.map((option) => (
-                <option key={option.value} value={option.value}>
-                    {option.label}
-                </option>
-            ))}
-        </select>
+            placeholder={placeholder}
+            options={options}
+            allowEmpty={!disabled}
+        />
     );
 }
 function CheckField({
