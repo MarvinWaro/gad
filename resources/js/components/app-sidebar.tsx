@@ -1,5 +1,4 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ClipboardList, Images, LayoutGrid } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -13,35 +12,11 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import type { NavItem } from '@/types';
+import { appNavigationItems } from '@/lib/app-navigation';
 
 export function AppSidebar() {
     const { auth } = usePage().props;
-    const mainNavItems: NavItem[] = [
-        {
-            title: 'Dashboard',
-            href: dashboard(),
-            icon: LayoutGrid,
-        },
-        ...(auth.permissions.includes('carousel.view')
-            ? [
-                  {
-                      title: 'Carousel',
-                      href: '/admin/carousels',
-                      icon: Images,
-                  },
-              ]
-            : []),
-        ...(auth.permissions.includes('surveys.view')
-            ? [
-                  {
-                      title: 'Surveys',
-                      href: '/admin/surveys',
-                      icon: ClipboardList,
-                  },
-              ]
-            : []),
-    ];
+    const mainNavItems = appNavigationItems(auth.permissions);
 
     return (
         <Sidebar collapsible="icon" variant="inset">

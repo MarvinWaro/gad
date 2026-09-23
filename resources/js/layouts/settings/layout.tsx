@@ -68,6 +68,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
         isCurrentOrParentUrl('/settings/clusters') ||
         isCurrentOrParentUrl('/settings/heis') ||
         isCurrentOrParentUrl('/settings/respondent-groups');
+    const isAppearancePage = isCurrentOrParentUrl('/settings/appearance');
     const configurationNavItems: NavItem[] = auth.permissions.includes(
         'survey-directories.view',
     )
@@ -135,13 +136,20 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                 <div
                     className={cn(
                         'min-w-0 flex-1',
-                        !isManagementPage && 'md:max-w-2xl',
+                        !isManagementPage &&
+                            (isAppearancePage
+                                ? 'md:max-w-3xl'
+                                : 'md:max-w-2xl'),
                     )}
                 >
                     <section
                         className={cn(
                             'space-y-12',
-                            isManagementPage ? 'max-w-6xl' : 'max-w-xl',
+                            isManagementPage
+                                ? 'max-w-6xl'
+                                : isAppearancePage
+                                  ? 'max-w-3xl'
+                                  : 'max-w-xl',
                         )}
                     >
                         {children}
