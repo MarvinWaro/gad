@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -29,7 +29,9 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
+// Email verification is temporarily optional. Restore MustVerifyEmail here to
+// require verification again; keep the verification routes and stored status.
+class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
@@ -46,5 +48,53 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    /** @return BelongsToMany<Role, $this> */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class);
+    }
+
+    public function assignRole(Role|string $role): void
+    {
+        $roleId = $role instanceof Role
+            ? $role->getKey()
+            : Role::query()->where('slug', $role)->value('id');
+
+        if ($roleId !== null) {
+            $this->roles()->syncWithoutDetaching([$roleId]);
+            $this->unsetRelation('roles');
+        }
+    }
+
+    public function hasRole(string $role): bool
+    {
+        $this->loadMissing('roles');
+
+        return $this->roles->contains('slug', $role);
+    }
+
+    public function hasPermissionTo(string $permission): bool
+    {
+        $this->loadMissing('roles.permissions');
+
+        return $this->roles->contains(
+            fn (Role $role): bool => $role->permissions->contains('slug', $permission),
+        );
+    }
+
+    /** @return array<int, string> */
+    public function permissionSlugs(): array
+    {
+        $this->loadMissing('roles.permissions');
+
+        return $this->roles
+            ->flatMap->permissions
+            ->pluck('slug')
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
     }
 }

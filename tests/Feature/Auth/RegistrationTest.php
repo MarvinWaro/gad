@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\User;
+use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
@@ -13,6 +16,8 @@ test('registration screen can be rendered', function () {
 });
 
 test('new users can register', function () {
+    Notification::fake();
+
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
@@ -22,4 +27,6 @@ test('new users can register', function () {
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
+    $this->get(route('dashboard'))->assertOk();
+    Notification::assertNotSentTo(User::where('email', 'test@example.com')->firstOrFail(), VerifyEmail::class);
 });

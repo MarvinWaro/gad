@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -63,9 +64,11 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::verifyEmailView(fn (Request $request) => Inertia::render('auth/verify-email', [
-            'status' => $request->session()->get('status'),
-        ]));
+        Fortify::verifyEmailView(fn (Request $request) => $request->user() instanceof MustVerifyEmail
+            ? Inertia::render('auth/verify-email', [
+                'status' => $request->session()->get('status'),
+            ])
+            : to_route('dashboard'));
 
         Fortify::registerView(fn () => Inertia::render('auth/register', [
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
