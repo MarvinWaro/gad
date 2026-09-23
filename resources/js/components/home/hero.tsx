@@ -10,6 +10,15 @@ import {
     Scale,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import { MediaPanel } from '@/components/public/shared';
 import type { HeroSlideRecord } from '@/data/phlgadis-demo';
 import { cn } from '@/lib/utils';
@@ -23,6 +32,7 @@ export function Hero({ slides }: { slides: HeroSlideRecord[] }) {
     const [isInteracting, setIsInteracting] = useState(false);
     const [isVisible, setIsVisible] = useState(true);
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+    const [detailsOpen, setDetailsOpen] = useState(false);
     const activeSlide = slides[activeIndex];
     const previewSlides = useMemo(
         () => slides.filter((_, index) => index !== activeIndex),
@@ -32,6 +42,7 @@ export function Hero({ slides }: { slides: HeroSlideRecord[] }) {
         slides.length > 1 &&
         isPlaying &&
         !isInteracting &&
+        !detailsOpen &&
         !prefersReducedMotion &&
         isVisible;
 
@@ -122,17 +133,16 @@ export function Hero({ slides }: { slides: HeroSlideRecord[] }) {
                             type="button"
                             className="hero-thumbnail"
                             onClick={() => showSlide(slide.id)}
-                            aria-label={`Show ${slide.label} visual`}
+                            aria-label={`Show ${slide.title} visual`}
                             aria-controls="hero-carousel-stage"
                         >
                             <MediaPanel
                                 media={slide.media}
-                                label={slide.label}
+                                label={slide.title}
                             />
                         </button>
                     ))}
                     <div className="hero-carousel-meta">
-                        <p>{activeSlide.supportingText}</p>
                         <button
                             type="button"
                             className="hero-playback"
@@ -172,45 +182,76 @@ export function Hero({ slides }: { slides: HeroSlideRecord[] }) {
                         >
                             <MediaPanel
                                 media={slide.media}
-                                label={`${slide.label} image placeholder`}
+                                label={`${slide.title} image placeholder`}
                             />
-                        </div>
-                    ))}
-                    {slides.map((slide, index) => (
-                        <div
-                            key={`${slide.id}-caption`}
-                            className={cn(
-                                'hero-image-caption',
-                                index === activeIndex && 'is-active',
-                            )}
-                            aria-hidden={index !== activeIndex}
-                        >
-                            <span className="caption-dot" />
-                            <div>
-                                {slide.caption}
-                                <br />
-                                <strong>{slide.captionEmphasis}</strong>
-                            </div>
                         </div>
                     ))}
                     <span className="sr-only">
                         Slide {activeIndex + 1} of {slides.length}:{' '}
-                        {activeSlide.label}
+                        {activeSlide.title}
                     </span>
                 </div>
-                <div className="hero-actions">
-                    <Button asChild size="lg">
-                        <a href="#statistics">
-                            Explore GAD data
-                            <ArrowUpRight />
-                        </a>
-                    </Button>
-                    <Button asChild size="lg" variant="ghost">
-                        <a href="#surveys">
-                            Take a survey
-                            <ArrowUpRight />
-                        </a>
-                    </Button>
+                <div className="hero-controls">
+                    <div className="hero-actions">
+                        <Button asChild size="lg">
+                            <a href="#statistics">
+                                Explore GAD data
+                                <ArrowUpRight />
+                            </a>
+                        </Button>
+                        <Button asChild size="lg" variant="ghost">
+                            <a href="#surveys">
+                                Take a survey
+                                <ArrowUpRight />
+                            </a>
+                        </Button>
+                    </div>
+                    <div
+                        className="hero-slide-summary"
+                        aria-live={isPlaying ? 'off' : 'polite'}
+                    >
+                        <p>{activeSlide.title}</p>
+                        {activeSlide.description && (
+                            <Dialog
+                                open={detailsOpen}
+                                onOpenChange={setDetailsOpen}
+                            >
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                        Read more
+                                        <ArrowUpRight aria-hidden="true" />
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="public-theme hero-detail-dialog">
+                                    <DialogHeader>
+                                        <span className="preview-label">
+                                            Featured update
+                                        </span>
+                                        <DialogTitle>
+                                            {activeSlide.title}
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                            {activeSlide.description}
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    {activeSlide.href && (
+                                        <DialogFooter>
+                                            <Button asChild>
+                                                <a
+                                                    href={activeSlide.href}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    Visit source
+                                                    <ArrowUpRight aria-hidden="true" />
+                                                </a>
+                                            </Button>
+                                        </DialogFooter>
+                                    )}
+                                </DialogContent>
+                            </Dialog>
+                        )}
+                    </div>
                 </div>
             </div>
             <div className="hero-bottom">

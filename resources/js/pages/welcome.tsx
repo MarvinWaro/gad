@@ -16,10 +16,18 @@ import {
     resources,
     stories,
 } from '@/data/phlgadis-demo';
+import type { HeroSlideRecord } from '@/data/phlgadis-demo';
 import '../../css/public.css';
 
-export default function Welcome() {
+export default function Welcome({
+    carouselSlides = [],
+    openSurveys = [],
+}: {
+    carouselSlides?: HeroSlideRecord[];
+    openSurveys?: string[];
+}) {
     const { auth } = usePage().props;
+    const slides = carouselSlides.length > 0 ? carouselSlides : heroSlides;
     return (
         <div className="public-theme">
             <Head>
@@ -39,9 +47,9 @@ export default function Welcome() {
             </a>
             <SiteHeader authenticated={Boolean(auth.user)} />
             <main id="main">
-                <Hero slides={heroSlides} />
+                <Hero slides={slides} />
                 <QuickAccess />
-                <Rights laws={laws} />
+                <Rights laws={laws} openSurveys={openSurveys} />
                 <Statistics datasets={datasets} />
                 <Stories stories={stories} />
                 <Campaign />

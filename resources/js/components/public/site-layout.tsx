@@ -20,9 +20,17 @@ const navigation = [
     ['About', '#about'],
 ];
 
-function Brand() {
+function resolvePublicHref(anchor: string, homeUrl?: string) {
+    return homeUrl ? `${homeUrl}${anchor}` : anchor;
+}
+
+function Brand({ homeUrl }: { homeUrl?: string }) {
     return (
-        <a href="#home" className="brand" aria-label="PHLGADIS home">
+        <a
+            href={resolvePublicHref('#home', homeUrl)}
+            className="brand"
+            aria-label="PHLGADIS home"
+        >
             <img
                 className="brand-logo"
                 src="/assets/img/gadlogo2.png"
@@ -35,14 +43,20 @@ function Brand() {
     );
 }
 
-export function SiteHeader({ authenticated }: { authenticated: boolean }) {
+export function SiteHeader({
+    authenticated,
+    homeUrl,
+}: {
+    authenticated: boolean;
+    homeUrl?: string;
+}) {
     return (
         <header className="site-header">
             <div className="public-container header-inner">
-                <Brand />
+                <Brand homeUrl={homeUrl} />
                 <nav className="desktop-nav" aria-label="Main navigation">
                     {navigation.map(([label, href]) => (
-                        <a key={href} href={href}>
+                        <a key={href} href={resolvePublicHref(href, homeUrl)}>
                             {label}
                         </a>
                     ))}
@@ -94,7 +108,7 @@ export function SiteHeader({ authenticated }: { authenticated: boolean }) {
                         <nav aria-label="Mobile navigation">
                             {navigation.map(([label, href]) => (
                                 <SheetClose key={href} asChild>
-                                    <a href={href}>
+                                    <a href={resolvePublicHref(href, homeUrl)}>
                                         {label}
                                         <ArrowUpRight size={16} />
                                     </a>
@@ -115,14 +129,14 @@ export function SiteHeader({ authenticated }: { authenticated: boolean }) {
     );
 }
 
-export function SiteFooter() {
+export function SiteFooter({ homeUrl }: { homeUrl?: string }) {
     return (
         <footer id="about" className="site-footer">
             <div className="public-container">
                 <div className="footer-grid">
                     <div className="footer-brand">
                         <a
-                            href="#home"
+                            href={resolvePublicHref('#home', homeUrl)}
                             className="footer-logo"
                             aria-label="PHLGADIS home"
                         >

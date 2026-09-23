@@ -68,34 +68,44 @@ test('hero thumbnails crossfade the featured visual and expose playback control'
     const carousel = page.getByRole('region', {
         name: 'Featured PHLGADIS visuals',
     });
-    const campusSlide = carousel.locator(
-        '.hero-carousel-slide:has-text("Campus image placeholder")',
-    );
-    const communitySlide = carousel.locator(
-        '.hero-carousel-slide:has-text("Community image placeholder")',
-    );
-    const learningSlide = carousel.locator(
-        '.hero-carousel-slide:has-text("Learning image placeholder")',
-    );
+    const slides = carousel.locator('.hero-carousel-slide');
+    expect(await slides.count()).toBeGreaterThan(1);
+    const firstSlide = slides.nth(0);
+    const secondSlide = slides.nth(1);
 
-    await expect(campusSlide).toHaveClass(/is-active/);
+    await expect(firstSlide).toHaveClass(/is-active/);
     await expect(carousel).toHaveAttribute('data-autoplay', 'true');
     await page.clock.fastForward(6000);
-    await expect(communitySlide).toHaveClass(/is-active/);
-    await carousel
-        .getByRole('button', { name: 'Show Learning visual' })
-        .click();
-    await expect(learningSlide).toHaveClass(/is-active/);
-    await expect(communitySlide).not.toHaveClass(/is-active/);
-    await expect(carousel).toContainText('Action that lasts.');
+    await expect(secondSlide).toHaveClass(/is-active/);
+    await carousel.locator('.hero-thumbnail').first().click();
+    await expect(firstSlide).toHaveClass(/is-active/);
+    await expect(secondSlide).not.toHaveClass(/is-active/);
+    await expect(carousel.locator('.hero-image-caption')).toHaveCount(0);
+    await expect(carousel.locator('.hero-carousel-meta > p')).toHaveCount(0);
     await expect(
         carousel.getByRole('button', { name: 'Play hero carousel' }),
     ).toBeVisible();
     expect(
-        await learningSlide.evaluate(
+        await firstSlide.evaluate(
             (element) => getComputedStyle(element).transitionProperty,
         ),
     ).toContain('opacity');
+
+    const activeTitle = await carousel
+        .locator('.hero-slide-summary > p')
+        .innerText();
+    const readMore = carousel.getByRole('button', {
+        name: 'Read more',
+        exact: true,
+    });
+    await readMore.click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByRole('heading')).toHaveText(activeTitle);
+    await expect(
+        dialog.locator('[data-slot="dialog-description"]'),
+    ).not.toBeEmpty();
+    await page.keyboard.press('Escape');
+    await expect(readMore).toBeFocused();
 });
 
 test('statistics reconcile through dataset, sex, chart and table controls', async ({
@@ -161,13 +171,34 @@ test('public theme remains light with dark preference and reduced motion', async
     await expect(
         page.getByRole('link', { name: 'Register', exact: true }),
     ).toHaveAttribute('href', /\/register$/);
-    await page.getByRole('button', { name: 'Explore surveys' }).click();
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toContainText('No information is collected');
+    await expect(page.locator('.survey-strip')).toHaveCount(0);
+    const surveyLinks = page.locator('#surveys .law-card a');
+    await expect(surveyLinks).toHaveCount(4);
+    for (const label of await surveyLinks.allInnerTexts()) {
+        expect(['Take the Survey', 'Opening soon']).toContain(label.trim());
+    }
+    // Follow a card and check it lands on the state its own label promised,
+    // rather than assuming which laws happen to be published.
+    const card = page.locator('#surveys .law-card').last();
+    const cta = (await card.getByRole('link').innerText()).trim();
+    await card.getByRole('link').click();
+    await expect(page).toHaveURL(/\/surveys\/ra-[\d]+$/);
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(
+        'Survey',
+    );
+    if (cta === 'Opening soon') {
+        await expect(
+            page.getByText('Survey questionnaire coming next'),
+        ).toBeVisible();
+    } else {
+        await expect(page.locator('form')).toHaveCount(1);
+    }
     expect(
-        await dialog.evaluate((el) => getComputedStyle(el).colorScheme),
+        await page
+            .locator('.public-theme')
+            .first()
+            .evaluate((el) => getComputedStyle(el).colorScheme),
     ).toBe('light');
-    await page.keyboard.press('Escape');
 });
 
 test('all public anchors have destinations and sample content is explicit', async ({
@@ -301,6 +332,24 @@ test('homepage and preview dialog meet automated WCAG AA checks', async ({
     const dialog = await scan();
     expect(
         dialog.violations.map(({ id, nodes }) => ({
+            id,
+            nodes: nodes.map((node) => ({
+                target: node.target,
+                summary: node.failureSummary,
+            })),
+        })),
+    ).toEqual([]);
+    await page.keyboard.press('Escape');
+
+    await page.getByRole('button', { name: 'Read more', exact: true }).click();
+    await page.getByRole('dialog').evaluate(async (element) => {
+        await Promise.all(
+            element.getAnimations().map((animation) => animation.finished),
+        );
+    });
+    const carouselDialog = await scan();
+    expect(
+        carouselDialog.violations.map(({ id, nodes }) => ({
             id,
             nodes: nodes.map((node) => ({
                 target: node.target,

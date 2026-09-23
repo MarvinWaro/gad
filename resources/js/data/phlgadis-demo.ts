@@ -13,13 +13,13 @@ export type MediaReference = {
 };
 export type HeroSlideRecord = {
     id: string;
-    label: string;
-    supportingText: string;
-    caption: string;
-    captionEmphasis: string;
+    title: string;
+    description?: string | null;
+    href?: string | null;
     media: MediaReference;
 };
 export type LawRecord = {
+    slug: string;
     number: string;
     title: string;
     description: string;
@@ -39,10 +39,9 @@ export type ResourceRecord = { title: string; description: string };
 export const heroSlides: HeroSlideRecord[] = [
     {
         id: 'campus',
-        label: 'Campus',
-        supportingText: 'Inclusive places. Shared possibilities.',
-        caption: 'Higher education.',
-        captionEmphasis: 'For every one of us.',
+        title: 'Inclusive places. Shared possibilities.',
+        description:
+            'Higher education can create safer and more inclusive places for every member of the community.',
         media: {
             variant: 'campus',
             alt: 'Architectural campus illustration, replaceable image placeholder',
@@ -50,10 +49,9 @@ export const heroSlides: HeroSlideRecord[] = [
     },
     {
         id: 'community',
-        label: 'Community',
-        supportingText: 'Voices together. Progress in motion.',
-        caption: 'Stronger communities.',
-        captionEmphasis: 'Built through participation.',
+        title: 'Voices together. Progress in motion.',
+        description:
+            'Stronger higher education communities are built through meaningful participation.',
         media: {
             variant: 'community',
             alt: 'Higher education community illustration, replaceable image placeholder',
@@ -61,10 +59,9 @@ export const heroSlides: HeroSlideRecord[] = [
     },
     {
         id: 'learning',
-        label: 'Learning',
-        supportingText: 'Knowledge shared. Change made possible.',
-        caption: 'Knowledge that travels.',
-        captionEmphasis: 'Action that lasts.',
+        title: 'Knowledge shared. Change made possible.',
+        description:
+            'Shared learning helps turn knowledge into informed and lasting action.',
         media: {
             variant: 'learning',
             alt: 'Open learning material illustration, replaceable image placeholder',
@@ -101,6 +98,7 @@ export const datasets: AcademicDataset[] = [
 ];
 export const laws: LawRecord[] = [
     {
+        slug: 'ra-7877',
         number: 'RA 7877',
         title: 'Anti-Sexual Harassment Act of 1995',
         description: 'Explore learning resources about this GAD enabling law.',
@@ -110,6 +108,7 @@ export const laws: LawRecord[] = [
         },
     },
     {
+        slug: 'ra-9262',
         number: 'RA 9262',
         title: 'Anti-Violence Against Women and Their Children Act',
         description: 'Explore learning resources about this GAD enabling law.',
@@ -119,6 +118,7 @@ export const laws: LawRecord[] = [
         },
     },
     {
+        slug: 'ra-9710',
         number: 'RA 9710',
         title: 'Magna Carta of Women',
         description: 'Explore learning resources about this GAD enabling law.',
@@ -128,6 +128,7 @@ export const laws: LawRecord[] = [
         },
     },
     {
+        slug: 'ra-11313',
         number: 'RA 11313',
         title: 'Safe Spaces Act',
         description: 'Explore learning resources about this GAD enabling law.',

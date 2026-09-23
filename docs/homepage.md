@@ -10,6 +10,7 @@ The `/` route renders the public homepage. Authentication, account settings, and
 - The footer uses `/assets/img/gadlogo.png`, while the header uses the compact `/assets/img/gadlogo2.png` lockup. The footer also uses the supplied CHED, Bagong Pilipinas, Freedom of Information, and Transparency Seal marks.
 - The four Know Your Rights cards use the matching artwork in `/assets/thumbnails` through typed law records.
 - Statistics default to a three-series line chart and also provide grouped bar and accessible table views over the same static fixture data.
+- The hero keeps its static fixtures as a fallback. Active records from the permission-protected carousel manager replace those fixtures in display order.
 - Surveys, feedback, downloads, policies, and article content use preview dialogs. No responses are sent or persisted.
 
 ## Design

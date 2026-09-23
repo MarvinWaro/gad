@@ -1,16 +1,15 @@
+import { Link } from '@inertiajs/react';
 import {
     ArrowRight,
     ArrowUpRight,
     BookOpen,
     FileText,
-    MessageSquare,
     Scale,
     Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
-    AvailabilityButton,
     MediaPanel,
     PreviewDialog,
     SectionHeading,
@@ -21,16 +20,33 @@ import type {
     ResourceRecord,
 } from '@/data/phlgadis-demo';
 
-export function Rights({ laws }: { laws: LawRecord[] }) {
+export function Rights({
+    laws,
+    openSurveys = [],
+}: {
+    laws: LawRecord[];
+    openSurveys?: string[];
+}) {
     return (
         <section id="rights" className="public-container public-section">
-            <SectionHeading
-                label="Knowledge empowers"
-                title="Your rights. A stronger foundation."
-                description="Get to know the four GAD enabling laws and the conversations they make possible."
-            />
-            <div className="laws-grid">
+            <div className="section-heading rights-heading">
+                <div>
+                    <h2>Know Your Rights</h2>
+                    <p className="section-description">
+                        This survey on the four GAD enabling laws gathers
+                        information about experiences involving sexual
+                        harassment, violence, and discrimination. Select a law
+                        below to proceed directly to its survey.
+                    </p>
+                    <p className="rights-note">
+                        (This survey does not require personal information)
+                    </p>
+                </div>
+            </div>
+            <div id="surveys" className="laws-grid">
                 {laws.map((law) => {
+                    const isOpen = openSurveys.includes(law.slug);
+
                     return (
                         <Card className="law-card" key={law.number}>
                             <div className="law-art">
@@ -46,55 +62,26 @@ export function Rights({ laws }: { laws: LawRecord[] }) {
                             <div className="law-body">
                                 <span className="law-number">{law.number}</span>
                                 <h3>{law.title}</h3>
-                                <PreviewDialog
-                                    title={`${law.number} · ${law.title}`}
-                                    description={law.description}
-                                    content={
-                                        <p className="availability-note">
-                                            Verified law texts, learning
-                                            materials, and related survey links
-                                            will be added here. This preview
-                                            does not provide legal guidance.
-                                        </p>
-                                    }
+                                <Button
+                                    asChild
+                                    variant="ghost"
+                                    className="text-action"
                                 >
-                                    <Button
-                                        variant="ghost"
-                                        className="text-action"
-                                    >
-                                        Explore this law
+                                    <Link href={`/surveys/${law.slug}`}>
+                                        {isOpen
+                                            ? 'Take the Survey'
+                                            : 'Opening soon'}
                                         <ArrowUpRight />
-                                    </Button>
-                                </PreviewDialog>
+                                    </Link>
+                                </Button>
                             </div>
                         </Card>
                     );
                 })}
             </div>
-            <div id="surveys" className="survey-strip">
-                <div className="survey-message">
-                    <span className="survey-icon">
-                        <MessageSquare size={21} strokeWidth={1.5} />
-                    </span>
-                    <div>
-                        <h3>Your experience can inform change.</h3>
-                        <p>
-                            GAD surveys are coming to this space. Participation
-                            is unavailable in this preview.
-                        </p>
-                    </div>
-                </div>
-                <AvailabilityButton
-                    title="GAD surveys"
-                    className="survey-button"
-                >
-                    Explore surveys
-                </AvailabilityButton>
-            </div>
         </section>
     );
 }
-
 export function Stories({ stories }: { stories: ContentRecord[] }) {
     return (
         <section id="stories" className="public-container public-section">
