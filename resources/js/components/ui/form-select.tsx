@@ -23,6 +23,7 @@ export function FormSelect({
     contentClassName,
     id,
     name,
+    tabIndex,
     'aria-describedby': describedBy,
     'aria-required': required,
     'aria-invalid': invalid,
@@ -38,6 +39,7 @@ export function FormSelect({
     contentClassName?: string;
     id?: string;
     name?: string;
+    tabIndex?: number;
     'aria-describedby'?: string;
     'aria-required'?: boolean;
     'aria-invalid'?: boolean;
@@ -53,6 +55,7 @@ export function FormSelect({
         >
             <SelectTrigger
                 id={id}
+                tabIndex={tabIndex}
                 aria-describedby={describedBy}
                 aria-required={required}
                 aria-invalid={invalid}

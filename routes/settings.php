@@ -37,6 +37,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('settings/users/{user}', [UserManagementController::class, 'update'])
         ->middleware('can:users.update')
         ->name('settings.users.update');
+    Route::patch('settings/users/{user}/status', [UserManagementController::class, 'updateStatus'])
+        ->middleware('can:users.update')
+        ->name('settings.users.status');
     Route::delete('settings/users/{user}', [UserManagementController::class, 'destroy'])
         ->middleware('can:users.delete')
         ->name('settings.users.destroy');

@@ -58,8 +58,8 @@ class RbacSeeder extends Seeder
             ],
             'hei' => [
                 'name' => 'HEI User',
-                'description' => 'Read-only access to available administration modules.',
-                'permissions' => ['carousel.view'],
+                'description' => 'Registered HEI account. Dashboard only.',
+                'permissions' => [],
             ],
         ])->mapWithKeys(function (array $attributes, string $slug) use ($permissions): array {
             $role = Role::query()->updateOrCreate(

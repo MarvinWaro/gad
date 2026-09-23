@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserStatus;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Notification;
@@ -15,18 +16,20 @@ test('registration screen can be rendered', function () {
     $response->assertOk();
 });
 
-test('new users can register', function () {
+test('new users can register and wait for approval', function () {
     Notification::fake();
+    $hei = createSurveyHei();
 
-    $response = $this->post(route('register.store'), [
-        'name' => 'Test User',
-        'email' => 'test@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ]);
+    $response = $this->post(route('register.store'), registrationPayload($hei));
 
-    $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
-    $this->get(route('dashboard'))->assertOk();
-    Notification::assertNotSentTo(User::where('email', 'test@example.com')->firstOrFail(), VerifyEmail::class);
+    $this->assertGuest();
+    $response->assertRedirect(route('login', absolute: false));
+    $response->assertSessionHas('status');
+
+    $user = User::where('email', 'test@example.com')->firstOrFail();
+    expect($user->status)->toBe(UserStatus::Pending)
+        ->and($user->survey_hei_id)->toBe($hei->id)
+        ->and($user->mobile_number)->toBe('09171234567')
+        ->and($user->sex)->toBe('female');
+    Notification::assertNotSentTo($user, VerifyEmail::class);
 });

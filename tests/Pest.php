@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\SurveyCluster;
+use App\Models\SurveyHei;
+use App\Models\SurveyRegion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -47,4 +50,46 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Create an institution, with its region and cluster, for tests that link
+ * accounts to an HEI.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function createSurveyHei(array $attributes = []): SurveyHei
+{
+    $region = SurveyRegion::query()->firstOrCreate(['name' => 'Regional Office XII'], ['is_active' => true]);
+    $cluster = SurveyCluster::query()->firstOrCreate(
+        ['survey_region_id' => $region->id, 'name' => 'South Cotabato'],
+        ['is_active' => true],
+    );
+
+    return SurveyHei::query()->create([
+        'survey_cluster_id' => $cluster->id,
+        'name' => 'Notre Dame of Marbel University',
+        'is_active' => true,
+        ...$attributes,
+    ]);
+}
+
+/**
+ * A valid public registration payload.
+ *
+ * @param  array<string, mixed>  $overrides
+ * @return array<string, mixed>
+ */
+function registrationPayload(SurveyHei $hei, array $overrides = []): array
+{
+    return [
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'survey_hei_id' => $hei->id,
+        'mobile_number' => '0917 123 4567',
+        'sex' => 'female',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        ...$overrides,
+    ];
 }
