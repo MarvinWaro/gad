@@ -17,7 +17,7 @@ class SurveyHeiSeeder extends Seeder
         $institutions = $this->institutions();
 
         DB::transaction(function () use ($institutions): void {
-            $region = SurveyRegion::query()->firstOrCreate(['name' => 'Region XII'], ['is_active' => true]);
+            $region = SurveyRegion::query()->firstOrCreate(['name' => 'Regional Office XII'], ['is_active' => true]);
             // The supplied directory has no province/cluster column. Use the
             // same fallback as portal sync instead of guessing assignments.
             $cluster = SurveyCluster::query()->firstOrCreate(
@@ -65,12 +65,12 @@ class SurveyHeiSeeder extends Seeder
     {
         $handle = fopen(__DIR__.'/data/region-xii-heis.csv', 'r');
         if ($handle === false) {
-            throw new RuntimeException('Cannot read the Region XII HEI seed data.');
+            throw new RuntimeException('Cannot read the Regional Office XII HEI seed data.');
         }
 
         try {
             if (fgetcsv($handle, escape: '') !== ['uii', 'name', 'type']) {
-                throw new RuntimeException('Invalid Region XII HEI CSV header.');
+                throw new RuntimeException('Invalid Regional Office XII HEI CSV header.');
             }
 
             $institutions = [];

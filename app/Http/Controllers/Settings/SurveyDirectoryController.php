@@ -9,11 +9,9 @@ use App\Models\SurveyRegion;
 use App\Models\SurveyRespondentGroup;
 use App\Models\SurveyResponse;
 use App\Services\PortalHeiSync;
-use App\Services\PortalService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -28,30 +26,65 @@ class SurveyDirectoryController extends Controller
         'survey_region_id' => 'region',
     ];
 
-    public function index(Request $request): Response
+    public function regions(Request $request): Response
     {
-        return Inertia::render('settings/survey-directories', [
+        return Inertia::render('settings/regions', [
             'regions' => SurveyRegion::query()->withCount('clusters')->orderBy('name')->get(),
+            'permissions' => $this->permissions($request),
+        ]);
+    }
+
+    public function clusters(Request $request): Response
+    {
+        return Inertia::render('settings/clusters', [
+            'regions' => SurveyRegion::query()->orderBy('name')->get(['id', 'name']),
             'clusters' => SurveyCluster::query()->with('region:id,name')->withCount('heis')->orderBy('name')->get(),
-            'respondentGroups' => SurveyRespondentGroup::query()->ordered()->get(),
+            'permissions' => $this->permissions($request),
+        ]);
+    }
+
+    public function heis(Request $request): Response
+    {
+        return Inertia::render('settings/heis', [
+            'regions' => SurveyRegion::query()->orderBy('name')->get(['id', 'name']),
+            'clusters' => SurveyCluster::query()->with('region:id,name')->orderBy('name')->get(),
+            // The directory runs to hundreds of institutions, so it is paged
+            // rather than rendered whole.
             'heis' => SurveyHei::query()->with('cluster:id,name,survey_region_id', 'cluster.region:id,name')
                 ->orderBy('name')
-                ->get(['id', 'survey_cluster_id', 'uii', 'name', 'ownership', 'is_active', 'portal_synced_at']),
+                ->paginate(10, ['id', 'survey_cluster_id', 'uii', 'name', 'ownership', 'is_active', 'portal_synced_at'])
+                ->withQueryString(),
+            'permissions' => $this->permissions($request),
+        ]);
+    }
+
+    /** @return array<string, bool> */
+    private function permissions(Request $request): array
+    {
+        return [
+            'create' => $request->user()->can('survey-directories.create'),
+            'update' => $request->user()->can('survey-directories.update'),
+            'delete' => $request->user()->can('survey-directories.delete'),
+        ];
+    }
+
+    public function respondentGroups(Request $request): Response
+    {
+        return Inertia::render('settings/respondent-groups', [
+            'respondentGroups' => SurveyRespondentGroup::query()->ordered()->get(),
             'permissions' => [
                 'create' => $request->user()->can('survey-directories.create'),
                 'update' => $request->user()->can('survey-directories.update'),
                 'delete' => $request->user()->can('survey-directories.delete'),
             ],
-            'portal' => [
-                'configured' => app(PortalService::class)->isConfigured(),
-                'last_synced_at' => SurveyHei::query()->max('portal_synced_at')
-                    ? Carbon::parse(SurveyHei::query()->max('portal_synced_at'))->toIso8601String()
-                    : null,
-                'synced_count' => SurveyHei::query()->whereNotNull('portal_synced_at')->where('is_active', true)->count(),
-            ],
         ]);
     }
 
+    /**
+     * Pull the HEI list from the CHED portal. No page links to this yet — the
+     * panel is withdrawn until the portal's API base URL is confirmed — but the
+     * endpoint and `php artisan surveys:sync-heis` both still work.
+     */
     public function sync(PortalHeiSync $sync): RedirectResponse
     {
         try {

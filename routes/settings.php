@@ -54,8 +54,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:roles.delete')
         ->name('settings.roles.destroy');
 
-    Route::get('settings/survey-directories', [SurveyDirectoryController::class, 'index'])
-        ->middleware('can:survey-directories.view')->name('settings.survey-directories.index');
+    Route::get('settings/respondent-groups', [SurveyDirectoryController::class, 'respondentGroups'])
+        ->middleware('can:survey-directories.view')->name('settings.respondent-groups.index');
+    Route::get('settings/regions', [SurveyDirectoryController::class, 'regions'])
+        ->middleware('can:survey-directories.view')->name('settings.regions.index');
+    Route::get('settings/clusters', [SurveyDirectoryController::class, 'clusters'])
+        ->middleware('can:survey-directories.view')->name('settings.clusters.index');
+    Route::get('settings/heis', [SurveyDirectoryController::class, 'heis'])
+        ->middleware('can:survey-directories.view')->name('settings.heis.index');
     Route::post('settings/survey-directories/sync-heis', [SurveyDirectoryController::class, 'sync'])
         ->middleware('can:survey-directories.create')->name('settings.survey-directories.sync');
     Route::post('settings/survey-directories/{type}', [SurveyDirectoryController::class, 'store'])

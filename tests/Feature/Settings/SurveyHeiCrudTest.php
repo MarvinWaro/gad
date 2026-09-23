@@ -40,7 +40,7 @@ test('an HEI is created with its UII, region, cluster, and ownership', function 
         ->and($hei->ownership)->toBe('private')
         ->and($hei->is_active)->toBeTrue()
         ->and($hei->cluster->name)->toBe('South Cotabato')
-        ->and($hei->cluster->region->name)->toBe('Region XII');
+        ->and($hei->cluster->region->name)->toBe('Regional Office XII');
 });
 
 test('the UII is optional so an institution can be entered before its code is known', function () {
@@ -182,17 +182,20 @@ test('the directory page ships the columns the HEI table renders', function () {
     $this->actingAs($this->admin)
         ->post(route('settings.survey-directories.store', ['type' => 'heis']), heiPayload());
 
-    $this->actingAs($this->admin)->get(route('settings.survey-directories.index'))
+    $this->actingAs($this->admin)->get(route('settings.heis.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('settings/survey-directories')
-            ->has('heis', 1)
-            ->where('heis.0.uii', '12001')
-            ->where('heis.0.name', 'Notre Dame of Marbel University')
-            ->where('heis.0.ownership', 'private')
-            ->where('heis.0.is_active', true)
-            ->where('heis.0.cluster.name', 'South Cotabato')
-            ->where('heis.0.cluster.region.name', 'Region XII'));
+            ->component('settings/heis')
+            // The list is paged, so the rows sit under `data`.
+            ->has('heis.data', 1)
+            ->where('heis.total', 1)
+            ->where('heis.per_page', 10)
+            ->where('heis.data.0.uii', '12001')
+            ->where('heis.data.0.name', 'Notre Dame of Marbel University')
+            ->where('heis.data.0.ownership', 'private')
+            ->where('heis.data.0.is_active', true)
+            ->where('heis.data.0.cluster.name', 'South Cotabato')
+            ->where('heis.data.0.cluster.region.name', 'Regional Office XII'));
 });
 
 test('creating regions and clusters is unchanged by the HEI fields', function () {

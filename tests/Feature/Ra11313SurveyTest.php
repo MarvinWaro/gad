@@ -16,7 +16,7 @@ beforeEach(function () {
     $this->admin->assignRole('admin');
     $this->survey = Survey::query()->where('slug', 'ra-11313')->sole();
 
-    $this->region = SurveyRegion::query()->where('name', 'Region XII')->sole();
+    $this->region = SurveyRegion::query()->where('name', 'Regional Office XII')->sole();
     $this->cluster = SurveyCluster::query()->create([
         'survey_region_id' => $this->region->id, 'name' => 'Test Cluster', 'is_active' => true,
     ]);
@@ -30,6 +30,7 @@ function publishRa11313(): void
     test()->survey->draftVersion()->update(['retention_days' => 365]);
     test()->actingAs(test()->admin)
         ->post(route('admin.surveys.publish', test()->survey))
+        ->assertRedirect()
         ->assertSessionHasNoErrors();
 }
 

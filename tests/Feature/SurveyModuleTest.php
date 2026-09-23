@@ -24,7 +24,7 @@ function surveyUser(string $role): User
 
 function configureSurveyDirectories(): array
 {
-    $region = SurveyRegion::query()->where('name', 'Region XII')->sole();
+    $region = SurveyRegion::query()->where('name', 'Regional Office XII')->sole();
     $cluster = SurveyCluster::query()->create(['survey_region_id' => $region->id, 'name' => 'Test Cluster', 'is_active' => true]);
     $hei = SurveyHei::query()->create(['survey_cluster_id' => $cluster->id, 'name' => 'Test HEI', 'is_active' => true]);
 
@@ -63,7 +63,7 @@ test('survey permissions separate content, publication, directories, and respons
         ->and($hei->can('surveys.view'))->toBeFalse();
 
     $this->actingAs($focal)->get(route('admin.surveys.index'))->assertOk();
-    $this->actingAs($focal)->get(route('settings.survey-directories.index'))->assertForbidden();
+    $this->actingAs($focal)->get(route('settings.regions.index'))->assertForbidden();
     $this->actingAs($hei)->get(route('admin.surveys.index'))->assertForbidden();
 });
 

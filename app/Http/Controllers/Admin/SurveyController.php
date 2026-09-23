@@ -302,7 +302,7 @@ class SurveyController extends Controller
                 'passed' => $hasDirectoryChain,
                 'detail' => 'Respondents choose their institution from this list. Add at least one active Region, Cluster, and HEI.',
                 'href' => $request->user()?->can('survey-directories.view')
-                    ? route('settings.survey-directories.index')
+                    ? route('settings.regions.index')
                     : null,
             ],
             [

@@ -30,7 +30,7 @@ function publishOptionalHeiRa7877(): Survey
  */
 function publishRa7877WithOptional(array $optional): Survey
 {
-    $region = SurveyRegion::query()->where('name', 'Region XII')->sole();
+    $region = SurveyRegion::query()->where('name', 'Regional Office XII')->sole();
     $cluster = SurveyCluster::query()->create([
         'survey_region_id' => $region->id, 'name' => 'Test Cluster', 'is_active' => true,
     ]);
@@ -211,7 +211,7 @@ test('a region that cannot reach a required cluster is never offered', function 
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->has('directories.regions', 1)
-            ->where('directories.regions.0.name', 'Region XII'));
+            ->where('directories.regions.0.name', 'Regional Office XII'));
 });
 
 test('a region whose clusters are all deactivated drops out of the list too', function () {

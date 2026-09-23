@@ -16,8 +16,11 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(RbacSeeder::class);
         $this->call(AdminUserSeeder::class);
-        $this->call(SurveySeeder::class);
+        // Regions before surveys, so the offices keep their canonical order
+        // rather than starting with whichever one a survey needed first.
+        $this->call(SurveyRegionSeeder::class);
         $this->call(SurveyRespondentGroupSeeder::class);
+        $this->call(SurveySeeder::class);
         $this->call(SurveyDirectorySeeder::class);
         $this->call(SurveyHeiSeeder::class);
     }

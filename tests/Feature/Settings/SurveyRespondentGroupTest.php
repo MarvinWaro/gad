@@ -17,7 +17,7 @@ beforeEach(function () {
     $this->admin->assignRole('admin');
     $this->survey = Survey::query()->where('slug', 'ra-7877')->sole();
 
-    $this->region = SurveyRegion::query()->where('name', 'Region XII')->sole();
+    $this->region = SurveyRegion::query()->where('name', 'Regional Office XII')->sole();
     $this->cluster = SurveyCluster::query()->create([
         'survey_region_id' => $this->region->id, 'name' => 'Test Cluster', 'is_active' => true,
     ]);
@@ -31,6 +31,7 @@ function publishBaseSurvey(): void
     test()->survey->draftVersion()->update(['retention_days' => 365]);
     test()->actingAs(test()->admin)
         ->post(route('admin.surveys.publish', test()->survey))
+        ->assertRedirect()
         ->assertSessionHasNoErrors();
 }
 
@@ -163,10 +164,15 @@ test('an unused group can be deleted', function () {
     expect(SurveyRespondentGroup::query()->count())->toBe(2);
 });
 
-test('the settings page ships the directory for its table', function () {
-    $this->actingAs($this->admin)->get(route('settings.survey-directories.index'))
+test('the groups have their own settings page, separate from the directories', function () {
+    $this->actingAs($this->admin)->get(route('settings.heis.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->missing('respondentGroups'));
+
+    $this->actingAs($this->admin)->get(route('settings.respondent-groups.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
+            ->component('settings/respondent-groups')
             ->has('respondentGroups', 3)
             ->where('respondentGroups.0.value', 'student')
             ->where('respondentGroups.0.label', 'Student')

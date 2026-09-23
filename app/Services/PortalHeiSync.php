@@ -56,7 +56,7 @@ class PortalHeiSync
         }
 
         $region = SurveyRegion::query()->firstOrCreate(
-            ['name' => 'Region XII'],
+            ['name' => 'Regional Office XII'],
             ['is_active' => true],
         );
 

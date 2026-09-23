@@ -76,7 +76,7 @@ function applyToQuestion(string $questionId, array $attributes): Survey
 
 function publishDraft(Survey $survey): void
 {
-    $region = SurveyRegion::query()->where('name', 'Region XII')->sole();
+    $region = SurveyRegion::query()->where('name', 'Regional Office XII')->sole();
     $cluster = SurveyCluster::query()->firstOrCreate(
         ['survey_region_id' => $region->id, 'name' => 'Test Cluster'],
         ['is_active' => true],
@@ -89,6 +89,7 @@ function publishDraft(Survey $survey): void
 
     test()->actingAs(test()->admin)
         ->post(route('admin.surveys.publish', $survey))
+        ->assertRedirect()
         ->assertSessionHasNoErrors();
 }
 
@@ -127,7 +128,7 @@ test('a question with no default is unchanged', function () {
 test('a default that is not one of the choices blocks publication', function () {
     $survey = withDefaultAnswer('sex', 'martian');
     $survey->draftVersion()->update(['retention_days' => 365]);
-    $region = SurveyRegion::query()->where('name', 'Region XII')->sole();
+    $region = SurveyRegion::query()->where('name', 'Regional Office XII')->sole();
     $cluster = SurveyCluster::query()->create([
         'survey_region_id' => $region->id, 'name' => 'Test Cluster', 'is_active' => true,
     ]);
@@ -253,7 +254,7 @@ test('locking is still enforced when the question keeps every choice', function 
 test('a question locked with no default to lock to blocks publication', function () {
     $survey = applyToQuestion('sex', ['locked' => true, 'default' => null]);
     $survey->draftVersion()->update(['retention_days' => 365]);
-    $region = SurveyRegion::query()->where('name', 'Region XII')->sole();
+    $region = SurveyRegion::query()->where('name', 'Regional Office XII')->sole();
     $cluster = SurveyCluster::query()->create([
         'survey_region_id' => $region->id, 'name' => 'Test Cluster', 'is_active' => true,
     ]);

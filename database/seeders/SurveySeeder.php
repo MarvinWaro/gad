@@ -15,7 +15,7 @@ class SurveySeeder extends Seeder
         // directory, so the surveys cannot be seeded without it.
         $this->call(SurveyRespondentGroupSeeder::class);
 
-        SurveyRegion::query()->firstOrCreate(['name' => 'Region XII'], ['is_active' => true]);
+        SurveyRegion::query()->firstOrCreate(['name' => 'Regional Office XII'], ['is_active' => true]);
 
         $survey = Survey::query()->firstOrCreate(
             ['slug' => 'ra-7877'],
