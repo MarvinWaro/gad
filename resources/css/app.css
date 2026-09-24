@@ -59,6 +59,15 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    /* DESIGN.md signature surfaces, for brand moments and category marks. */
+    --color-signature-coral: var(--signature-coral);
+    --color-signature-forest: var(--signature-forest);
+    --color-signature-cream: var(--signature-cream);
+    --color-signature-cream-foreground: var(--signature-cream-foreground);
+    --color-signature-mustard: var(--signature-mustard);
+    --color-signature-mint: var(--signature-mint);
+    --color-on-signature: var(--on-signature);
 }
 
 :root {
@@ -96,6 +105,13 @@
     --sidebar-accent-foreground: #181d26;
     --sidebar-border: #dddddd;
     --sidebar-ring: #1b61c9;
+    --signature-coral: #aa2d00;
+    --signature-forest: #0a2e0e;
+    --signature-cream: #f5e9d4;
+    --signature-cream-foreground: #181d26;
+    --signature-mustard: #d9a441;
+    --signature-mint: #a8d8c4;
+    --on-signature: #ffffff;
 }
 
 .dark {
@@ -131,6 +147,13 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(0.269 0 0);
     --sidebar-ring: oklch(0.439 0 0);
+    --signature-coral: #f0845c;
+    --signature-forest: #133d19;
+    --signature-cream: oklch(0.29 0.025 75);
+    --signature-cream-foreground: oklch(0.95 0.015 80);
+    --signature-mustard: #d9a441;
+    --signature-mint: #a8d8c4;
+    --on-signature: #ffffff;
 }
 
 @layer base {
@@ -142,5 +165,15 @@
         @apply bg-background text-foreground;
         font-family: var(--font-sans);
         -webkit-font-smoothing: antialiased;
+    }
+
+    /* Browser surfaces on the HEI pages carry the palette too. */
+    [data-surface='hei'] ::selection {
+        background: var(--signature-cream);
+        color: var(--signature-cream-foreground);
+    }
+
+    [data-surface='hei'] textarea {
+        caret-color: var(--signature-coral);
     }
 }

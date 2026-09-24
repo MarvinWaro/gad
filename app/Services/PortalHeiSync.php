@@ -35,7 +35,7 @@ class PortalHeiSync
         'sultan kudarat' => 'Sultan Kudarat',
     ];
 
-    private const UNASSIGNED_CLUSTER = 'Unassigned';
+    private const UNASSIGNED_CLUSTER = SurveyCluster::UNASSIGNED;
 
     public function __construct(private readonly PortalService $portal) {}
 

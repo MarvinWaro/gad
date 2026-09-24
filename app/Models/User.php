@@ -102,6 +102,14 @@ class User extends Authenticatable implements PasskeyUser
         return $this->roles->contains('slug', $role);
     }
 
+    /** An HEI account with no staff role, which gets the HEI home and header shell. */
+    public function isHeiOnly(): bool
+    {
+        $this->loadMissing('roles');
+
+        return $this->roles->pluck('slug')->all() === ['hei'];
+    }
+
     public function hasPermissionTo(string $permission): bool
     {
         $this->loadMissing('roles.permissions');

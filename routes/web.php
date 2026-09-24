@@ -1,8 +1,15 @@
 <?php
 
 use App\Http\Controllers\Admin\CarouselSlideController;
+use App\Http\Controllers\Admin\GadEventController;
 use App\Http\Controllers\Admin\SurveyController;
 use App\Http\Controllers\Admin\SurveyResponseController;
+use App\Http\Controllers\CommunityController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\PostCommentController;
+use App\Http\Controllers\PostController;
+use App\Http\Controllers\PostLikeController;
 use App\Http\Controllers\PublicSurveyController;
 use App\Models\CarouselSlide;
 use App\Models\Survey;
@@ -52,9 +59,27 @@ Route::post('/surveys/{survey:slug}/responses', [PublicSurveyController::class, 
     ->name('surveys.responses.store');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::get('events', [EventController::class, 'index'])->name('events.index');
+
+    Route::post('posts', [PostController::class, 'store'])->middleware('throttle:20,1')->name('posts.store');
+    Route::put('posts/{post}', [PostController::class, 'update'])->name('posts.update');
+    Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
+    Route::post('posts/{post}/like', [PostLikeController::class, 'store'])->name('posts.like');
+    Route::delete('posts/{post}/like', [PostLikeController::class, 'destroy'])->name('posts.unlike');
+    Route::post('posts/{post}/comments', [PostCommentController::class, 'store'])
+        ->middleware('throttle:30,1')
+        ->name('posts.comments.store');
+    Route::delete('comments/{comment}', [PostCommentController::class, 'destroy'])->name('comments.destroy');
+
+    Route::get('community', CommunityController::class)->middleware('can:posts.moderate')->name('community');
 
     Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('events', [GadEventController::class, 'index'])->middleware('can:events.view')->name('events.index');
+        Route::post('events', [GadEventController::class, 'store'])->middleware('can:events.create')->name('events.store');
+        Route::put('events/{event}', [GadEventController::class, 'update'])->middleware('can:events.update')->name('events.update');
+        Route::delete('events/{event}', [GadEventController::class, 'destroy'])->middleware('can:events.delete')->name('events.destroy');
+
         Route::get('carousels', [CarouselSlideController::class, 'index'])
             ->middleware('can:carousel.view')
             ->name('carousels.index');

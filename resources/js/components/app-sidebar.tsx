@@ -16,7 +16,7 @@ import { appNavigationItems } from '@/lib/app-navigation';
 
 export function AppSidebar() {
     const { auth } = usePage().props;
-    const mainNavItems = appNavigationItems(auth.permissions);
+    const mainNavItems = appNavigationItems(auth.permissions, auth.roles);
 
     return (
         <Sidebar collapsible="icon" variant="inset">

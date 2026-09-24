@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['survey_region_id', 'name', 'is_active'])]
 class SurveyCluster extends Model
 {
+    /** Holding cluster for institutions whose province is not known yet. */
+    public const UNASSIGNED = 'Unassigned';
+
     protected function casts(): array
     {
         return ['is_active' => 'boolean'];

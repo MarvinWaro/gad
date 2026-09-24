@@ -36,6 +36,11 @@ class RbacSeeder extends Seeder
             ['name' => 'Create survey directories', 'slug' => 'survey-directories.create', 'group' => 'Survey directories'],
             ['name' => 'Update survey directories', 'slug' => 'survey-directories.update', 'group' => 'Survey directories'],
             ['name' => 'Delete survey directories', 'slug' => 'survey-directories.delete', 'group' => 'Survey directories'],
+            ['name' => 'View GAD events', 'slug' => 'events.view', 'group' => 'GAD events'],
+            ['name' => 'Create GAD events', 'slug' => 'events.create', 'group' => 'GAD events'],
+            ['name' => 'Update GAD events', 'slug' => 'events.update', 'group' => 'GAD events'],
+            ['name' => 'Delete GAD events', 'slug' => 'events.delete', 'group' => 'GAD events'],
+            ['name' => 'Moderate community posts', 'slug' => 'posts.moderate', 'group' => 'Community'],
         ])->mapWithKeys(function (array $attributes): array {
             $permission = Permission::query()->updateOrCreate(
                 ['slug' => $attributes['slug']],
@@ -54,7 +59,11 @@ class RbacSeeder extends Seeder
             'gad-focal-person' => [
                 'name' => 'GAD Focal Person',
                 'description' => 'Creates and maintains approved GAD content.',
-                'permissions' => ['carousel.view', 'carousel.create', 'carousel.update', 'surveys.view', 'surveys.create', 'surveys.update'],
+                'permissions' => [
+                    'carousel.view', 'carousel.create', 'carousel.update',
+                    'surveys.view', 'surveys.create', 'surveys.update',
+                    'events.view', 'events.create', 'events.update',
+                ],
             ],
             'hei' => [
                 'name' => 'HEI User',
