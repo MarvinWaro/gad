@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\UserStatus;
 use App\Models\Post;
 use App\Models\PostComment;
 use App\Models\PostImage;
@@ -24,11 +25,11 @@ class CommunityFeed
     {
         return Post::query()
             ->with([
-                'author:id,name',
+                'author:id,name,status',
                 'hei:id,name',
                 'images',
                 'comments' => fn ($query) => $query
-                    ->with('author:id,name')
+                    ->with('author:id,name,status')
                     ->latest()
                     ->latest('id')
                     ->limit(self::COMMENTS_PER_POST),
@@ -50,7 +51,7 @@ class CommunityFeed
             'created_at' => $post->created_at?->toIso8601String(),
             'edited' => $post->updated_at !== null && $post->created_at !== null
                 && $post->updated_at->gt($post->created_at->addMinute()),
-            'author' => ['id' => $post->author->id, 'name' => $post->author->name],
+            'author' => self::author($post->author),
             'hei' => $post->hei ? [
                 'id' => $post->hei->id,
                 'name' => $post->hei->name,
@@ -71,6 +72,21 @@ class CommunityFeed
         ];
     }
 
+    /**
+     * A deactivated author's posts stay up as part of their school's record,
+     * flagged so readers know the account can no longer respond.
+     *
+     * @return array{id: int, name: string, deactivated: bool}
+     */
+    private static function author(User $author): array
+    {
+        return [
+            'id' => $author->id,
+            'name' => $author->name,
+            'deactivated' => $author->status === UserStatus::Inactive,
+        ];
+    }
+
     /** @return array<string, mixed> */
     public static function presentComment(PostComment $comment, User $viewer): array
     {
@@ -78,7 +94,7 @@ class CommunityFeed
             'id' => $comment->id,
             'body' => $comment->body,
             'created_at' => $comment->created_at?->toIso8601String(),
-            'author' => ['id' => $comment->author->id, 'name' => $comment->author->name],
+            'author' => self::author($comment->author),
             'can_delete' => $viewer->can('delete', $comment),
         ];
     }

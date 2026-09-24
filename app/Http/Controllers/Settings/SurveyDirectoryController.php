@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Models\Post;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\SurveyRespondentGroup;
 use App\Models\SurveyResponse;
+use App\Models\User;
 use App\Services\PortalHeiSync;
+use App\Support\CountPhrase;
+use App\Support\InstitutionName;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -245,13 +249,38 @@ class SurveyDirectoryController extends Controller
         $record = $this->modelFor($type)->newQuery()->findOrFail($id);
         if ($record instanceof SurveyRespondentGroup
             && SurveyResponse::query()->where('respondent_group', $record->value)->exists()) {
-            return back()->withErrors(['directory' => 'Responses were collected under this group. Deactivate it instead.']);
+            return $this->refuse(__('Responses were collected under this group. Deactivate it instead.'));
         }
+
+        // Deleting an institution would unlink its accounts and make its posts
+        // look like CHED's, so one with any records can only be deactivated.
+        if ($record instanceof SurveyHei) {
+            $records = [
+                'survey response' => SurveyResponse::query()->where('survey_hei_id', $record->id)->count(),
+                'user account' => User::query()->where('survey_hei_id', $record->id)->count(),
+                'post' => Post::query()->where('survey_hei_id', $record->id)->count(),
+            ];
+
+            if (array_sum($records) > 0) {
+                return $this->refuse(__(':name has :records. Deactivate it instead.', [
+                    'name' => InstitutionName::display($record->name),
+                    'records' => CountPhrase::of($records),
+                ]));
+            }
+        }
+
+        $name = $record instanceof SurveyRespondentGroup ? $record->label : $record->getAttribute('name');
+
         try {
             $record->delete();
         } catch (\Throwable) {
-            return back()->withErrors(['directory' => 'This directory record is in use. Deactivate it instead.']);
+            return $this->refuse(__('This directory record is in use. Deactivate it instead.'));
         }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => __(':name deleted.', ['name' => $record instanceof SurveyHei ? InstitutionName::display($name) : $name]),
+        ]);
 
         return back();
     }

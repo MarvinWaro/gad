@@ -89,7 +89,7 @@ export function PostComments({
                         <li key={comment.id} className="group flex gap-2.5">
                             <span
                                 aria-hidden
-                                className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border bg-background text-[0.6875rem] text-muted-foreground"
+                                className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border bg-background text-xs text-muted-foreground"
                             >
                                 {getInitials(comment.author.name)}
                             </span>
@@ -97,7 +97,13 @@ export function PostComments({
                                 <p className="text-sm leading-snug">
                                     <span className="font-medium">
                                         {comment.author.name}
-                                    </span>{' '}
+                                    </span>
+                                    {comment.author.deactivated && (
+                                        <span className="text-xs text-muted-foreground italic">
+                                            {' '}
+                                            (deactivated)
+                                        </span>
+                                    )}{' '}
                                     <span className="break-words whitespace-pre-line">
                                         {comment.body}
                                     </span>

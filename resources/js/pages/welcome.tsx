@@ -96,7 +96,10 @@ export default function Welcome({
     }, []);
     const slides = carouselSlides.length > 0 ? carouselSlides : heroSlides;
     return (
-        <div className="public-theme landing-page" onClick={handleSectionLink}>
+        <div
+            className="public-theme landing-page dot-backdrop"
+            onClick={handleSectionLink}
+        >
             <Head>
                 <title>PHLGADIS | Gender-responsive higher education</title>
                 <link

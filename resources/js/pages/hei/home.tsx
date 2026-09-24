@@ -8,6 +8,7 @@ import type { QuickLink } from '@/components/hei/quick-links';
 import { SurveyPanel } from '@/components/hei/survey-panel';
 import { UpcomingEvents } from '@/components/hei/upcoming-events';
 import { WelcomeBand } from '@/components/hei/welcome-band';
+import { useStickyRail } from '@/hooks/use-sticky-rail';
 import type {
     CalendarEvent,
     CalendarMonth,
@@ -38,6 +39,8 @@ export default function HeiHome({
 }: Props) {
     const { auth } = usePage().props;
     const [nextEvent, ...laterEvents] = upcoming;
+    // Clears AppHeader's sticky bar (h-16 plus its 1px border) by 24px.
+    const railRef = useStickyRail<HTMLElement>({ top: 65 + 24, bottom: 24 });
 
     return (
         <>
@@ -94,8 +97,9 @@ export default function HeiHome({
                     </div>
 
                     <aside
+                        ref={railRef}
                         aria-label="Events and links"
-                        className="hidden min-w-0 space-y-4 lg:block"
+                        className="hidden min-w-0 space-y-4 lg:sticky lg:block lg:self-start"
                     >
                         <NextEventCard event={nextEvent} />
                         <EventCalendar calendar={calendar} />

@@ -161,7 +161,7 @@ test('an HEI with responses cannot be deleted', function () {
 
     $this->actingAs($this->admin)
         ->delete(route('settings.survey-directories.destroy', ['type' => 'heis', 'id' => $hei->id]))
-        ->assertSessionHasErrors('directory');
+        ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
     expect(SurveyHei::query()->whereKey($hei->id)->exists())->toBeTrue();
 });

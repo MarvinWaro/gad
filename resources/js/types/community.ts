@@ -1,5 +1,8 @@
 export type PersonRef = { id: number; name: string };
 
+/** A post or comment author; deactivated accounts keep their content. */
+export type AuthorRef = PersonRef & { deactivated: boolean };
+
 /** An institution: the official directory name plus a readable display form. */
 export type HeiRef = { id: number; name: string; display_name: string };
 
@@ -9,7 +12,7 @@ export type PostComment = {
     id: number;
     body: string;
     created_at: string | null;
-    author: PersonRef;
+    author: AuthorRef;
     can_delete: boolean;
 };
 
@@ -18,7 +21,7 @@ export type Post = {
     body: string | null;
     created_at: string | null;
     edited: boolean;
-    author: PersonRef;
+    author: AuthorRef;
     hei: HeiRef | null;
     images: PostImage[];
     likes_count: number;

@@ -104,7 +104,7 @@ export default function SurveyShow({
     const { auth } = usePage().props;
     const law = laws.find(({ slug }) => slug === lawSlug) ?? laws[0];
     return (
-        <div className="public-theme">
+        <div className="public-theme dot-backdrop">
             <Head>
                 <title>{`PHLGADIS | ${law.number} Survey`}</title>
                 <meta

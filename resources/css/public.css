@@ -40,21 +40,25 @@
     --secondary-foreground: #181d26;
     --accent: #f5e9d4;
     --accent-foreground: #181d26;
-    --muted: #f8fafc;
+    --muted: #faf8f5;
     --muted-foreground: #41454d;
-    --border: #dddddd;
-    --input: #9297a0;
+    --border: #e6e1d9;
+    --input: #958f86;
     --ring: #1b61c9;
     --focus-color: #1b61c9;
+    --surface-strong: #ebe7e0;
+    /* Pinned to the light values: the public site stays light in dark mode. */
+    --brand: #7030a8;
+    --signature-violet: #3b1a5c;
     --data-male: #181d26;
-    --data-female: #aa2d00;
-    --data-total: #0a2e0e;
+    --data-female: #7030a8;
+    --data-total: #0038a8;
     --orange-soft: #f5e9d4;
     --radius: 0.75rem;
     background: var(--background);
     color: var(--foreground);
     color-scheme: light;
-    font-family: 'Haas', 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--font-sans);
     font-size: 15px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
@@ -135,7 +139,7 @@
     gap: 27px;
 }
 .desktop-nav a {
-    font-size: 13px;
+    font-size: 14px;
     color: #505059;
     padding-block: 8px;
 }
@@ -185,7 +189,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 12px;
+    font-size: 13px;
     margin-bottom: 23px;
     color: #58575d;
 }
@@ -199,7 +203,7 @@
     font-size: clamp(36px, 4.6vw, 48px);
     line-height: 1.075;
     font-weight: 500;
-    letter-spacing: 0;
+    letter-spacing: -0.015em;
     margin: 0;
     text-wrap: balance;
 }
@@ -255,7 +259,7 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 500;
     background: #ffffffdf;
     color: #4d4a50;
@@ -316,7 +320,7 @@
     gap: 8px;
 }
 .hero-actions [data-slot='button'] {
-    font-size: 12px;
+    font-size: 14px;
     height: 40px;
 }
 .hero-slide-summary {
@@ -341,7 +345,7 @@
     max-width: 390px;
     overflow: hidden;
     color: var(--muted-foreground);
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.45;
     text-align: right;
     text-overflow: ellipsis;
@@ -349,7 +353,7 @@
 }
 .hero-slide-summary [data-slot='button'] {
     flex-shrink: 0;
-    font-size: 11px;
+    font-size: 13px;
 }
 .hero-detail-dialog [data-slot='dialog-description'] {
     color: var(--foreground);
@@ -385,12 +389,12 @@
     margin-top: 3px;
 }
 .quick-access h2 {
-    font-size: 13px;
+    font-size: 15px;
     line-height: 1.5;
     font-weight: 500;
 }
 .quick-access p {
-    font-size: 10px;
+    font-size: 12px;
     color: var(--muted-foreground);
     margin-top: 4px;
 }
@@ -414,7 +418,7 @@
     display: flex;
     align-items: center;
     gap: 9px;
-    font-size: 11px;
+    font-size: 12px;
     color: #65616a;
     margin-bottom: 15px;
 }
@@ -429,13 +433,13 @@
 .feedback-inner h2 {
     font-size: clamp(28px, 3vw, 38px);
     line-height: 1.2;
-    letter-spacing: 0;
+    letter-spacing: -0.01em;
     font-weight: 500;
     text-wrap: balance;
 }
 .section-description {
     margin-top: 13px;
-    font-size: 13px;
+    font-size: 15px;
     color: var(--muted-foreground);
     max-width: 620px;
 }
@@ -445,7 +449,7 @@
 .rights-note {
     margin-top: 5px;
     color: var(--muted-foreground);
-    font-size: 12px;
+    font-size: 13px;
     font-style: italic;
 }
 .laws-grid {
@@ -467,13 +471,13 @@
 }
 .law-card:focus-within {
     transform: translateY(-4px);
-    border-color: #9297a0;
+    border-color: var(--input);
     box-shadow: 0 12px 28px #181d2614;
 }
 @media (hover: hover) {
     .law-card:hover {
         transform: translateY(-4px);
-        border-color: #9297a0;
+        border-color: var(--input);
         box-shadow: 0 12px 28px #181d2614;
     }
 }
@@ -506,7 +510,7 @@
     align-items: flex-start;
 }
 .law-number {
-    font-size: 10px;
+    font-size: 12px;
     color: #333840;
     background: #f5e9d4;
     border-radius: 4px;
@@ -522,7 +526,7 @@
 .public-theme .text-action {
     padding: 0;
     height: auto;
-    font-size: 11px;
+    font-size: 13px;
     gap: 12px;
     margin-top: auto;
     background: transparent;
@@ -554,7 +558,7 @@
     gap: 8px;
     margin-bottom: 24px;
     color: var(--muted-foreground);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
 }
 .survey-back-link svg {
@@ -579,7 +583,7 @@
 .survey-introduction h1 {
     font-size: clamp(32px, 4vw, 52px);
     font-weight: 500;
-    letter-spacing: 0;
+    letter-spacing: -0.015em;
     line-height: 1.08;
 }
 .survey-introduction h1 span {
@@ -609,9 +613,9 @@
     gap: 20px;
     margin-top: 22px;
     padding: 26px 28px;
-    border: 1px solid #dddddd;
+    border: 1px solid var(--border);
     border-radius: 12px;
-    background: #f8fafc;
+    background: var(--muted);
 }
 .survey-coming-soon > svg {
     width: 22px;
@@ -619,12 +623,12 @@
 }
 .survey-coming-soon h2 {
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 500;
 }
 .survey-coming-soon p {
     margin-top: 3px;
     color: var(--muted-foreground);
-    font-size: 12px;
+    font-size: 13px;
 }
 .survey-form {
     display: flex;
@@ -648,7 +652,7 @@
     gap: 10px;
     padding: 16px;
     color: var(--muted-foreground);
-    font-size: 12px;
+    font-size: 13px;
 }
 .survey-steps > div + div {
     border-left: 1px solid var(--border);
@@ -661,7 +665,7 @@
     place-items: center;
     border: 1px solid var(--border);
     border-radius: 50%;
-    font-size: 11px;
+    font-size: 12px;
 }
 .survey-steps svg {
     width: 13px;
@@ -694,19 +698,19 @@
 }
 .survey-card-heading h2 {
     font-size: 20px;
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: -0.025em;
 }
 .survey-card-heading p,
 .survey-privacy-copy {
     color: var(--muted-foreground);
-    font-size: 13px;
+    font-size: 14px;
 }
 .survey-privacy-copy {
     margin-bottom: 24px;
     padding: 20px;
     border-radius: 10px;
-    background: #f8fafc;
+    background: var(--muted);
 }
 .survey-privacy-copy p + p {
     margin-top: 10px;
@@ -718,7 +722,7 @@
     align-items: flex-start;
     gap: 11px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 14px;
 }
 .survey-check [data-slot='checkbox'] {
     margin-top: 2px;
@@ -734,7 +738,7 @@
 .survey-label {
     display: block;
     margin-bottom: 7px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
 }
 .survey-label span {
@@ -745,13 +749,13 @@
 .survey-label .survey-label-optional {
     margin-left: 6px;
     color: var(--muted-foreground);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 400;
 }
 .survey-field-note {
     margin-top: 7px;
     color: var(--muted-foreground);
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.5;
 }
 .survey-field-note a {
@@ -768,7 +772,7 @@
     padding: 9px 12px;
     color: var(--foreground);
     font: inherit;
-    font-size: 13px;
+    font-size: 14px;
 }
 .survey-input:focus {
     border-color: var(--focus-color);
@@ -795,25 +799,25 @@
 }
 .survey-experience {
     padding: 17px;
-    border: 1px solid #dddddd;
+    border: 1px solid var(--border);
     border-radius: 11px;
     background: #ffffff;
 }
 .survey-experience.is-selected {
-    border-color: #9297a0;
+    border-color: var(--input);
     background: #f5e9d4;
 }
 .survey-experience fieldset {
     margin-top: 16px;
     padding: 17px;
-    border: 1px dashed #9297a0;
+    border: 1px dashed var(--input);
     border-radius: 9px;
     background: white;
 }
 .survey-experience legend {
     padding-inline: 5px;
     color: var(--muted-foreground);
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: 0.04em;
     text-transform: uppercase;
 }
@@ -859,7 +863,7 @@
 .survey-selection-hint {
     margin: 0 0 10px;
     color: var(--muted-foreground);
-    font-size: 12px;
+    font-size: 13px;
 }
 .survey-selection-grid {
     display: grid;
@@ -876,7 +880,7 @@
     border: 1px solid #f2b8b5;
     border-radius: 9px;
     background: #fff1f0;
-    font-size: 12px;
+    font-size: 13px;
 }
 .survey-review {
     display: grid;
@@ -889,11 +893,11 @@
 }
 .survey-review dt {
     color: var(--muted-foreground);
-    font-size: 11px;
+    font-size: 12px;
 }
 .survey-review dd {
     margin-top: 4px;
-    font-size: 13px;
+    font-size: 14px;
 }
 .survey-confirmation {
     max-width: 760px;
@@ -920,7 +924,7 @@
 .survey-confirmation h1 {
     font-size: clamp(30px, 4vw, 46px);
     line-height: 1.1;
-    letter-spacing: 0;
+    letter-spacing: -0.015em;
 }
 .survey-confirmation > p {
     max-width: 560px;
@@ -935,10 +939,10 @@
     font-size: 16px;
 }
 .survey-confirmation .survey-confirmation-note {
-    font-size: 11px;
+    font-size: 12px;
 }
 .statistics-section {
-    background: #f8fafc;
+    background: var(--muted);
     border-block: 1px solid var(--border);
 }
 .year-control {
@@ -947,13 +951,13 @@
 .year-control label {
     display: block;
     margin-bottom: 7px;
-    font-size: 10px;
+    font-size: 12px;
     color: var(--muted-foreground);
 }
 .year-control [data-slot='select-trigger'] {
     min-width: 158px;
     background: white;
-    font-size: 12px;
+    font-size: 13px;
     box-shadow: none;
 }
 .statistics-toolbar {
@@ -966,11 +970,11 @@
 .segmented-control {
     display: inline-flex;
     padding: 4px;
-    background: #e0e2e6;
+    background: var(--surface-strong);
     border-radius: 8px;
 }
 .segmented-control button {
-    font-size: 12px;
+    font-size: 13px;
     border-radius: 5px;
     padding: 8px 22px;
     color: #64616a;
@@ -984,11 +988,11 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    border: 1px solid #dddddd;
+    border: 1px solid var(--border);
     border-radius: 5px;
     color: #41454d;
     padding: 4px 8px;
-    font-size: 9px;
+    font-size: 12px;
     flex-shrink: 0;
 }
 .demo-badge > span {
@@ -1013,7 +1017,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--muted-foreground);
 }
 .stat-card strong {
@@ -1026,7 +1030,7 @@
 }
 .stat-card p {
     margin-top: 5px;
-    font-size: 10px;
+    font-size: 12px;
     color: var(--muted-foreground);
 }
 .stat-card p > span {
@@ -1061,7 +1065,7 @@
 }
 .stat-total {
     background: #f5e9d4;
-    border-color: #dddddd;
+    border-color: var(--border);
 }
 .chart-card {
     padding: 28px;
@@ -1080,7 +1084,7 @@
     letter-spacing: -0.02em;
 }
 .chart-heading p {
-    font-size: 11px;
+    font-size: 13px;
     color: var(--muted-foreground);
     margin-top: 5px;
 }
@@ -1089,7 +1093,7 @@
     gap: 4px;
 }
 .chart-view-toggle [data-slot='button'] {
-    font-size: 10px;
+    font-size: 12px;
 }
 .chart-controls {
     display: flex;
@@ -1102,7 +1106,7 @@
     gap: 6px;
 }
 .sex-filter button {
-    font-size: 10px;
+    font-size: 12px;
     padding: 4px 12px;
     border-radius: 5px;
     color: var(--muted-foreground);
@@ -1114,7 +1118,7 @@
 .chart-legend {
     display: flex;
     gap: 15px;
-    font-size: 10px;
+    font-size: 12px;
     color: var(--muted-foreground);
 }
 .chart-legend > span {
@@ -1148,7 +1152,7 @@
     border: 1px solid var(--border);
     background: white;
     border-radius: 8px;
-    font-size: 11px;
+    font-size: 12px;
     box-shadow: 0 4px 15px #0000000a;
 }
 .chart-tooltip strong {
@@ -1177,7 +1181,7 @@
     gap: 7px;
     padding-top: 18px;
     border-top: 1px solid var(--border);
-    font-size: 10px;
+    font-size: 12px;
     color: var(--muted-foreground);
     margin-top: 16px;
 }
@@ -1191,11 +1195,11 @@
 .data-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12px;
+    font-size: 13px;
 }
 .data-table caption {
     text-align: left;
-    font-size: 10px;
+    font-size: 12px;
     color: var(--muted-foreground);
     padding-block: 0 15px;
 }
@@ -1232,7 +1236,7 @@
     font-weight: 500;
 }
 .data-state p {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--muted-foreground);
 }
 .stories-grid {
@@ -1256,7 +1260,7 @@
     padding-block: 4px;
 }
 .story-category {
-    font-size: 10px;
+    font-size: 12px;
     color: #41454d;
     display: flex;
     gap: 12px;
@@ -1273,7 +1277,7 @@
     margin-bottom: 17px;
 }
 .story-featured {
-    background: #0a2e0e;
+    background: var(--signature-violet);
     color: #ffffff;
     border-radius: 12px;
     padding: 24px;
@@ -1292,7 +1296,7 @@
 }
 .story-description {
     color: var(--muted-foreground);
-    font-size: 12px;
+    font-size: 14px;
     margin-bottom: 20px;
     max-width: 490px;
 }
@@ -1326,27 +1330,27 @@
     margin-bottom: 21px;
 }
 .resource-card h3 {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 500;
     margin-bottom: 8px;
 }
 .resource-card p {
-    font-size: 11px;
+    font-size: 13px;
     color: var(--muted-foreground);
     max-width: 210px;
     min-height: 38px;
 }
 .resource-card > span {
     margin-top: 25px;
-    font-size: 10px;
+    font-size: 12px;
     color: var(--muted-foreground);
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
 .feedback-section {
-    background: #e0e2e6;
-    border-block: 1px solid #dddddd;
+    background: var(--surface-strong);
+    border-block: 1px solid var(--border);
 }
 .feedback-inner {
     padding-block: 58px;
@@ -1359,14 +1363,14 @@
     font-size: 32px;
 }
 .feedback-inner p:not(.section-label) {
-    font-size: 12px;
+    font-size: 14px;
     margin-top: 12px;
     color: var(--muted-foreground);
     max-width: 500px;
 }
 .feedback-inner > button {
     flex-shrink: 0;
-    font-size: 12px;
+    font-size: 14px;
 }
 .site-footer {
     background: white;
@@ -1381,7 +1385,7 @@
 }
 .footer-brand > p {
     max-width: 280px;
-    font-size: 11px;
+    font-size: 13px;
     color: var(--muted-foreground);
     margin-top: 17px;
 }
@@ -1396,13 +1400,13 @@
     height: auto;
 }
 .footer-contact h3 {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     margin-bottom: 20px;
 }
 .footer-contact a {
     display: block;
-    font-size: 11px;
+    font-size: 13px;
     color: var(--muted-foreground);
 }
 .footer-contact a:hover {
@@ -1410,7 +1414,7 @@
     text-underline-offset: 4px;
 }
 .footer-contact p {
-    font-size: 11px;
+    font-size: 13px;
     color: var(--muted-foreground);
     margin-top: 14px;
 }
@@ -1434,7 +1438,7 @@
     border-top: 1px solid var(--border);
     padding-block: 22px;
     color: var(--muted-foreground);
-    font-size: 9px;
+    font-size: 12px;
 }
 .preview-dialog {
     max-height: 85dvh;
@@ -1442,7 +1446,7 @@
     border-color: var(--border);
 }
 .preview-label {
-    font-size: 10px;
+    font-size: 12px;
     color: #41454d;
     display: block;
     margin-bottom: 12px;
@@ -1462,7 +1466,7 @@
     background: var(--muted);
     border-radius: 8px;
     padding: 16px;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--muted-foreground);
 }
 .availability-note svg {
@@ -1475,7 +1479,7 @@
     margin-bottom: 18px;
 }
 .story-preview p {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--muted-foreground);
     margin-top: 12px;
 }
@@ -1572,6 +1576,10 @@
         grid-column: 2;
         justify-self: start;
     }
+    /* iOS Safari zooms the page into any focused field set below 16px. */
+    .survey-input {
+        font-size: 16px;
+    }
     .hero {
         padding-top: 50px;
     }
@@ -1615,10 +1623,10 @@
         text-align: left;
     }
     .hero-description {
-        font-size: 13px;
+        font-size: 15px;
     }
     .quick-access h2 {
-        font-size: 11px;
+        font-size: 13px;
     }
     .quick-icon {
         width: 18px;
@@ -1702,7 +1710,7 @@
         width: 142px;
     }
     .header-actions [data-slot='button'] {
-        font-size: 11px;
+        font-size: 13px;
         padding-inline: 10px;
         height: 34px;
     }
@@ -1721,13 +1729,13 @@
         line-height: 1.1;
     }
     .hero-eyebrow {
-        font-size: 10px;
+        font-size: 12px;
         gap: 7px;
         margin-bottom: 20px;
     }
     .hero-description {
         margin-top: 20px;
-        font-size: 13px;
+        font-size: 15px;
     }
     .hero {
         display: flex;
@@ -1754,14 +1762,14 @@
         justify-content: flex-start;
     }
     .hero-actions [data-slot='button'] {
-        font-size: 11px;
+        font-size: 13px;
         padding-inline: 14px;
     }
     .hero-slide-summary {
         gap: 10px;
     }
     .hero-slide-summary > p {
-        font-size: 11px;
+        font-size: 12px;
     }
     .hero-satellites {
         order: 2;
@@ -1794,7 +1802,7 @@
         border-bottom: 1px solid var(--border);
     }
     .quick-access h2 {
-        font-size: 11px;
+        font-size: 13px;
     }
     .section-heading {
         flex-direction: column;
@@ -1803,11 +1811,11 @@
         margin-bottom: 25px;
     }
     .section-label {
-        font-size: 10px;
+        font-size: 12px;
         margin-bottom: 12px;
     }
     .section-description {
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.75;
     }
     .public-section h2 {
@@ -1827,7 +1835,7 @@
         padding: 18px;
     }
     .law-body h3 {
-        font-size: 14px;
+        font-size: 15px;
         min-height: 0;
         margin-bottom: 17px;
     }
@@ -1888,10 +1896,10 @@
     }
     .segmented-control button {
         padding: 7px 14px;
-        font-size: 11px;
+        font-size: 12px;
     }
     .demo-badge {
-        font-size: 8px;
+        font-size: 12px;
     }
     .stat-grid {
         grid-template-columns: 1fr 1fr;
@@ -1904,10 +1912,10 @@
         font-size: 29px;
     }
     .stat-label {
-        font-size: 10px;
+        font-size: 12px;
     }
     .stat-card p {
-        font-size: 9px;
+        font-size: 12px;
     }
     .stat-total {
         grid-column: 1 / -1;
@@ -1933,13 +1941,13 @@
     }
     .chart-legend {
         gap: 9px;
-        font-size: 9px;
+        font-size: 12px;
     }
     .sex-filter button {
         padding-inline: 9px;
     }
     .chart-footnote {
-        font-size: 9px;
+        font-size: 12px;
     }
     .stories-grid {
         display: flex;
@@ -1968,10 +1976,10 @@
         padding: 24px 16px;
     }
     .resource-card h3 {
-        font-size: 13px;
+        font-size: 15px;
     }
     .resource-card p {
-        font-size: 10px;
+        font-size: 12px;
         min-height: 48px;
     }
     .feedback-inner {

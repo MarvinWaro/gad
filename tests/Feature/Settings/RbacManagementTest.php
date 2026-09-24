@@ -93,7 +93,7 @@ test('user management protects the current and last administrator accounts', fun
 
     $this->actingAs($admin)
         ->delete(route('settings.users.destroy', $admin))
-        ->assertSessionHasErrors('user');
+        ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
     $this->actingAs($admin)
         ->put(route('settings.users.update', $admin), [

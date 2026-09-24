@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { toast } from 'sonner';
 import { HeiCombobox } from '@/components/hei-combobox';
 import type { HeiOption } from '@/components/hei-combobox';
 import Heading from '@/components/heading';
@@ -415,14 +414,8 @@ function changeStatus(
         { status },
         {
             preserveScroll: true,
-            onSuccess: () => onDone?.(),
-            onError: (errors) => {
-                const message = Object.values(errors)[0];
-
-                if (message) {
-                    toast.error(message);
-                }
-            },
+            // A refusal comes back as a red toast from the server.
+            onFinish: () => onDone?.(),
         },
     );
 }
@@ -755,7 +748,9 @@ function DeleteUserDialog({ user }: { user: ManagedUser }) {
                     <DialogTitle>Delete user?</DialogTitle>
                     <DialogDescription>
                         {user.name} will lose access immediately. This action
-                        cannot be undone.
+                        cannot be undone. Accounts with posts or comments
+                        can&apos;t be deleted; deactivate them instead to keep
+                        their school&apos;s record.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>

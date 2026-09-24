@@ -1,6 +1,7 @@
 # PHLGADIS UI/UX Modernization Brief for Codex
 
 ## Project
+
 Modernize the existing **PHLGADIS (Philippine Higher Education Gender and Development Information System)** frontend using a modern, minimalist, professional, institutional design inspired by **shadcn/ui**.
 
 The current system is functional but uses an older frontend design/framework. The goal is **not** to remove or break existing functionality.
@@ -110,9 +111,11 @@ Create reusable components such as:
 Keep the existing PHLGADIS identity based around **orange and violet**, but modernize how they are used.
 
 ### Primary Orange
+
 `#F97316`
 
 Use for:
+
 - Primary buttons
 - Active navigation
 - Important CTAs
@@ -120,9 +123,11 @@ Use for:
 - Small brand accents
 
 ### Secondary Violet
+
 `#7C3AED`
 
 Use for:
+
 - Secondary badges
 - Supporting highlights
 - Certain chart/data states
@@ -297,15 +302,19 @@ Do not overcrowd the hero.
 Create four quick-access cards.
 
 ### GAD Laws
+
 Understand key gender-related legislation.
 
 ### Surveys
+
 Participate in available GAD surveys.
 
 ### Statistics
+
 Explore higher education GAD data.
 
 ### Resources
+
 Access reports, policies and learning materials.
 
 Each card should contain:
@@ -324,15 +333,19 @@ Use mostly white/neutral surfaces.
 Keep the existing four laws.
 
 ### RA 7877
+
 Anti-Sexual Harassment Act of 1995
 
 ### RA 9262
+
 Anti-Violence Against Women and Their Children Act
 
 ### RA 9710
+
 Magna Carta of Women
 
 ### RA 11313
+
 Safe Spaces Act
 
 Use modern resource/feature cards.
@@ -606,27 +619,32 @@ Create a professional institutional footer.
 Suggested structure:
 
 ### PHLGADIS
+
 Philippine Higher Education Gender and Development Information System
 
 ### Explore
+
 - Home
 - Statistics
 - Surveys
 - Initiatives
 
 ### Resources
+
 - GAD Laws
 - Publications
 - Reports
 - Downloads
 
 ### Support
+
 - Help Center
 - Contact
 - Feedback
 - Privacy
 
 ### CHED Regional Office XII
+
 Include existing hotline and email.
 
 Email:
@@ -891,16 +909,16 @@ Adjust this structure according to the actual framework/project architecture.
 3. Determine whether shadcn/ui can be introduced directly or whether the current frontend needs a staged migration.
 4. Do not blindly replace working code.
 5. Preserve:
-   - authentication
-   - surveys
-   - statistical calculations
-   - database queries
-   - API requests
-   - forms
-   - validation
-   - routing
-   - permissions
-   - existing backend functionality
+    - authentication
+    - surveys
+    - statistical calculations
+    - database queries
+    - API requests
+    - forms
+    - validation
+    - routing
+    - permissions
+    - existing backend functionality
 6. Separate visual/UI refactoring from backend logic.
 7. Reuse existing data sources.
 8. Remove obsolete CSS only after confirming it is unused.
@@ -941,9 +959,11 @@ Color should support hierarchy rather than dominate the interface.
 Before coding the redesign:
 
 ### Step 1
+
 Analyze the current project.
 
 ### Step 2
+
 Report:
 
 - frontend framework
@@ -957,12 +977,15 @@ Report:
 - potential migration risks
 
 ### Step 3
+
 Propose the recommended shadcn-compatible architecture.
 
 ### Step 4
+
 Create or revise theme tokens.
 
 ### Step 5
+
 Build shared layout components:
 
 - Header
@@ -973,9 +996,11 @@ Build shared layout components:
 - Footer
 
 ### Step 6
+
 Redesign the homepage one section at a time.
 
 ### Step 7
+
 Verify that existing functionality remains intact after each major change.
 
 Do not perform a massive uncontrolled rewrite.

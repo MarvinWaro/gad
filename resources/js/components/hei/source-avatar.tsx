@@ -36,7 +36,7 @@ export function SourceAvatar({
             aria-hidden
             className={cn(
                 'flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground tabular-nums',
-                initials.length > 2 ? 'text-[0.6875rem]' : 'text-sm',
+                initials.length > 2 ? 'text-xs' : 'text-sm',
                 className,
             )}
         >

@@ -132,6 +132,14 @@ export function PostCard({ post }: { post: Post }) {
                     </p>
                     <p className="text-xs text-muted-foreground">
                         {post.author.name}
+                        {post.author.deactivated && (
+                            <>
+                                <span aria-hidden> · </span>
+                                <span className="italic">
+                                    Deactivated account
+                                </span>
+                            </>
+                        )}
                         <span aria-hidden> · </span>
                         <time
                             dateTime={post.created_at ?? undefined}
@@ -260,7 +268,7 @@ export function PostCard({ post }: { post: Post }) {
                     className={cn(
                         'inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm tabular-nums transition-colors duration-150 outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50',
                         like.liked
-                            ? 'text-signature-coral'
+                            ? 'text-signature-red'
                             : 'text-muted-foreground hover:text-foreground',
                     )}
                 >

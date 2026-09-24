@@ -3,6 +3,7 @@ import { Menu } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { HeaderActions } from '@/components/header-actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -134,6 +135,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
 
                     <div className="ml-auto flex items-center space-x-2">
+                        <HeaderActions />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button

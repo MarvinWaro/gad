@@ -8,8 +8,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+    /* Loaded by the bunny() entry in vite.config.ts and emitted by @fonts. */
     --font-sans:
-        'Haas', 'Helvetica Neue', Arial, ui-sans-serif, system-ui, sans-serif,
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
@@ -60,18 +61,22 @@
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
 
-    /* DESIGN.md signature surfaces, for brand moments and category marks. */
-    --color-signature-coral: var(--signature-coral);
-    --color-signature-forest: var(--signature-forest);
-    --color-signature-cream: var(--signature-cream);
-    --color-signature-cream-foreground: var(--signature-cream-foreground);
+    /* PHLGADIS brand, sampled from the logo: GAD purple is the brand, the
+       flag red and blue carry destructive and data roles. See DESIGN.md. */
+    --color-brand: var(--brand);
+    --color-brand-foreground: var(--brand-foreground);
+    --color-brand-soft: var(--brand-soft);
+    --color-signature-violet: var(--signature-violet);
+    --color-signature-red: var(--signature-red);
+    --color-callout: var(--callout);
+    --color-callout-foreground: var(--callout-foreground);
     --color-signature-mustard: var(--signature-mustard);
-    --color-signature-mint: var(--signature-mint);
     --color-on-signature: var(--on-signature);
 }
 
 :root {
-    /* Shared application tokens from DESIGN.md; dark mode remains available. */
+    /* Shared application tokens from DESIGN.md; neutrals lean warm to sit
+       with the cream surface. */
     --background: #ffffff;
     --foreground: #181d26;
     --card: #ffffff;
@@ -80,80 +85,150 @@
     --popover-foreground: #181d26;
     --primary: #181d26;
     --primary-foreground: #ffffff;
-    --secondary: #f8fafc;
+    --secondary: #faf8f5;
     --secondary-foreground: #181d26;
-    --muted: #f8fafc;
+    --muted: #faf8f5;
     --muted-foreground: #41454d;
     --accent: #f5e9d4;
     --accent-foreground: #181d26;
-    --destructive: #aa2d00;
+    --destructive: #ce1126;
     --destructive-foreground: #ffffff;
-    --border: #dddddd;
-    --input: #9297a0;
+    --border: #e6e1d9;
+    --input: #958f86;
     --ring: #1b61c9;
     --chart-1: #181d26;
-    --chart-2: #aa2d00;
-    --chart-3: #0a2e0e;
+    --chart-2: #7030a8;
+    --chart-3: #0038a8;
     --chart-4: #d9a441;
     --chart-5: #a8d8c4;
     --radius: 0.75rem;
-    --sidebar: #f8fafc;
+    --sidebar: #faf8f5;
     --sidebar-foreground: #181d26;
     --sidebar-primary: #181d26;
     --sidebar-primary-foreground: #ffffff;
     --sidebar-accent: #f5e9d4;
     --sidebar-accent-foreground: #181d26;
-    --sidebar-border: #dddddd;
+    --sidebar-border: #e6e1d9;
     --sidebar-ring: #1b61c9;
-    --signature-coral: #aa2d00;
-    --signature-forest: #0a2e0e;
-    --signature-cream: #f5e9d4;
-    --signature-cream-foreground: #181d26;
+    --brand: #7030a8;
+    --brand-foreground: #ffffff;
+    --brand-soft: #f1eaf8;
+    --signature-violet: #3b1a5c;
+    --signature-red: #ce1126;
+    /* Soft brand surface for the HEI law-surveys panel: a pastel pink that
+       drifts to lilac, toward the violet card beside it. --callout is the
+       solid fallback and the HEI text-selection colour. */
+    --callout: #fce6ee;
+    --callout-gradient: linear-gradient(
+        120deg,
+        #fde2eb 0%,
+        #fbe9f0 45%,
+        #efe3f8 100%
+    );
+    --callout-foreground: #181d26;
     --signature-mustard: #d9a441;
-    --signature-mint: #a8d8c4;
     --on-signature: #ffffff;
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
-    --signature-coral: #f0845c;
-    --signature-forest: #133d19;
-    --signature-cream: oklch(0.29 0.025 75);
-    --signature-cream-foreground: oklch(0.95 0.015 80);
+    /* Warm, faintly violet neutrals so the brand survives dark mode. */
+    --background: #141217;
+    --foreground: #f4f1ec;
+    --card: #1a1820;
+    --card-foreground: #f4f1ec;
+    --popover: #1a1820;
+    --popover-foreground: #f4f1ec;
+    --primary: #f4f1ec;
+    --primary-foreground: #141217;
+    --secondary: #24212a;
+    --secondary-foreground: #f4f1ec;
+    --muted: #24212a;
+    --muted-foreground: #a8a3ad;
+    --accent: #2a2631;
+    --accent-foreground: #f4f1ec;
+    --destructive: #e5484d;
+    --destructive-foreground: #ffffff;
+    --border: #2e2a35;
+    --input: #615b6a;
+    --ring: #6d9eeb;
+    --chart-1: #f4f1ec;
+    --chart-2: #b58ce0;
+    --chart-3: #6d9eeb;
+    --chart-4: #d9a441;
+    --chart-5: #a8d8c4;
+    --sidebar: #0f0d12;
+    --sidebar-foreground: #f4f1ec;
+    --sidebar-primary: #f4f1ec;
+    --sidebar-primary-foreground: #141217;
+    --sidebar-accent: #24212a;
+    --sidebar-accent-foreground: #f4f1ec;
+    --sidebar-border: #2e2a35;
+    --sidebar-ring: #6d9eeb;
+    --brand: #b58ce0;
+    --brand-foreground: #141217;
+    --brand-soft: #2a1f38;
+    --signature-violet: #2a1740;
+    --signature-red: #ef5a66;
+    --callout: oklch(0.29 0.045 350);
+    --callout-gradient: linear-gradient(
+        120deg,
+        oklch(0.3 0.05 355) 0%,
+        oklch(0.285 0.045 340) 45%,
+        oklch(0.28 0.05 305) 100%
+    );
+    --callout-foreground: oklch(0.95 0.012 350);
     --signature-mustard: #d9a441;
-    --signature-mint: #a8d8c4;
     --on-signature: #ffffff;
+}
+
+/* A faint halftone dot grid fading in from the top-right (and softly from the
+   bottom-left) of a surface's first screen. Pure CSS: one layer, painted
+   once, no images or scripts. `isolation` lets the dots sit above the
+   surface's own background and below its content. The surface must start at
+   the top of the page or be positioned (the admin inset card is). */
+@utility dot-backdrop {
+    isolation: isolate;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: -1;
+        height: 100svh;
+        max-height: 100%;
+        border-radius: inherit;
+        pointer-events: none;
+        background-image: radial-gradient(
+            circle,
+            color-mix(in oklab, var(--foreground) 16%, transparent) 1px,
+            transparent 1.5px
+        );
+        background-size: 14px 14px;
+        mask-image:
+            radial-gradient(
+                ellipse 55% 65% at 100% 0%,
+                #000 10%,
+                transparent 70%
+            ),
+            radial-gradient(
+                ellipse 40% 50% at 0% 100%,
+                rgb(0 0 0 / 0.55),
+                transparent 70%
+            );
+    }
+
+    @media print {
+        &::before {
+            display: none;
+        }
+    }
+}
+
+/* Paints --callout-gradient over bg-callout's solid colour. */
+@utility bg-callout-gradient {
+    background-image: var(--callout-gradient);
 }
 
 @layer base {
@@ -169,11 +244,11 @@
 
     /* Browser surfaces on the HEI pages carry the palette too. */
     [data-surface='hei'] ::selection {
-        background: var(--signature-cream);
-        color: var(--signature-cream-foreground);
+        background: var(--callout);
+        color: var(--callout-foreground);
     }
 
     [data-surface='hei'] textarea {
-        caret-color: var(--signature-coral);
+        caret-color: var(--brand);
     }
 }

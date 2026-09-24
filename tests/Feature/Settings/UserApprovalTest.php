@@ -52,7 +52,7 @@ test('an approved registration can log in', function () {
 test('administrators cannot change their own status', function () {
     $this->actingAs($this->admin)
         ->patch(route('settings.users.status', $this->admin), ['status' => 'inactive'])
-        ->assertSessionHasErrors('user');
+        ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
     expect($this->admin->fresh()->status)->toBe(UserStatus::Active);
 });
@@ -66,7 +66,7 @@ test('the last active administrator cannot be deactivated', function () {
 
     $this->actingAs($operator)
         ->patch(route('settings.users.status', $this->admin), ['status' => 'inactive'])
-        ->assertSessionHasErrors('user');
+        ->assertSessionHas('inertia.flash_data.toast.type', 'error');
     expect($this->admin->fresh()->status)->toBe(UserStatus::Active);
 
     $secondAdmin = User::factory()->create();

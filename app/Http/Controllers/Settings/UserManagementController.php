@@ -9,6 +9,7 @@ use App\Http\Requests\Settings\UpdateManagedUserRequest;
 use App\Models\Role;
 use App\Models\SurveyHei;
 use App\Models\User;
+use App\Support\CountPhrase;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -165,22 +166,24 @@ class UserManagementController extends Controller
         $status = UserStatus::from($validated['status']);
 
         if ($user->is($request->user())) {
-            throw ValidationException::withMessages([
-                'user' => __('You cannot change the status of your own account.'),
-            ]);
+            return $this->refuse(__('You cannot change the status of your own account.'));
         }
 
-        $this->ensureUserIsManageable($request->user(), $user);
+        try {
+            $this->ensureUserIsManageable($request->user(), $user);
 
-        if ($status !== UserStatus::Active) {
-            $this->ensureAnotherActiveAdministrator($user, 'user');
+            if ($status !== UserStatus::Active) {
+                $this->ensureAnotherActiveAdministrator($user, 'user');
+            }
+        } catch (ValidationException $exception) {
+            return $this->refuse($this->firstMessage($exception));
         }
 
         $message = match (true) {
-            $status === UserStatus::Active && $user->status === UserStatus::Pending => __('Account approved.'),
-            $status === UserStatus::Active => __('Account reactivated.'),
-            $status === UserStatus::Inactive => __('Account deactivated.'),
-            default => __('Account marked as pending.'),
+            $status === UserStatus::Active && $user->status === UserStatus::Pending => __(':name approved.', ['name' => $user->name]),
+            $status === UserStatus::Active => __(':name reactivated.', ['name' => $user->name]),
+            $status === UserStatus::Inactive => $this->deactivatedMessage($user),
+            default => __(':name marked as pending.', ['name' => $user->name]),
         };
 
         $user->update(['status' => $status]);
@@ -196,21 +199,61 @@ class UserManagementController extends Controller
     public function destroy(Request $request, User $user): RedirectResponse
     {
         if ($user->is($request->user())) {
-            throw ValidationException::withMessages([
-                'user' => __('You cannot delete your own account from user management.'),
-            ]);
+            return $this->refuse(__('You cannot delete your own account from user management.'));
         }
 
-        $this->ensureUserIsManageable($request->user(), $user);
-        $this->ensureAdministratorRemains($user, []);
+        try {
+            $this->ensureUserIsManageable($request->user(), $user);
+            $this->ensureAdministratorRemains($user, []);
+        } catch (ValidationException $exception) {
+            return $this->refuse($this->firstMessage($exception));
+        }
+
+        // Posts and comments are the school's GAD record; deleting the author
+        // would erase them. Deactivation keeps them and blocks the login.
+        $activity = $this->activityCounts($user);
+
+        if (array_sum($activity) > 0) {
+            return $this->refuse(__(':name has :activity. Deactivate the account instead to keep them.', [
+                'name' => $user->name,
+                'activity' => CountPhrase::of($activity),
+            ]));
+        }
+
         $user->delete();
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('User deleted.'),
+            'message' => __(':name deleted.', ['name' => $user->name]),
         ]);
 
         return to_route('settings.users.index');
+    }
+
+    /** @return array{post: int, comment: int} */
+    private function activityCounts(User $user): array
+    {
+        return [
+            'post' => $user->posts()->count(),
+            'comment' => $user->postComments()->count(),
+        ];
+    }
+
+    private function deactivatedMessage(User $user): string
+    {
+        $activity = $this->activityCounts($user);
+
+        return array_sum($activity) > 0
+            ? __(':name deactivated. Their activity (:activity) stays visible, marked as from a deactivated account.', [
+                'name' => $user->name,
+                'activity' => CountPhrase::of($activity),
+            ])
+            : __(':name deactivated.', ['name' => $user->name]);
+    }
+
+    private function firstMessage(ValidationException $exception): string
+    {
+        return (string) (collect($exception->errors())->flatten()->first() ?? $exception->getMessage());
     }
 
     /** @param array<int, int|string> $roleIds */

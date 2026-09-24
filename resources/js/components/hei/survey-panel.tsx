@@ -8,7 +8,7 @@ import type { HeiSurvey } from '@/types';
 const count = new Intl.NumberFormat('en-PH');
 
 /**
- * The four law surveys on one cream callout (DESIGN.md), divided by hairlines
+ * The four law surveys on one soft callout surface (DESIGN.md), divided by hairlines
  * rather than split into a grid of identical cards. Each shows what this HEI
  * has contributed and the two things a focal person does: open or share.
  */
@@ -22,7 +22,7 @@ export function SurveyPanel({ surveys }: { surveys: HeiSurvey[] }) {
     return (
         <section
             aria-labelledby={titleId}
-            className="overflow-hidden rounded-[10px] bg-signature-cream text-signature-cream-foreground"
+            className="overflow-hidden rounded-[10px] bg-callout bg-callout-gradient text-callout-foreground"
         >
             <header className="px-5 pt-5 sm:px-6">
                 <h2 id={titleId} className="text-lg font-medium">
@@ -33,7 +33,7 @@ export function SurveyPanel({ surveys }: { surveys: HeiSurvey[] }) {
                     anonymous; the count shows responses from your institution.
                 </p>
             </header>
-            <ul className="mt-4 flex snap-x snap-mandatory divide-x divide-signature-cream-foreground/15 overflow-x-auto sm:grid sm:grid-cols-2 sm:divide-x-0 sm:overflow-visible xl:grid-cols-4">
+            <ul className="mt-4 flex snap-x snap-mandatory divide-x divide-callout-foreground/15 overflow-x-auto sm:grid sm:grid-cols-2 sm:divide-x-0 sm:overflow-visible xl:grid-cols-4">
                 {surveys.map((survey, index) => (
                     <SurveyItem key={survey.id} survey={survey} index={index} />
                 ))}
@@ -64,7 +64,7 @@ function SurveyItem({ survey, index }: { survey: HeiSurvey; index: number }) {
                 // Relative, so screen-reader text stays inside the scroller.
                 'relative flex w-[78%] shrink-0 snap-start flex-col px-5 pt-4 pb-5 sm:w-auto sm:px-6',
                 // Hairlines between columns and rows, never around the edge.
-                'sm:border-signature-cream-foreground/15',
+                'sm:border-callout-foreground/15',
                 index % 2 === 1 && 'sm:border-l',
                 index >= 2 && 'sm:border-t xl:border-t-0',
                 index >= 1 && 'xl:border-l',
@@ -90,7 +90,7 @@ function SurveyItem({ survey, index }: { survey: HeiSurvey; index: number }) {
                             href={survey.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 rounded-sm underline decoration-signature-cream-foreground/30 underline-offset-4 outline-none hover:decoration-signature-cream-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            className="inline-flex items-center gap-1 rounded-sm underline decoration-callout-foreground/30 underline-offset-4 outline-none hover:decoration-callout-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
                         >
                             Open survey
                             <ArrowUpRight aria-hidden className="size-3.5" />
@@ -102,7 +102,7 @@ function SurveyItem({ survey, index }: { survey: HeiSurvey; index: number }) {
                         <button
                             type="button"
                             onClick={() => void share()}
-                            className="inline-flex items-center gap-1 rounded-sm underline decoration-signature-cream-foreground/30 underline-offset-4 outline-none hover:decoration-signature-cream-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            className="inline-flex items-center gap-1 rounded-sm underline decoration-callout-foreground/30 underline-offset-4 outline-none hover:decoration-callout-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
                         >
                             {copied ? (
                                 <Check aria-hidden className="size-3.5" />

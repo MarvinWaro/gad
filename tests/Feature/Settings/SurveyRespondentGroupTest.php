@@ -149,7 +149,7 @@ test('a group with collected responses cannot be deleted', function () {
 
     $this->actingAs($this->admin)
         ->delete(route('settings.survey-directories.destroy', ['type' => 'respondent-groups', 'id' => $group->id]))
-        ->assertSessionHasErrors('directory');
+        ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
     expect(SurveyRespondentGroup::query()->whereKey($group->id)->exists())->toBeTrue();
 });

@@ -58,7 +58,7 @@ export function QuickLinks({
                                 className="flex items-center justify-between gap-3 text-sm text-muted-foreground"
                             >
                                 {label}
-                                <span className="rounded-[6px] border px-1.5 py-0.5 text-[0.6875rem] leading-none">
+                                <span className="rounded-[6px] border px-1.5 py-0.5 text-xs leading-none">
                                     Soon
                                 </span>
                             </li>

@@ -83,11 +83,8 @@ export const eventCategories: Record<
     EventCategory,
     { label: string; dot: string }
 > = {
-    training: {
-        label: 'Training',
-        dot: 'bg-signature-forest dark:bg-signature-mint',
-    },
-    campaign: { label: 'Campaign', dot: 'bg-signature-coral' },
+    training: { label: 'Training', dot: 'bg-brand' },
+    campaign: { label: 'Campaign', dot: 'bg-signature-red' },
     deadline: { label: 'Deadline', dot: 'bg-signature-mustard' },
     meeting: { label: 'Meeting', dot: 'bg-foreground' },
     other: { label: 'Event', dot: 'bg-muted-foreground' },

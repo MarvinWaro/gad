@@ -25,7 +25,7 @@ export function EventDateBlock({
                 className,
             )}
         >
-            <span className="text-[0.6875rem] leading-none uppercase">
+            <span className="text-xs leading-none uppercase">
                 {monthShort.format(date)}
             </span>
             <span className="mt-0.5 text-lg leading-none">

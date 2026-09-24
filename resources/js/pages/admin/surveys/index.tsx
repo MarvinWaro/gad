@@ -38,6 +38,15 @@ type Survey = {
     responses_count: number;
     public_url: string | null;
 };
+// Same status language as the users table: live is emerald, unpublished work
+// is amber, retired is muted.
+const publicationBadges: Record<Survey['publication_status'], string> = {
+    Published:
+        'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
+    Draft: 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200',
+    Archived: 'bg-muted text-muted-foreground',
+};
+
 type Permissions = {
     create: boolean;
     update: boolean;
@@ -122,11 +131,12 @@ export default function SurveyIndex({
                                                 </td>
                                                 <td className="px-5 py-4">
                                                     <Badge
-                                                        variant={
-                                                            survey.publication_status ===
-                                                            'Published'
-                                                                ? 'secondary'
-                                                                : 'outline'
+                                                        variant="secondary"
+                                                        className={
+                                                            publicationBadges[
+                                                                survey
+                                                                    .publication_status
+                                                            ]
                                                         }
                                                     >
                                                         {

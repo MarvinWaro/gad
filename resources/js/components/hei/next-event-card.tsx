@@ -27,7 +27,7 @@ export function NextEventCard({
             <section
                 aria-label="Next event"
                 className={cn(
-                    'rounded-[12px] bg-signature-forest p-6 text-on-signature',
+                    'rounded-[12px] bg-signature-violet p-6 text-on-signature',
                     className,
                 )}
             >
@@ -46,7 +46,7 @@ export function NextEventCard({
         <section
             aria-label="Next event"
             className={cn(
-                'rounded-[12px] bg-signature-forest p-6 text-on-signature',
+                'rounded-[12px] bg-signature-violet p-6 text-on-signature',
                 className,
             )}
         >
