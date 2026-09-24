@@ -30,7 +30,8 @@ export function SurveyPanel({ surveys }: { surveys: HeiSurvey[] }) {
                 </h2>
                 <p className="mt-1 max-w-prose text-sm opacity-80">
                     Share these with your students and employees. Answers are
-                    anonymous; the count shows responses from your institution.
+                    anonymous. Each count is how many people chose your
+                    institution when they answered.
                 </p>
             </header>
             <ul className="mt-4 flex snap-x snap-mandatory divide-x divide-callout-foreground/15 overflow-x-auto sm:grid sm:grid-cols-2 sm:divide-x-0 sm:overflow-visible xl:grid-cols-4">
@@ -83,7 +84,8 @@ function SurveyItem({ survey, index }: { survey: HeiSurvey; index: number }) {
                         </span>{' '}
                         {survey.responses_from_hei === 1
                             ? 'response'
-                            : 'responses'}
+                            : 'responses'}{' '}
+                        from your HEI
                     </p>
                     <div className="mt-auto flex flex-wrap gap-x-4 gap-y-2 pt-4 text-sm">
                         <a

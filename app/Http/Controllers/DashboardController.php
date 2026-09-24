@@ -41,13 +41,14 @@ class DashboardController extends Controller
             'calendar' => fn (): array => EventCalendar::month($request->string('month')->toString() ?: null),
             'upcoming' => fn (): array => EventCalendar::upcoming(),
             'posts' => Inertia::scroll(fn () => CommunityFeed::page($user)),
+            // The HEI modules from the old portal. None is built yet, so each
+            // has no href and shows as "Soon"; give one an href when it ships.
             'quickLinks' => [
-                ['label' => 'Event calendar', 'href' => route('events.index')],
-                ['label' => 'PHLGADIS public site', 'href' => route('home')],
-                ['label' => 'Profile', 'href' => route('profile.edit')],
-                ['label' => 'Password and security', 'href' => route('security.edit')],
+                ['key' => 'upload-monitoring', 'label' => 'Upload Monitoring', 'href' => null],
+                ['key' => 'gad-training-survey', 'label' => 'GAD Training Survey', 'href' => null],
+                ['key' => 'gad-compliance-survey', 'label' => 'GAD Compliance Survey', 'href' => null],
+                ['key' => 'records', 'label' => 'Records', 'href' => null],
             ],
-            'comingSoon' => ['Upload Monitoring', 'Records', 'GAD Training Survey', 'GAD Compliance Survey'],
         ]);
     }
 

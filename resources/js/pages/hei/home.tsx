@@ -25,7 +25,6 @@ type Props = {
     upcoming: CalendarEvent[];
     posts: ScrollPage<Post>;
     quickLinks: QuickLink[];
-    comingSoon: string[];
 };
 
 export default function HeiHome({
@@ -35,7 +34,6 @@ export default function HeiHome({
     upcoming,
     posts,
     quickLinks,
-    comingSoon,
 }: Props) {
     const { auth } = usePage().props;
     const [nextEvent, ...laterEvents] = upcoming;
@@ -65,10 +63,7 @@ export default function HeiHome({
                                     title="Later"
                                 />
                             )}
-                            <QuickLinks
-                                links={quickLinks}
-                                comingSoon={comingSoon}
-                            />
+                            <QuickLinks links={quickLinks} />
                         </div>
 
                         <section
@@ -110,10 +105,7 @@ export default function HeiHome({
                                 title="Later"
                             />
                         )}
-                        <QuickLinks
-                            links={quickLinks}
-                            comingSoon={comingSoon}
-                        />
+                        <QuickLinks links={quickLinks} />
                     </aside>
                 </div>
             </div>

@@ -56,7 +56,11 @@ test('HEI users get the HEI home with their institution and the law surveys', fu
             ->where('surveys.0.code', 'RA 7877')
             ->where('surveys.3.code', 'RA 11313')
             ->where('surveys.0.is_open', false)
-            ->has('comingSoon', 4)
+            ->has('quickLinks', 4)
+            ->where('quickLinks.0.label', 'Upload Monitoring')
+            ->where('quickLinks.3.label', 'Records')
+            ->where('quickLinks.0.href', null)
+            ->missing('comingSoon')
             ->has('posts.data', 0));
 });
 
