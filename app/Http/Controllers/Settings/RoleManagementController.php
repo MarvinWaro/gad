@@ -129,7 +129,7 @@ class RoleManagementController extends Controller
         $role->delete();
 
         Inertia::flash('toast', [
-            'type' => 'success',
+            'type' => 'deleted',
             'message' => __('Role deleted.'),
         ]);
 

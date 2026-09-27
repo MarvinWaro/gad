@@ -1,13 +1,14 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Download, Eye, Search, Trash2 } from 'lucide-react';
 import { FormEvent, useState } from 'react';
+import { ConfirmPopover } from '@/components/confirm-popover';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
 type Row = {
-    id: number;
+    id: string;
     reference: string;
     version: number;
     age: number;
@@ -174,26 +175,36 @@ export default function Responses({
                                                             </Link>
                                                         </Button>
                                                         {permissions.delete && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() =>
-                                                                    confirm(
-                                                                        'Permanently delete this response?',
-                                                                    ) &&
+                                                            <ConfirmPopover
+                                                                title={`Delete response ${row.reference}?`}
+                                                                description="Its answers are removed for good and cannot be recovered. The respondent keeps a reference code that will no longer match anything."
+                                                                confirmLabel="Delete"
+                                                                onConfirm={(
+                                                                    visit,
+                                                                ) =>
                                                                     router.delete(
                                                                         `/admin/surveys/${survey.id}/responses/${row.id}`,
+                                                                        {
+                                                                            preserveScroll: true,
+                                                                            ...visit,
+                                                                        },
                                                                     )
                                                                 }
                                                             >
-                                                                <Trash2 />
-                                                                <span className="sr-only">
-                                                                    Delete{' '}
-                                                                    {
-                                                                        row.reference
-                                                                    }
-                                                                </span>
-                                                            </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="text-muted-foreground hover:text-destructive"
+                                                                >
+                                                                    <Trash2 />
+                                                                    <span className="sr-only">
+                                                                        Delete{' '}
+                                                                        {
+                                                                            row.reference
+                                                                        }
+                                                                    </span>
+                                                                </Button>
+                                                            </ConfirmPopover>
                                                         )}
                                                     </div>
                                                 </td>

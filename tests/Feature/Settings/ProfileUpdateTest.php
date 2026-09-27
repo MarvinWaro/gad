@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\User;
+use App\Support\InstitutionName;
+use Database\Seeders\RbacSeeder;
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -50,8 +52,10 @@ test('email verification status is unchanged when the email address is unchanged
     expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
 
-test('user can delete their account', function () {
+test('administrators can delete their own account', function () {
+    $this->seed(RbacSeeder::class);
     $user = User::factory()->create();
+    $user->assignRole('admin');
 
     $response = $this
         ->actingAs($user)
@@ -68,7 +72,9 @@ test('user can delete their account', function () {
 });
 
 test('correct password must be provided to delete account', function () {
+    $this->seed(RbacSeeder::class);
     $user = User::factory()->create();
+    $user->assignRole('admin');
 
     $response = $this
         ->actingAs($user)
@@ -83,3 +89,41 @@ test('correct password must be provided to delete account', function () {
 
     expect($user->fresh())->not->toBeNull();
 });
+
+test('the profile shows the institution, which only administrators can change', function () {
+    $hei = createSurveyHei(['name' => 'STI COLLEGE KORONADAL CITY, INC.']);
+    $other = createSurveyHei(['name' => 'Notre Dame of Marbel University']);
+    $user = User::factory()->create(['survey_hei_id' => $hei->id]);
+
+    $this->actingAs($user)
+        ->get(route('profile.edit'))
+        ->assertInertia(fn ($page) => $page->where('institution', InstitutionName::display($hei->name)));
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'survey_hei_id' => $other->id,
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect($user->fresh()->survey_hei_id)->toBe($hei->id);
+});
+
+test('accounts without an institution show none', function () {
+    $this->actingAs(User::factory()->create())
+        ->get(route('profile.edit'))
+        ->assertInertia(fn ($page) => $page->where('institution', null));
+});
+
+test('only administrators may delete their own account', function (string $role) {
+    $this->seed(RbacSeeder::class);
+    $user = User::factory()->create();
+    $user->assignRole($role);
+
+    $this->actingAs($user)
+        ->delete(route('profile.destroy'), ['password' => 'password'])
+        ->assertForbidden();
+
+    expect($user->fresh())->not->toBeNull();
+})->with(['hei', 'gad-focal-person']);

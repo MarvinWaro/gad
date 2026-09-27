@@ -1,6 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     Building2,
+    ContactRound,
+    GraduationCap,
+    Map,
     Palette,
     ShieldCheck,
     UserRound,
@@ -61,15 +64,34 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const isManagementPage =
         isCurrentOrParentUrl('/settings/users') ||
         isCurrentOrParentUrl('/settings/roles') ||
-        isCurrentOrParentUrl('/settings/survey-directories');
+        isCurrentOrParentUrl('/settings/regions') ||
+        isCurrentOrParentUrl('/settings/clusters') ||
+        isCurrentOrParentUrl('/settings/heis') ||
+        isCurrentOrParentUrl('/settings/respondent-groups');
+    const isAppearancePage = isCurrentOrParentUrl('/settings/appearance');
     const configurationNavItems: NavItem[] = auth.permissions.includes(
         'survey-directories.view',
     )
         ? [
               {
-                  title: 'Survey directories',
-                  href: '/settings/survey-directories',
+                  title: 'Regions',
+                  href: '/settings/regions',
+                  icon: Map,
+              },
+              {
+                  title: 'Clusters',
+                  href: '/settings/clusters',
                   icon: Building2,
+              },
+              {
+                  title: 'HEIs',
+                  href: '/settings/heis',
+                  icon: GraduationCap,
+              },
+              {
+                  title: 'Respondent groups',
+                  href: '/settings/respondent-groups',
+                  icon: ContactRound,
               },
           ]
         : [];
@@ -114,13 +136,20 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                 <div
                     className={cn(
                         'min-w-0 flex-1',
-                        !isManagementPage && 'md:max-w-2xl',
+                        !isManagementPage &&
+                            (isAppearancePage
+                                ? 'md:max-w-3xl'
+                                : 'md:max-w-2xl'),
                     )}
                 >
                     <section
                         className={cn(
                             'space-y-12',
-                            isManagementPage ? 'max-w-6xl' : 'max-w-xl',
+                            isManagementPage
+                                ? 'max-w-6xl'
+                                : isAppearancePage
+                                  ? 'max-w-3xl'
+                                  : 'max-w-xl',
                         )}
                     >
                         {children}

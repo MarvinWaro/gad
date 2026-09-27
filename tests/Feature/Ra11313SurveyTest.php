@@ -16,7 +16,7 @@ beforeEach(function () {
     $this->admin->assignRole('admin');
     $this->survey = Survey::query()->where('slug', 'ra-11313')->sole();
 
-    $this->region = SurveyRegion::query()->where('name', 'Region XII')->sole();
+    $this->region = SurveyRegion::query()->where('name', 'Regional Office XII')->sole();
     $this->cluster = SurveyCluster::query()->create([
         'survey_region_id' => $this->region->id, 'name' => 'Test Cluster', 'is_active' => true,
     ]);
@@ -30,6 +30,7 @@ function publishRa11313(): void
     test()->survey->draftVersion()->update(['retention_days' => 365]);
     test()->actingAs(test()->admin)
         ->post(route('admin.surveys.publish', test()->survey))
+        ->assertRedirect()
         ->assertSessionHasNoErrors();
 }
 
@@ -37,6 +38,7 @@ function publishRa11313(): void
 function ra11313Payload(array $overrides = []): array
 {
     return [...[
+        ...respondentFollowUps(),
         'version_id' => test()->survey->refresh()->publishedVersion()->id,
         'age' => 21,
         'sex' => 'female',
@@ -165,6 +167,7 @@ test('surveys without a check-all-that-apply question are unaffected', function 
         ->assertSessionHasNoErrors();
 
     $this->post(route('surveys.responses.store', $ra7877), [
+        ...respondentFollowUps(),
         'version_id' => $ra7877->refresh()->publishedVersion()->id,
         'age' => 33, 'sex' => 'male', 'respondent_group' => 'student',
         'region_id' => $this->region->id, 'cluster_id' => $this->cluster->id,

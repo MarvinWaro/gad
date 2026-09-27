@@ -11,6 +11,7 @@ import { FormEvent, useState } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmPopover } from '@/components/confirm-popover';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -462,47 +463,29 @@ function RoleDialog({
 }
 
 function DeleteRoleDialog({ role }: { role: Role }) {
-    const [open, setOpen] = useState(false);
+    const inUse = role.users_count > 0;
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                    <Trash2 />
-                    <span className="sr-only">Delete {role.name}</span>
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Delete role?</DialogTitle>
-                    <DialogDescription>
-                        {role.users_count > 0
-                            ? `${role.name} is assigned to ${role.users_count} users and cannot be deleted yet.`
-                            : `${role.name} will be removed permanently.`}
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setOpen(false)}>
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        disabled={role.users_count > 0}
-                        onClick={() =>
-                            router.delete(`/settings/roles/${role.id}`, {
-                                preserveScroll: true,
-                                onSuccess: () => setOpen(false),
-                            })
-                        }
-                    >
-                        Delete role
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <ConfirmPopover
+            title={`Delete ${role.name}?`}
+            description={
+                inUse
+                    ? `It is assigned to ${role.users_count} users and cannot be deleted yet.`
+                    : 'It will be removed permanently.'
+            }
+            confirmLabel="Delete role"
+            confirmDisabled={inUse}
+            onConfirm={(visit) =>
+                router.delete(`/settings/roles/${role.id}`, {
+                    preserveScroll: true,
+                    ...visit,
+                })
+            }
+        >
+            <Button variant="ghost" size="icon">
+                <Trash2 />
+                <span className="sr-only">Delete {role.name}</span>
+            </Button>
+        </ConfirmPopover>
     );
 }
-
-Roles.layout = {
-    breadcrumbs: [{ title: 'Roles & permissions', href: '/settings/roles' }],
-};

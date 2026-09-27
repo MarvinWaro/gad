@@ -8,6 +8,7 @@ use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\SurveyDirectorySeeder;
 use Database\Seeders\SurveyHeiSeeder;
+use Database\Seeders\SurveyRegionSeeder;
 use Illuminate\Support\Facades\Hash;
 
 test('default seed creates the admin, survey drafts and all 129 supplied HEIs', function () {
@@ -21,7 +22,11 @@ test('default seed creates the admin, survey drafts and all 129 supplied HEIs', 
         ->and($admin->hasRole('admin'))->toBeTrue()
         ->and($admin->can('surveys.publish'))->toBeTrue()
         ->and($admin->can('survey-directories.update'))->toBeTrue()
-        ->and(SurveyRegion::query()->sole()->name)->toBe('Region XII')
+        ->and(SurveyRegion::query()->count())->toBe(17)
+        ->and(SurveyRegion::query()->where('is_active', true)->count())->toBe(17)
+        ->and(SurveyRegion::query()->where('name', 'Regional Office XII')->exists())->toBeTrue()
+        ->and(SurveyRegion::query()->orderBy('id')->pluck('name')->all())
+        ->toBe(SurveyRegionSeeder::OFFICES)
         ->and(SurveyHei::query()->count())->toBe(129)
         ->and(SurveyHei::query()->where('is_active', true)->count())->toBe(129)
         ->and(SurveyHei::query()->where('ownership', 'public')->count())->toBe(22)

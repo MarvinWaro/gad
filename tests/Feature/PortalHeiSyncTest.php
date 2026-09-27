@@ -73,7 +73,7 @@ test('the sync sends the portal key and files institutions under their province'
         ->and($result['clusters_created'])->toBe([]);
 });
 
-test('an unrecognised province becomes a new cluster under Region XII and is reported', function () {
+test('an unrecognised province becomes a new cluster under Regional Office XII and is reported', function () {
     portalReturns([portalRow('12010', 'Davao Doctors College', 'Davao del Sur')]);
 
     $result = app(PortalHeiSync::class)->sync();
@@ -81,7 +81,7 @@ test('an unrecognised province becomes a new cluster under Region XII and is rep
     expect($result['clusters_created'])->toBe(['Davao del Sur'])
         ->and(SurveyHei::query()->sole()->cluster->name)->toBe('Davao del Sur')
         ->and(SurveyCluster::query()->where('name', 'Davao del Sur')->sole()->survey_region_id)
-        ->toBe(SurveyRegion::query()->where('name', 'Region XII')->sole()->id);
+        ->toBe(SurveyRegion::query()->where('name', 'Regional Office XII')->sole()->id);
 });
 
 test('an institution with no province lands in Unassigned rather than being dropped', function () {
@@ -224,11 +224,11 @@ test('only directory managers can trigger a sync from settings', function () {
 
     expect(SurveyHei::query()->where('uii', '12001')->exists())->toBeTrue();
 
-    $this->actingAs($admin)->get(route('settings.survey-directories.index'))
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('portal.configured', true)
-            ->where('portal.synced_count', 1)
-            ->has('portal.last_synced_at'));
+    // The panel is withdrawn from the settings pages for now; the endpoint and
+    // the artisan command still work.
+    $this->actingAs($admin)->get(route('settings.heis.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->missing('portal'));
 });
 
 test('a failed sync from settings surfaces the reason instead of a blank page', function () {

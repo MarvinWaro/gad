@@ -62,13 +62,20 @@ return new class extends Migration
         });
 
         Schema::create('survey_responses', function (Blueprint $table) {
-            $table->id();
+            // A ULID, so admin URLs never reveal how many responses exist.
+            // `public_reference` stays random: a ULID encodes its creation
+            // time, which must not be handed to an anonymous respondent.
+            $table->ulid('id')->primary();
             $table->foreignId('survey_version_id')->constrained()->restrictOnDelete();
             $table->string('public_reference', 32)->unique();
             $table->unsignedTinyInteger('age');
             $table->string('sex', 40)->index();
             $table->string('respondent_group', 60)->index();
             $table->string('respondent_group_other')->nullable();
+            // Asked only after a Female or Male answer for sex
+            // (App\Support\RespondentDetails). The chosen group's own
+            // follow-up answers live in survey_group_answers.
+            $table->string('gender_identity', 40)->nullable()->index();
             $table->foreignId('survey_region_id')->constrained()->restrictOnDelete();
             $table->foreignId('survey_cluster_id')->constrained()->restrictOnDelete();
             $table->foreignId('survey_hei_id')->constrained()->restrictOnDelete();

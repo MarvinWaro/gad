@@ -4,8 +4,9 @@ import {
     ArrowUpRight,
     BookOpen,
     FileText,
+    NotebookTabs,
     Scale,
-    Sparkles,
+    Video,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -138,90 +139,57 @@ export function Stories({ stories }: { stories: ContentRecord[] }) {
     );
 }
 
-export function Campaign() {
-    return (
-        <section
-            className="public-container campaign-section"
-            aria-labelledby="campaign-title"
-        >
-            <div className="campaign">
-                <div>
-                    <p className="section-label">
-                        <span />
-                        Awareness into action
-                        <span className="campaign-sample">Sample campaign</span>
-                    </p>
-                    <h2 id="campaign-title">
-                        A future free
-                        <br />
-                        from violence.
-                    </h2>
-                    <p className="campaign-name">
-                        18-Day Campaign to End Violence Against Women
-                    </p>
-                    <p className="campaign-description">
-                        Make space for awareness, solidarity, and a shared
-                        commitment to safer communities.
-                    </p>
-                    <PreviewDialog
-                        title="18-Day Campaign to End Violence Against Women"
-                        description="Sample campaign feature. Official dates, activities, and campaign materials will be added when verified."
-                    >
-                        <Button variant="outline">
-                            Explore the campaign
-                            <ArrowUpRight />
-                        </Button>
-                    </PreviewDialog>
-                </div>
-                <div
-                    className="campaign-art"
-                    role="img"
-                    aria-label="Campaign artwork placeholder"
-                >
-                    <span className="campaign-ring" />
-                    <span className="campaign-big-number">
-                        18<span>days of action</span>
-                    </span>
-                    <span className="campaign-art-label">
-                        Campaign artwork placeholder
-                    </span>
-                </div>
-            </div>
-        </section>
-    );
-}
-
-const resourceIcons = [FileText, BookOpen, Scale, Sparkles];
+const resourceIcons = {
+    terms: BookOpen,
+    acts: Scale,
+    videos: Video,
+    issuances: FileText,
+    manuals: NotebookTabs,
+} satisfies Record<ResourceRecord['id'], typeof BookOpen>;
 export function Resources({ resources }: { resources: ResourceRecord[] }) {
     return (
         <section id="resources" className="public-container public-section">
             <SectionHeading
                 label="Tools for change"
                 title="Learn more. Do more."
-                description="A growing collection of knowledge for gender-responsive higher education."
+                description="Explore five resource areas. Materials will be added as they become available."
             />
-            <div className="resources-grid">
-                {resources.map((resource, index) => {
-                    const Icon = resourceIcons[index % resourceIcons.length];
-                    return (
-                        <PreviewDialog
-                            key={resource.title}
-                            title={resource.title}
-                            description="Downloads are not yet available. Verified resources will be connected here."
-                        >
-                            <button className="resource-card">
-                                <Icon strokeWidth={1.5} />
+            <ul className="resources-grid">
+                {resources.map((resource) => {
+                    const Icon = resourceIcons[resource.id];
+                    if (!resource.href) {
+                        return (
+                            <li className="resource-card" key={resource.id}>
+                                <Icon aria-hidden="true" strokeWidth={1.5} />
                                 <h3>{resource.title}</h3>
-                                <p>{resource.description}</p>
-                                <span>
-                                    Coming soon
-                                    <ArrowUpRight size={17} />
-                                </span>
-                            </button>
-                        </PreviewDialog>
+                                <span>Content coming soon</span>
+                            </li>
+                        );
+                    }
+
+                    // The title link stretches over the whole card.
+                    return (
+                        <li
+                            className="resource-card resource-card-linked"
+                            key={resource.id}
+                        >
+                            <Icon aria-hidden="true" strokeWidth={1.5} />
+                            <h3>
+                                <Link
+                                    className="resource-link"
+                                    href={resource.href}
+                                >
+                                    {resource.title}
+                                </Link>
+                            </h3>
+                            <span className="resource-summary">
+                                {resource.summary}
+                                <ArrowUpRight aria-hidden="true" />
+                            </span>
+                        </li>
                     );
                 })}
-            </div>
+            </ul>
         </section>
     );
 }

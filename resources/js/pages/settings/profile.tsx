@@ -1,9 +1,12 @@
 import { Form, Head, usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
+import { Lock } from 'lucide-react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import ProfilePhotoField from '@/components/profile-photo-field';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,9 +21,12 @@ type PageProps = {
 export default function Profile({
     mustVerifyEmail,
     status,
+    institution,
 }: {
     mustVerifyEmail: boolean;
     status?: string;
+    /** The account's HEI (read-only here); null for CHED staff. */
+    institution: string | null;
 }) {
     const { auth } = usePage<PageProps>().props;
 
@@ -34,8 +40,10 @@ export default function Profile({
                 <Heading
                     variant="small"
                     title="Profile"
-                    description="Update your name and email address"
+                    description="Update your photo, name, and email address"
                 />
+
+                <ProfilePhotoField />
 
                 <Form
                     {...ProfileController.update.form()}
@@ -46,6 +54,48 @@ export default function Profile({
                 >
                     {({ processing, errors }) => (
                         <>
+                            {institution && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="institution">
+                                        Institution
+                                    </Label>
+
+                                    {/* Read-only and unnamed, so it is never
+                                        submitted with the form. */}
+                                    <Input
+                                        id="institution"
+                                        className="mt-1 block w-full bg-muted text-muted-foreground"
+                                        value={institution}
+                                        readOnly
+                                        aria-describedby="institution-note"
+                                    />
+
+                                    <Alert
+                                        id="institution-note"
+                                        className="bg-muted/60"
+                                    >
+                                        <Lock />
+                                        <AlertTitle className="line-clamp-none">
+                                            Only an administrator can change
+                                            your institution
+                                        </AlertTitle>
+                                        <AlertDescription>
+                                            <p>
+                                                If this is wrong, contact CHEDRO
+                                                XII at{' '}
+                                                <a
+                                                    href="mailto:chedro12@ched.gov.ph"
+                                                    className="text-foreground underline underline-offset-4"
+                                                >
+                                                    chedro12@ched.gov.ph
+                                                </a>
+                                                .
+                                            </p>
+                                        </AlertDescription>
+                                    </Alert>
+                                </div>
+                            )}
+
                             <div className="grid gap-2">
                                 <Label htmlFor="name">Name</Label>
 
@@ -123,7 +173,8 @@ export default function Profile({
                 </Form>
             </div>
 
-            <DeleteUser />
+            {/* Only administrators may delete their own account. */}
+            {auth.roles.includes('admin') && <DeleteUser />}
         </>
     );
 }

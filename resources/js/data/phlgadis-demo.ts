@@ -24,6 +24,17 @@ export type LawRecord = {
     title: string;
     description: string;
     image: { src: string; alt: string };
+    // Where to read the full text of the Act, and its size when it is a
+    // file served from public/.
+    document: string;
+    documentBytes?: number;
+    // The link text the old PHLGADIS resources list used.
+    listName: string;
+    // Section 1 short title and approval date, as the Act records them.
+    shortTitle: string;
+    approved: string;
+    // An information brochure about the law, where one was supplied.
+    brochure?: { href: string; bytes: number };
 };
 export type ContentRecord = {
     id: string;
@@ -32,7 +43,13 @@ export type ContentRecord = {
     description: string;
     media: MediaReference;
 };
-export type ResourceRecord = { title: string; description: string };
+export type ResourceRecord = {
+    id: 'terms' | 'acts' | 'videos' | 'issuances' | 'manuals';
+    title: string;
+    // Set once the area has a page; cards without one stay static.
+    href?: string;
+    summary?: string;
+};
 
 // Add a `src` such as `/images/hero/campus.jpg` to any media entry after the
 // approved files are placed in public/. The illustration remains the fallback.
@@ -106,6 +123,11 @@ export const laws: LawRecord[] = [
             src: '/assets/thumbnails/ra7877.jpg',
             alt: 'RA 7877 Anti-Sexual Harassment Law awareness artwork',
         },
+        document: '/assets/document/ra7877.pdf',
+        documentBytes: 121190,
+        listName: 'Anti-Sexual Harassment Law',
+        shortTitle: 'Anti-Sexual Harassment Act of 1995',
+        approved: '1995-02-14',
     },
     {
         slug: 'ra-9262',
@@ -116,6 +138,15 @@ export const laws: LawRecord[] = [
             src: '/assets/thumbnails/ra9262.jpg',
             alt: 'RA 9262 Violence Against Women and Their Children awareness artwork',
         },
+        // public/assets/document/ra9262.pdf is an information brochure, not
+        // the Act (see `brochure`), so the full text comes from LawPhil.
+        document:
+            'https://lawphil.net/statutes/repacts/ra2004/ra_9262_2004.html',
+        listName: 'VAWC',
+        shortTitle:
+            'Anti-Violence Against Women and Their Children Act of 2004',
+        approved: '2004-03-08',
+        brochure: { href: '/assets/document/ra9262.pdf', bytes: 5978152 },
     },
     {
         slug: 'ra-9710',
@@ -126,6 +157,11 @@ export const laws: LawRecord[] = [
             src: '/assets/thumbnails/ra9710.jpg',
             alt: 'RA 9710 Magna Carta of Women awareness artwork',
         },
+        document: '/assets/document/ra9710.pdf',
+        documentBytes: 357676,
+        listName: 'Magna Carta of Women',
+        shortTitle: 'The Magna Carta of Women',
+        approved: '2009-08-14',
     },
     {
         slug: 'ra-11313',
@@ -136,6 +172,11 @@ export const laws: LawRecord[] = [
             src: '/assets/thumbnails/ra11313.jpg',
             alt: 'RA 11313 Safe Spaces Act awareness artwork',
         },
+        document: '/assets/document/ra11313.pdf',
+        documentBytes: 4657048,
+        listName: 'Safe Spaces Act',
+        shortTitle: 'Safe Spaces Act',
+        approved: '2019-04-17',
     },
 ];
 export const stories: ContentRecord[] = [
@@ -172,19 +213,31 @@ export const stories: ContentRecord[] = [
 ];
 export const resources: ResourceRecord[] = [
     {
-        title: 'Policies & guidelines',
-        description: 'Guidance for gender-responsive institutions.',
+        id: 'terms',
+        title: 'Definition of Terms',
+        href: '/resources/definition-of-terms',
+        summary: '19 terms',
     },
     {
-        title: 'Publications',
-        description: 'Perspectives and research on gender and development.',
+        id: 'acts',
+        title: 'GAD Enabling Republic Acts',
+        href: '/resources/gad-enabling-republic-acts',
+        summary: '4 laws',
     },
     {
-        title: 'Reports & statistics',
-        description: 'Evidence to inform your next decision.',
+        id: 'videos',
+        title: 'GAD Videos',
     },
     {
-        title: 'Learning materials',
-        description: 'Build understanding. Bring it into practice.',
+        id: 'issuances',
+        title: 'Issuances',
+        href: '/resources/issuances',
+        summary: '2 issuances',
+    },
+    {
+        id: 'manuals',
+        title: 'Manuals',
+        href: '/resources/manuals',
+        summary: '2 manuals',
     },
 ];

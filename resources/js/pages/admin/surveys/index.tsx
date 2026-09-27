@@ -9,6 +9,8 @@ import {
     Trash2,
 } from 'lucide-react';
 import { FormEvent, useState } from 'react';
+import { ConfirmPopover } from '@/components/confirm-popover';
+import type { ConfirmVisit } from '@/components/confirm-popover';
 import { IconAction } from '@/components/icon-action';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +40,15 @@ type Survey = {
     responses_count: number;
     public_url: string | null;
 };
+// Same status language as the users table: live is emerald, unpublished work
+// is amber, retired is muted.
+const publicationBadges: Record<Survey['publication_status'], string> = {
+    Published:
+        'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
+    Draft: 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200',
+    Archived: 'bg-muted text-muted-foreground',
+};
+
 type Permissions = {
     create: boolean;
     update: boolean;
@@ -122,11 +133,12 @@ export default function SurveyIndex({
                                                 </td>
                                                 <td className="px-5 py-4">
                                                     <Badge
-                                                        variant={
-                                                            survey.publication_status ===
-                                                            'Published'
-                                                                ? 'secondary'
-                                                                : 'outline'
+                                                        variant="secondary"
+                                                        className={
+                                                            publicationBadges[
+                                                                survey
+                                                                    .publication_status
+                                                            ]
                                                         }
                                                     >
                                                         {
@@ -189,43 +201,61 @@ export default function SurveyIndex({
                                                                 </Link>
                                                             </IconAction>
                                                         )}
-                                                        {permissions.publish && (
-                                                            <IconAction
-                                                                label={
-                                                                    survey.publication_status ===
-                                                                    'Archived'
-                                                                        ? 'Restore this survey so the public can reach it'
-                                                                        : 'Archive this survey and close it to the public'
-                                                                }
-                                                                onClick={() =>
-                                                                    router.patch(
-                                                                        `/admin/surveys/${survey.id}/archive`,
-                                                                        {},
-                                                                        {
-                                                                            preserveScroll: true,
-                                                                        },
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Archive />
-                                                            </IconAction>
-                                                        )}
-                                                        {permissions.delete &&
-                                                            !survey.published_version && (
+                                                        {permissions.publish &&
+                                                            (survey.publication_status ===
+                                                            'Archived' ? (
+                                                                // Restoring reopens it, so it needs no warning.
                                                                 <IconAction
-                                                                    label="Delete this draft permanently"
-                                                                    className="text-muted-foreground hover:text-destructive"
+                                                                    label="Restore this survey so the public can reach it"
                                                                     onClick={() =>
-                                                                        confirm(
-                                                                            `Delete ${survey.title}? It has never been published, so this cannot be undone.`,
-                                                                        ) &&
-                                                                        router.delete(
-                                                                            `/admin/surveys/${survey.id}`,
+                                                                        toggleArchive(
+                                                                            survey,
                                                                         )
                                                                     }
                                                                 >
-                                                                    <Trash2 />
+                                                                    <Archive />
                                                                 </IconAction>
+                                                            ) : (
+                                                                <ConfirmPopover
+                                                                    title={`Archive ${survey.title}?`}
+                                                                    description="It closes to the public straight away. Responses already collected are kept, and you can restore it anytime."
+                                                                    confirmLabel="Archive"
+                                                                    onConfirm={(
+                                                                        visit,
+                                                                    ) =>
+                                                                        toggleArchive(
+                                                                            survey,
+                                                                            visit,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <IconAction label="Archive this survey and close it to the public">
+                                                                        <Archive />
+                                                                    </IconAction>
+                                                                </ConfirmPopover>
+                                                            ))}
+                                                        {permissions.delete &&
+                                                            !survey.published_version && (
+                                                                <ConfirmPopover
+                                                                    title={`Delete ${survey.title}?`}
+                                                                    description="It has never been published, so this cannot be undone."
+                                                                    confirmLabel="Delete"
+                                                                    onConfirm={(
+                                                                        visit,
+                                                                    ) =>
+                                                                        router.delete(
+                                                                            `/admin/surveys/${survey.id}`,
+                                                                            visit,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <IconAction
+                                                                        label="Delete this draft permanently"
+                                                                        className="text-muted-foreground hover:text-destructive"
+                                                                    >
+                                                                        <Trash2 />
+                                                                    </IconAction>
+                                                                </ConfirmPopover>
                                                             )}
                                                     </div>
                                                 </td>
@@ -239,6 +269,15 @@ export default function SurveyIndex({
                 </Card>
             </div>
         </>
+    );
+}
+
+/** Archive a survey (closing it to the public), or restore an archived one. */
+function toggleArchive(survey: Survey, visit?: ConfirmVisit) {
+    router.patch(
+        `/admin/surveys/${survey.id}/archive`,
+        {},
+        { preserveScroll: true, ...visit },
     );
 }
 

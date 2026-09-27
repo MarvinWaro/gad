@@ -30,11 +30,16 @@ test('carousel administration requires authentication and view permission', func
     $hei = userWithRole('hei');
     $this->actingAs($hei)
         ->get(route('admin.carousels.index'))
+        ->assertForbidden();
+
+    $focal = userWithRole('gad-focal-person');
+    $this->actingAs($focal)
+        ->get(route('admin.carousels.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/carousels/index')
-            ->where('permissions.create', false)
-            ->where('permissions.update', false)
+            ->where('permissions.create', true)
+            ->where('permissions.update', true)
             ->where('permissions.delete', false));
 });
 
@@ -51,7 +56,7 @@ test('role permissions follow the initial access matrix', function () {
         ->and($focal->can('carousel.create'))->toBeTrue()
         ->and($focal->can('carousel.update'))->toBeTrue()
         ->and($focal->can('carousel.delete'))->toBeFalse()
-        ->and($hei->can('carousel.view'))->toBeTrue()
+        ->and($hei->can('carousel.view'))->toBeFalse()
         ->and($hei->can('carousel.create'))->toBeFalse();
 });
 

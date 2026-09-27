@@ -5,6 +5,7 @@ use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\SurveyResponse;
+use App\Models\SurveyVersion;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
 use Database\Seeders\SurveySeeder;
@@ -24,7 +25,7 @@ function surveyUser(string $role): User
 
 function configureSurveyDirectories(): array
 {
-    $region = SurveyRegion::query()->where('name', 'Region XII')->sole();
+    $region = SurveyRegion::query()->where('name', 'Regional Office XII')->sole();
     $cluster = SurveyCluster::query()->create(['survey_region_id' => $region->id, 'name' => 'Test Cluster', 'is_active' => true]);
     $hei = SurveyHei::query()->create(['survey_cluster_id' => $cluster->id, 'name' => 'Test HEI', 'is_active' => true]);
 
@@ -63,7 +64,7 @@ test('survey permissions separate content, publication, directories, and respons
         ->and($hei->can('surveys.view'))->toBeFalse();
 
     $this->actingAs($focal)->get(route('admin.surveys.index'))->assertOk();
-    $this->actingAs($focal)->get(route('settings.survey-directories.index'))->assertForbidden();
+    $this->actingAs($focal)->get(route('settings.regions.index'))->assertForbidden();
     $this->actingAs($hei)->get(route('admin.surveys.index'))->assertForbidden();
 });
 
@@ -72,8 +73,12 @@ test('RA 7877 starts as a draft and publication requires directories and retenti
     $survey = Survey::query()->where('slug', 'ra-7877')->sole();
 
     expect($survey->draftVersion())->not->toBeNull()
-        ->and($survey->publishedVersion())->toBeNull();
+        ->and($survey->publishedVersion())->toBeNull()
+        // Five years unless the editor changes it.
+        ->and($survey->draftVersion()->retention_days)->toBe(1825);
 
+    // Clearing the period blocks publication, like missing directories.
+    $survey->draftVersion()->update(['retention_days' => null]);
     $this->actingAs($admin)->post(route('admin.surveys.publish', $survey))
         ->assertSessionHasErrors(['retention_days', 'directories']);
 
@@ -88,6 +93,17 @@ test('RA 7877 starts as a draft and publication requires directories and retenti
         ->and($hei->is_active)->toBeTrue();
 });
 
+test('a new survey starts with a five-year retention period', function () {
+    $this->actingAs(surveyUser('admin'))->post(route('admin.surveys.store'), [
+        'code' => 'RA 11166', 'title' => 'RA 11166 Survey',
+        'law_title' => 'Philippine HIV and AIDS Policy Act', 'slug' => 'ra-11166',
+    ])->assertRedirect();
+
+    expect(Survey::query()->where('slug', 'ra-11166')->sole()->draftVersion()->retention_days)
+        ->toBe(SurveyVersion::DEFAULT_RETENTION_DAYS)
+        ->toBe(1825);
+});
+
 test('the builder names every publish blocker before the editor clicks publish', function () {
     $admin = surveyUser('admin');
     $survey = Survey::query()->where('slug', 'ra-7877')->sole();
@@ -100,7 +116,8 @@ test('the builder names every publish blocker before the editor clicks publish',
             ->where('readiness.0.key', 'notices')
             ->where('readiness.0.passed', true)
             ->where('readiness.1.key', 'retention')
-            ->where('readiness.1.passed', false)
+            // Ready from the start: new drafts keep responses for five years.
+            ->where('readiness.1.passed', true)
             ->where('readiness.2.key', 'directories')
             ->where('readiness.2.passed', false)
             ->where('readiness.3.key', 'definition')
@@ -202,6 +219,7 @@ test('anonymous responses validate conditional answers and store no direct ident
     $version = $survey->publishedVersion();
 
     $payload = [
+        ...respondentFollowUps(),
         'version_id' => $version->id,
         'age' => 22,
         'sex' => 'female',

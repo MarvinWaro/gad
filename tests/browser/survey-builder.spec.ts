@@ -1,8 +1,6 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
-test('survey sections collapse and option editors accept new lines', async ({
-    page,
-}) => {
+async function openRa9262Draft(page: Page) {
     await page.goto('/login');
     await page.getByLabel('Email address').fill('browser-admin@example.test');
     await page.getByLabel('Password', { exact: true }).fill('browser-password');
@@ -14,6 +12,12 @@ test('survey sections collapse and option editors accept new lines', async ({
         .filter({ hasText: 'RA 9262' })
         .getByRole('link', { name: 'Edit the draft for RA 9262 Survey' })
         .click();
+}
+
+test('survey sections collapse and option editors accept new lines', async ({
+    page,
+}) => {
+    await openRa9262Draft(page);
 
     const respondent = page.getByRole('button', {
         name: /Respondent details.*7 questions/i,
@@ -55,4 +59,34 @@ test('survey sections collapse and option editors accept new lines', async ({
     await expect(page.getByLabel('Perpetrators', { exact: true })).toHaveValue(
         /New perpetrator from editor$/,
     );
+});
+
+// The answer key is also what the builder used to tell questions apart, so
+// each keystroke rebuilt the question and dropped the cursor.
+test('an answer key can be typed out, and saves without builder-only keys', async ({
+    page,
+}) => {
+    await openRa9262Draft(page);
+
+    const answerKey = page.getByLabel('Answer key').first();
+    await answerKey.click();
+    await answerKey.press('End');
+    await page.keyboard.type('-check');
+    await expect(answerKey).toHaveValue('answering_for-check');
+    await expect(answerKey).toBeFocused();
+
+    // Put it back, then save: the draft goes out exactly as it is stored.
+    await answerKey.fill('answering_for');
+    const saved = page.waitForRequest(
+        (request) =>
+            request.method() === 'PUT' &&
+            request.url().includes('/admin/surveys/'),
+    );
+    await page.getByRole('button', { name: 'Save draft' }).click();
+    const payload = (await saved).postDataJSON();
+    expect(JSON.stringify(payload)).not.toContain('clientKey');
+    expect(payload.definition.sections[0].questions[0].id).toBe(
+        'answering_for',
+    );
+    await expect(page.getByText('Unsaved changes')).toHaveCount(0);
 });

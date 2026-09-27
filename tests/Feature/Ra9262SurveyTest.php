@@ -27,6 +27,7 @@ beforeEach(function () {
         $this->actingAs($this->admin)->post(route('admin.surveys.publish', $this->survey))->assertSessionHasNoErrors();
     };
     $this->payload = fn (): array => [
+        ...respondentFollowUps(),
         'version_id' => $this->survey->publishedVersion()->id,
         'answering_for' => 'self', 'age' => 22, 'sex' => 'female', 'respondent_group' => 'student',
         'region_id' => $this->region->id, 'cluster_id' => $this->cluster->id, 'hei_id' => $this->hei->id,
@@ -81,6 +82,7 @@ test('initial RA 9262 retention copies published RA 7877 only', function () {
 
 test('readiness and publication open RA 9262 without changing RA 7877', function () {
     $before = Survey::query()->where('slug', 'ra-7877')->sole()->draftVersion()->getAttributes();
+    $this->survey->draftVersion()->update(['retention_days' => null]);
     $this->actingAs($this->admin)->post(route('admin.surveys.publish', $this->survey))->assertSessionHasErrors('retention_days');
     ($this->publish)();
     $this->get('/surveys/ra-9262')->assertInertia(fn (Assert $page) => $page
@@ -96,6 +98,7 @@ test('readiness and publication open RA 9262 without changing RA 7877', function
 test('RA 9262 stores anonymous self and minor responses', function (string $answeringFor, int $age) {
     ($this->publish)();
     $this->post(route('surveys.responses.store', $this->survey), [
+        ...respondentFollowUps(),
         ...($this->payload)(), 'answering_for' => $answeringFor, 'age' => $age, 'guardian_consent' => $age < 18,
         'email' => 'must-not-be-stored@example.com',
     ])->assertSessionHasNoErrors()->assertRedirect('/surveys/ra-9262');
@@ -186,6 +189,7 @@ test('a survey without a matrix accepts respondent details without experience an
 test('admin response list, frozen labels and CSV include RA 9262 answers and specified details', function () {
     ($this->publish)();
     $this->post(route('surveys.responses.store', $this->survey), [
+        ...respondentFollowUps(),
         ...($this->payload)(), 'answering_for' => 'minor-under-legal-care', 'age' => 15, 'guardian_consent' => true,
         'perpetrators' => ['physical-violence' => ['other-relative']],
         'other_relative_details' => ['physical-violence' => '  Aunt  '],

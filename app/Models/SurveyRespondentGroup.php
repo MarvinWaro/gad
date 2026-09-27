@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -25,6 +26,48 @@ class SurveyRespondentGroup extends Model
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
+    }
+
+    /**
+     * Every follow-up question, retired ones included.
+     *
+     * @return HasMany<SurveyGroupQuestion, $this>
+     */
+    public function questions(): HasMany
+    {
+        return $this->hasMany(SurveyGroupQuestion::class)->orderBy('sort_order');
+    }
+
+    /**
+     * The questions asked right after a respondent picks this group.
+     *
+     * @return HasMany<SurveyGroupQuestion, $this>
+     */
+    public function followUpQuestions(): HasMany
+    {
+        return $this->questions()->where('is_active', true);
+    }
+
+    /**
+     * The follow-up questions as the public form and the settings editor use
+     * them: each with its key, label, type and choices. Eager load
+     * `followUpQuestions.activeOptions` when reading several groups.
+     *
+     * @return list<array{key: string, label: string, type: string, required: bool, options: list<array{value: string, label: string, requires_text?: true}>}>
+     */
+    public function followUps(): array
+    {
+        return $this->followUpQuestions->map(fn (SurveyGroupQuestion $question): array => [
+            'key' => $question->key,
+            'label' => $question->label,
+            'type' => $question->type,
+            'required' => $question->required,
+            'options' => $question->activeOptions->map(fn (SurveyGroupOption $option): array => [
+                'value' => $option->value,
+                'label' => $option->label,
+                ...($option->requires_text ? ['requires_text' => true] : []),
+            ])->all(),
+        ])->all();
     }
 
     /** @param Builder<self> $query */

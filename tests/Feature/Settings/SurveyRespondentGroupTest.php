@@ -17,7 +17,7 @@ beforeEach(function () {
     $this->admin->assignRole('admin');
     $this->survey = Survey::query()->where('slug', 'ra-7877')->sole();
 
-    $this->region = SurveyRegion::query()->where('name', 'Region XII')->sole();
+    $this->region = SurveyRegion::query()->where('name', 'Regional Office XII')->sole();
     $this->cluster = SurveyCluster::query()->create([
         'survey_region_id' => $this->region->id, 'name' => 'Test Cluster', 'is_active' => true,
     ]);
@@ -31,6 +31,7 @@ function publishBaseSurvey(): void
     test()->survey->draftVersion()->update(['retention_days' => 365]);
     test()->actingAs(test()->admin)
         ->post(route('admin.surveys.publish', test()->survey))
+        ->assertRedirect()
         ->assertSessionHasNoErrors();
 }
 
@@ -38,6 +39,7 @@ function publishBaseSurvey(): void
 function groupPayload(string $group): array
 {
     return [
+        ...respondentFollowUps(),
         'version_id' => test()->survey->refresh()->publishedVersion()->id,
         'age' => 24, 'sex' => 'female', 'respondent_group' => $group,
         'region_id' => test()->region->id, 'cluster_id' => test()->cluster->id,
@@ -148,7 +150,7 @@ test('a group with collected responses cannot be deleted', function () {
 
     $this->actingAs($this->admin)
         ->delete(route('settings.survey-directories.destroy', ['type' => 'respondent-groups', 'id' => $group->id]))
-        ->assertSessionHasErrors('directory');
+        ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
     expect(SurveyRespondentGroup::query()->whereKey($group->id)->exists())->toBeTrue();
 });
@@ -163,10 +165,15 @@ test('an unused group can be deleted', function () {
     expect(SurveyRespondentGroup::query()->count())->toBe(2);
 });
 
-test('the settings page ships the directory for its table', function () {
-    $this->actingAs($this->admin)->get(route('settings.survey-directories.index'))
+test('the groups have their own settings page, separate from the directories', function () {
+    $this->actingAs($this->admin)->get(route('settings.heis.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->missing('respondentGroups'));
+
+    $this->actingAs($this->admin)->get(route('settings.respondent-groups.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
+            ->component('settings/respondent-groups')
             ->has('respondentGroups', 3)
             ->where('respondentGroups.0.value', 'student')
             ->where('respondentGroups.0.label', 'Student')

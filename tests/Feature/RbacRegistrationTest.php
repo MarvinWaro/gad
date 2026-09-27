@@ -7,12 +7,10 @@ use Database\Seeders\RbacSeeder;
 test('newly registered users receive the HEI role when RBAC is seeded', function () {
     $this->seed(RbacSeeder::class);
 
-    $this->post(route('register.store'), [
+    $this->post(route('register.store'), registrationPayload(createSurveyHei(), [
         'name' => 'HEI User',
         'email' => 'hei@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ])->assertRedirect(route('dashboard'));
+    ]))->assertRedirect(route('login'));
 
     $user = User::query()->where('email', 'hei@example.com')->sole();
 
