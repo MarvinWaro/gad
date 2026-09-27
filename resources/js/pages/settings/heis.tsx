@@ -1,6 +1,8 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { GraduationCap, Pencil, Plus, Trash2 } from 'lucide-react';
 import { FormEvent, useState } from 'react';
+import { ConfirmPopover } from '@/components/confirm-popover';
+import type { ConfirmVisit } from '@/components/confirm-popover';
 import Heading from '@/components/heading';
 import { Pagination, type Paginated } from '@/components/pagination';
 import { IconAction } from '@/components/icon-action';
@@ -167,50 +169,57 @@ function HeiTable({
                                                 regions={regions}
                                                 clusters={clusters}
                                             />
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() =>
-                                                    router.put(
-                                                        `/settings/survey-directories/heis/${hei.id}`,
-                                                        {
-                                                            uii: hei.uii,
-                                                            name: hei.name,
-                                                            ownership:
-                                                                hei.ownership,
-                                                            survey_cluster_id:
-                                                                hei.survey_cluster_id,
-                                                            is_active:
-                                                                !hei.is_active,
-                                                        },
-                                                        {
-                                                            preserveScroll: true,
-                                                        },
-                                                    )
-                                                }
-                                            >
-                                                {hei.is_active
-                                                    ? 'Deactivate'
-                                                    : 'Activate'}
-                                            </Button>
+                                            {hei.is_active ? (
+                                                <ConfirmPopover
+                                                    title={`Deactivate ${hei.name}?`}
+                                                    description="It will be hidden from the public surveys and registration. Its responses and accounts are kept, and you can activate it again anytime."
+                                                    confirmLabel="Deactivate"
+                                                    onConfirm={(visit) =>
+                                                        toggleActive(hei, visit)
+                                                    }
+                                                >
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                    >
+                                                        Deactivate
+                                                    </Button>
+                                                </ConfirmPopover>
+                                            ) : (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        toggleActive(hei)
+                                                    }
+                                                >
+                                                    Activate
+                                                </Button>
+                                            )}
                                         </>
                                     )}
                                     {permissions.delete && (
-                                        <IconAction
-                                            label="Delete this institution"
-                                            className="text-muted-foreground hover:text-destructive"
-                                            onClick={() =>
-                                                confirm(
-                                                    `Delete ${hei.name}? Institutions with responses cannot be deleted — deactivate them instead.`,
-                                                ) &&
+                                        <ConfirmPopover
+                                            title={`Delete ${hei.name}?`}
+                                            description="Institutions with responses cannot be deleted. Deactivate them instead."
+                                            confirmLabel="Delete"
+                                            onConfirm={(visit) =>
                                                 router.delete(
                                                     `/settings/survey-directories/heis/${hei.id}`,
-                                                    { preserveScroll: true },
+                                                    {
+                                                        preserveScroll: true,
+                                                        ...visit,
+                                                    },
                                                 )
                                             }
                                         >
-                                            <Trash2 />
-                                        </IconAction>
+                                            <IconAction
+                                                label="Delete this institution"
+                                                className="text-muted-foreground hover:text-destructive"
+                                            >
+                                                <Trash2 />
+                                            </IconAction>
+                                        </ConfirmPopover>
                                     )}
                                 </div>
                             </td>
@@ -219,6 +228,20 @@ function HeiTable({
                 </tbody>
             </table>
         </div>
+    );
+}
+
+function toggleActive(hei: Hei, visit?: ConfirmVisit) {
+    router.put(
+        `/settings/survey-directories/heis/${hei.id}`,
+        {
+            uii: hei.uii,
+            name: hei.name,
+            ownership: hei.ownership,
+            survey_cluster_id: hei.survey_cluster_id,
+            is_active: !hei.is_active,
+        },
+        { preserveScroll: true, ...visit },
     );
 }
 

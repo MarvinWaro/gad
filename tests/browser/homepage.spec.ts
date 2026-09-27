@@ -104,16 +104,23 @@ test('hero previews crossfade the featured visual and autoplay resumes after foc
         name: 'Featured PHLGADIS visuals',
     });
     const slides = carousel.locator('.hero-carousel-slide');
-    expect(await slides.count()).toBeGreaterThan(1);
+    const slideCount = await slides.count();
+    expect(slideCount).toBeGreaterThan(2);
     const firstSlide = slides.nth(0);
     const secondSlide = slides.nth(1);
+    const thirdSlide = slides.nth(2);
 
+    // At most two previews, whatever the number of slides.
+    await expect(carousel.locator('.hero-thumbnail')).toHaveCount(
+        Math.min(2, slideCount - 1),
+    );
     await expect(firstSlide).toHaveClass(/is-active/);
     await expect(carousel).toHaveAttribute('data-autoplay', 'true');
     await page.clock.fastForward(6000);
     await expect(secondSlide).toHaveClass(/is-active/);
+    // The previews are the slides that come next, so the first is slide 3.
     await carousel.locator('.hero-thumbnail').first().click();
-    await expect(firstSlide).toHaveClass(/is-active/);
+    await expect(thirdSlide).toHaveClass(/is-active/);
     await expect(secondSlide).not.toHaveClass(/is-active/);
     await expect(carousel.locator('.hero-carousel-meta')).toHaveCount(0);
     await expect(carousel).toHaveAttribute('data-autoplay', 'false');
@@ -121,7 +128,7 @@ test('hero previews crossfade the featured visual and autoplay resumes after foc
     await page.locator('header .brand').focus();
     await expect(carousel).toHaveAttribute('data-autoplay', 'true');
     await page.clock.fastForward(6000);
-    await expect(secondSlide).toHaveClass(/is-active/);
+    await expect(slides.nth(3 % slideCount)).toHaveClass(/is-active/);
     expect(
         await firstSlide.evaluate(
             (element) => getComputedStyle(element).transitionProperty,

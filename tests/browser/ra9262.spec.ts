@@ -30,7 +30,12 @@ async function details(page: Page, minor = false) {
     );
     await page.locator('#age').fill(minor ? '15' : '25');
     await chooseSelect(page, 'sex', 'female');
+    // Female and Male are asked a gender identity; the first choice will do.
+    await page.locator('#gender_identity').check();
     await chooseSelect(page, 'respondent_group', 'student');
+    // The Student group's follow-up questions: year, and whether a scholar.
+    await chooseSelect(page, 'group-answer-student-year', '2nd-year');
+    await page.locator('#group-answer-scholar').check();
     await chooseSelectIndex(page, 'region_id', 1);
     await chooseSelectIndex(page, 'cluster_id', 1);
     await chooseSelectIndex(page, 'hei_id', 1);
@@ -70,7 +75,7 @@ for (const width of [375, 768, 1280, 1536]) {
         await page
             .getByLabel('Other Relative (Specify)', { exact: true })
             .check();
-        await page.getByLabel(/Specify Other Relative/).fill('Aunt');
+        await page.getByLabel('Specify the other relative').fill('Aunt');
         const result = await new AxeBuilder({ page })
             .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
             .analyze();
@@ -132,7 +137,7 @@ test('RA 9262 validates minor details and links experience errors to controls', 
     await page
         .getByRole('link', { name: /Provide the requested details/ })
         .click();
-    await expect(page.getByLabel(/Specify Other Relative/)).toBeFocused();
+    await expect(page.getByLabel('Specify the other relative')).toBeFocused();
     await page
         .getByLabel('I have not experienced any of the above', { exact: true })
         .check();
@@ -153,7 +158,7 @@ test('RA 9262 submission appears in admin responses and CSV', async ({
         .getByLabel('Physical Violence (Pisikal na Karahasan)', { exact: true })
         .check();
     await page.getByLabel('Other Relative (Specify)', { exact: true }).check();
-    await page.getByLabel(/Specify Other Relative/).fill('Aunt');
+    await page.getByLabel('Specify the other relative').fill('Aunt');
     await page.getByRole('button', { name: 'Continue' }).click();
     await page
         .getByRole('button', { name: 'Submit anonymous response' })

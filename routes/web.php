@@ -10,6 +10,8 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\PostCommentController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostLikeController;
+use App\Http\Controllers\PostShareController;
+use App\Http\Controllers\PostTagSuggestionController;
 use App\Http\Controllers\PublicSurveyController;
 use App\Models\CarouselSlide;
 use App\Models\Survey;
@@ -48,6 +50,11 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+Route::inertia('/resources/definition-of-terms', 'resources/definition-of-terms')->name('resources.terms');
+Route::inertia('/resources/gad-enabling-republic-acts', 'resources/gad-enabling-republic-acts')->name('resources.acts');
+Route::inertia('/resources/issuances', 'resources/issuances')->name('resources.issuances');
+Route::inertia('/resources/manuals', 'resources/manuals')->name('resources.manuals');
+
 Route::get('/surveys/{law}', [PublicSurveyController::class, 'show'])->whereIn('law', [
     'ra-7877',
     'ra-9262',
@@ -63,11 +70,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('events', [EventController::class, 'index'])->name('events.index');
 
     Route::post('posts', [PostController::class, 'store'])->middleware('throttle:20,1')->name('posts.store');
-    Route::put('posts/{post}', [PostController::class, 'update'])->name('posts.update');
-    Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
-    Route::post('posts/{post}/like', [PostLikeController::class, 'store'])->name('posts.like');
-    Route::delete('posts/{post}/like', [PostLikeController::class, 'destroy'])->name('posts.unlike');
+    Route::get('posts/tag-suggestions', PostTagSuggestionController::class)
+        ->middleware('throttle:60,1')
+        ->name('posts.tag-suggestions');
+    Route::get('posts/{post}', [PostController::class, 'show'])->whereUlid('post')->name('posts.show');
+    Route::put('posts/{post}', [PostController::class, 'update'])->whereUlid('post')->name('posts.update');
+    Route::delete('posts/{post}', [PostController::class, 'destroy'])->whereUlid('post')->name('posts.destroy');
+    Route::post('posts/{post}/share', PostShareController::class)->whereUlid('post')->middleware('throttle:20,1')->name('posts.share');
+    Route::post('posts/{post}/like', [PostLikeController::class, 'store'])->whereUlid('post')->name('posts.like');
+    Route::delete('posts/{post}/like', [PostLikeController::class, 'destroy'])->whereUlid('post')->name('posts.unlike');
     Route::post('posts/{post}/comments', [PostCommentController::class, 'store'])
+        ->whereUlid('post')
         ->middleware('throttle:30,1')
         ->name('posts.comments.store');
     Route::delete('comments/{comment}', [PostCommentController::class, 'destroy'])->name('comments.destroy');

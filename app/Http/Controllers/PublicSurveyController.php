@@ -8,8 +8,12 @@ use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\SurveyRespondentGroup;
 use App\Models\SurveyResponse;
+use App\Support\RespondentDetails;
+use App\Support\RespondentFollowUps;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -22,6 +26,7 @@ class PublicSurveyController extends Controller
     {
         $survey = Survey::query()->where('slug', $law)->where('status', 'active')->first();
         $version = $survey?->publishedVersion();
+        $groupQuestion = $version ? $this->findQuestion($version->definition, 'id', 'respondent_group', false) ?? [] : [];
 
         return Inertia::render('surveys/show', [
             'lawSlug' => $law,
@@ -45,10 +50,12 @@ class PublicSurveyController extends Controller
                 ? [
                     ...$this->directories($this->requiredFlags($version->definition)),
                     'respondent_groups' => $this->respondentGroupChoices(
-                        $this->findQuestion($version->definition, 'id', 'respondent_group', false) ?? [],
+                        $groupQuestion,
+                        $this->directoryGroups($groupQuestion),
                     ),
                 ]
                 : ['regions' => [], 'clusters' => [], 'heis' => [], 'respondent_groups' => []],
+            'respondentDetails' => RespondentDetails::forForm(),
             'confirmation' => $request->session()->pull('survey_confirmation'),
         ]);
     }
@@ -70,7 +77,14 @@ class PublicSurveyController extends Controller
         $textPerpetrators = array_column(array_filter($matrix['perpetrator_options'] ?? [], fn (array $option): bool => ($option['requires_text'] ?? false) === true), 'value');
         $sexQuestion = $this->findQuestion($definition, 'id', 'sex');
         $groupQuestion = $this->findQuestion($definition, 'id', 'respondent_group');
-        $groupChoices = $this->respondentGroupChoices($groupQuestion);
+        $groups = $this->directoryGroups($groupQuestion);
+        $groupChoices = $this->respondentGroupChoices($groupQuestion, $groups);
+        // Follow-ups that apply to this respondent: gender identity for a
+        // Female or Male answer, and the chosen group's own questions.
+        // Anything else that is sent is dropped rather than stored.
+        $genderIdentities = RespondentDetails::genderIdentities($request->input('sex'));
+        $chosenGroup = $groups->firstWhere('value', $request->input('respondent_group'));
+        $groupQuestions = $chosenGroup?->followUps() ?? [];
         $multiSelects = $this->multiSelectQuestions($definition);
         $experienceValues = [...$this->optionValues($matrix, 'options'), $noneValue];
         $perpetratorValues = $this->optionValues($matrix, 'perpetrator_options');
@@ -104,6 +118,8 @@ class PublicSurveyController extends Controller
                     : array_column($groupChoices, 'value')),
             ],
             'respondent_group_other' => ['nullable', 'string', 'max:160', Rule::requiredIf(fn (): bool => collect($groupChoices)->contains(fn (array $option): bool => $option['value'] === $request->input('respondent_group') && ($option['requires_text'] ?? false)))],
+            'gender_identity' => [Rule::excludeIf($genderIdentities === []), $required['sex'], 'nullable', Rule::in(array_keys($genderIdentities))],
+            ...RespondentFollowUps::answerRules($groupQuestions, $request->input('group_answers')),
             'region_id' => [
                 $required['region'], 'nullable',
                 Rule::requiredIf(fn (): bool => $request->filled('cluster_id')),
@@ -132,6 +148,9 @@ class PublicSurveyController extends Controller
                 Rule::requiredIf(fn (): bool => $request->filled('age') && $request->integer('age') < 18),
                 'accepted',
             ],
+        ], [], [
+            'gender_identity' => 'gender identity',
+            ...RespondentFollowUps::answerAttributes($groupQuestions),
         ]);
 
         if ((int) $validated['version_id'] !== $version->id) {
@@ -161,13 +180,14 @@ class PublicSurveyController extends Controller
             $reference = Str::upper(preg_replace('/[^a-zA-Z0-9]/', '', $survey->code)).'-'.Str::upper(Str::random(10));
         } while (SurveyResponse::query()->where('public_reference', $reference)->exists());
 
-        SurveyResponse::query()->create([
+        $attributes = [
             'survey_version_id' => $version->id,
             'public_reference' => $reference,
             'age' => $validated['age'] ?? null,
             'sex' => $validated['sex'] ?? null,
             'respondent_group' => $validated['respondent_group'] ?? null,
             'respondent_group_other' => $validated['respondent_group_other'] ?? null,
+            'gender_identity' => $validated['gender_identity'] ?? null,
             'survey_region_id' => $validated['region_id'] ?? null,
             'survey_cluster_id' => $validated['cluster_id'] ?? null,
             'survey_hei_id' => $validated['hei_id'] ?? null,
@@ -181,7 +201,12 @@ class PublicSurveyController extends Controller
             'consent_at' => now(),
             'guardian_confirmed_at' => isset($validated['age']) && (int) $validated['age'] < 18 ? now() : null,
             'expires_at' => now()->addDays($version->retention_days),
-        ]);
+        ];
+
+        DB::transaction(function () use ($attributes, $chosenGroup, $validated): void {
+            $response = SurveyResponse::query()->create($attributes);
+            RespondentFollowUps::saveAnswers($response, $chosenGroup, $validated);
+        });
 
         return to_route('surveys.show', ['law' => $survey->slug])->with('survey_confirmation', $reference);
     }
@@ -194,9 +219,10 @@ class PublicSurveyController extends Controller
      * its live form is never emptied by the change.
      *
      * @param  array<string, mixed>  $question
-     * @return list<array{value: string, label: string, requires_text?: bool}>
+     * @param  Collection<int, SurveyRespondentGroup>  $groups  from directoryGroups()
+     * @return list<array{value: string, label: string, requires_text?: bool, follow_ups?: list<array<string, mixed>>}>
      */
-    private function respondentGroupChoices(array $question): array
+    private function respondentGroupChoices(array $question, Collection $groups): array
     {
         if (($question['type'] ?? null) !== 'directory_respondent_group') {
             return array_values(array_filter(
@@ -205,13 +231,30 @@ class PublicSurveyController extends Controller
             ));
         }
 
-        return SurveyRespondentGroup::active()
+        return $groups
             ->map(fn (SurveyRespondentGroup $group): array => [
                 'value' => $group->value,
                 'label' => $group->label,
                 'requires_text' => $group->requires_text,
+                'follow_ups' => $group->followUps(),
             ])
             ->all();
+    }
+
+    /**
+     * The directory's active groups, with their follow-up questions and
+     * choices, when the questionnaire reads its groups from the directory.
+     *
+     * @param  array<string, mixed>  $question
+     * @return Collection<int, SurveyRespondentGroup>
+     */
+    private function directoryGroups(array $question): Collection
+    {
+        if (($question['type'] ?? null) !== 'directory_respondent_group') {
+            return new Collection;
+        }
+
+        return SurveyRespondentGroup::active()->load('followUpQuestions.activeOptions');
     }
 
     /**

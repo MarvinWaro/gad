@@ -66,7 +66,7 @@ class GadEventController extends Controller
     {
         $event->delete();
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Event deleted.')]);
+        Inertia::flash('toast', ['type' => 'deleted', 'message' => __('Event deleted.')]);
 
         return back();
     }

@@ -75,6 +75,27 @@ function createSurveyHei(array $attributes = []): SurveyHei
 }
 
 /**
+ * Valid answers to every follow-up a survey response can be asked: gender
+ * identity (for Female or Male) and the seeded Student and Employee groups'
+ * questions. The server keeps only those that apply, so a payload can always
+ * carry them.
+ *
+ * @return array<string, mixed>
+ */
+function respondentFollowUps(): array
+{
+    return [
+        'gender_identity' => 'heterosexual',
+        'group_answers' => [
+            'student-year' => '2nd-year',
+            'scholar' => 'no',
+            'unit-division' => 'teaching',
+            'employment-status' => 'regular-permanent',
+        ],
+    ];
+}
+
+/**
  * A valid public registration payload.
  *
  * @param  array<string, mixed>  $overrides

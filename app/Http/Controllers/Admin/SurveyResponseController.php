@@ -4,7 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Survey;
+use App\Models\SurveyGroupQuestion;
+use App\Models\SurveyRespondentGroup;
 use App\Models\SurveyResponse;
+use App\Support\RespondentDetails;
+use App\Support\RespondentFollowUps;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -56,8 +60,9 @@ class SurveyResponseController extends Controller
                 throw new \RuntimeException('Unable to open the CSV output stream.');
             }
             $selectionColumns = $this->selectionColumns($survey);
-            fputcsv($handle, ['Reference', 'Version', 'Submitted', 'Age', 'Sex', 'Respondent group', 'Region', 'Cluster', 'HEI', 'Experiences', 'Perpetrators', 'Expires', 'Specified perpetrator details', ...($survey->slug === 'ra-9262' ? ['Answering for'] : []), ...array_values($selectionColumns)]);
-            $this->query($request, $survey)->with(['version', 'region', 'cluster', 'hei'])->latest()->each(function (SurveyResponse $response) use ($handle, $survey, $selectionColumns): void {
+            $followUpColumns = $this->followUpColumns();
+            fputcsv($handle, ['Reference', 'Version', 'Submitted', 'Age', 'Sex', 'Respondent group', 'Gender identity', ...array_column($followUpColumns, 'heading'), 'Region', 'Cluster', 'HEI', 'Experiences', 'Perpetrators', 'Expires', 'Specified perpetrator details', ...($survey->slug === 'ra-9262' ? ['Answering for'] : []), ...array_values($selectionColumns)]);
+            $this->query($request, $survey)->with(['version', 'region', 'cluster', 'hei', 'groupAnswers.option'])->latest()->each(function (SurveyResponse $response) use ($handle, $survey, $selectionColumns, $followUpColumns): void {
                 fputcsv($handle, [
                     $response->public_reference,
                     $response->version->version,
@@ -65,6 +70,11 @@ class SurveyResponseController extends Controller
                     $response->age,
                     $response->sex,
                     $response->respondent_group_other ?: $response->respondent_group,
+                    // Blank where the question was not asked.
+                    RespondentDetails::genderIdentity($response),
+                    ...array_map(fn (array $column): string => RespondentFollowUps::answerText(
+                        $response->groupAnswers->firstWhere('question_id', $column['question']->id),
+                    ), $followUpColumns),
                     $response->region?->name,
                     $response->cluster?->name,
                     $response->hei?->name,
@@ -123,6 +133,8 @@ class SurveyResponseController extends Controller
         if ($details) {
             $data['answers'] = $response->answers;
             $data['answer_labels'] = $this->answerLabels($response);
+            // Gender identity and the group's follow-ups, readable, in form order.
+            $data['details'] = RespondentDetails::describe($response);
         }
 
         return $data;
@@ -148,6 +160,28 @@ class SurveyResponseController extends Controller
         return $columns;
     }
 
+    /**
+     * One export column per group follow-up question, e.g. "Civilian:
+     * Occupation", in the groups' order, so the columns stay stable. Retired
+     * questions keep their column: older responses answered them.
+     *
+     * @return list<array{question: SurveyGroupQuestion, heading: string}>
+     */
+    private function followUpColumns(): array
+    {
+        $columns = [];
+        foreach (SurveyRespondentGroup::query()->ordered()->with('questions')->get() as $group) {
+            foreach ($group->questions as $question) {
+                $columns[] = [
+                    'question' => $question,
+                    'heading' => "{$group->label}: {$question->label}".($question->is_active ? '' : ' (retired)'),
+                ];
+            }
+        }
+
+        return $columns;
+    }
+
     /** @return array<string, array<string, string>> */
     private function answerLabels(SurveyResponse $response): array
     {
@@ -164,6 +198,11 @@ class SurveyResponseController extends Controller
                 $key = $question['id'];
                 if (in_array($key, ['sex', 'respondent_group', 'answering_for'], true)) {
                     $labels[$key] = $this->optionLabels($question['options'] ?? []);
+                }
+                // Directory-backed groups have no options of their own; name
+                // them from the directory, inactive ones included.
+                if (($question['type'] ?? null) === 'directory_respondent_group') {
+                    $labels['respondent_group'] = SurveyRespondentGroup::query()->pluck('label', 'value')->all();
                 }
                 if (($question['type'] ?? null) === 'multi_select') {
                     $labels['selections'][$key] = [

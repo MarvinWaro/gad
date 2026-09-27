@@ -184,6 +184,7 @@ test('a default answer can still be changed by the respondent', function () {
     $hei = SurveyHei::query()->sole();
 
     $this->post(route('surveys.responses.store', $survey), [
+        ...respondentFollowUps(),
         'version_id' => $version->id,
         'age' => 30,
         'sex' => 'male',
@@ -273,6 +274,7 @@ test('a question locked with no default to lock to blocks publication', function
 function lockedPayload(Survey $survey, string $sex): array
 {
     return [
+        ...respondentFollowUps(),
         'version_id' => $survey->refresh()->publishedVersion()->id,
         'age' => 28,
         'sex' => $sex,

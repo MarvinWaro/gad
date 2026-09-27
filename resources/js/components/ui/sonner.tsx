@@ -15,16 +15,20 @@ function Toaster({ ...props }: ToasterProps) {
             richColors
             style={
                 {
+                    // Sonner sets its own system font stack; use the app's.
+                    fontFamily: 'inherit',
+                    '--border-radius': '10px',
                     '--normal-bg': 'var(--popover)',
                     '--normal-text': 'var(--popover-foreground)',
                     '--normal-border': 'var(--border)',
-                    // Only refusals and failures stand out, in the destructive red.
-                    '--error-bg': 'var(--destructive)',
-                    '--error-text': 'var(--on-signature)',
-                    '--error-border': 'var(--destructive)',
-                    '--success-bg': 'var(--popover)',
-                    '--success-text': 'var(--popover-foreground)',
-                    '--success-border': 'var(--border)',
+                    // Green when something went through; red when it failed
+                    // or something was deleted (see lib/toast).
+                    '--success-bg': 'var(--toast-success-bg)',
+                    '--success-text': 'var(--toast-success-text)',
+                    '--success-border': 'var(--toast-success-border)',
+                    '--error-bg': 'var(--toast-error-bg)',
+                    '--error-text': 'var(--toast-error-text)',
+                    '--error-border': 'var(--toast-error-border)',
                     '--info-bg': 'var(--popover)',
                     '--info-text': 'var(--popover-foreground)',
                     '--info-border': 'var(--border)',

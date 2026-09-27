@@ -15,9 +15,97 @@ const layouts: Record<number, string> = {
     2: 'grid-cols-2 aspect-[2/1]',
     3: 'grid-cols-2 grid-rows-2 aspect-[16/10]',
     4: 'grid-cols-2 grid-rows-2 aspect-[16/10]',
+    // Five or more: two photos over three, the last showing "+N".
+    5: 'grid-cols-6 grid-rows-2 aspect-[4/3]',
 };
 
-/** Up to four photos in a fixed-ratio grid (no layout shift), with a viewer. */
+/** Tiles shown before the rest collapse into the "+N" tile. */
+const MOSAIC_TILES = 5;
+
+export type MosaicImage = { key: string | number; url: string; alt: string };
+
+/**
+ * Photos in a fixed-ratio grid (no layout shift). Up to four fill the grid;
+ * five or more show two over three, and the fifth tile counts the rest.
+ * Shared by the feed and the composer preview so both look the same.
+ */
+export function PhotoMosaic({
+    images,
+    onSelect,
+    className,
+}: {
+    images: MosaicImage[];
+    onSelect?: (index: number) => void;
+    className?: string;
+}) {
+    if (images.length === 0) {
+        return null;
+    }
+
+    const shown = images.slice(0, MOSAIC_TILES);
+    const hidden = images.length - shown.length;
+    const layout = layouts[Math.min(images.length, MOSAIC_TILES)];
+
+    return (
+        <div
+            className={cn(
+                'grid gap-1 overflow-hidden rounded-[10px] bg-muted',
+                layout,
+                className,
+            )}
+        >
+            {shown.map((image, index) => {
+                const isLast = index === shown.length - 1 && hidden > 0;
+                const tileClass = cn(
+                    'group relative min-h-0 overflow-hidden',
+                    images.length === 3 && index === 0 && 'row-span-2',
+                    images.length >= MOSAIC_TILES &&
+                        (index < 2 ? 'col-span-3' : 'col-span-2'),
+                );
+                const content = (
+                    <>
+                        <img
+                            src={image.url}
+                            alt={image.alt}
+                            loading="lazy"
+                            decoding="async"
+                            className="size-full object-cover transition-transform duration-200 ease-out group-hover:scale-[1.015]"
+                        />
+                        {isLast && (
+                            <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-2xl font-medium text-white tabular-nums">
+                                +{hidden}
+                                <span className="sr-only">
+                                    {' '}
+                                    more {hidden === 1 ? 'photo' : 'photos'}
+                                </span>
+                            </span>
+                        )}
+                    </>
+                );
+
+                return onSelect ? (
+                    <button
+                        key={image.key}
+                        type="button"
+                        onClick={() => onSelect(index)}
+                        className={cn(
+                            tileClass,
+                            'outline-none focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:ring-inset',
+                        )}
+                    >
+                        {content}
+                    </button>
+                ) : (
+                    <div key={image.key} className={tileClass}>
+                        {content}
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
+/** A post's photos as a mosaic, opening a viewer that steps through all. */
 export function PostImages({
     images,
     sharedBy,
@@ -31,7 +119,6 @@ export function PostImages({
         return null;
     }
 
-    const count = Math.min(images.length, 4);
     const altFor = (index: number) =>
         `Photo ${index + 1} of ${images.length} shared by ${sharedBy}`;
 
@@ -53,32 +140,14 @@ export function PostImages({
 
     return (
         <>
-            <div
-                className={cn(
-                    'grid gap-1 overflow-hidden rounded-[10px] bg-muted',
-                    layouts[count],
-                )}
-            >
-                {images.slice(0, 4).map((image, index) => (
-                    <button
-                        key={image.id}
-                        type="button"
-                        onClick={() => setOpen(index)}
-                        className={cn(
-                            'group relative min-h-0 overflow-hidden outline-none focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:ring-inset',
-                            count === 3 && index === 0 && 'row-span-2',
-                        )}
-                    >
-                        <img
-                            src={image.url}
-                            alt={altFor(index)}
-                            loading="lazy"
-                            decoding="async"
-                            className="size-full object-cover transition-transform duration-200 ease-out group-hover:scale-[1.015]"
-                        />
-                    </button>
-                ))}
-            </div>
+            <PhotoMosaic
+                images={images.map((image, index) => ({
+                    key: image.id,
+                    url: image.url,
+                    alt: altFor(index),
+                }))}
+                onSelect={setOpen}
+            />
 
             <Dialog
                 open={open !== null}

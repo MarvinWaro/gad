@@ -1,6 +1,8 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { Building2, Plus, Trash2 } from 'lucide-react';
 import { FormEvent, useState } from 'react';
+import { ConfirmPopover } from '@/components/confirm-popover';
+import type { ConfirmVisit } from '@/components/confirm-popover';
 import Heading from '@/components/heading';
 import { IconAction } from '@/components/icon-action';
 import InputError from '@/components/input-error';
@@ -98,47 +100,63 @@ export default function Clusters({
                                         </td>
                                         <td className="px-5 py-4">
                                             <div className="flex justify-end gap-1">
-                                                {permissions.update && (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() =>
-                                                            router.put(
-                                                                `/settings/survey-directories/clusters/${cluster.id}`,
-                                                                {
-                                                                    name: cluster.name,
-                                                                    is_active:
-                                                                        !cluster.is_active,
-                                                                },
-                                                                {
-                                                                    preserveScroll: true,
-                                                                },
-                                                            )
-                                                        }
-                                                    >
-                                                        {cluster.is_active
-                                                            ? 'Deactivate'
-                                                            : 'Activate'}
-                                                    </Button>
-                                                )}
+                                                {permissions.update &&
+                                                    (cluster.is_active ? (
+                                                        <ConfirmPopover
+                                                            title={`Deactivate ${cluster.name}?`}
+                                                            description="It will be hidden from the public surveys. Its institutions and responses are kept, and you can activate it again anytime."
+                                                            confirmLabel="Deactivate"
+                                                            onConfirm={(
+                                                                visit,
+                                                            ) =>
+                                                                toggleActive(
+                                                                    cluster,
+                                                                    visit,
+                                                                )
+                                                            }
+                                                        >
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                            >
+                                                                Deactivate
+                                                            </Button>
+                                                        </ConfirmPopover>
+                                                    ) : (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() =>
+                                                                toggleActive(
+                                                                    cluster,
+                                                                )
+                                                            }
+                                                        >
+                                                            Activate
+                                                        </Button>
+                                                    ))}
                                                 {permissions.delete && (
-                                                    <IconAction
-                                                        label="Delete this cluster"
-                                                        className="text-muted-foreground hover:text-destructive"
-                                                        onClick={() =>
-                                                            confirm(
-                                                                `Delete ${cluster.name}? Clusters with institutions cannot be deleted — deactivate them instead.`,
-                                                            ) &&
+                                                    <ConfirmPopover
+                                                        title={`Delete ${cluster.name}?`}
+                                                        description="Clusters with institutions cannot be deleted. Deactivate them instead."
+                                                        confirmLabel="Delete"
+                                                        onConfirm={(visit) =>
                                                             router.delete(
                                                                 `/settings/survey-directories/clusters/${cluster.id}`,
                                                                 {
                                                                     preserveScroll: true,
+                                                                    ...visit,
                                                                 },
                                                             )
                                                         }
                                                     >
-                                                        <Trash2 />
-                                                    </IconAction>
+                                                        <IconAction
+                                                            label="Delete this cluster"
+                                                            className="text-muted-foreground hover:text-destructive"
+                                                        >
+                                                            <Trash2 />
+                                                        </IconAction>
+                                                    </ConfirmPopover>
                                                 )}
                                             </div>
                                         </td>
@@ -150,6 +168,14 @@ export default function Clusters({
                 </div>
             </div>
         </>
+    );
+}
+
+function toggleActive(cluster: Cluster, visit?: ConfirmVisit) {
+    router.put(
+        `/settings/survey-directories/clusters/${cluster.id}`,
+        { name: cluster.name, is_active: !cluster.is_active },
+        { preserveScroll: true, ...visit },
     );
 }
 

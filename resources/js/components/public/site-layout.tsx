@@ -12,11 +12,12 @@ import {
 } from '@/components/ui/sheet';
 import { dashboard, login, register } from '@/routes';
 
+// In the order the sections appear on the homepage.
 const navigation = [
     ['Home', '#home'],
-    ['Resources', '#resources'],
     ['Surveys', '#surveys'],
     ['Data & statistics', '#statistics'],
+    ['Resources', '#resources'],
     ['About', '#about'],
 ];
 
@@ -131,7 +132,7 @@ export function SiteHeader({
 
 export function SiteFooter({ homeUrl }: { homeUrl?: string }) {
     return (
-        <footer id="about" className="site-footer">
+        <footer className="site-footer">
             <div className="public-container">
                 <div className="footer-grid">
                     <div className="footer-brand">

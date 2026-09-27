@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\ProfileAvatarController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\RoleManagementController;
 use App\Http\Controllers\Settings\SecurityController;
@@ -13,6 +14,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('settings/profile/avatar', [ProfileAvatarController::class, 'update'])
+        ->middleware('throttle:10,1')
+        ->name('profile.avatar.update');
+    Route::delete('settings/profile/avatar', [ProfileAvatarController::class, 'destroy'])->name('profile.avatar.destroy');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -65,6 +70,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:survey-directories.view')->name('settings.clusters.index');
     Route::get('settings/heis', [SurveyDirectoryController::class, 'heis'])
         ->middleware('can:survey-directories.view')->name('settings.heis.index');
+    Route::put('settings/respondent-groups/{group}/follow-ups', [SurveyDirectoryController::class, 'updateFollowUps'])
+        ->middleware('can:survey-directories.update')->name('settings.respondent-groups.follow-ups');
     Route::post('settings/survey-directories/sync-heis', [SurveyDirectoryController::class, 'sync'])
         ->middleware('can:survey-directories.create')->name('settings.survey-directories.sync');
     Route::post('settings/survey-directories/{type}', [SurveyDirectoryController::class, 'store'])

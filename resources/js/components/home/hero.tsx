@@ -22,6 +22,9 @@ import { cn } from '@/lib/utils';
 
 const carouselInterval = 6000;
 
+/** Thumbnails beside the headline; further slides wait their turn. */
+const maxPreviews = 2;
+
 export function Hero({ slides }: { slides: HeroSlideRecord[] }) {
     const carouselRef = useRef<HTMLElement>(null);
     const [activeIndex, setActiveIndex] = useState(0);
@@ -30,8 +33,15 @@ export function Hero({ slides }: { slides: HeroSlideRecord[] }) {
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
     const [detailsOpen, setDetailsOpen] = useState(false);
     const activeSlide = slides[activeIndex];
+    // Up next: the slides after the active one, in rotation order. Autoplay
+    // still reaches every slide, so none is ever skipped.
     const previewSlides = useMemo(
-        () => slides.filter((_, index) => index !== activeIndex),
+        () =>
+            Array.from(
+                { length: Math.min(maxPreviews, slides.length - 1) },
+                (_, offset) =>
+                    slides[(activeIndex + offset + 1) % slides.length],
+            ),
         [activeIndex, slides],
     );
     const autoplayEnabled =

@@ -92,6 +92,7 @@ test('unchecking Required on a question really makes that answer optional', func
             ->where('survey.required.cluster', 'required'));
 
     $this->post(route('surveys.responses.store', $survey), [
+        ...respondentFollowUps(),
         'version_id' => $version->id,
         'age' => 24,
         'sex' => 'female',
@@ -114,6 +115,7 @@ test('a question left Required still has to be answered', function () {
 
     // HEI is optional now, but cluster was left Required.
     $this->post(route('surveys.responses.store', $survey), [
+        ...respondentFollowUps(),
         'version_id' => $version->id,
         'age' => 24,
         'sex' => 'female',
@@ -139,6 +141,7 @@ test('an optional answer that is supplied still has to be real and in scope', fu
     ]);
 
     $this->post(route('surveys.responses.store', $survey), [
+        ...respondentFollowUps(),
         'version_id' => $version->id,
         'age' => 24,
         'sex' => 'female',
@@ -160,6 +163,7 @@ test('an HEI cannot be submitted without the cluster that narrows it', function 
     $hei = SurveyHei::query()->sole();
 
     $this->post(route('surveys.responses.store', $survey), [
+        ...respondentFollowUps(),
         'version_id' => $version->id,
         'age' => 24,
         'sex' => 'female',
@@ -179,6 +183,7 @@ test('a response missing its optional institution still renders for reviewers', 
     $region = SurveyRegion::query()->sole();
     $cluster = SurveyCluster::query()->sole();
     $this->post(route('surveys.responses.store', $survey), [
+        ...respondentFollowUps(),
         'version_id' => $version->id, 'age' => 24, 'sex' => 'female',
         'respondent_group' => 'student', 'region_id' => $region->id,
         'cluster_id' => $cluster->id, 'experiences' => ['none'],
@@ -236,6 +241,7 @@ test('when the cluster is optional an empty region stays available', function ()
     // And the respondent can submit having picked only that region.
     $barmm = SurveyRegion::query()->where('name', 'BARMM B')->sole();
     $this->post(route('surveys.responses.store', $survey), [
+        ...respondentFollowUps(),
         'version_id' => $survey->publishedVersion()->id,
         'age' => 24, 'sex' => 'female', 'respondent_group' => 'student',
         'region_id' => $barmm->id, 'experiences' => ['none'],

@@ -47,7 +47,7 @@ test('a user with no activity is deleted with a confirmation', function () {
 
     $this->actingAs($this->admin)
         ->delete(route('settings.users.destroy', $member))
-        ->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Ana Dela Cruz deleted.']);
+        ->assertSessionHas('inertia.flash_data.toast', ['type' => 'deleted', 'message' => 'Ana Dela Cruz deleted.']);
 
     expect(User::query()->whereKey($member->id)->exists())->toBeFalse();
 });
@@ -112,7 +112,7 @@ test('an unused school is deleted with a confirmation', function () {
 
     $this->actingAs($this->admin)
         ->delete(route('settings.survey-directories.destroy', ['type' => 'heis', 'id' => $hei->id]))
-        ->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'ACLC College of Marbel deleted.']);
+        ->assertSessionHas('inertia.flash_data.toast', ['type' => 'deleted', 'message' => 'ACLC College of Marbel deleted.']);
 
     expect(SurveyHei::query()->whereKey($hei->id)->exists())->toBeFalse();
 });

@@ -1,6 +1,8 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { Map, Plus } from 'lucide-react';
 import { FormEvent, useState } from 'react';
+import { ConfirmPopover } from '@/components/confirm-popover';
+import type { ConfirmVisit } from '@/components/confirm-popover';
 import Heading from '@/components/heading';
 import { IconAction } from '@/components/icon-action';
 import InputError from '@/components/input-error';
@@ -89,47 +91,63 @@ export default function Regions({
                                         </td>
                                         <td className="px-5 py-4">
                                             <div className="flex justify-end gap-1">
-                                                {permissions.update && (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() =>
-                                                            router.put(
-                                                                `/settings/survey-directories/regions/${region.id}`,
-                                                                {
-                                                                    name: region.name,
-                                                                    is_active:
-                                                                        !region.is_active,
-                                                                },
-                                                                {
-                                                                    preserveScroll: true,
-                                                                },
-                                                            )
-                                                        }
-                                                    >
-                                                        {region.is_active
-                                                            ? 'Deactivate'
-                                                            : 'Activate'}
-                                                    </Button>
-                                                )}
+                                                {permissions.update &&
+                                                    (region.is_active ? (
+                                                        <ConfirmPopover
+                                                            title={`Deactivate ${region.name}?`}
+                                                            description="It will be hidden from the public surveys. Its clusters and responses are kept, and you can activate it again anytime."
+                                                            confirmLabel="Deactivate"
+                                                            onConfirm={(
+                                                                visit,
+                                                            ) =>
+                                                                toggleActive(
+                                                                    region,
+                                                                    visit,
+                                                                )
+                                                            }
+                                                        >
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                            >
+                                                                Deactivate
+                                                            </Button>
+                                                        </ConfirmPopover>
+                                                    ) : (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() =>
+                                                                toggleActive(
+                                                                    region,
+                                                                )
+                                                            }
+                                                        >
+                                                            Activate
+                                                        </Button>
+                                                    ))}
                                                 {permissions.delete && (
-                                                    <IconAction
-                                                        label="Delete this region"
-                                                        className="text-muted-foreground hover:text-destructive"
-                                                        onClick={() =>
-                                                            confirm(
-                                                                `Delete ${region.name}? Regions with clusters cannot be deleted — deactivate them instead.`,
-                                                            ) &&
+                                                    <ConfirmPopover
+                                                        title={`Delete ${region.name}?`}
+                                                        description="Regions with clusters cannot be deleted. Deactivate them instead."
+                                                        confirmLabel="Delete"
+                                                        onConfirm={(visit) =>
                                                             router.delete(
                                                                 `/settings/survey-directories/regions/${region.id}`,
                                                                 {
                                                                     preserveScroll: true,
+                                                                    ...visit,
                                                                 },
                                                             )
                                                         }
                                                     >
-                                                        <Trash2 />
-                                                    </IconAction>
+                                                        <IconAction
+                                                            label="Delete this region"
+                                                            className="text-muted-foreground hover:text-destructive"
+                                                        >
+                                                            <Trash2 />
+                                                        </IconAction>
+                                                    </ConfirmPopover>
                                                 )}
                                             </div>
                                         </td>
@@ -141,6 +159,14 @@ export default function Regions({
                 </div>
             </div>
         </>
+    );
+}
+
+function toggleActive(region: Region, visit?: ConfirmVisit) {
+    router.put(
+        `/settings/survey-directories/regions/${region.id}`,
+        { name: region.name, is_active: !region.is_active },
+        { preserveScroll: true, ...visit },
     );
 }
 

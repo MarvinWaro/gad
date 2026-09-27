@@ -71,6 +71,7 @@ class SurveyController extends Controller
                 'introduction' => 'Describe the purpose of this survey.',
                 'privacy_notice' => 'Add the approved privacy notice before publication.',
                 'consent_text' => 'I consent to the processing of my responses for the stated purpose.',
+                'retention_days' => SurveyVersion::DEFAULT_RETENTION_DAYS,
                 'definition' => ['sections' => []],
             ]);
 
@@ -255,7 +256,7 @@ class SurveyController extends Controller
         $survey->delete();
 
         Inertia::flash('toast', [
-            'type' => 'success',
+            'type' => 'deleted',
             'message' => __(':code was deleted.', ['code' => $code]),
         ]);
 

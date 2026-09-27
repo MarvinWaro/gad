@@ -128,6 +128,14 @@
     --callout-foreground: #181d26;
     --signature-mustard: #d9a441;
     --on-signature: #ffffff;
+    /* Toasts: a deep tinted surface with bright text, green when something
+       went through and red when it failed or was deleted. */
+    --toast-success-bg: #052912;
+    --toast-success-border: #0e4222;
+    --toast-success-text: #86efac;
+    --toast-error-bg: #3b0a10;
+    --toast-error-border: #5e111b;
+    --toast-error-text: #ffb3b8;
 }
 
 .dark {
@@ -179,25 +187,35 @@
     --callout-foreground: oklch(0.95 0.012 350);
     --signature-mustard: #d9a441;
     --on-signature: #ffffff;
+    /* Lighter edges keep the deep toasts apart from the dark page. */
+    --toast-success-bg: #0a2a16;
+    --toast-success-border: #1d5a34;
+    --toast-success-text: #86efac;
+    --toast-error-bg: #340b11;
+    --toast-error-border: #6e1a25;
+    --toast-error-text: #ffb3b8;
 }
 
-/* A faint halftone dot grid fading in from the top-right (and softly from the
-   bottom-left) of a surface's first screen. Pure CSS: one layer, painted
-   once, no images or scripts. `isolation` lets the dots sit above the
-   surface's own background and below its content. The surface must start at
-   the top of the page or be positioned (the admin inset card is). */
+/* A faint halftone dot grid in the top-right (and softly the bottom-left)
+   corners of the window, staying put while the page scrolls. Pure CSS: one
+   screen-sized layer, painted once and moved by the compositor, no images or
+   scripts. It is sticky rather than fixed so it never leaves its surface
+   (the admin card keeps its frame clean), and its negative margin means it
+   takes no space. `isolation` puts the dots above the surface's own
+   background and below its content. Put it on a block or a top-aligned
+   flex column: the dots are the surface's first child. */
 @utility dot-backdrop {
     isolation: isolate;
 
     &::before {
         content: '';
-        position: absolute;
+        position: sticky;
         top: 0;
-        right: 0;
-        left: 0;
         z-index: -1;
+        display: block;
+        align-self: stretch;
         height: 100svh;
-        max-height: 100%;
+        margin-bottom: -100svh;
         border-radius: inherit;
         pointer-events: none;
         background-image: radial-gradient(

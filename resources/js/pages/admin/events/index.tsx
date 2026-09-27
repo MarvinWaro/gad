@@ -11,6 +11,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { EventCategoryLabel } from '@/components/hei/event-category';
 import InputError from '@/components/input-error';
+import { ConfirmPopover } from '@/components/confirm-popover';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -538,41 +539,23 @@ function EventDialog({
 }
 
 function DeleteEventDialog({ event }: { event: AdminEvent }) {
-    const [open, setOpen] = useState(false);
-
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                    <Trash2 />
-                    <span className="sr-only">Delete {event.title}</span>
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Delete this event?</DialogTitle>
-                    <DialogDescription>
-                        “{event.title}” will be removed from every HEI calendar.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setOpen(false)}>
-                        Keep event
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        onClick={() =>
-                            router.delete(`/admin/events/${event.id}`, {
-                                preserveScroll: true,
-                                onSuccess: () => setOpen(false),
-                            })
-                        }
-                    >
-                        Delete event
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <ConfirmPopover
+            title="Delete this event?"
+            description={`“${event.title}” will be removed from every HEI calendar.`}
+            confirmLabel="Delete event"
+            onConfirm={(visit) =>
+                router.delete(`/admin/events/${event.id}`, {
+                    preserveScroll: true,
+                    ...visit,
+                })
+            }
+        >
+            <Button variant="ghost" size="icon">
+                <Trash2 />
+                <span className="sr-only">Delete {event.title}</span>
+            </Button>
+        </ConfirmPopover>
     );
 }
 

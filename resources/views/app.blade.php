@@ -36,8 +36,19 @@
 
         @fonts
 
+        {{-- The public pages import public.css from JavaScript. A build links
+             it from the page's chunk, but the dev server only injects it once
+             that JavaScript runs, so the server-rendered page would flash
+             unstyled. While developing, link it up front. --}}
+        @php
+            $publicCss = \Illuminate\Support\Facades\Vite::isRunningHot()
+                && in_array($page['component'], ['welcome', 'surveys/show'], true)
+                ? ['resources/css/public.css']
+                : [];
+        @endphp
+
         @viteReactRefresh
-        @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
+        @vite(['resources/css/app.css', ...$publicCss, 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
             <title>{{ config('app.name', 'Laravel') }}</title>
         </x-inertia::head>

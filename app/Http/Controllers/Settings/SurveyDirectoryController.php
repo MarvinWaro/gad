@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\PortalHeiSync;
 use App\Support\CountPhrase;
 use App\Support\InstitutionName;
+use App\Support\RespondentFollowUps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -75,7 +76,19 @@ class SurveyDirectoryController extends Controller
     public function respondentGroups(Request $request): Response
     {
         return Inertia::render('settings/respondent-groups', [
-            'respondentGroups' => SurveyRespondentGroup::query()->ordered()->get(),
+            'respondentGroups' => SurveyRespondentGroup::query()
+                ->ordered()
+                ->with('followUpQuestions.activeOptions')
+                ->get()
+                ->map(fn (SurveyRespondentGroup $group): array => [
+                    'id' => $group->id,
+                    'value' => $group->value,
+                    'label' => $group->label,
+                    'requires_text' => $group->requires_text,
+                    'is_active' => $group->is_active,
+                    'sort_order' => $group->sort_order,
+                    'follow_ups' => $group->followUps(),
+                ]),
             'permissions' => [
                 'create' => $request->user()->can('survey-directories.create'),
                 'update' => $request->user()->can('survey-directories.update'),
@@ -184,6 +197,29 @@ class SurveyDirectoryController extends Controller
         return back();
     }
 
+    /**
+     * Save the questions a respondent group asks right after it is picked.
+     * Each question keeps its answer key and each choice its value, so the
+     * answers already collected keep their meaning.
+     */
+    public function updateFollowUps(Request $request, SurveyRespondentGroup $group): RedirectResponse
+    {
+        $validated = $request->validate(
+            RespondentFollowUps::definitionRules(),
+            [],
+            RespondentFollowUps::definitionAttributes(),
+        );
+
+        RespondentFollowUps::sync($group, $validated['follow_ups']);
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => __('Follow-up questions for :name saved.', ['name' => $group->label]),
+        ]);
+
+        return back();
+    }
+
     public function update(Request $request, string $type, int $id): RedirectResponse
     {
         $record = $this->modelFor($type)->newQuery()->findOrFail($id);
@@ -278,7 +314,7 @@ class SurveyDirectoryController extends Controller
         }
 
         Inertia::flash('toast', [
-            'type' => 'success',
+            'type' => 'deleted',
             'message' => __(':name deleted.', ['name' => $record instanceof SurveyHei ? InstitutionName::display($name) : $name]),
         ]);
 

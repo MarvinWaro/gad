@@ -26,6 +26,12 @@ use Illuminate\Support\Carbon;
 ])]
 class SurveyVersion extends Model
 {
+    /**
+     * How long a response is kept before it is deleted automatically, unless
+     * the draft says otherwise: 5 years, to cover several reporting cycles.
+     */
+    public const DEFAULT_RETENTION_DAYS = 1825;
+
     protected function casts(): array
     {
         return [

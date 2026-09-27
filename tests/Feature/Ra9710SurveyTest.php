@@ -39,6 +39,7 @@ function publishRa9710(): void
 function ra9710Payload(array $overrides = []): array
 {
     return [...[
+        ...respondentFollowUps(),
         'version_id' => test()->survey->refresh()->publishedVersion()->id,
         'age' => 26,
         'sex' => 'female',

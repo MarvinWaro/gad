@@ -1,6 +1,7 @@
 import { useEffect, useRef, type MouseEvent } from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import { Hero, QuickAccess } from '@/components/home/hero';
+import { About } from '@/components/home/about';
 import {
     Feedback,
     Resources,
@@ -123,6 +124,7 @@ export default function Welcome({
                 <Statistics datasets={datasets} />
                 <Stories stories={stories} />
                 <Resources resources={resources} />
+                <About />
                 <Feedback />
             </main>
             <SiteFooter />

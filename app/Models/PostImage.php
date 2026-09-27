@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int $id
- * @property int $post_id
+ * @property string $post_id
  * @property string $path
  * @property int $sort_order
  */

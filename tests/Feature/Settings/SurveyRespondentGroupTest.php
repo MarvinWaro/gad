@@ -39,6 +39,7 @@ function publishBaseSurvey(): void
 function groupPayload(string $group): array
 {
     return [
+        ...respondentFollowUps(),
         'version_id' => test()->survey->refresh()->publishedVersion()->id,
         'age' => 24, 'sex' => 'female', 'respondent_group' => $group,
         'region_id' => test()->region->id, 'cluster_id' => test()->cluster->id,

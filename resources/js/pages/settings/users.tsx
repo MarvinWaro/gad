@@ -16,6 +16,8 @@ import type { HeiOption } from '@/components/hei-combobox';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmPopover } from '@/components/confirm-popover';
+import type { ConfirmVisit } from '@/components/confirm-popover';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -407,16 +409,13 @@ export default function Users({
 function changeStatus(
     user: ManagedUser,
     status: UserStatus,
-    onDone?: () => void,
+    visit?: ConfirmVisit,
 ) {
     router.patch(
         `/settings/users/${user.id}/status`,
         { status },
-        {
-            preserveScroll: true,
-            // A refusal comes back as a red toast from the server.
-            onFinish: () => onDone?.(),
-        },
+        // A refusal comes back as a red toast from the server.
+        { preserveScroll: true, ...visit },
     );
 }
 
@@ -453,39 +452,18 @@ function StatusAction({ user }: { user: ManagedUser }) {
 }
 
 function DeactivateUserDialog({ user }: { user: ManagedUser }) {
-    const [open, setOpen] = useState(false);
-
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" title="Deactivate">
-                    <UserX />
-                    <span className="sr-only">Deactivate {user.name}</span>
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Deactivate account?</DialogTitle>
-                    <DialogDescription>
-                        {user.name} will be signed out and cannot log in until
-                        the account is reactivated. Their data is kept.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setOpen(false)}>
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        onClick={() =>
-                            changeStatus(user, 'inactive', () => setOpen(false))
-                        }
-                    >
-                        Deactivate
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <ConfirmPopover
+            title={`Deactivate ${user.name}?`}
+            description="They will be signed out and cannot log in until the account is reactivated. Their data is kept."
+            confirmLabel="Deactivate"
+            onConfirm={(visit) => changeStatus(user, 'inactive', visit)}
+        >
+            <Button variant="ghost" size="icon" title="Deactivate">
+                <UserX />
+                <span className="sr-only">Deactivate {user.name}</span>
+            </Button>
+        </ConfirmPopover>
     );
 }
 
@@ -733,44 +711,23 @@ function UserDialog({
 }
 
 function DeleteUserDialog({ user }: { user: ManagedUser }) {
-    const [open, setOpen] = useState(false);
-
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                    <Trash2 />
-                    <span className="sr-only">Delete {user.name}</span>
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Delete user?</DialogTitle>
-                    <DialogDescription>
-                        {user.name} will lose access immediately. This action
-                        cannot be undone. Accounts with posts or comments
-                        can&apos;t be deleted; deactivate them instead to keep
-                        their school&apos;s record.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setOpen(false)}>
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        onClick={() =>
-                            router.delete(`/settings/users/${user.id}`, {
-                                preserveScroll: true,
-                                onSuccess: () => setOpen(false),
-                            })
-                        }
-                    >
-                        Delete user
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <ConfirmPopover
+            title={`Delete ${user.name}?`}
+            description="They lose access immediately and this cannot be undone. Accounts with posts or comments can't be deleted; deactivate them instead to keep their school's record."
+            confirmLabel="Delete user"
+            onConfirm={(visit) =>
+                router.delete(`/settings/users/${user.id}`, {
+                    preserveScroll: true,
+                    ...visit,
+                })
+            }
+        >
+            <Button variant="ghost" size="icon">
+                <Trash2 />
+                <span className="sr-only">Delete {user.name}</span>
+            </Button>
+        </ConfirmPopover>
     );
 }
 

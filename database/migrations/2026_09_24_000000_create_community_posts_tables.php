@@ -9,7 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('posts', function (Blueprint $table) {
-            $table->id();
+            // A ULID, not a counter: post links are shared, and a sequential
+            // id would reveal how many posts exist and invite guessing others.
+            $table->ulid('id')->primary();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             // The author's institution when they posted, so a post keeps its
             // HEI even if the account later moves. Null for CHED staff.
@@ -21,14 +23,14 @@ return new class extends Migration
 
         Schema::create('post_images', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('post_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('post_id')->constrained()->cascadeOnDelete();
             $table->string('path');
             $table->unsignedTinyInteger('sort_order')->default(0);
             $table->timestamps();
         });
 
         Schema::create('post_likes', function (Blueprint $table) {
-            $table->foreignId('post_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('post_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
             $table->primary(['post_id', 'user_id']);
@@ -36,7 +38,7 @@ return new class extends Migration
 
         Schema::create('post_comments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('post_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('post_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->text('body');
             $table->timestamps();

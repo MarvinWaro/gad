@@ -1,43 +1,41 @@
-import { router, useForm, useHttp } from '@inertiajs/react';
-import {
-    Heart,
-    MessageCircle,
-    MoreHorizontal,
-    Pencil,
-    Trash2,
-} from 'lucide-react';
+import { router, useForm, useHttp, usePage } from '@inertiajs/react';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { toast } from 'sonner';
-import { PostComments } from '@/components/hei/post-comments';
+import { toast } from '@/lib/toast';
+import { PostDialog } from '@/components/hei/post-dialog';
 import { PostImages } from '@/components/hei/post-images';
-import { SourceAvatar } from '@/components/hei/source-avatar';
-import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+    PostActions,
+    PostByline,
+    SharedPostEmbed,
+    sourceOf,
+} from '@/components/hei/post-parts';
+import type { LikeState } from '@/components/hei/post-parts';
+import { SharePostDialog } from '@/components/hei/post-share-dialog';
+import InputError from '@/components/input-error';
+import { ConfirmPopover } from '@/components/confirm-popover';
+import type { ConfirmVisit } from '@/components/confirm-popover';
+import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { formatFull, formatRelative } from '@/lib/relative-time';
 import { cn } from '@/lib/utils';
-import type { Post } from '@/types';
+import type { Post, PostComment } from '@/types';
 
-const CHED_LABEL = 'CHED Regional Office XII';
-
-type LikeState = { liked: boolean; likes_count: number };
-
-export function PostCard({ post }: { post: Post }) {
-    const source = post.hei?.display_name ?? CHED_LABEL;
+export function PostCard({
+    post,
+    openOnArrival = false,
+}: {
+    post: Post;
+    /** Open the post modal right away, as its own page does. */
+    openOnArrival?: boolean;
+}) {
+    const { auth } = usePage().props;
+    const source = sourceOf(post);
 
     // Server data wins whenever the feed reloads; local state covers the
     // likes and comments made since.
@@ -46,22 +44,27 @@ export function PostCard({ post }: { post: Post }) {
         liked: post.liked,
         likes_count: post.likes_count,
     });
+    const [thread, setThread] = useState(post.comments);
     const [commentsCount, setCommentsCount] = useState(post.comments_count);
-    const [revision, setRevision] = useState(0);
 
     if (synced !== post) {
         setSynced(post);
         setLike({ liked: post.liked, likes_count: post.likes_count });
+        setThread(post.comments);
         setCommentsCount(post.comments_count);
-        setRevision((value) => value + 1);
     }
 
     const [editing, setEditing] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
+    // Set when "Delete post" is picked. The confirmation opens only once the
+    // menu has closed, so the closing menu cannot pull focus away from it.
+    const deleteChosen = useRef(false);
     const [expanded, setExpanded] = useState(false);
     const [clamped, setClamped] = useState(false);
+    const [commentsOpen, setCommentsOpen] = useState(openOnArrival);
+    const [shareOpen, setShareOpen] = useState(false);
     const bodyRef = useRef<HTMLParagraphElement>(null);
-    const commentInput = useRef<HTMLInputElement>(null);
+    const composerRef = useRef<HTMLTextAreaElement>(null);
     const likeRequest = useHttp<Record<string, never>, LikeState>({});
     const edit = useForm({ body: post.body ?? '' });
 
@@ -108,12 +111,65 @@ export function PostCard({ post }: { post: Post }) {
         });
     }
 
-    function deletePost() {
+    function deletePost(visit: ConfirmVisit) {
         router.delete(`/posts/${post.id}`, {
             preserveScroll: true,
             reset: ['posts'],
-            onFinish: () => setConfirmDelete(false),
+            ...visit,
         });
+    }
+
+    // A new comment starts a thread; a reply joins its thread's replies.
+    function addComment(comment: PostComment, count: number) {
+        setThread((current) =>
+            comment.parent_id === null
+                ? [...current, comment]
+                : current.map((thread) =>
+                      thread.id === comment.parent_id
+                          ? { ...thread, replies: [...thread.replies, comment] }
+                          : thread,
+                  ),
+        );
+        setCommentsCount(count);
+    }
+
+    // Removing a comment takes its replies with it (the server does too).
+    function removeComment(commentId: number, count: number) {
+        setThread((current) =>
+            current
+                .filter((thread) => thread.id !== commentId)
+                .map((thread) =>
+                    thread.replies.some((reply) => reply.id === commentId)
+                        ? {
+                              ...thread,
+                              replies: thread.replies.filter(
+                                  (reply) => reply.id !== commentId,
+                              ),
+                          }
+                        : thread,
+                ),
+        );
+        setCommentsCount(count);
+    }
+
+    function actions(onComment: () => void) {
+        return (
+            <PostActions
+                like={like}
+                onToggleLike={toggleLike}
+                commentsCount={commentsCount}
+                onComment={onComment}
+                sharesCount={post.shares_count}
+                share={{
+                    postId: post.id,
+                    title: `${source} on PHLGADIS`,
+                    text:
+                        post.body?.slice(0, 140) ??
+                        `A post from ${source} in the Region XII community.`,
+                    onShareToFeed: () => setShareOpen(true),
+                }}
+            />
+        );
     }
 
     return (
@@ -121,76 +177,83 @@ export function PostCard({ post }: { post: Post }) {
             aria-labelledby={`post-${post.id}-source`}
             className="overflow-hidden rounded-[10px] border bg-card"
         >
-            <header className="flex items-start gap-3 px-4 pt-4 sm:px-5">
-                <SourceAvatar name={source} official={!post.hei} />
-                <div className="min-w-0 flex-1">
-                    <p
-                        id={`post-${post.id}-source`}
-                        className="truncate text-sm font-medium"
-                    >
-                        {source}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                        {post.author.name}
-                        {post.author.deactivated && (
-                            <>
-                                <span aria-hidden> · </span>
-                                <span className="italic">
-                                    Deactivated account
-                                </span>
-                            </>
-                        )}
-                        <span aria-hidden> · </span>
-                        <time
-                            dateTime={post.created_at ?? undefined}
-                            title={formatFull(post.created_at)}
-                        >
-                            {formatRelative(post.created_at)}
-                        </time>
-                        {post.edited && (
-                            <>
-                                <span aria-hidden> · </span>Edited
-                            </>
-                        )}
-                    </p>
-                </div>
-                {(post.can_edit || post.can_delete) && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="-mt-1 -mr-2 size-8 rounded-full text-muted-foreground"
+            <header className="px-4 pt-4 sm:px-5">
+                <PostByline
+                    post={post}
+                    edited={post.edited}
+                    action={post.shared_post ? 'shared a post' : undefined}
+                    titleId={`post-${post.id}-source`}
+                >
+                    {(post.can_edit || post.can_delete) && (
+                        <DropdownMenu>
+                            {/* "Delete post" in the menu opens this, pointing
+                                at the options button. */}
+                            <ConfirmPopover
+                                title="Delete this post?"
+                                description="The post, its photos, likes, comments, and shares will be removed for everyone. This cannot be undone."
+                                confirmLabel="Delete post"
+                                open={confirmDelete}
+                                onOpenChange={setConfirmDelete}
+                                anchorOnly
+                                onConfirm={deletePost}
                             >
-                                <MoreHorizontal />
-                                <span className="sr-only">Post options</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                            {post.can_edit && (
-                                <DropdownMenuItem
-                                    onSelect={() => {
-                                        edit.setData('body', post.body ?? '');
-                                        edit.clearErrors();
-                                        setEditing(true);
-                                    }}
-                                >
-                                    <Pencil />
-                                    Edit post
-                                </DropdownMenuItem>
-                            )}
-                            {post.can_delete && (
-                                <DropdownMenuItem
-                                    onSelect={() => setConfirmDelete(true)}
-                                    className="text-destructive focus:text-destructive [&_svg]:!text-destructive"
-                                >
-                                    <Trash2 />
-                                    Delete post
-                                </DropdownMenuItem>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="-mt-1 -mr-2 size-8 rounded-full text-muted-foreground"
+                                    >
+                                        <MoreHorizontal />
+                                        <span className="sr-only">
+                                            Post options
+                                        </span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                            </ConfirmPopover>
+                            <DropdownMenuContent
+                                align="end"
+                                className="w-40"
+                                onCloseAutoFocus={(event) => {
+                                    // The menu has closed: open the delete
+                                    // confirmation now, and let it take focus
+                                    // instead of the options button.
+                                    if (deleteChosen.current) {
+                                        event.preventDefault();
+                                        deleteChosen.current = false;
+                                        setConfirmDelete(true);
+                                    }
+                                }}
+                            >
+                                {post.can_edit && (
+                                    <DropdownMenuItem
+                                        onSelect={() => {
+                                            edit.setData(
+                                                'body',
+                                                post.body ?? '',
+                                            );
+                                            edit.clearErrors();
+                                            setEditing(true);
+                                        }}
+                                    >
+                                        <Pencil />
+                                        Edit post
+                                    </DropdownMenuItem>
+                                )}
+                                {post.can_delete && (
+                                    <DropdownMenuItem
+                                        onSelect={() => {
+                                            deleteChosen.current = true;
+                                        }}
+                                        className="text-destructive focus:text-destructive [&_svg]:!text-destructive"
+                                    >
+                                        <Trash2 />
+                                        Delete post
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                </PostByline>
             </header>
 
             {editing ? (
@@ -260,79 +323,30 @@ export function PostCard({ post }: { post: Post }) {
                 </div>
             )}
 
-            <div className="mt-3 flex items-center gap-1 border-t px-2 py-1.5 sm:px-3">
-                <button
-                    type="button"
-                    onClick={toggleLike}
-                    aria-pressed={like.liked}
-                    className={cn(
-                        'inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm tabular-nums transition-colors duration-150 outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50',
-                        like.liked
-                            ? 'text-signature-red'
-                            : 'text-muted-foreground hover:text-foreground',
-                    )}
-                >
-                    <Heart
-                        aria-hidden
-                        className={cn(
-                            'size-4 transition-transform duration-200 ease-out',
-                            like.liked && 'scale-110 fill-current',
-                        )}
-                    />
-                    <span>
-                        {like.likes_count > 0 ? like.likes_count : 'Like'}
-                    </span>
-                    <span className="sr-only">
-                        {like.likes_count > 0 &&
-                            (like.likes_count === 1 ? ' like' : ' likes')}
-                        {like.liked ? ', you liked this' : ''}
-                    </span>
-                </button>
-                <button
-                    type="button"
-                    onClick={() => commentInput.current?.focus()}
-                    className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm text-muted-foreground tabular-nums transition-colors duration-150 outline-none hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                >
-                    <MessageCircle aria-hidden className="size-4" />
-                    {commentsCount > 0 ? commentsCount : 'Comment'}
-                    <span className="sr-only">
-                        {commentsCount > 0 &&
-                            (commentsCount === 1 ? ' comment' : ' comments')}
-                    </span>
-                </button>
-            </div>
+            {post.shared_post && (
+                <div className="px-4 pt-3 sm:px-5">
+                    <SharedPostEmbed post={post.shared_post} />
+                </div>
+            )}
 
-            <PostComments
-                key={revision}
-                postId={post.id}
-                comments={post.comments}
-                commentsCount={commentsCount}
-                onCountChange={setCommentsCount}
-                inputRef={commentInput}
+            <div className="mt-3">{actions(() => setCommentsOpen(true))}</div>
+
+            <PostDialog
+                post={post}
+                open={commentsOpen}
+                onOpenChange={setCommentsOpen}
+                actions={actions(() => composerRef.current?.focus())}
+                comments={thread}
+                viewerName={auth.user.name}
+                composerRef={composerRef}
+                onCommentCreated={addComment}
+                onCommentRemoved={removeComment}
             />
-
-            <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Delete this post?</DialogTitle>
-                        <DialogDescription>
-                            The post, its photos, likes, and comments will be
-                            removed for everyone. This cannot be undone.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => setConfirmDelete(false)}
-                        >
-                            Keep post
-                        </Button>
-                        <Button variant="destructive" onClick={deletePost}>
-                            Delete post
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <SharePostDialog
+                post={post}
+                open={shareOpen}
+                onOpenChange={setShareOpen}
+            />
         </article>
     );
 }

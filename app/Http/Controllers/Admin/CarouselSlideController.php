@@ -106,7 +106,7 @@ class CarouselSlideController extends Controller
         Storage::disk('public')->delete($imagePath);
 
         Inertia::flash('toast', [
-            'type' => 'success',
+            'type' => 'deleted',
             'message' => __('Carousel slide deleted.'),
         ]);
 

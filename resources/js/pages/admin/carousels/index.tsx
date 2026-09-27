@@ -10,6 +10,7 @@ import {
 import { FormEvent, useState } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmPopover } from '@/components/confirm-popover';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -548,42 +549,23 @@ function SlideDialog({
 }
 
 function DeleteSlideDialog({ slide }: { slide: CarouselSlide }) {
-    const [open, setOpen] = useState(false);
-
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                    <Trash2 />
-                    <span className="sr-only">Delete {slide.title}</span>
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Delete carousel slide?</DialogTitle>
-                    <DialogDescription>
-                        “{slide.title}” and its uploaded image will be
-                        permanently removed.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setOpen(false)}>
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        onClick={() =>
-                            router.delete(`/admin/carousels/${slide.id}`, {
-                                preserveScroll: true,
-                                onSuccess: () => setOpen(false),
-                            })
-                        }
-                    >
-                        Delete slide
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <ConfirmPopover
+            title="Delete carousel slide?"
+            description={`“${slide.title}” and its uploaded image will be permanently removed.`}
+            confirmLabel="Delete slide"
+            onConfirm={(visit) =>
+                router.delete(`/admin/carousels/${slide.id}`, {
+                    preserveScroll: true,
+                    ...visit,
+                })
+            }
+        >
+            <Button variant="ghost" size="icon">
+                <Trash2 />
+                <span className="sr-only">Delete {slide.title}</span>
+            </Button>
+        </ConfirmPopover>
     );
 }
 

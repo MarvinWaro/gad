@@ -135,7 +135,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
 
                     <div className="ml-auto flex items-center space-x-2">
-                        <HeaderActions />
+                        <HeaderActions navigation="header" />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
@@ -145,8 +145,9 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 >
                                     <Avatar className="size-8 overflow-hidden rounded-full">
                                         <AvatarImage
-                                            src={auth.user?.avatar}
+                                            src={auth.user?.avatar ?? undefined}
                                             alt={auth.user?.name}
+                                            className="object-cover"
                                         />
                                         <AvatarFallback className="rounded-full bg-accent text-accent-foreground">
                                             {getInitials(auth.user?.name ?? '')}

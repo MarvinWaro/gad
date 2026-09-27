@@ -223,7 +223,7 @@ class UserManagementController extends Controller
         $user->delete();
 
         Inertia::flash('toast', [
-            'type' => 'success',
+            'type' => 'deleted',
             'message' => __(':name deleted.', ['name' => $user->name]),
         ]);
 

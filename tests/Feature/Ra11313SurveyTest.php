@@ -38,6 +38,7 @@ function publishRa11313(): void
 function ra11313Payload(array $overrides = []): array
 {
     return [...[
+        ...respondentFollowUps(),
         'version_id' => test()->survey->refresh()->publishedVersion()->id,
         'age' => 21,
         'sex' => 'female',
@@ -166,6 +167,7 @@ test('surveys without a check-all-that-apply question are unaffected', function 
         ->assertSessionHasNoErrors();
 
     $this->post(route('surveys.responses.store', $ra7877), [
+        ...respondentFollowUps(),
         'version_id' => $ra7877->refresh()->publishedVersion()->id,
         'age' => 33, 'sex' => 'male', 'respondent_group' => 'student',
         'region_id' => $this->region->id, 'cluster_id' => $this->cluster->id,

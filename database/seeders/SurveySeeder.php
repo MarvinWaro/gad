@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Survey;
 use App\Models\SurveyRegion;
+use App\Models\SurveyVersion;
 use App\Support\SurveyDefinitions;
 use Illuminate\Database\Seeder;
 
@@ -35,7 +36,7 @@ class SurveySeeder extends Seeder
                 'introduction' => 'This survey gathers anonymous information about experiences related to the Anti-Sexual Harassment Act of 1995. No name or email is collected.',
                 'privacy_notice' => 'CHED Regional Office XII collects age, sex, respondent group, Region, Cluster, HEI, selected experiences, perpetrator categories, and consent timestamps. These fields are used for statistical analysis and gender-responsive higher education programs. Only authorized administrators may access individual responses. You may request access to or deletion of your response using its reference code. Contact chedro12@ched.gov.ph for privacy concerns.',
                 'consent_text' => 'I have read the privacy notice and voluntarily consent to the collection and processing of my survey responses for the stated purpose.',
-                'retention_days' => null,
+                'retention_days' => SurveyVersion::DEFAULT_RETENTION_DAYS,
                 'definition' => SurveyDefinitions::factories()['ra-7877']::make(),
             ],
         );
@@ -51,7 +52,7 @@ class SurveySeeder extends Seeder
                 'introduction' => 'Share your lived experiences so CHED Regional Office XII can craft responsive policies, referral pathways, and protection programs for women and children within HEIs. No name or email is collected. If answering for a minor under your legal care, provide the minor\'s details and experiences.',
                 'privacy_notice' => 'CHED Regional Office XII collects whether you are answering for yourself or a minor under your legal care, the subject\'s age, sex, respondent group, Region, Cluster, HEI, selected experiences, perpetrator categories, specified-relative details, and consent timestamps. No name or email is collected. These responses are used for statistical analysis and gender-responsive higher education programs. Only authorized administrators may access individual responses. You may request access to or deletion of a response using its reference code. Contact chedro12@ched.gov.ph for privacy concerns.',
                 'consent_text' => 'I have read the privacy notice and voluntarily consent to the collection and processing of these responses for the stated purpose. If answering for a minor, I confirm that the minor is under my legal care.',
-                'retention_days' => $survey->publishedVersion()?->retention_days,
+                'retention_days' => $survey->publishedVersion()?->retention_days ?? SurveyVersion::DEFAULT_RETENTION_DAYS,
                 'definition' => SurveyDefinitions::factories()['ra-9262']::make(),
             ]);
         }
@@ -68,7 +69,7 @@ class SurveySeeder extends Seeder
                 'introduction' => 'Share how gender equality is practised in your institution so CHED Regional Office XII can strengthen protection, participation, and empowerment programmes for women learners and personnel. The Magna Carta of Women addresses discrimination against women, so this questionnaire is answered by women. No name or email is collected.',
                 'privacy_notice' => 'CHED Regional Office XII collects age, respondent group, Region, Cluster, HEI, selected experiences of discrimination, the categories of those responsible, specified-relative details, and consent timestamps. Sex is recorded as female because this survey covers women only. No name or email is collected. These responses are used for statistical analysis and gender-responsive higher education programs. Only authorized administrators may access individual responses. You may request access to or deletion of your response using its reference code. Contact chedro12@ched.gov.ph for privacy concerns.',
                 'consent_text' => 'I have read the privacy notice and voluntarily consent to the collection and processing of my survey responses for the stated purpose.',
-                'retention_days' => $survey->publishedVersion()?->retention_days,
+                'retention_days' => $survey->publishedVersion()?->retention_days ?? SurveyVersion::DEFAULT_RETENTION_DAYS,
                 'definition' => SurveyDefinitions::factories()['ra-9710']::make(),
             ]);
         }
@@ -85,7 +86,7 @@ class SurveySeeder extends Seeder
                 'introduction' => 'Share your lived experiences so CHED Regional Office XII can better protect everyone from gender-based sexual harassment in schools, online spaces, and public areas. No name or email is collected.',
                 'privacy_notice' => 'CHED Regional Office XII collects age, sex, respondent group, Region, Cluster, HEI, selected experiences, perpetrator categories, specified-relative details, where each experience took place, and consent timestamps. No name or email is collected. These responses are used for statistical analysis and gender-responsive higher education programs. Only authorized administrators may access individual responses. You may request access to or deletion of your response using its reference code. Contact chedro12@ched.gov.ph for privacy concerns.',
                 'consent_text' => 'I have read the privacy notice and voluntarily consent to the collection and processing of my survey responses for the stated purpose.',
-                'retention_days' => $survey->publishedVersion()?->retention_days,
+                'retention_days' => $survey->publishedVersion()?->retention_days ?? SurveyVersion::DEFAULT_RETENTION_DAYS,
                 'definition' => SurveyDefinitions::factories()['ra-11313']::make(),
             ]);
         }

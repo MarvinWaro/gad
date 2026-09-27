@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Support\InstitutionName;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,9 +20,14 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $hei = $request->user()->hei;
+
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
+            // Shown read-only: only an administrator can move an account to
+            // another institution. CHED staff have none.
+            'institution' => $hei ? InstitutionName::display($hei->name) : null,
         ]);
     }
 

@@ -1,10 +1,11 @@
 ﻿import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ConfirmPopover } from '@/components/confirm-popover';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 type ResponseData = {
-    id: number;
+    id: string;
     reference: string;
     version: number;
     age: number;
@@ -16,6 +17,11 @@ type ResponseData = {
     hei: string;
     submitted_at: string;
     expires_at: string;
+    /**
+     * Follow-ups the respondent was asked, heading => answer, in form order:
+     * gender identity, then the group's student or employee questions.
+     */
+    details: Record<string, string>;
     answers: {
         answering_for?: string | null;
         experiences: string[];
@@ -71,18 +77,22 @@ export default function ResponseShow({
                         </p>
                     </div>
                     {canDelete && (
-                        <Button
-                            variant="destructive"
-                            onClick={() =>
-                                confirm('Permanently delete this response?') &&
+                        <ConfirmPopover
+                            title={`Delete response ${response.reference}?`}
+                            description="Its answers are removed for good and cannot be recovered. The respondent keeps a reference code that will no longer match anything."
+                            confirmLabel="Delete"
+                            onConfirm={(visit) =>
                                 router.delete(
                                     `/admin/surveys/${survey.id}/responses/${response.id}`,
+                                    visit,
                                 )
                             }
                         >
-                            <Trash2 />
-                            Delete
-                        </Button>
+                            <Button variant="destructive">
+                                <Trash2 />
+                                Delete
+                            </Button>
+                        </ConfirmPopover>
                     )}
                 </div>
                 <div className="grid gap-6 lg:grid-cols-3">
@@ -116,6 +126,12 @@ export default function ResponseShow({
                                     response.sex
                                 }
                             />
+                            {response.details['Gender identity'] && (
+                                <Item
+                                    label="Gender identity"
+                                    value={response.details['Gender identity']}
+                                />
+                            )}
                             <Item
                                 label="Group"
                                 value={
@@ -126,6 +142,17 @@ export default function ResponseShow({
                                     response.respondent_group
                                 }
                             />
+                            {Object.entries(response.details)
+                                .filter(
+                                    ([label]) => label !== 'Gender identity',
+                                )
+                                .map(([label, value]) => (
+                                    <Item
+                                        key={label}
+                                        label={label}
+                                        value={value}
+                                    />
+                                ))}
                             <Item label="Region" value={response.region} />
                             <Item label="Cluster" value={response.cluster} />
                             <Item label="HEI" value={response.hei} />

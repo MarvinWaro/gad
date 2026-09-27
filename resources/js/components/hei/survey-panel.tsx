@@ -1,6 +1,6 @@
 import { ArrowUpRight, Check, Link2 } from 'lucide-react';
 import { useId, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { cn } from '@/lib/utils';
 import type { HeiSurvey } from '@/types';
