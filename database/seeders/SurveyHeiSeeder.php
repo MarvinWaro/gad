@@ -79,7 +79,7 @@ class SurveyHeiSeeder extends Seeder
                 if (count($row) !== 3) {
                     throw new RuntimeException('Each HEI seed row must contain UII, name, and type.');
                 }
-                [$uii, $name, $type] = array_map(trim(...), $row);
+                [$uii, $name, $type] = array_map(fn (?string $value): string => trim((string) $value), $row);
                 if ($uii === '' || $name === '' || isset($seen[$uii])) {
                     throw new RuntimeException('HEI seed rows need a name and unique non-empty UII.');
                 }

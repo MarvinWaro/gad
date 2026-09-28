@@ -16,6 +16,8 @@ use RuntimeException;
  * The directory is not replaced by the portal: survey_responses.survey_hei_id
  * points at these rows with restrictOnDelete, so rows are only ever created,
  * updated, or deactivated — never removed.
+ *
+ * @phpstan-type SyncCounts array{created: int, updated: int, reactivated: int, deactivated: int, clusters_created: array<int, string>, skipped: int, total: int}
  */
 class PortalHeiSync
 {
@@ -60,6 +62,7 @@ class PortalHeiSync
             ['is_active' => true],
         );
 
+        /** @var SyncCounts $result filled in by the transaction below */
         $result = [
             'created' => 0, 'updated' => 0, 'reactivated' => 0, 'deactivated' => 0,
             'clusters_created' => [], 'skipped' => 0, 'total' => count($snapshot['data']),
@@ -148,7 +151,7 @@ class PortalHeiSync
 
     /**
      * @param  Collection<string, SurveyCluster>  $clusters
-     * @param  array<string, mixed>  $result
+     * @param  SyncCounts  $result
      */
     private function resolveCluster(
         ?string $province,

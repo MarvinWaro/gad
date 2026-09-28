@@ -233,7 +233,7 @@ class SurveyDirectoryController extends Controller
 
             Inertia::flash('toast', [
                 'type' => 'success',
-                'message' => __(':name updated.', ['name' => $record->label]),
+                'message' => __(':name updated.', ['name' => $record->getAttribute('label')]),
             ]);
 
             return back();
@@ -253,7 +253,7 @@ class SurveyDirectoryController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __(':name updated.', ['name' => $record->name]),
+            'message' => __(':name updated.', ['name' => $record->getAttribute('name')]),
         ]);
 
         return back();

@@ -57,17 +57,17 @@ class SurveyRespondentGroup extends Model
      */
     public function followUps(): array
     {
-        return $this->followUpQuestions->map(fn (SurveyGroupQuestion $question): array => [
+        return array_values($this->followUpQuestions->map(fn (SurveyGroupQuestion $question): array => [
             'key' => $question->key,
             'label' => $question->label,
             'type' => $question->type,
             'required' => $question->required,
-            'options' => $question->activeOptions->map(fn (SurveyGroupOption $option): array => [
+            'options' => array_values($question->activeOptions->map(fn (SurveyGroupOption $option): array => [
                 'value' => $option->value,
                 'label' => $option->label,
                 ...($option->requires_text ? ['requires_text' => true] : []),
-            ])->all(),
-        ])->all();
+            ])->all()),
+        ])->all());
     }
 
     /** @param Builder<self> $query */
