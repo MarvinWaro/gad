@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { toast } from '@/lib/toast';
-import { PostImages } from '@/components/hei/post-images';
+import { hasPostMedia, PostMedia } from '@/components/hei/post-goals';
 import { SourceAvatar } from '@/components/hei/source-avatar';
 import {
     DropdownMenu,
@@ -193,12 +193,9 @@ export function SharedPostEmbed({ post }: { post: PostContent }) {
                     {post.body}
                 </p>
             )}
-            {post.images.length > 0 ? (
+            {hasPostMedia(post) ? (
                 <div className="px-3 pt-3 pb-3 sm:px-4">
-                    <PostImages
-                        images={post.images}
-                        sharedBy={sourceOf(post)}
-                    />
+                    <PostMedia post={post} sharedBy={sourceOf(post)} />
                 </div>
             ) : (
                 <div className="pb-3" />

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Community\CreatePost;
 use App\Http\Requests\StorePostRequest;
 use App\Models\Post;
 use App\Models\User;
@@ -9,13 +10,11 @@ use App\Support\CommunityFeed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use Throwable;
 
 class PostController extends Controller
 {
@@ -31,34 +30,14 @@ class PostController extends Controller
         ]);
     }
 
-    public function store(StorePostRequest $request): RedirectResponse
+    public function store(StorePostRequest $request, CreatePost $createPost): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
-        /** @var array<int, UploadedFile> $files */
-        $files = $request->file('images', []);
-        $paths = array_map(fn (UploadedFile $file): string => (string) $file->store('posts', 'public'), $files);
+        /** @var array<int, UploadedFile> $images */
+        $images = $request->file('images', []);
 
-        try {
-            DB::transaction(function () use ($request, $user, $paths): void {
-                $post = Post::query()->create([
-                    'user_id' => $user->id,
-                    'survey_hei_id' => $user->survey_hei_id,
-                    'body' => $request->validated('body'),
-                    'feeling' => $request->validated('feeling'),
-                ]);
-
-                foreach ($paths as $index => $path) {
-                    $post->images()->create(['path' => $path, 'sort_order' => $index]);
-                }
-
-                $post->tags()->attach($request->validated('tags', []));
-            });
-        } catch (Throwable $exception) {
-            Storage::disk('public')->delete($paths);
-
-            throw $exception;
-        }
+        $createPost->handle($user, $request->validated(), $images);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Post shared.')]);
 

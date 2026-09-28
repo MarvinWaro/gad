@@ -2,7 +2,7 @@ import { MessageCircle, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import type { ReactNode, RefObject } from 'react';
 import { CommentComposer, CommentList } from '@/components/hei/post-comments';
-import { PostImages } from '@/components/hei/post-images';
+import { hasPostMedia, PostMedia } from '@/components/hei/post-goals';
 import {
     PostByline,
     SharedPostEmbed,
@@ -105,12 +105,9 @@ export function PostDialog({
                             {post.body}
                         </p>
                     )}
-                    {post.images.length > 0 && (
+                    {hasPostMedia(post) && (
                         <div className="px-4 pt-3 sm:px-5">
-                            <PostImages
-                                images={post.images}
-                                sharedBy={source}
-                            />
+                            <PostMedia post={post} sharedBy={source} />
                         </div>
                     )}
                     {post.shared_post && (

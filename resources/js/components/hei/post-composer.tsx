@@ -1,12 +1,22 @@
 import { useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, ImagePlus, Pencil, Smile, UserPlus, X } from 'lucide-react';
+import {
+    ArrowLeft,
+    ImagePlus,
+    Pencil,
+    Smile,
+    Target,
+    UserPlus,
+    X,
+} from 'lucide-react';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent, ReactNode } from 'react';
 import {
     FeelingView,
+    GoalsView,
     PhotosView,
     TagPeopleView,
 } from '@/components/hei/post-composer-views';
+import { GoalBadges } from '@/components/hei/post-goals';
 import { PhotoMosaic } from '@/components/hei/post-images';
 import { SourceAvatar } from '@/components/hei/source-avatar';
 import { IconAction } from '@/components/icon-action';
@@ -19,7 +29,9 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
+import type { AchieveCode } from '@/data/achieve';
 import { POST_FEELINGS, taggedSummary } from '@/lib/post-feelings';
+import { MAX_ACHIEVE_ITEMS, MAX_SDGS, toggleWithin } from '@/lib/post-goals';
 import { cn } from '@/lib/utils';
 import type { TaggedUser } from '@/types';
 
@@ -35,21 +47,28 @@ type ComposerForm = {
     images: File[];
     tags: number[];
     feeling: string;
+    sdgs: number[];
+    achieve_items: AchieveCode[];
 };
 
-type View = 'compose' | 'tag' | 'feeling' | 'photos';
+type View = 'compose' | 'tag' | 'feeling' | 'photos' | 'goals';
 
 const titles: Record<View, string> = {
     compose: 'Create post',
     tag: 'Tag people',
     feeling: 'How are you feeling?',
     photos: 'Photos',
+    goals: 'What does this support?',
 };
+
+/** The action that picks the SDGs and A.C.H.I.E.V.E. items. */
+const GOALS_LABEL = 'SDGs & ACHIEVE';
 
 /**
  * The feed's "Create post": a compact prompt that opens a modal for writing,
- * up to ten photos, tagging people, and a feeling. The draft survives
- * closing the modal and clears only once the post is shared.
+ * up to ten photos, tagging people, a feeling, and the SDGs and A.C.H.I.E.V.E.
+ * items the activity supports. The draft survives closing the modal and
+ * clears only once the post is shared.
  */
 export function PostComposer({
     authorLabel,
@@ -74,6 +93,8 @@ export function PostComposer({
         images: [],
         tags: [],
         feeling: '',
+        sdgs: [],
+        achieve_items: [],
     });
 
     const latestPreviews = useRef(previews);
@@ -184,6 +205,17 @@ export function PostComposer({
         setView('compose');
     }
 
+    function toggleSdg(goal: number) {
+        form.setData('sdgs', toggleWithin(form.data.sdgs, goal, MAX_SDGS));
+    }
+
+    function toggleAchieve(code: AchieveCode) {
+        form.setData(
+            'achieve_items',
+            toggleWithin(form.data.achieve_items, code, MAX_ACHIEVE_ITEMS),
+        );
+    }
+
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
@@ -211,17 +243,31 @@ export function PostComposer({
         fileError,
         form.errors.feeling,
         ...Object.entries(form.errors)
-            .filter(
-                ([key]) => key.startsWith('images') || key.startsWith('tags'),
+            .filter(([key]) =>
+                ['images', 'tags', 'sdgs', 'achieve_items'].some((field) =>
+                    key.startsWith(field),
+                ),
             )
             .map(([, message]) => message),
     ].filter((message, index, all): message is string =>
         Boolean(message && all.indexOf(message) === index),
     );
+    const goalsCount = form.data.sdgs.length + form.data.achieve_items.length;
+    const goalBadges = (tone: 'media' | 'surface') => (
+        <GoalBadges
+            sdgs={form.data.sdgs}
+            achieveItems={form.data.achieve_items}
+            tone={tone}
+            onEdit={() => setView('goals')}
+        />
+    );
     const hasContent =
         form.data.body.trim().length > 0 || form.data.images.length > 0;
     const hasDraft =
-        hasContent || form.data.tags.length > 0 || form.data.feeling !== '';
+        hasContent ||
+        form.data.tags.length > 0 ||
+        form.data.feeling !== '' ||
+        goalsCount > 0;
     const remaining = MAX_LENGTH - form.data.body.length;
     const firstLine = form.data.body.trim().split('\n')[0];
     // The prompt shows a saved draft only once the modal is closed, so it
@@ -293,6 +339,13 @@ export function PostComposer({
                 >
                     <Smile className="text-signature-mustard" />
                 </ComposerShortcut>
+                <ComposerShortcut
+                    label={GOALS_LABEL}
+                    count={goalsCount}
+                    onClick={() => openComposer('goals')}
+                >
+                    <Target className="text-brand" />
+                </ComposerShortcut>
             </div>
 
             <Dialog
@@ -334,7 +387,9 @@ export function PostComposer({
                         <DialogTitle className="text-base font-medium">
                             {titles[view]}
                         </DialogTitle>
-                        {(view === 'tag' || view === 'photos') && (
+                        {(view === 'tag' ||
+                            view === 'photos' ||
+                            view === 'goals') && (
                             <Button
                                 type="button"
                                 variant="ghost"
@@ -347,8 +402,9 @@ export function PostComposer({
                         )}
                     </header>
                     <DialogDescription className="sr-only">
-                        Write a post for the Region XII community, add up to ten
-                        photos, tag people, or add a feeling.
+                        Write a post for the community, add up to ten photos,
+                        tag people, add a feeling, or pick the SDGs and
+                        A.C.H.I.E.V.E. items it supports.
                     </DialogDescription>
 
                     <div
@@ -377,6 +433,14 @@ export function PostComposer({
                                 max={MAX_IMAGES}
                                 onRemove={removeImage}
                                 onAdd={pickPhotos}
+                            />
+                        )}
+                        {view === 'goals' && (
+                            <GoalsView
+                                sdgs={form.data.sdgs}
+                                achieveItems={form.data.achieve_items}
+                                onToggleSdg={toggleSdg}
+                                onToggleAchieve={toggleAchieve}
                             />
                         )}
                         {view === 'compose' && (
@@ -492,6 +556,11 @@ export function PostComposer({
                                                 onSelect={() =>
                                                     setView('photos')
                                                 }
+                                                overlay={
+                                                    goalsCount > 0
+                                                        ? goalBadges('media')
+                                                        : undefined
+                                                }
                                             />
                                             <Button
                                                 type="button"
@@ -520,6 +589,12 @@ export function PostComposer({
                                             </button>
                                         </div>
                                     )}
+
+                                    {/* Without photos, the badges sit under
+                                        the text, as they will in the feed. */}
+                                    {previews.length === 0 &&
+                                        goalsCount > 0 &&
+                                        goalBadges('surface')}
 
                                     {errors.map((message) => (
                                         <InputError
@@ -578,6 +653,17 @@ export function PostComposer({
                                             >
                                                 <Smile className="size-5" />
                                             </IconAction>
+                                            <IconAction
+                                                label={GOALS_LABEL}
+                                                onClick={() => setView('goals')}
+                                                className={cn(
+                                                    'rounded-full text-brand',
+                                                    goalsCount > 0 &&
+                                                        'bg-muted',
+                                                )}
+                                            >
+                                                <Target className="size-5" />
+                                            </IconAction>
                                         </div>
                                     </div>
 
@@ -626,10 +712,11 @@ function ComposerShortcut({
             type="button"
             variant="ghost"
             onClick={onClick}
-            className="h-9 flex-1 gap-2 rounded-[10px] text-muted-foreground hover:text-foreground"
+            className="h-9 min-w-0 flex-1 gap-2 rounded-[10px] text-muted-foreground hover:text-foreground"
         >
             {children}
-            {label}
+            {/* Four don't fit with names on a phone; the icons stay. */}
+            <span className="max-sm:sr-only">{label}</span>
             {count > 0 && (
                 <span className="text-xs text-foreground tabular-nums">
                     ({count})

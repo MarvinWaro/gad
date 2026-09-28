@@ -21,7 +21,9 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 - [ ] "Region XII community" in:
     - `post-share-dialog.tsx`
     - `post-card.tsx`
-    - `post-composer.tsx`
+
+    (`post-composer.tsx` no longer says it, as of 2026-09-28.)
+
 - [ ] "CHED Regional Office XII" or "Region XII" in:
     - `welcome-band.tsx`
     - `upcoming-events.tsx`
@@ -66,6 +68,7 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
     - directories (regions, clusters, HEIs)
     - aggregate survey statistics, never individual responses
     - published events
+    - counts of community posts per SDG and per A.C.H.I.E.V.E. item, by region, cluster, HEI and year. Posts store these as codes in `post_sdgs` and `post_achieve_items`, both indexed by code. Count original posts only, since a share carries none of its own.
 
     Write endpoints come later, behind tokens and the same permissions.
 

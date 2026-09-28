@@ -9,7 +9,8 @@ import {
 /**
  * An icon-only button whose meaning is available on hover and focus, and to
  * assistive technology. `label` is the accessible name as well as the tooltip,
- * so the two can never drift apart.
+ * so the two can never drift apart. It is an action, not a submit button, so
+ * using it inside a form never sends the form.
  */
 export function IconAction({
     label,
@@ -25,6 +26,7 @@ export function IconAction({
         <Tooltip>
             <TooltipTrigger asChild>
                 <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     aria-label={label}

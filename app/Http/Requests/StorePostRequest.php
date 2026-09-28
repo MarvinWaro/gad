@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\AchieveItem;
 use App\Enums\PostFeeling;
+use App\Enums\SustainableDevelopmentGoal;
 use App\Enums\UserStatus;
 use App\Models\Post;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -32,6 +34,10 @@ class StorePostRequest extends FormRequest
                 Rule::exists('users', 'id')->where('status', UserStatus::Active->value),
                 Rule::notIn([$this->user()?->id]),
             ],
+            'sdgs' => ['nullable', 'array', 'max:'.Post::MAX_SDGS],
+            'sdgs.*' => ['integer', 'distinct', Rule::enum(SustainableDevelopmentGoal::class)],
+            'achieve_items' => ['nullable', 'array', 'max:'.Post::MAX_ACHIEVE_ITEMS],
+            'achieve_items.*' => ['string', 'distinct', Rule::enum(AchieveItem::class)],
         ];
     }
 
@@ -49,6 +55,14 @@ class StorePostRequest extends FormRequest
             'tags.*.distinct' => __('Each person can be tagged once.'),
             'tags.*.exists' => __('Only active accounts can be tagged.'),
             'tags.*.not_in' => __('You cannot tag yourself.'),
+            'sdgs.max' => __('You can pick up to :max SDGs.'),
+            'sdgs.*.integer' => __('Choose SDGs from the list.'),
+            'sdgs.*.enum' => __('Choose SDGs from the list.'),
+            'sdgs.*.distinct' => __('Each SDG can be picked once.'),
+            'achieve_items.max' => __('You can pick up to :max A.C.H.I.E.V.E. items.'),
+            'achieve_items.*.string' => __('Choose A.C.H.I.E.V.E. items from the list.'),
+            'achieve_items.*.enum' => __('Choose A.C.H.I.E.V.E. items from the list.'),
+            'achieve_items.*.distinct' => __('Each A.C.H.I.E.V.E. item can be picked once.'),
         ];
     }
 }

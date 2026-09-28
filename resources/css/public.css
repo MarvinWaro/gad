@@ -65,13 +65,9 @@
     --success: #08785b;
     --success-soft: #e9f7f1;
     --float-shadow: 0 12px 28px #181d2614;
-    /* CHED's A.C.H.I.E.V.E. Agenda tiles: blue thrusts, red enablers, as on
-       its site. White on them is 8.6:1 and 5.6:1; kept in dark mode too. */
-    --thrust: #0038a8;
-    --enabler: #ce1126;
-    /* A darkening scrim and a frosted label over artwork, as on the SDG
-       tiles; the same in both themes because the artwork doesn't change. */
-    --media-scrim: rgb(24 29 38 / 0.62);
+    /* --thrust, --enabler and --media-scrim come from app.css. A frosted
+       label over artwork, as on the SDG tiles; the same in both themes
+       because the artwork doesn't change. */
     --media-label: rgb(255 255 255 / 0.16);
     --media-label-border: rgb(255 255 255 / 0.45);
     /* Declared here as well as in app.css, so dark mode can swap the public
