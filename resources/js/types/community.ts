@@ -1,3 +1,5 @@
+import type { AchieveCode } from '@/data/achieve';
+
 export type PersonRef = { id: number; name: string };
 
 /** A post or comment author; deactivated accounts keep their content. */
@@ -10,7 +12,13 @@ export type AuthorRef = PersonRef & {
 /** An institution: the official directory name plus a readable display form. */
 export type HeiRef = { id: number; name: string; display_name: string };
 
-export type PostImage = { id: number; url: string };
+/** A post's photo; its size is as shown (EXIF rotation applied), if known. */
+export type PostImage = {
+    id: number;
+    url: string;
+    width: number | null;
+    height: number | null;
+};
 
 /** A feeling on a post; the list lives in App\Enums\PostFeeling. */
 export type PostFeeling = { value: string; label: string; emoji: string };
@@ -52,6 +60,10 @@ export type PostContent = {
     images: PostImage[];
     feeling: PostFeeling | null;
     tags: TaggedUser[];
+    /** Sustainable Development Goals the activity supports, 1–17, ascending. */
+    sdgs: number[];
+    /** A.C.H.I.E.V.E. Agenda items it supports, in the agenda's order. */
+    achieve_items: AchieveCode[];
 };
 
 export type Post = PostContent & {

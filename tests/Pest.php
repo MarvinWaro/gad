@@ -114,3 +114,28 @@ function registrationPayload(SurveyHei $hei, array $overrides = []): array
         ...$overrides,
     ];
 }
+
+/**
+ * A real JPEG, saved to a temporary file, whose Exif block holds an
+ * orientation tag, as phone cameras write it. Orientations 5 to 8 mean the
+ * picture shows a quarter turn from its stored pixels.
+ */
+function exifJpeg(int $width, int $height, int $orientation, bool $bigEndian = true): string
+{
+    $image = imagecreatetruecolor($width, $height);
+    ob_start();
+    imagejpeg($image);
+    $jpeg = (string) ob_get_clean();
+
+    [$short, $long, $byteOrder] = $bigEndian ? ['n', 'N', 'MM'] : ['v', 'V', 'II'];
+    $tiff = $byteOrder.pack($short, 42).pack($long, 8)
+        .pack($short, 1)
+        .pack($short, 0x0112).pack($short, 3).pack($long, 1).pack($short, $orientation).pack($short, 0)
+        .pack($long, 0);
+    $exif = "Exif\0\0".$tiff;
+
+    $path = (string) tempnam(sys_get_temp_dir(), 'exif-');
+    file_put_contents($path, "\xFF\xD8\xFF\xE1".pack('n', strlen($exif) + 2).$exif.substr($jpeg, 2));
+
+    return $path;
+}

@@ -73,6 +73,9 @@
     --color-callout-foreground: var(--callout-foreground);
     --color-signature-mustard: var(--signature-mustard);
     --color-on-signature: var(--on-signature);
+    --color-thrust: var(--thrust);
+    --color-enabler: var(--enabler);
+    --color-media-panel: var(--media-panel);
 }
 
 :root {
@@ -132,6 +135,17 @@
     --callout-foreground: #181d26;
     --signature-mustard: #d9a441;
     --on-signature: #ffffff;
+    /* CHED's A.C.H.I.E.V.E. Agenda: blue thrusts, red enablers, as on its
+       site. White on them is 8.6:1 and 5.6:1. Like the media tokens below,
+       these are not redefined for dark mode. */
+    --thrust: #0038a8;
+    --enabler: #ce1126;
+    /* Over photos and artwork, which look the same in either theme: a
+       darkening scrim (SDG tile hover, the fade behind a post's goal
+       badges) and a near-opaque panel for text that must read on any
+       photo (the A.C.H.I.E.V.E. strip). */
+    --media-scrim: rgb(24 29 38 / 0.62);
+    --media-panel: rgb(24 29 38 / 0.88);
     /* Toasts: a deep tinted surface with bright text, green when something
        went through and red when it failed or was deleted. */
     --toast-success-bg: #052912;
@@ -252,6 +266,19 @@
 /* Paints --callout-gradient over bg-callout's solid colour. */
 @utility bg-callout-gradient {
     background-image: var(--callout-gradient);
+}
+
+/* A soft fade from the bottom-right corner of a post's photos, behind its
+   goal badges. The ellipse meets the box's top and left edges fully clear,
+   so it has no visible edge. It darkens the photo, never the SDG icons laid
+   over it. */
+@utility bg-corner-fade {
+    background-image: radial-gradient(
+        farthest-side at 100% 100%,
+        var(--media-scrim),
+        color-mix(in oklab, var(--media-scrim) 50%, transparent) 50%,
+        transparent
+    );
 }
 
 @layer base {

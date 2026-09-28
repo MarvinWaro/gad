@@ -4,7 +4,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { toast } from '@/lib/toast';
 import { PostDialog } from '@/components/hei/post-dialog';
-import { PostImages } from '@/components/hei/post-images';
+import { hasPostMedia, PostMedia } from '@/components/hei/post-goals';
 import {
     PostActions,
     PostByline,
@@ -317,9 +317,9 @@ export function PostCard({
                 )
             )}
 
-            {post.images.length > 0 && (
+            {hasPostMedia(post) && (
                 <div className="px-4 pt-3 sm:px-5">
-                    <PostImages images={post.images} sharedBy={source} />
+                    <PostMedia post={post} sharedBy={source} />
                 </div>
             )}
 

@@ -10,6 +10,7 @@ use App\Models\User;
 use Database\Seeders\RbacSeeder;
 use Database\Seeders\SurveySeeder;
 use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
 require __DIR__.'/../../vendor/autoload.php';
@@ -17,6 +18,11 @@ require __DIR__.'/../../vendor/autoload.php';
 $database = tempnam(sys_get_temp_dir(), 'phlgadis-browser-');
 if ($database === false) {
     throw new RuntimeException('Cannot create the isolated browser database.');
+}
+// Photos uploaded during the run go here, never into storage/app/public.
+$uploads = $database.'-uploads';
+if (! mkdir($uploads)) {
+    throw new RuntimeException('Cannot create the isolated browser uploads folder.');
 }
 
 $environment = [
@@ -29,6 +35,8 @@ $environment = [
     'SESSION_DOMAIN' => 'null', 'SESSION_SECURE_COOKIE' => 'false',
     'CACHE_STORE' => 'array', 'QUEUE_CONNECTION' => 'sync', 'MAIL_MAILER' => 'array',
     'BCRYPT_ROUNDS' => '4',
+    // Read by router.php: the public disk's root for this run.
+    'BROWSER_UPLOADS' => $uploads,
 ];
 foreach ($environment as $key => $value) {
     putenv("{$key}={$value}");
@@ -69,5 +77,8 @@ try {
         if (is_file($file)) {
             unlink($file);
         }
+    }
+    if (is_dir($uploads)) {
+        (new Filesystem)->deleteDirectory($uploads);
     }
 }

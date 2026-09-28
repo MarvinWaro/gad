@@ -11,14 +11,18 @@ use Illuminate\Support\Facades\Storage;
  * @property int $id
  * @property string $post_id
  * @property string $path
+ * @property int|null $width As displayed, with EXIF rotation applied.
+ * @property int|null $height
  * @property int $sort_order
  */
-#[Fillable(['post_id', 'path', 'sort_order'])]
+#[Fillable(['post_id', 'path', 'width', 'height', 'sort_order'])]
 class PostImage extends Model
 {
     protected function casts(): array
     {
         return [
+            'width' => 'integer',
+            'height' => 'integer',
             'sort_order' => 'integer',
         ];
     }

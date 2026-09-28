@@ -1,8 +1,12 @@
 <?php
 
+use App\Enums\AchieveItem;
 use App\Enums\PostFeeling;
+use App\Enums\SustainableDevelopmentGoal;
 use App\Models\Post;
+use App\Models\PostAchieveItem;
 use App\Models\PostComment;
+use App\Models\PostSdg;
 use App\Models\User;
 use App\Support\InstitutionName;
 use Database\Seeders\RbacSeeder;
@@ -63,6 +67,32 @@ test('HEI users share a post with photos, tagged with their institution', functi
         ->and($post->images)->toHaveCount(2)
         ->and($post->images->pluck('sort_order')->all())->toBe([0, 1]);
     Storage::disk('public')->assertExists($post->images->pluck('path')->all());
+
+    // Each photo's size goes out with it, so the feed can shape its frame
+    // before the photo loads.
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('posts.data.0.images.0.width', 1200)
+            ->where('posts.data.0.images.0.height', 800)
+            ->where('posts.data.0.images.1.width', 800)
+            ->where('posts.data.0.images.1.height', 800));
+});
+
+test('a phone photo turned by its Exif tag is stored with its upright size', function () {
+    $path = exifJpeg(1200, 800, 6);
+
+    $this->actingAs(communityMember())
+        ->post(route('posts.store'), [
+            'images' => [new UploadedFile($path, 'portrait.jpg', 'image/jpeg', null, true)],
+        ])
+        ->assertSessionHasNoErrors();
+
+    $image = Post::query()->with('images')->sole()->images->sole();
+
+    expect([$image->width, $image->height])->toBe([800, 1200]);
+
+    unlink($path);
 });
 
 test('a post can be text only or photo only', function () {
@@ -168,6 +198,106 @@ test('feelings and tags are validated', function () {
     }
 
     expect(Post::query()->count())->toBe(0);
+});
+
+test('authors say which SDGs and A.C.H.I.E.V.E. items a post supports, and the feed lists them in order', function () {
+    $author = communityMember();
+
+    // The composer sends multipart form data, so numbers arrive as strings.
+    $this->actingAs($author)
+        ->post(route('posts.store'), [
+            'body' => 'Research colloquium on gender-responsive curricula.',
+            'sdgs' => ['5', '4'],
+            'achieve_items' => ['research-innovation', 'lifelong-learning'],
+        ])
+        ->assertSessionHasNoErrors();
+
+    $post = Post::query()->with(['sdgs', 'achieveItems'])->sole();
+
+    expect($post->sdgs->pluck('sdg')->all())
+        ->toBe([SustainableDevelopmentGoal::QualityEducation, SustainableDevelopmentGoal::GenderEquality])
+        ->and($post->achieveItems->pluck('item')->all())
+        ->toEqualCanonicalizing([AchieveItem::ResearchInnovation, AchieveItem::LifelongLearning]);
+
+    $this->actingAs($author)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('posts.data.0.sdgs', [4, 5])
+            ->where('posts.data.0.achieve_items', ['lifelong-learning', 'research-innovation']));
+});
+
+test('a post without SDGs or A.C.H.I.E.V.E. items lists none', function () {
+    $author = communityMember();
+    communityPost($author);
+
+    $this->actingAs($author)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('posts.data.0.sdgs', 0)
+            ->has('posts.data.0.achieve_items', 0));
+});
+
+test('SDGs and A.C.H.I.E.V.E. items are validated', function (array $payload, string $field) {
+    $this->actingAs(communityMember())
+        ->post(route('posts.store'), ['body' => 'Activity report', ...$payload])
+        ->assertSessionHasErrors($field);
+
+    expect(Post::query()->count())->toBe(0);
+})->with([
+    'more than three SDGs' => [['sdgs' => [1, 4, 5, 10]], 'sdgs'],
+    'goal 0' => [['sdgs' => [0]], 'sdgs.0'],
+    'goal 18' => [['sdgs' => [18]], 'sdgs.0'],
+    'not a number' => [['sdgs' => ['five']], 'sdgs.0'],
+    'the same goal twice' => [['sdgs' => [5, 5]], 'sdgs.0'],
+    'more than three agenda items' => [['achieve_items' => ['lifelong-learning', 'human-capital', 'governance', 'public-service']], 'achieve_items'],
+    'an unknown agenda item' => [['achieve_items' => ['excellence']], 'achieve_items.0'],
+    'the same agenda item twice' => [['achieve_items' => ['governance', 'governance']], 'achieve_items.0'],
+]);
+
+test('a share carries its original\'s SDGs and A.C.H.I.E.V.E. items, not its own', function () {
+    $original = communityPost(communityMember());
+    $original->sdgs()->create(['sdg' => 5]);
+    $original->achieveItems()->create(['item' => 'governance']);
+    $sharer = communityMember();
+
+    $this->actingAs($sharer)->post(route('posts.share', $original))->assertSessionHasNoErrors();
+
+    $this->actingAs($sharer)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('posts.data.0.sdgs', 0)
+            ->where('posts.data.0.shared_post.sdgs', [5])
+            ->where('posts.data.0.shared_post.achieve_items', ['governance']));
+});
+
+test('removing a post removes its SDGs and A.C.H.I.E.V.E. items', function () {
+    $author = communityMember();
+
+    $this->actingAs($author)->post(route('posts.store'), [
+        'body' => 'Tree planting with the student council.',
+        'sdgs' => [13, 15],
+        'achieve_items' => ['public-service'],
+    ]);
+
+    $this->actingAs($author)->delete(route('posts.destroy', Post::query()->sole()))->assertRedirect();
+
+    expect(PostSdg::query()->count())->toBe(0)
+        ->and(PostAchieveItem::query()->count())->toBe(0);
+});
+
+test('SDG numbers and A.C.H.I.E.V.E. codes stay stable', function () {
+    expect(array_map(fn (SustainableDevelopmentGoal $goal): int => $goal->value, SustainableDevelopmentGoal::cases()))
+        ->toBe(range(1, 17))
+        ->and(array_map(fn (AchieveItem $item): string => $item->value, AchieveItem::cases()))
+        ->toBe([
+            'lifelong-learning',
+            'human-capital',
+            'research-innovation',
+            'internationalization',
+            'data-analytics',
+            'governance',
+            'public-service',
+        ]);
 });
 
 test('likes are idempotent and report the new count', function () {

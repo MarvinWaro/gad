@@ -5,7 +5,7 @@ import { PhlgadisLogo } from '@/components/public/phlgadis-logo';
 import { PublicPage } from '@/components/public/public-page';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { sustainableGoals } from '@/data/about';
+import { sustainableGoals } from '@/data/sdgs';
 import {
     chedLogo,
     phlgadisLogo,

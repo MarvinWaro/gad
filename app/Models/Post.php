@@ -34,6 +34,16 @@ class Post extends Model
     /** People who can be tagged on one post. */
     public const MAX_TAGS = 20;
 
+    /**
+     * Sustainable Development Goals one post can support. Few enough to stay
+     * meaningful in counts, and to fit one line on a photo as the UN's icon
+     * guidelines ask.
+     */
+    public const MAX_SDGS = 3;
+
+    /** A.C.H.I.E.V.E. Agenda items one post can support. */
+    public const MAX_ACHIEVE_ITEMS = 3;
+
     /** @return array<string, string> */
     protected function casts(): array
     {
@@ -102,5 +112,25 @@ class Post extends Model
         return $this->belongsToMany(User::class, 'post_tags')
             ->withTimestamps()
             ->orderBy('users.name');
+    }
+
+    /**
+     * The Sustainable Development Goals the activity supports, by number.
+     *
+     * @return HasMany<PostSdg, $this>
+     */
+    public function sdgs(): HasMany
+    {
+        return $this->hasMany(PostSdg::class)->orderBy('sdg');
+    }
+
+    /**
+     * The A.C.H.I.E.V.E. Agenda items the activity supports.
+     *
+     * @return HasMany<PostAchieveItem, $this>
+     */
+    public function achieveItems(): HasMany
+    {
+        return $this->hasMany(PostAchieveItem::class);
     }
 }

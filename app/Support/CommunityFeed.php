@@ -4,8 +4,10 @@ namespace App\Support;
 
 use App\Enums\UserStatus;
 use App\Models\Post;
+use App\Models\PostAchieveItem;
 use App\Models\PostComment;
 use App\Models\PostImage;
+use App\Models\PostSdg;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -51,11 +53,15 @@ class CommunityFeed
                 'images',
                 'tags:id,name,survey_hei_id,avatar_path',
                 'tags.hei:id,name',
+                'sdgs',
+                'achieveItems',
                 'sharedPost.author:id,name,status,avatar_path',
                 'sharedPost.hei:id,name',
                 'sharedPost.images',
                 'sharedPost.tags:id,name,survey_hei_id,avatar_path',
                 'sharedPost.tags.hei:id,name',
+                'sharedPost.sdgs',
+                'sharedPost.achieveItems',
                 'comments' => fn ($query) => $query
                     ->whereNull('parent_id')
                     ->with([
@@ -117,7 +123,12 @@ class CommunityFeed
                 'display_name' => InstitutionName::display($post->hei->name),
             ] : null,
             'images' => $post->images
-                ->map(fn (PostImage $image): array => ['id' => $image->id, 'url' => $image->url()])
+                ->map(fn (PostImage $image): array => [
+                    'id' => $image->id,
+                    'url' => $image->url(),
+                    'width' => $image->width,
+                    'height' => $image->height,
+                ])
                 ->values(),
             'feeling' => $post->feeling ? [
                 'value' => $post->feeling->value,
@@ -131,6 +142,15 @@ class CommunityFeed
                     'avatar' => $user->avatar,
                     'hei' => $user->hei ? InstitutionName::display($user->hei->name) : null,
                 ])
+                ->values(),
+            // Codes only, in their official order; the client holds the names
+            // and icons (resources/js/data/sdgs.ts and achieve.ts).
+            'sdgs' => $post->sdgs
+                ->map(fn (PostSdg $row): int => $row->sdg->value)
+                ->values(),
+            'achieve_items' => $post->achieveItems
+                ->sortBy(fn (PostAchieveItem $row): int => $row->item->position())
+                ->map(fn (PostAchieveItem $row): string => $row->item->value)
                 ->values(),
         ];
     }

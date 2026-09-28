@@ -25,6 +25,10 @@ return new class extends Migration
             $table->id();
             $table->foreignUlid('post_id')->constrained()->cascadeOnDelete();
             $table->string('path');
+            // The photo as people see it (EXIF rotation applied), so the feed
+            // can give it the right shape before it loads. Null if unreadable.
+            $table->unsignedInteger('width')->nullable();
+            $table->unsignedInteger('height')->nullable();
             $table->unsignedTinyInteger('sort_order')->default(0);
             $table->timestamps();
         });

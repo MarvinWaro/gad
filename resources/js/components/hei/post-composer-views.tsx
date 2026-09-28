@@ -1,10 +1,19 @@
-import { Check, ImagePlus, Search, X } from 'lucide-react';
+import { ArrowUpRight, Check, ImagePlus, Search, X } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
+import { AgendaTile, SdgCredit } from '@/components/hei/post-goals';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { PersonAvatar } from '@/components/person-avatar';
+import { achieveAgenda, achievePage, type AchieveCode } from '@/data/achieve';
+import { sdgsFor, sustainableGoals } from '@/data/sdgs';
 import { POST_FEELINGS } from '@/lib/post-feelings';
+import { MAX_ACHIEVE_ITEMS, MAX_SDGS, sdgLabel } from '@/lib/post-goals';
 import { cn } from '@/lib/utils';
 import type { TaggedUser } from '@/types';
 
@@ -38,6 +47,21 @@ function SearchField({
                 className="h-10 rounded-[10px] pl-9 caret-brand"
             />
         </div>
+    );
+}
+
+/** The round check at the end of a pickable row. */
+function SelectionMark({ selected }: { selected: boolean }) {
+    return (
+        <span
+            aria-hidden
+            className={cn(
+                'flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors duration-150',
+                selected && 'border-primary bg-primary text-primary-foreground',
+            )}
+        >
+            {selected && <Check className="size-3.5" />}
+        </span>
     );
 }
 
@@ -213,18 +237,7 @@ export function TagPeopleView({
                                                 {person.hei ?? CHED_LABEL}
                                             </span>
                                         </span>
-                                        <span
-                                            aria-hidden
-                                            className={cn(
-                                                'flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors duration-150',
-                                                isSelected &&
-                                                    'border-primary bg-primary text-primary-foreground',
-                                            )}
-                                        >
-                                            {isSelected && (
-                                                <Check className="size-3.5" />
-                                            )}
-                                        </span>
+                                        <SelectionMark selected={isSelected} />
                                     </button>
                                 </li>
                             );
@@ -375,6 +388,164 @@ export function PhotosView({
                 {previews.length} of {max} photos · JPG, PNG, or WebP, up to 5
                 MB each
             </p>
+        </div>
+    );
+}
+
+/**
+ * Pick the SDGs and A.C.H.I.E.V.E. items the activity supports, up to three
+ * of each. The SDG icons stay whole, square, uncovered and in their own
+ * colours, as the UN's guidelines ask: a picked icon gets a frame outside its
+ * edge, and once three are picked the others stop responding rather than
+ * fading.
+ */
+export function GoalsView({
+    sdgs,
+    achieveItems,
+    onToggleSdg,
+    onToggleAchieve,
+}: {
+    sdgs: number[];
+    achieveItems: AchieveCode[];
+    onToggleSdg: (goal: number) => void;
+    onToggleAchieve: (code: AchieveCode) => void;
+}) {
+    const sdgHeading = useId();
+    const agendaHeading = useId();
+    const picked = sdgsFor(sdgs);
+    const sdgsFull = sdgs.length >= MAX_SDGS;
+    const agendaFull = achieveItems.length >= MAX_ACHIEVE_ITEMS;
+
+    return (
+        <div className="flex min-h-0 flex-col gap-6 overflow-y-auto p-4">
+            <section aria-labelledby={sdgHeading} className="space-y-3">
+                <div className="flex items-baseline justify-between gap-3">
+                    <h3 id={sdgHeading} className="text-sm font-medium">
+                        Sustainable Development Goals
+                    </h3>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                        {sdgs.length}/{MAX_SDGS}
+                    </span>
+                </div>
+                <ul className="grid grid-cols-4 gap-4 sm:grid-cols-6">
+                    {sustainableGoals.map((goal) => {
+                        const isPicked = sdgs.includes(goal.number);
+                        const blocked = !isPicked && sdgsFull;
+
+                        return (
+                            <li key={goal.number}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <button
+                                            type="button"
+                                            aria-pressed={isPicked}
+                                            aria-disabled={blocked || undefined}
+                                            onClick={() => {
+                                                if (!blocked) {
+                                                    onToggleSdg(goal.number);
+                                                }
+                                            }}
+                                            // The focus ring hugs the icon
+                                            // and the picked frame sits
+                                            // just beyond it, so both show.
+                                            className={cn(
+                                                'block w-full outline-[3px] outline-offset-[3px] outline-transparent transition-[outline-color] duration-150 focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                                                isPicked && 'outline-brand',
+                                                blocked && 'cursor-not-allowed',
+                                            )}
+                                        >
+                                            <img
+                                                src={goal.image}
+                                                alt=""
+                                                width={320}
+                                                height={320}
+                                                loading="lazy"
+                                                decoding="async"
+                                                className="block aspect-square w-full"
+                                            />
+                                            <span className="sr-only">
+                                                {sdgLabel(goal)}
+                                            </span>
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        {sdgLabel(goal)}
+                                    </TooltipContent>
+                                </Tooltip>
+                            </li>
+                        );
+                    })}
+                </ul>
+                <p aria-live="polite" className="text-xs text-muted-foreground">
+                    {picked.length === 0
+                        ? `Pick up to ${MAX_SDGS} goals this activity supports.`
+                        : `Picked: ${picked.map(sdgLabel).join('; ')}.`}
+                    {sdgsFull &&
+                        ` You can pick up to ${MAX_SDGS} SDGs. Remove one to pick another.`}
+                </p>
+                <SdgCredit />
+            </section>
+
+            <section aria-labelledby={agendaHeading} className="space-y-2">
+                <div className="flex items-baseline justify-between gap-3">
+                    <h3 id={agendaHeading} className="text-sm font-medium">
+                        A.C.H.I.E.V.E. Agenda
+                    </h3>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                        {achieveItems.length}/{MAX_ACHIEVE_ITEMS}
+                    </span>
+                </div>
+                <ul className="-mx-2 space-y-0.5">
+                    {achieveAgenda.map((item) => {
+                        const isPicked = achieveItems.includes(item.code);
+
+                        return (
+                            <li key={item.code}>
+                                <button
+                                    type="button"
+                                    aria-pressed={isPicked}
+                                    disabled={!isPicked && agendaFull}
+                                    onClick={() => onToggleAchieve(item.code)}
+                                    className="flex w-full items-center gap-3 rounded-[10px] px-2 py-2 text-left outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <AgendaTile
+                                        item={item}
+                                        className="size-9 text-base"
+                                    />
+                                    <span className="min-w-0 flex-1">
+                                        <span className="block text-sm font-medium">
+                                            {item.title}
+                                        </span>
+                                        <span className="block text-xs text-muted-foreground capitalize">
+                                            {item.role}
+                                        </span>
+                                    </span>
+                                    <SelectionMark selected={isPicked} />
+                                </button>
+                            </li>
+                        );
+                    })}
+                </ul>
+                {agendaFull && (
+                    <p
+                        className="text-xs text-muted-foreground"
+                        aria-live="polite"
+                    >
+                        You can pick up to {MAX_ACHIEVE_ITEMS} A.C.H.I.E.V.E.
+                        items.
+                    </p>
+                )}
+                <a
+                    href={achievePage}
+                    target="_blank"
+                    rel="noopener"
+                    className="inline-flex items-center gap-1 rounded-sm text-sm text-muted-foreground underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                >
+                    About the agenda
+                    <ArrowUpRight aria-hidden className="size-3.5" />
+                    <span className="sr-only">(opens in a new tab)</span>
+                </a>
+            </section>
         </div>
     );
 }
