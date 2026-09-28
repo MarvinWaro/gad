@@ -33,10 +33,10 @@ for (const width of [375, 768, 1280]) {
         expect(await page.locator('.public-theme').boundingBox()).toMatchObject(
             { x: 0, width },
         );
-        // The public site stays light even when the device prefers dark.
+        // Like the dashboard, the public site follows a dark preference.
         await expect(page.locator('.public-theme')).toHaveCSS(
             'background-color',
-            'rgb(255, 255, 255)',
+            'rgb(20, 18, 23)',
         );
         expect(
             await page.evaluate(

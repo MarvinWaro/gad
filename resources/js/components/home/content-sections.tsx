@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { LinkCards } from '@/components/public/link-cards';
 import {
     MediaPanel,
     PreviewDialog,
@@ -154,42 +155,12 @@ export function Resources({ resources }: { resources: ResourceRecord[] }) {
                 title="Learn more. Do more."
                 description="Explore five resource areas. Materials will be added as they become available."
             />
-            <ul className="resources-grid">
-                {resources.map((resource) => {
-                    const Icon = resourceIcons[resource.id];
-                    if (!resource.href) {
-                        return (
-                            <li className="resource-card" key={resource.id}>
-                                <Icon aria-hidden="true" strokeWidth={1.5} />
-                                <h3>{resource.title}</h3>
-                                <span>Content coming soon</span>
-                            </li>
-                        );
-                    }
-
-                    // The title link stretches over the whole card.
-                    return (
-                        <li
-                            className="resource-card resource-card-linked"
-                            key={resource.id}
-                        >
-                            <Icon aria-hidden="true" strokeWidth={1.5} />
-                            <h3>
-                                <Link
-                                    className="resource-link"
-                                    href={resource.href}
-                                >
-                                    {resource.title}
-                                </Link>
-                            </h3>
-                            <span className="resource-summary">
-                                {resource.summary}
-                                <ArrowUpRight aria-hidden="true" />
-                            </span>
-                        </li>
-                    );
-                })}
-            </ul>
+            <LinkCards
+                cards={resources.map((resource) => ({
+                    ...resource,
+                    icon: resourceIcons[resource.id],
+                }))}
+            />
         </section>
     );
 }

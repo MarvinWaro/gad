@@ -13,7 +13,9 @@ use App\Http\Controllers\PostLikeController;
 use App\Http\Controllers\PostShareController;
 use App\Http\Controllers\PostTagSuggestionController;
 use App\Http\Controllers\PublicSurveyController;
+use App\Http\Controllers\SiteRatingController;
 use App\Models\CarouselSlide;
+use App\Models\SiteSetting;
 use App\Models\Survey;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -47,13 +49,23 @@ Route::get('/', function () {
     return Inertia::render('welcome', [
         'carouselSlides' => $carouselSlides,
         'openSurveys' => $openSurveys,
+        'ratingButton' => SiteSetting::ratingButtonEnabled(),
     ]);
 })->name('home');
+
+// The homepage's anonymous "Rate PHLGADIS" answers, throttled like the surveys.
+Route::post('/ratings', [SiteRatingController::class, 'store'])
+    ->middleware('throttle:5,60')
+    ->name('ratings.store');
 
 Route::inertia('/resources/definition-of-terms', 'resources/definition-of-terms')->name('resources.terms');
 Route::inertia('/resources/gad-enabling-republic-acts', 'resources/gad-enabling-republic-acts')->name('resources.acts');
 Route::inertia('/resources/issuances', 'resources/issuances')->name('resources.issuances');
 Route::inertia('/resources/manuals', 'resources/manuals')->name('resources.manuals');
+
+Route::inertia('/about', 'about')->name('about');
+Route::inertia('/about/gad-herstory', 'about/gad-herstory')->name('about.herstory');
+Route::inertia('/help/faq', 'help/faq')->name('help.faq');
 
 Route::get('/surveys/{law}', [PublicSurveyController::class, 'show'])->whereIn('law', [
     'ra-7877',

@@ -8,6 +8,7 @@ import {
     Rights,
     Stories,
 } from '@/components/home/content-sections';
+import { RateWidget } from '@/components/home/rate-widget';
 import { Statistics } from '@/components/home/statistics';
 import { SiteFooter, SiteHeader } from '@/components/public/site-layout';
 import {
@@ -23,9 +24,12 @@ import '../../css/public.css';
 export default function Welcome({
     carouselSlides = [],
     openSurveys = [],
+    ratingButton = false,
 }: {
     carouselSlides?: HeroSlideRecord[];
     openSurveys?: string[];
+    /** Whether Settings → Site ratings has the rating button switched on. */
+    ratingButton?: boolean;
 }) {
     const { auth } = usePage().props;
     const mainRef = useRef<HTMLElement>(null);
@@ -128,6 +132,7 @@ export default function Welcome({
                 <Feedback />
             </main>
             <SiteFooter />
+            {ratingButton && <RateWidget />}
         </div>
     );
 }

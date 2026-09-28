@@ -6,7 +6,7 @@ const linkTargets = (page: import('@playwright/test').Page, name: string) =>
         .getByRole('link')
         .evaluateAll((links) => links.map((link) => link.getAttribute('href')));
 
-test('public navigation follows the order of the homepage sections', async ({
+test('public navigation follows the order of the homepage sections, then the FAQ', async ({
     page,
 }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -19,7 +19,9 @@ test('public navigation follows the order of the homepage sections', async ({
         '#statistics',
         '#resources',
         '#about',
+        '/help/faq',
     ]);
+    const sections = desktop.filter((href) => href?.startsWith('#'));
     const positions = await page.evaluate(
         (hrefs) =>
             hrefs.map(
@@ -28,7 +30,7 @@ test('public navigation follows the order of the homepage sections', async ({
                         .getElementById(String(href).slice(1))!
                         .getBoundingClientRect().top + window.scrollY,
             ),
-        desktop,
+        sections,
     );
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
 
