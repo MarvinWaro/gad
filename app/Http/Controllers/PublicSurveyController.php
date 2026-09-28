@@ -231,14 +231,14 @@ class PublicSurveyController extends Controller
             ));
         }
 
-        return $groups
+        return array_values($groups
             ->map(fn (SurveyRespondentGroup $group): array => [
                 'value' => $group->value,
                 'label' => $group->label,
                 'requires_text' => $group->requires_text,
                 'follow_ups' => $group->followUps(),
             ])
-            ->all();
+            ->all());
     }
 
     /**

@@ -124,9 +124,9 @@ class SurveyResponseController extends Controller
             'respondent_group_other' => $response->respondent_group_other,
             // These answers are optional when the questionnaire says so, so a
             // reviewer sees an explicit gap rather than a crash or a blank.
-            'region' => $response->region?->name ?? 'Not provided',
-            'cluster' => $response->cluster?->name ?? 'Not provided',
-            'hei' => $response->hei?->name ?? 'Not provided',
+            'region' => $response->region->name ?? 'Not provided',
+            'cluster' => $response->cluster->name ?? 'Not provided',
+            'hei' => $response->hei->name ?? 'Not provided',
             'submitted_at' => $response->created_at?->toISOString(),
             'expires_at' => $response->expires_at->toISOString(),
         ];
@@ -182,7 +182,17 @@ class SurveyResponseController extends Controller
         return $columns;
     }
 
-    /** @return array<string, array<string, string>> */
+    /**
+     * Option labels by question: each question's value → label map, and, under
+     * `selections`, each multi-select question's label with its option labels.
+     *
+     * @return array{
+     *     sex: array<string, string>, respondent_group: array<string, string>,
+     *     experiences: array<string, string>, perpetrators: array<string, string>,
+     *     answering_for: array<string, string>,
+     *     selections: array<string, array{label: string, options: array<string, string>}>
+     * }
+     */
     private function answerLabels(SurveyResponse $response): array
     {
         $labels = ['sex' => [], 'respondent_group' => [], 'experiences' => [], 'perpetrators' => [], 'answering_for' => [], 'selections' => []];

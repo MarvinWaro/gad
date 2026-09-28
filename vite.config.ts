@@ -41,6 +41,8 @@ export default defineConfig({
     },
     lint: {
         ignorePatterns: [
+            // Vendored agent tooling (the Impeccable skill), as for fmt below.
+            '.github/**',
             'vendor/**',
             'node_modules/**',
             'public/**',

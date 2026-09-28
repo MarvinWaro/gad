@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Schema;
  */
 return new class extends Migration
 {
-    /** @var list<string> */
+    /** @var array<string, string> each foreign key column and the table it references */
     private array $foreignKeys = [
         'survey_region_id' => 'survey_regions',
         'survey_cluster_id' => 'survey_clusters',

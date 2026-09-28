@@ -99,7 +99,7 @@ final class RespondentFollowUps
     public static function saveAnswers(SurveyResponse $response, ?SurveyRespondentGroup $group, array $validated): void
     {
         $rows = [];
-        foreach ($group?->followUpQuestions ?? [] as $question) {
+        foreach ($group->followUpQuestions ?? [] as $question) {
             $value = $validated['group_answers'][$question->key] ?? null;
             $option = $question->activeOptions->firstWhere('value', $value);
             if (! $option instanceof SurveyGroupOption) {
@@ -190,7 +190,7 @@ final class RespondentFollowUps
      * choices left out are deleted, or retired if they have been answered, so
      * the answers keep their meaning.
      *
-     * @param  list<array<string, mixed>>  $submitted  the validated questions
+     * @param  array<array-key, array<string, mixed>>  $submitted  the validated questions
      *
      * @throws ValidationException when a question repeats a choice
      */
@@ -226,7 +226,7 @@ final class RespondentFollowUps
                 } else {
                     $question = $group->questions()->create([
                         ...$attributes,
-                        'key' => self::uniqueKey(Str::slug($data['label']) ?: 'question', $existing->keys()->all()),
+                        'key' => self::uniqueKey(Str::slug($data['label']) ?: 'question', array_map(strval(...), $existing->keys()->all())),
                     ]);
                     $existing->put($question->key, $question);
                 }
@@ -306,7 +306,7 @@ final class RespondentFollowUps
         return $values;
     }
 
-    /** @param list<string> $taken */
+    /** @param array<int, string> $taken */
     private static function uniqueKey(string $base, array $taken): string
     {
         $key = $base;

@@ -29,7 +29,7 @@ class PostCommentController extends Controller
         ]);
 
         $answered = isset($validated['parent_id'])
-            ? PostComment::query()->findOrFail($validated['parent_id'])
+            ? PostComment::query()->findOrFail((int) $validated['parent_id'])
             : null;
 
         $comment = $post->comments()->create([
@@ -37,7 +37,7 @@ class PostCommentController extends Controller
             'body' => $validated['body'],
             // Threads are one level deep: a reply to a reply joins the same
             // thread, naming the person it answers.
-            'parent_id' => $answered?->parent_id ?? $answered?->id,
+            'parent_id' => $answered === null ? null : ($answered->parent_id ?? $answered->id),
             'reply_to_user_id' => $answered !== null && $answered->user_id !== $user->id
                 ? $answered->user_id
                 : null,

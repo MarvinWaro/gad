@@ -23,6 +23,9 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $guardian_confirmed_at
  * @property Carbon $expires_at
  * @property Carbon|null $created_at
+ * @property-read SurveyRegion|null $region Null when the questionnaire made the place optional.
+ * @property-read SurveyCluster|null $cluster
+ * @property-read SurveyHei|null $hei
  */
 #[Fillable([
     'survey_version_id', 'public_reference', 'age', 'sex', 'respondent_group',

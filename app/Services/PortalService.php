@@ -44,7 +44,7 @@ class PortalService
     {
         $key = self::CACHE_KEY;
 
-        if (! $force && ($cached = Cache::get($key))) {
+        if (! $force && ($cached = $this->cached($key))) {
             return $cached + ['stale' => false, 'error' => null];
         }
 
@@ -54,7 +54,7 @@ class PortalService
         }
 
         try {
-            if (! $force && ($cached = Cache::get($key))) {
+            if (! $force && ($cached = $this->cached($key))) {
                 return $cached + ['stale' => false, 'error' => null];
             }
 
@@ -151,11 +151,21 @@ class PortalService
     }
 
     /**
+     * A snapshot saved by an earlier fetch, if the cache still holds one.
+     *
+     * @return array{data: array<int, array<string, string|null>>, last_fetched_at: ?string}|null
+     */
+    private function cached(string $key): ?array
+    {
+        return Cache::get($key);
+    }
+
+    /**
      * @return array{data: array<int, array<string, string|null>>, last_fetched_at: ?string, stale: bool, error: string}
      */
     private function fallback(string $key, string $message): array
     {
-        $previous = Cache::get($key.':last_success');
+        $previous = $this->cached($key.':last_success');
 
         return ($previous ?? ['data' => [], 'last_fetched_at' => null])
             + ['stale' => true, 'error' => $message];
