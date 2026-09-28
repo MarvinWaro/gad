@@ -4,6 +4,7 @@ use App\Http\Controllers\Settings\ProfileAvatarController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\RoleManagementController;
 use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Controllers\Settings\SiteRatingManagementController;
 use App\Http\Controllers\Settings\SurveyDirectoryController;
 use App\Http\Controllers\Settings\UserManagementController;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -80,6 +81,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:survey-directories.update')->name('settings.survey-directories.update');
     Route::delete('settings/survey-directories/{type}/{id}', [SurveyDirectoryController::class, 'destroy'])
         ->middleware('can:survey-directories.delete')->name('settings.survey-directories.destroy');
+
+    Route::get('settings/ratings', [SiteRatingManagementController::class, 'index'])
+        ->middleware('can:site-ratings.view')->name('settings.ratings.index');
+    Route::get('settings/ratings/export', [SiteRatingManagementController::class, 'export'])
+        ->middleware('can:site-ratings.export')->name('settings.ratings.export');
+    Route::put('settings/ratings/button', [SiteRatingManagementController::class, 'updateButton'])
+        ->middleware('can:site-ratings.update')->name('settings.ratings.button');
+    Route::delete('settings/ratings/{siteRating}', [SiteRatingManagementController::class, 'destroy'])
+        ->whereUlid('siteRating')
+        ->middleware('can:site-ratings.delete')->name('settings.ratings.destroy');
 });
 
 Route::get('.well-known/passkey-endpoints', function () {

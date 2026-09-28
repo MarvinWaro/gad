@@ -90,7 +90,7 @@ function Unavailable({ law }: { law: (typeof laws)[number] }) {
                     alt={law.image.alt}
                 />
             </section>
-            <section className="survey-coming-soon">
+            <section className="notice-panel survey-coming-soon">
                 <Clock3 aria-hidden="true" />
                 <div>
                     <h2>Survey questionnaire coming next</h2>

@@ -229,7 +229,7 @@ test('statistics reconcile through dataset, sex, chart and table controls', asyn
     await page.getByRole('option', { name: '2025–2026' }).click();
 });
 
-test('public theme remains light with dark preference and reduced motion', async ({
+test('public theme follows a dark preference and respects reduced motion', async ({
     page,
 }) => {
     await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
@@ -243,12 +243,13 @@ test('public theme remains light with dark preference and reduced motion', async
         ),
     ).toBe('auto');
     await expect(page.locator('#stories')).not.toHaveClass(/reveal-pending/);
+    // Like the dashboard, the public site follows the device's preference.
     expect(
         await page
             .locator('.public-theme')
             .first()
             .evaluate((el) => getComputedStyle(el).backgroundColor),
-    ).toBe('rgb(255, 255, 255)');
+    ).toBe('rgb(20, 18, 23)');
     const login = page.getByRole('link', { name: 'Log in', exact: true });
     await expect(login).toHaveAttribute('href', /\/login$/);
     await expect(
@@ -281,7 +282,7 @@ test('public theme remains light with dark preference and reduced motion', async
             .locator('.public-theme')
             .first()
             .evaluate((el) => getComputedStyle(el).colorScheme),
-    ).toBe('light');
+    ).toBe('dark');
 });
 
 test('all public anchors have destinations and sample content is explicit', async ({

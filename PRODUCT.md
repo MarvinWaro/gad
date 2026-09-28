@@ -8,13 +8,13 @@ web
 
 ## Users
 
-- **HEI users.** GAD focal persons and staff of higher education institutions under CHED Regional Office XII (South Cotabato, Cotabato, Sarangani, Sultan Kudarat clusters). They register with their institution, wait for approval, then use PHLGADIS to follow regional GAD events, answer and promote the RA surveys, and share their campus's gender-and-development activities with other HEIs.
-- **CHED Regional Office XII staff.** Administrators approve accounts, manage users, roles, directories, surveys, carousel content, and regional GAD events, and moderate the community feed. GAD focal persons at CHED create and maintain content and events.
+- **HEI users.** GAD focal persons and staff of higher education institutions across the Philippines, grouped by CHED region and cluster. The first deployment covers CHED Regional Office XII (South Cotabato, Cotabato, Sarangani, Sultan Kudarat clusters). They register with their institution, wait for approval, then use PHLGADIS to follow regional GAD events, answer and promote the RA surveys, and share their campus's gender-and-development activities with other HEIs.
+- **CHED staff.** Regional office administrators approve accounts, manage users, roles, directories, surveys, carousel content, and regional GAD events for their region, and moderate the community feed. Central office staff oversee every region. GAD focal persons at CHED create and maintain content and events. Today CHED Regional Office XII is the only office using it.
 - **Public visitors.** Students and employees who answer the anonymous law surveys and read the public homepage.
 
 ## Product Purpose
 
-PHLGADIS (Philippine Higher Education Gender and Development Information System) is CHED RO XII's GAD information system: public awareness of the four GAD laws, anonymous surveys tagged by institution, and a logged-in space where HEIs and CHED share activities and follow regional GAD events. Success means HEIs participate: their students answer the surveys, and their focal persons post activities and attend events.
+PHLGADIS (Philippine Higher Education Gender and Development Information System) is a GAD information system for Philippine higher education, run first by CHED RO XII and built to hold data for every region: public awareness of the four GAD laws, anonymous surveys tagged by institution, and a logged-in space where HEIs and CHED share activities and follow regional GAD events. Success means HEIs participate: their students answer the surveys, and their focal persons post activities and attend events.
 
 ## Operating Context
 
@@ -22,6 +22,7 @@ PHLGADIS (Philippine Higher Education Gender and Development Information System)
 - Survey responses are anonymous but record the respondent's region, cluster, and HEI, so response counts per institution are real data.
 - The community feed is visible to logged-in users only. Posts publish immediately; administrators can remove any post or comment.
 - Regional GAD events (trainings, campaigns, deadlines, meetings) are created by CHED staff; HEI users view them.
+- National scope: every HEI belongs to a cluster and a region, and the data is meant to cover all 17 CHED regions. Staff access is to be scoped by region, with central office staff seeing all regions. Other systems will read and write the data through a versioned JSON API. Rules for both, and the current gaps, are in CLAUDE.md and docs/national-and-api-readiness.md.
 
 ## Capabilities and Constraints
 
@@ -31,20 +32,21 @@ PHLGADIS (Philippine Higher Education Gender and Development Information System)
 
 ## Brand Commitments
 
-- Name: PHLGADIS; owner: Commission on Higher Education Regional Office XII.
+- Name: PHLGADIS; run by the Commission on Higher Education Regional Office XII today, for use across all CHED regions.
 - Visual system: DESIGN.md (ink, cream, and signature surfaces). The earlier orange/violet palette and gradient banners of the old system are superseded.
 
 ## Evidence on Hand
 
-- HEI directory: about 129 institutions seeded from a CHED list.
+- HEI directory: about 129 institutions seeded from a CHED list (Region XII only so far; other regions arrive through the CHED portal sync).
 - No real community posts, events, or statistics are seeded; do not fabricate them in shipped UI.
 
 ## Product Principles
 
 1. Institutional trust first: plain language, accurate status, nothing presented as working before it is.
 2. Participation over decoration: every surface should make it easier for an HEI to act (answer, share, attend).
-3. One region, many institutions: always show which HEI a person or post belongs to.
+3. Every region, every institution: always show which HEI a person, post or response belongs to, and which region once more than one region is in play. Never assume Region XII.
 4. Privacy by default: survey data stays anonymous; community content stays behind login.
+5. National and API-ready: build for all regions' data and volume, and for other systems to use the same rules and shapes through an API.
 
 ## Accessibility & Inclusion
 

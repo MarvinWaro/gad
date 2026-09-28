@@ -1,5 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { ArrowUpRight, Menu } from 'lucide-react';
+import { PhlgadisLogo } from '@/components/public/phlgadis-logo';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import {
     Sheet,
@@ -10,7 +12,9 @@ import {
     SheetTitle,
     SheetTrigger,
 } from '@/components/ui/sheet';
+import { chedContact } from '@/data/contact';
 import { dashboard, login, register } from '@/routes';
+import { faq } from '@/routes/help';
 
 // In the order the sections appear on the homepage.
 const navigation = [
@@ -20,6 +24,10 @@ const navigation = [
     ['Resources', '#resources'],
     ['About', '#about'],
 ];
+
+// After the sections comes the FAQ, a page of its own. The old site put it
+// in a one-item help menu; a plain link does the same job.
+const faqHref = faq.url();
 
 function resolvePublicHref(anchor: string, homeUrl?: string) {
     return homeUrl ? `${homeUrl}${anchor}` : anchor;
@@ -61,8 +69,10 @@ export function SiteHeader({
                             {label}
                         </a>
                     ))}
+                    <Link href={faqHref}>FAQ</Link>
                 </nav>
                 <div className="header-actions">
+                    <ThemeToggle className="theme-toggle" />
                     {authenticated ? (
                         <Button asChild variant="outline">
                             <Link href={dashboard()}>
@@ -115,6 +125,12 @@ export function SiteHeader({
                                     </a>
                                 </SheetClose>
                             ))}
+                            <SheetClose asChild>
+                                <Link href={faqHref}>
+                                    FAQ
+                                    <ArrowUpRight size={16} />
+                                </Link>
+                            </SheetClose>
                         </nav>
                         {!authenticated && (
                             <Button asChild variant="outline">
@@ -141,14 +157,7 @@ export function SiteFooter({ homeUrl }: { homeUrl?: string }) {
                             className="footer-logo"
                             aria-label="PHLGADIS home"
                         >
-                            <img
-                                src="/assets/img/gadlogo.png"
-                                width="1053"
-                                height="345"
-                                loading="lazy"
-                                decoding="async"
-                                alt="PHLGADIS — Philippine Higher Education Gender and Development Information System"
-                            />
+                            <PhlgadisLogo />
                         </a>
                         <p>
                             Philippine Higher Education Gender and Development
@@ -195,10 +204,12 @@ export function SiteFooter({ homeUrl }: { homeUrl?: string }) {
                     <div className="footer-contact">
                         <h3>Contact</h3>
                         <p>Hotline:</p>
-                        <a href="tel:+639366167199">+63 936 616 7199</a>
+                        <a href={chedContact.hotline.href}>
+                            {chedContact.hotline.label}
+                        </a>
                         <p>Email:</p>
-                        <a href="mailto:chedro12@ched.gov.ph">
-                            chedro12@ched.gov.ph
+                        <a href={`mailto:${chedContact.email}`}>
+                            {chedContact.email}
                         </a>
                     </div>
                 </div>

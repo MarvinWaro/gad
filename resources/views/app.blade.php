@@ -42,7 +42,8 @@
              unstyled. While developing, link it up front. --}}
         @php
             $publicCss = \Illuminate\Support\Facades\Vite::isRunningHot()
-                && in_array($page['component'], ['welcome', 'surveys/show'], true)
+                && (in_array($page['component'], ['welcome', 'about'], true)
+                    || \Illuminate\Support\Str::startsWith($page['component'], ['surveys/', 'resources/', 'help/', 'about/']))
                 ? ['resources/css/public.css']
                 : [];
         @endphp

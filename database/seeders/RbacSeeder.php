@@ -41,6 +41,10 @@ class RbacSeeder extends Seeder
             ['name' => 'Update GAD events', 'slug' => 'events.update', 'group' => 'GAD events'],
             ['name' => 'Delete GAD events', 'slug' => 'events.delete', 'group' => 'GAD events'],
             ['name' => 'Moderate community posts', 'slug' => 'posts.moderate', 'group' => 'Community'],
+            ['name' => 'View site ratings', 'slug' => 'site-ratings.view', 'group' => 'Site ratings'],
+            ['name' => 'Export site ratings', 'slug' => 'site-ratings.export', 'group' => 'Site ratings'],
+            ['name' => 'Delete site ratings', 'slug' => 'site-ratings.delete', 'group' => 'Site ratings'],
+            ['name' => 'Manage the rating button', 'slug' => 'site-ratings.update', 'group' => 'Site ratings'],
         ])->mapWithKeys(function (array $attributes): array {
             $permission = Permission::query()->updateOrCreate(
                 ['slug' => $attributes['slug']],
@@ -63,6 +67,7 @@ class RbacSeeder extends Seeder
                     'carousel.view', 'carousel.create', 'carousel.update',
                     'surveys.view', 'surveys.create', 'surveys.update',
                     'events.view', 'events.create', 'events.update',
+                    'site-ratings.view',
                 ],
             ],
             'hei' => [

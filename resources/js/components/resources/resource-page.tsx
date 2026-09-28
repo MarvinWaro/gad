@@ -1,58 +1,19 @@
-import type { MouseEventHandler, ReactNode } from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, ArrowUpRight } from 'lucide-react';
-import { SiteFooter, SiteHeader } from '@/components/public/site-layout';
+import type { ComponentProps } from 'react';
+import { ArrowUpRight } from 'lucide-react';
+import { PublicPage } from '@/components/public/public-page';
 import { Button } from '@/components/ui/button';
 import { formatFileSize } from '@/lib/file-size';
 
-// The shared frame of every /resources/{area} page: public header, a back
-// link to the homepage Resources section, the intro, and the footer.
-export function ResourcePage({
-    title,
-    description,
-    summary,
-    metaDescription,
-    onMainClick,
-    children,
-}: {
-    title: string;
-    description: string;
-    summary: string;
-    metaDescription: string;
-    onMainClick?: MouseEventHandler<HTMLElement>;
-    children: ReactNode;
-}) {
-    const { auth } = usePage().props;
+const backToResources = { href: '/#resources', label: 'Back to Resources' };
 
-    return (
-        <div className="public-theme dot-backdrop">
-            <Head>
-                <title>{`PHLGADIS | ${title}`}</title>
-                <meta name="description" content={metaDescription} />
-            </Head>
-            <a className="skip-link" href="#main">
-                Skip to content
-            </a>
-            <SiteHeader authenticated={Boolean(auth.user)} homeUrl="/" />
-            <main id="main" className="resource-page" onClick={onMainClick}>
-                <div className="public-container resource-intro">
-                    <Link className="page-back-link" href="/#resources">
-                        <ArrowLeft aria-hidden="true" />
-                        Back to Resources
-                    </Link>
-                    <p className="section-label">
-                        <span />
-                        Resources
-                    </p>
-                    <h1>{title}</h1>
-                    <p className="section-description">{description}</p>
-                    <p className="resource-meta">{summary}</p>
-                </div>
-                {children}
-            </main>
-            <SiteFooter homeUrl="/" />
-        </div>
-    );
+// Every /resources/{area} page: the public page frame, labelled Resources,
+// with a back link to the homepage Resources section.
+export function ResourcePage(
+    props: Omit<ComponentProps<typeof PublicPage>, 'eyebrow' | 'back'> & {
+        summary: string;
+    },
+) {
+    return <PublicPage eyebrow="Resources" back={backToResources} {...props} />;
 }
 
 // Screen-reader suffix for a link to a document, which is either a PDF

@@ -51,6 +51,7 @@
     --color-chart-3: var(--chart-3);
     --color-chart-4: var(--chart-4);
     --color-chart-5: var(--chart-5);
+    --color-chart-rating: var(--chart-rating);
 
     --color-sidebar: var(--sidebar);
     --color-sidebar-foreground: var(--sidebar-foreground);
@@ -101,6 +102,9 @@
     --chart-3: #0038a8;
     --chart-4: #d9a441;
     --chart-5: #a8d8c4;
+    /* Bars of the Site ratings breakdown. The dark step is deeper than the
+       dark brand so the bars sit in the dark lightness band (dataviz check). */
+    --chart-rating: #7030a8;
     --radius: 0.75rem;
     --sidebar: #faf8f5;
     --sidebar-foreground: #181d26;
@@ -164,6 +168,7 @@
     --chart-3: #6d9eeb;
     --chart-4: #d9a441;
     --chart-5: #a8d8c4;
+    --chart-rating: #a57cd4;
     --sidebar: #0f0d12;
     --sidebar-foreground: #f4f1ec;
     --sidebar-primary: #f4f1ec;

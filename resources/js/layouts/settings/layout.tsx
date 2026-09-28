@@ -6,6 +6,7 @@ import {
     Map,
     Palette,
     ShieldCheck,
+    Star,
     UserRound,
     UsersRound,
 } from 'lucide-react';
@@ -67,7 +68,8 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
         isCurrentOrParentUrl('/settings/regions') ||
         isCurrentOrParentUrl('/settings/clusters') ||
         isCurrentOrParentUrl('/settings/heis') ||
-        isCurrentOrParentUrl('/settings/respondent-groups');
+        isCurrentOrParentUrl('/settings/respondent-groups') ||
+        isCurrentOrParentUrl('/settings/ratings');
     const isAppearancePage = isCurrentOrParentUrl('/settings/appearance');
     const configurationNavItems: NavItem[] = auth.permissions.includes(
         'survey-directories.view',
@@ -94,6 +96,12 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                   icon: ContactRound,
               },
           ]
+        : [];
+    // What the public site collects: the homepage's Rate PHLGADIS answers.
+    const publicSiteNavItems: NavItem[] = auth.permissions.includes(
+        'site-ratings.view',
+    )
+        ? [{ title: 'Site ratings', href: '/settings/ratings', icon: Star }]
         : [];
 
     return (
@@ -125,6 +133,13 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                             <SettingsNavGroup
                                 label="System configuration"
                                 items={configurationNavItems}
+                                isCurrentOrParentUrl={isCurrentOrParentUrl}
+                            />
+                        )}
+                        {publicSiteNavItems.length > 0 && (
+                            <SettingsNavGroup
+                                label="Public site"
+                                items={publicSiteNavItems}
                                 isCurrentOrParentUrl={isCurrentOrParentUrl}
                             />
                         )}

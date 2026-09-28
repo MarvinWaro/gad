@@ -1,7 +1,7 @@
 import { usePage } from '@inertiajs/react';
-import { Bell, Moon, PanelLeft, PanelTop, Sun } from 'lucide-react';
+import { Bell, PanelLeft, PanelTop } from 'lucide-react';
 import { IconAction } from '@/components/icon-action';
-import { useAppearance } from '@/hooks/use-appearance';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { useNavigationStyle } from '@/hooks/use-navigation-style';
 import type { NavigationStyle } from '@/hooks/use-navigation-style';
 import { isHeiOnly } from '@/lib/app-navigation';
@@ -23,7 +23,6 @@ export function HeaderActions({
     className?: string;
 }) {
     const { auth } = usePage().props;
-    const { resolvedAppearance, updateAppearance } = useAppearance();
     const { updateStyle } = useNavigationStyle();
     // HEI accounts always get the top header, so they have nothing to switch.
     const canSwitchNavigation = !isHeiOnly(auth.roles ?? []);
@@ -37,20 +36,7 @@ export function HeaderActions({
             >
                 <Bell className="size-4" />
             </IconAction>
-            <IconAction
-                label="Toggle dark mode"
-                onClick={() =>
-                    updateAppearance(
-                        resolvedAppearance === 'dark' ? 'light' : 'dark',
-                    )
-                }
-                className={buttonClass}
-            >
-                {/* html.dark is set before first paint, so CSS picks the icon
-                    and the server-rendered markup never disagrees with it. */}
-                <Moon className="size-4 dark:hidden" />
-                <Sun className="hidden size-4 dark:block" />
-            </IconAction>
+            <ThemeToggle className={buttonClass} />
             {canSwitchNavigation && (
                 <IconAction
                     label={

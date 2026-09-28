@@ -36,6 +36,7 @@ dark:
     brand: '#b58ce0'
     signature-violet: '#2a1740'
     signature-red: '#ef5a66'
+    signature-cream: '#2c261d'
     destructive: '#e5484d'
 
 typography:
@@ -220,7 +221,7 @@ Never put a font that isn't actually loaded first in the stack. The browser sile
 - 4px base unit; tokens as in `spacing`.
 - Public site: `.public-container` caps at 1280px; `.public-section` uses 96px vertical rhythm (64px ≤900px, 48px ≤600px).
 - App: shadcn sidebar-inset shell; content cards on canvas, sidebar on `surface-soft`.
-- Whitespace is the atmosphere. No gradient, mesh or glow backdrops, with one exception: the pastel callout gradient on the HEI law-surveys panel.
+- Whitespace is the atmosphere. No gradient, mesh or glow backdrops, with one exception: the pastel callout gradient on the HEI law-surveys panel. (Line fades, such as the timeline's, are not backdrops.)
 - **Dot texture** (`dot-backdrop` utility in `app.css`): a faint 14px halftone dot grid (ink at 16%) pinned to the top-right corner of the window, and softly the bottom-left, staying put while the page scrolls. It is a sticky, screen-sized layer that takes no space, so it stays inside its surface (the admin card keeps a clean frame). It goes on page surfaces (HEI shell, admin inset card, auth wrapper, public landing and survey pages) as a block or top-aligned flex column, never on cards, dialogs or menus. Opaque sections such as the landing statistics band cover it by design.
 
 ## Elevation and shape
@@ -238,7 +239,17 @@ Never put a font that isn't actually loaded first in the stack. The browser sile
 - **Callout**: HEI law-surveys panel on `{colors.callout-gradient}`. Ink text, dividers in ink at 15% opacity.
 - **Sidebar**: `surface-soft` background, cream active item.
 - **App icon** (`app-logo-icon.tsx` → `public/assets/img/gadicon.png`): the official ⚥ icon supplied by CHED central office. It is used as-is in the sidebar, header, auth pages, the CHED official-post avatar and the favicons (`public/favicon.svg` embeds the same PNG, unmodified). Never redraw, recolor or replace official CHED/PHLGADIS assets.
-- **Header actions** (`header-actions.tsx`): a notifications bell (placeholder until notifications ship) and a light/dark toggle, to the left of the account avatar in the HEI header and at the right end of the admin top bar.
+- **Header actions** (`header-actions.tsx`): a notifications bell (placeholder until notifications ship) and a light/dark toggle, to the left of the account avatar in the HEI header and at the right end of the admin top bar. The toggle is `ThemeToggle` (`theme-toggle.tsx`), which the public site header uses too.
+- **FAQ** (public header): a plain "FAQ" link after the section links, styled like them, and last in the phone menu. The FAQ opens with the old page's prose: a larger lead paragraph, then the objectives as a two-column bulleted list (one column on phones). The questions follow as `<details>` rows on hairlines under an ink rule, and the page ends with a contact panel (the survey "coming soon" panel style) holding the hotline and email.
+- **Timeline** (`pages/about/gad-herstory.tsx`, `.timeline*` in `public.css`): after shadcnblocks' timeline4, without its outer frame. Steps alternate text and media either side of a hairline centre line. A 2px `brand` line grows down it as the reader scrolls, its tip at the middle of the screen. Both lines fade out at their ends (fixed 80–140px fades), as in timeline4. Text faces the axis (right-aligned on the left side) with a 12px date, a title-md heading and muted body. On the axis sits a 44px card-bordered badge with a cream inner square and a lucide icon for the kind of milestone. Media sit in a dashed `border-input` frame hatched in `hairline`; a step without a photo shows its year there. Below 900px it becomes one column with the line and badges down the left.
+- **Page tabs** (`/about`, `.about-tabs` in `public.css`): a bar pinned under the site header (88px, 76px ≤900px, 70px ≤600px) on the page background with a hairline under it. Tabs look like the header links: `nav-foreground` text, the chosen one ink with a 2px ink underline. On phones the bar scrolls sideways.
+- **PHLGADIS logo** (`PhlgadisLogo`, `components/public/phlgadis-logo.tsx`): gadlogo.png on the light theme; in dark mode the compact gadlogo2.png on the header's white plate (`.lockup-plate`). Used by the footer and the Logo tab; the header always uses gadlogo2.png.
+- **Logo explainer** (`.logo-block` in `public.css`, the Logo tab of `/about`): each official logo in a 220px column beside its explanation, sticky under the tab bar from 901px; body text muted with the source's bold terms in ink at 600. Stacked on phones.
+- **A.C.H.I.E.V.E. tiles** (`.achieve-*`): CHED's agenda as rows on hairlines under an ink rule, each led by an 80px lettered tile with an uppercase THRUST/ENABLER label. Thrusts use `--thrust` (flag blue) and enablers `--enabler` (flag red), in both themes. This is the one place flag red appears outside errors and the campaign category, because it reproduces CHED's own agenda colours.
+- **SDG tiles** (`.goal-tile`, the SDG tab of `/about`): six a row, 8px radius, each a link to its UN goal page. Hover or keyboard focus lays `--media-scrim` over the tile, zooms the artwork 4%, and shows a frosted "Read more ↗" label (`--media-label`, 8px radius, not a pill).
+- **Rate PHLGADIS** (`rate-widget.tsx`, `.rate-*` in `public.css`): an ink button fixed at the bottom-left of the homepage (44px, float shadow) opening a 360px popover card above it. Brand-purple uppercase eyebrow, a title-sm question, five 28px stars that fill in `brand` (hover previews, the chosen meaning shows under them), an optional textarea, a lock-iconed privacy line, and a full-width primary "Submit feedback". A thank-you state with a success check replaces the form.
+- **Site ratings** (`settings/ratings.tsx`): a switch row for the button, a KPI row of three stat tiles (proportional figures), a "Ratings by stars" breakdown whose rows filter the list (10px bars in `--chart-rating`, square at the baseline and 4px-rounded at the tip, on a `muted` track; count and share in muted text), then the ratings table with star marks and delete. `--chart-rating` is `brand` in light and `#a57cd4` in dark, one step deeper than the dark brand so the bars sit in the dark lightness band.
+- **Notice panel** (`.notice-panel`): icon, a short heading and line, then its action on a `muted` tint with a hairline border. Used by the unpublished survey, the FAQ's contact box and the About page's link to the timeline.
 - **Status badges**: live/active = emerald tint, draft/pending = amber tint, archived/inactive = muted. Admin tables all share this mapping.
 - **Post composer** (`post-composer.tsx` + `post-composer-views.tsx`): a compact prompt card (with Photos / Tag people / Feeling shortcuts) that opens a "Create post" modal. Sub-views (Tag people, feelings, Photos) swap in place with a back arrow and Done; Escape steps back before it closes. "Add to your post" and Post stay pinned while the content scrolls. The draft survives closing the modal.
 - **Post modal** (`post-dialog.tsx`): "Comment" opens "{School}'s post": the full post and thread scroll, and the "Comment as …" box stays pinned at the bottom (Enter sends; the new comment scrolls into view). Feed cards show no inline comments. Comments thread one level deep (`post-comments.tsx`): each has "time · Reply · Delete", replies fold under "View N replies", a reply names whom it answers in brand purple, and the post author's comments carry an "Author" tag. Deleting a comment removes its replies. Like / Comment / Share (`PostActions` in `post-parts.tsx`) show counts once non-zero.
@@ -251,7 +262,7 @@ Never put a font that isn't actually loaded first in the stack. The browser sile
 
 ## Dark mode
 
-Dark mode uses the `dark` palette above: warm, faintly violet neutrals. Brand, violet and red are lifted for contrast on dark. The public site (`.public-theme`) pins its light palette and stays light.
+Dark mode uses the `dark` palette above: warm, faintly violet neutrals. Brand, violet and red are lifted for contrast on dark. The public site (`.public-theme`) follows the same setting. `.dark .public-theme` in `public.css` maps these values, with cards one step above the page and muted bands one step below, as in light. Signature cream becomes a warm dark tone (`signature-cream` above), so highlighted states still read as cream. The swap is screen only, so printouts stay light. The header lockup sits on a white plate inside its frame in dark mode, because the official file is transparent there.
 
 ## Do and don't
 
