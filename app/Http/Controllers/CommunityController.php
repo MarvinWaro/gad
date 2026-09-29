@@ -17,7 +17,8 @@ class CommunityController extends Controller
         $user = $request->user();
 
         return Inertia::render('community/index', [
-            'posts' => Inertia::scroll(fn () => CommunityFeed::page($user)),
+            // Loaded just after the page appears, which shows skeletons meanwhile.
+            'posts' => Inertia::scroll(fn () => CommunityFeed::page($user))->defer(),
         ]);
     }
 }

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
@@ -364,6 +365,339 @@ test('a lone portrait photo shows whole, in its own shape', async ({
             0,
         );
     }
+});
+
+test('members react with a heart, care, or clap, and see who reacted', async ({
+    page,
+}) => {
+    const text = 'Browser test: Women’s Month forum on safe spaces.';
+    await logIn(page);
+    const dialog = await openComposer(page, text);
+    await dialog.getByRole('button', { name: 'Post', exact: true }).click();
+    await expect(dialog).toHaveCount(0, { timeout: posting });
+
+    const card = postCard(page, text);
+    const summary = (label: string) =>
+        card.getByRole('button', { name: new RegExp(`^${label}`) });
+    await expect(summary('\\d+ reactions?:')).toHaveCount(0);
+
+    // A click gives a heart, and the summary at the end of the row counts it.
+    await card.getByRole('button', { name: 'React with Heart' }).click();
+    await expect(summary('1 reaction: 1 Heart')).toBeVisible();
+
+    // Resting the mouse on React opens the picker; Clap replaces the heart.
+    // (The click above leaves the pointer on the button, so come back to it.)
+    await page.mouse.move(0, 0);
+    await card
+        .getByRole('button', { name: 'Remove your Heart reaction' })
+        .hover();
+    const picker = page.getByRole('toolbar', { name: 'Reactions' });
+    await expect(picker).toBeVisible();
+    await picker.getByRole('button', { name: 'Clap' }).click();
+    await expect(picker).toHaveCount(0);
+    await expect(summary('1 reaction: 1 Clap')).toBeVisible();
+
+    // Hovering the summary names who reacted; selecting it lists everyone.
+    await summary('1 reaction').hover();
+    await expect(page.getByRole('tooltip')).toContainText('👏');
+    await summary('1 reaction').click();
+    const list = page.getByRole('dialog', { name: 'Reactions' });
+    await expect(list.getByRole('listitem')).toHaveCount(1);
+    await expect(list.getByRole('listitem')).toContainText('reacted with Clap');
+    await scan(page, '[role="dialog"]');
+    await page.keyboard.press('Escape');
+    await expect(list).toHaveCount(0);
+    // Focus comes back to the summary without popping the names up again.
+    await expect(summary('1 reaction')).toBeFocused();
+    await expect(page.getByRole('tooltip')).toHaveCount(0);
+
+    // From the keyboard: the up arrow opens the picker on the current choice.
+    await card
+        .getByRole('button', { name: 'Remove your Clap reaction' })
+        .focus();
+    await page.keyboard.press('ArrowUp');
+    await expect(picker.getByRole('button', { name: 'Clap' })).toBeFocused();
+    await page.keyboard.press('ArrowLeft');
+    await expect(picker.getByRole('button', { name: 'Care' })).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(summary('1 reaction: 1 Care')).toBeVisible();
+    await expect(
+        card.getByRole('button', { name: 'Remove your Care reaction' }),
+    ).toBeFocused();
+
+    // On a phone the icons and the summary share one row.
+    await page.setViewportSize({ width: 375, height: 812 });
+    const row = (await card
+        .getByRole('button', { name: 'Remove your Care reaction' })
+        .locator('..')
+        .boundingBox())!;
+    const counted = (await summary('1 reaction').boundingBox())!;
+    expect(
+        Math.abs(counted.y + counted.height / 2 - (row.y + row.height / 2)),
+    ).toBeLessThanOrEqual(1);
+    expect(counted.x + counted.width).toBeLessThanOrEqual(row.x + row.width);
+    await scan(page, 'article');
+
+    // A click takes the reaction back.
+    const takenBack = () =>
+        page.waitForResponse(
+            (response) =>
+                response.request().method() === 'DELETE' &&
+                response.url().endsWith('/reaction'),
+        );
+    let removed = takenBack();
+    await card
+        .getByRole('button', { name: 'Remove your Care reaction' })
+        .click();
+    await expect(
+        card.getByRole('button', { name: 'React with Heart' }),
+    ).toBeVisible();
+    await expect(summary('\\d+ reactions?:')).toHaveCount(0);
+    await removed;
+
+    // A double tap gives and takes back. The two requests go in order, so
+    // the server ends where the card does.
+    removed = takenBack();
+    await card.getByRole('button', { name: 'React with Heart' }).dblclick();
+    await expect(
+        card.getByRole('button', { name: 'React with Heart' }),
+    ).toBeVisible();
+    await removed;
+    await page.reload();
+    await expect(
+        card.getByRole('button', { name: 'React with Heart' }),
+    ).toBeVisible();
+    await expect(summary('\\d+ reactions?:')).toHaveCount(0);
+});
+
+test('the feed opens on skeletons, then its first five posts', async ({
+    page,
+}) => {
+    await logIn(page);
+    // Hold the feed's own request (it follows the page) so the skeletons
+    // can be seen.
+    await page.route(
+        (url) => url.pathname === '/community',
+        async (route) => {
+            if (
+                route.request().headers()['x-inertia-partial-data'] === 'posts'
+            ) {
+                await new Promise((resolve) => setTimeout(resolve, 800));
+            }
+            await route.continue();
+        },
+    );
+    await page.goto('/community');
+
+    await expect(
+        page.getByRole('heading', { name: 'HEI Gender Mainstreaming Efforts' }),
+    ).toBeVisible();
+    await expect(
+        page.getByRole('status').filter({ hasText: 'Loading posts' }),
+    ).toBeAttached();
+    await expect(page.locator('[data-slot="skeleton"]').first()).toBeVisible();
+    await expect(page.getByRole('article')).toHaveCount(0);
+
+    await expect(page.getByRole('article')).toHaveCount(5);
+    await expect(page.locator('div[aria-busy="true"]')).toHaveCount(0);
+});
+
+test('a photo shimmers in its place until it arrives', async ({ page }) => {
+    const text = 'Browser test: a photo on a slow connection.';
+    await logIn(page);
+    const token = (await page.context().cookies()).find(
+        (cookie) => cookie.name === 'XSRF-TOKEN',
+    )!.value;
+    const response = await page.request.post('/posts', {
+        multipart: {
+            body: text,
+            'images[]': {
+                name: 'building.jpg',
+                mimeType: 'image/jpeg',
+                buffer: readFileSync(photo),
+            },
+        },
+        headers: { 'X-XSRF-TOKEN': decodeURIComponent(token) },
+        maxRedirects: 0,
+    });
+    expect(response.status()).toBe(302);
+
+    // Hold the photo, as a slow connection would.
+    let releasePhoto = () => {};
+    const photoHeld = new Promise<void>((resolve) => {
+        releasePhoto = resolve;
+    });
+    await page.route('**/storage/posts/**', async (route) => {
+        await photoHeld;
+        await route.continue();
+    });
+    await page.goto('/community');
+
+    const tile = postCard(page, text).getByRole('button', {
+        name: /^Photo 1 of 1/,
+    });
+    await expect(tile.locator('.animate-pulse')).toBeVisible();
+    releasePhoto();
+    await expect(tile.locator('.animate-pulse')).toHaveCount(0);
+    await expect(tile.getByRole('img')).toBeVisible();
+});
+
+test('the feed is called Gender Mainstreaming in both menus', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await logIn(page);
+    await page.goto('/community');
+    await expect(page).toHaveTitle(/^Gender Mainstreaming/);
+    await expect(
+        page.getByRole('link', { name: 'Gender Mainstreaming' }).first(),
+    ).toBeVisible();
+
+    // The top navigation still fits its row at the smallest desktop width.
+    await page
+        .getByRole('button', { name: 'Switch to top navigation' })
+        .click();
+    const topLink = page
+        .getByRole('navigation')
+        .getByRole('link', { name: 'Gender Mainstreaming' });
+    await expect(topLink).toBeVisible();
+    const box = (await topLink.boundingBox())!;
+    expect(box.height).toBeLessThanOrEqual(40);
+    expect(
+        await page.evaluate(
+            () =>
+                document.documentElement.scrollWidth <=
+                document.documentElement.clientWidth,
+        ),
+    ).toBe(true);
+    await page
+        .getByRole('button', { name: 'Switch to sidebar navigation' })
+        .click();
+});
+
+test('older posts load by themselves as the reader scrolls, and the end says so', async ({
+    page,
+}) => {
+    await logIn(page);
+    await page.goto('/community');
+    await expect(page.getByRole('article').first()).toBeVisible();
+    // The eleven seed posts (tests/browser/server.php) are the oldest, so
+    // the last of them is never on the first page.
+    const oldest = postCard(page, 'Browser seed post 11:');
+    const caughtUp = page.getByText('You’re all caught up');
+    await expect(oldest).toHaveCount(0);
+    await expect(caughtUp).toHaveCount(0);
+
+    // Hold each next page a moment, so its skeleton shows below the posts.
+    await page.route(
+        (url) => url.pathname === '/community' && url.searchParams.has('page'),
+        async (route) => {
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            await route.continue();
+        },
+    );
+    await page.mouse.wheel(0, 20_000);
+    await expect(page.locator('[data-slot="skeleton"]').first()).toBeVisible();
+    await expect(page.getByRole('article').first()).toBeVisible();
+
+    await expect(async () => {
+        await page.mouse.wheel(0, 20_000);
+        await expect(caughtUp).toBeVisible({ timeout: 1_000 });
+    }).toPass({ timeout: 30_000 });
+    await expect(oldest).toBeVisible();
+    await expect(
+        page.getByRole('button', { name: /view more|load more/i }),
+    ).toHaveCount(0);
+});
+
+test('a reader coming back gets the posts shared while they were away', async ({
+    page,
+}) => {
+    await page.clock.install();
+    await logIn(page);
+    await page.goto('/community');
+
+    const setVisibility = (state: 'hidden' | 'visible') =>
+        page.evaluate((value) => {
+            Object.defineProperty(document, 'visibilityState', {
+                configurable: true,
+                get: () => value,
+            });
+            document.dispatchEvent(new Event('visibilitychange'));
+        }, state);
+    // As if posted from another device: straight to the server.
+    const postElsewhere = async (body: string) => {
+        const token = (await page.context().cookies()).find(
+            (cookie) => cookie.name === 'XSRF-TOKEN',
+        )!.value;
+        const response = await page.request.post('/posts', {
+            form: { body },
+            headers: { 'X-XSRF-TOKEN': decodeURIComponent(token) },
+            maxRedirects: 0,
+        });
+        expect(response.status()).toBe(302);
+    };
+    let checks = 0;
+    page.on('request', (request) => {
+        if (request.url().includes('/posts/newer')) {
+            checks += 1;
+        }
+    });
+
+    // A short absence asks nothing.
+    await setVisibility('hidden');
+    await page.clock.fastForward('00:10');
+    await setVisibility('visible');
+    await page.waitForTimeout(300);
+    expect(checks).toBe(0);
+
+    // At the top of the feed, the new post loads straight in.
+    const first = 'Browser test: shared while the reader was away.';
+    await setVisibility('hidden');
+    await postElsewhere(first);
+    await page.clock.fastForward('00:31');
+    await setVisibility('visible');
+    await expect(postCard(page, first)).toBeVisible();
+    expect(checks).toBe(1);
+
+    // Further down, on a phone, a button offers it instead of moving the page.
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.mouse.wheel(0, 2_000);
+    await expect
+        .poll(() => page.evaluate(() => window.scrollY))
+        .toBeGreaterThan(200);
+    const second = 'Browser test: another post while the reader was away.';
+    await setVisibility('hidden');
+    await postElsewhere(second);
+    await page.clock.fastForward('00:31');
+    await setVisibility('visible');
+
+    const offer = page.getByRole('button', { name: '1 new post' });
+    await expect(offer).toBeVisible();
+    await expect(postCard(page, second)).toHaveCount(0);
+    const box = (await offer.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(375);
+    await scan(page, 'div[aria-busy]');
+
+    // Hold the reload a moment, so its loader shows.
+    await page.route(
+        (url) => url.pathname === '/community',
+        async (route) => {
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            await route.continue();
+        },
+    );
+    await offer.click();
+    await expect(
+        page.getByRole('status').filter({ hasText: 'Loading new posts' }),
+    ).toBeAttached();
+    await expect(page.locator('div[aria-busy="true"]')).toBeVisible();
+    await expect(postCard(page, second)).toBeVisible();
+    await expect(offer).toHaveCount(0);
+    await expect
+        .poll(() => page.evaluate(() => window.scrollY))
+        .toBeLessThan(50);
 });
 
 test('the four composer shortcuts fit on a phone', async ({ page }) => {

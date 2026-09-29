@@ -23,7 +23,8 @@ type Props = {
     surveys: HeiSurvey[];
     calendar: CalendarMonth;
     upcoming: CalendarEvent[];
-    posts: ScrollPage<Post>;
+    /** Deferred: arrives just after the page. */
+    posts?: ScrollPage<Post>;
     quickLinks: QuickLink[];
 };
 
@@ -67,19 +68,21 @@ export default function HeiHome({
                         </div>
 
                         <section
-                            aria-labelledby="community-title"
+                            aria-labelledby="gad-efforts-title"
                             className="space-y-4"
                         >
+                            {/* Title and line as the old PHLGADIS HEI page
+                                has them, word for word. */}
                             <header>
                                 <h2
-                                    id="community-title"
+                                    id="gad-efforts-title"
                                     className="text-xl font-normal"
                                 >
-                                    Community
+                                    HEI Gender Mainstreaming Efforts
                                 </h2>
                                 <p className="mt-1 text-sm text-muted-foreground">
-                                    Gender and development activities shared by
-                                    HEIs across Region XII.
+                                    Promoting gender equality and inclusivity in
+                                    our school community
                                 </p>
                             </header>
                             <PostComposer

@@ -45,7 +45,7 @@ export function appNavigationItems(
         ...(permissions.includes('posts.moderate')
             ? [
                   {
-                      title: 'Community',
+                      title: 'Gender Mainstreaming',
                       href: '/community',
                       icon: MessagesSquare,
                   },

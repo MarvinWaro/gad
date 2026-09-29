@@ -7,9 +7,10 @@ use App\Http\Controllers\Admin\SurveyResponseController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\NewerPostsController;
 use App\Http\Controllers\PostCommentController;
 use App\Http\Controllers\PostController;
-use App\Http\Controllers\PostLikeController;
+use App\Http\Controllers\PostReactionController;
 use App\Http\Controllers\PostShareController;
 use App\Http\Controllers\PostTagSuggestionController;
 use App\Http\Controllers\PublicSurveyController;
@@ -85,12 +86,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('posts/tag-suggestions', PostTagSuggestionController::class)
         ->middleware('throttle:60,1')
         ->name('posts.tag-suggestions');
+    Route::get('posts/newer', NewerPostsController::class)
+        ->middleware('throttle:30,1')
+        ->name('posts.newer');
     Route::get('posts/{post}', [PostController::class, 'show'])->whereUlid('post')->name('posts.show');
     Route::put('posts/{post}', [PostController::class, 'update'])->whereUlid('post')->name('posts.update');
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->whereUlid('post')->name('posts.destroy');
     Route::post('posts/{post}/share', PostShareController::class)->whereUlid('post')->middleware('throttle:20,1')->name('posts.share');
-    Route::post('posts/{post}/like', [PostLikeController::class, 'store'])->whereUlid('post')->name('posts.like');
-    Route::delete('posts/{post}/like', [PostLikeController::class, 'destroy'])->whereUlid('post')->name('posts.unlike');
+    Route::get('posts/{post}/reactions', [PostReactionController::class, 'index'])
+        ->whereUlid('post')
+        ->middleware('throttle:60,1')
+        ->name('posts.reactions.index');
+    Route::put('posts/{post}/reaction', [PostReactionController::class, 'update'])
+        ->whereUlid('post')
+        ->middleware('throttle:60,1')
+        ->name('posts.reaction.update');
+    Route::delete('posts/{post}/reaction', [PostReactionController::class, 'destroy'])
+        ->whereUlid('post')
+        ->name('posts.reaction.destroy');
     Route::post('posts/{post}/comments', [PostCommentController::class, 'store'])
         ->whereUlid('post')
         ->middleware('throttle:30,1')

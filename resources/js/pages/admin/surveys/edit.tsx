@@ -86,7 +86,7 @@ export default function SurveyBuilder({
                 </div>
 
                 <div className="mx-auto max-w-6xl @min-[88rem]:grid @min-[88rem]:max-w-none @min-[88rem]:grid-cols-[minmax(0,1fr)_21rem] @min-[88rem]:items-start @min-[88rem]:gap-x-12">
-                    <div className="@min-[88rem]:sticky @min-[88rem]:top-6 @min-[88rem]:col-start-2 @min-[88rem]:row-start-1 @min-[88rem]:-mx-1 @min-[88rem]:max-h-[calc(100svh-3rem)] @min-[88rem]:overflow-y-auto @min-[88rem]:px-1">
+                    <div className="@min-[88rem]:sticky @min-[88rem]:top-below-header @min-[88rem]:col-start-2 @min-[88rem]:row-start-1 @min-[88rem]:-mx-1 @min-[88rem]:max-h-[calc(100svh-var(--app-header,0px)-3rem)] @min-[88rem]:overflow-y-auto @min-[88rem]:px-1">
                         <PublicationPanel
                             survey={survey}
                             draft={draft}

@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
-import type { KeyboardEvent, ReactNode } from 'react';
+import type { ImgHTMLAttributes, KeyboardEvent, ReactNode } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -34,6 +34,39 @@ export type MosaicImage = {
 };
 
 type PhotoSize = { width: number; height: number };
+
+/**
+ * A mosaic photo that shimmers in its tile until it arrives, which on a slow
+ * connection is most of what the reader waits for. The shimmer goes once the
+ * photo loads (or fails), so a lone photo's bands never pulse.
+ */
+function TilePhoto({
+    onLoad,
+    className,
+    ...props
+}: ImgHTMLAttributes<HTMLImageElement>) {
+    const [loaded, setLoaded] = useState(false);
+
+    return (
+        <>
+            {!loaded && (
+                <span
+                    aria-hidden
+                    className="absolute inset-0 animate-pulse bg-primary/10 motion-reduce:animate-none"
+                />
+            )}
+            <img
+                {...props}
+                onLoad={(event) => {
+                    setLoaded(true);
+                    onLoad?.(event);
+                }}
+                onError={() => setLoaded(true)}
+                className={cn('relative', className)}
+            />
+        </>
+    );
+}
 
 /**
  * Photos in a frame whose shape is known before they load, so the feed
@@ -103,7 +136,8 @@ export function PhotoMosaic({
                     );
                     const content = (
                         <>
-                            <img
+                            <TilePhoto
+                                key={image.url}
                                 src={image.url}
                                 alt={image.alt}
                                 loading="lazy"

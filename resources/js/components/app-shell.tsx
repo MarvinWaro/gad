@@ -12,8 +12,9 @@ export function AppShell({ children, variant = 'sidebar' }: Props) {
     const isOpen = usePage().props.sidebarOpen;
 
     if (variant === 'header') {
+        // AppHeader's sticky bar: h-16 plus its 1px border.
         return (
-            <div className="dot-backdrop flex min-h-screen w-full flex-col">
+            <div className="dot-backdrop flex min-h-screen w-full flex-col [--app-header:4.0625rem]">
                 {children}
             </div>
         );

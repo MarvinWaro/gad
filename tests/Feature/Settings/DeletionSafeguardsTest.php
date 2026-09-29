@@ -74,10 +74,10 @@ test('deactivating an author keeps their posts in the feed, marked', function ()
 
     $this->actingAs($this->admin)
         ->get(route('community'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
             ->has('posts.data', 1)
             ->where('posts.data.0.author.deactivated', true)
-            ->where('posts.data.0.comments.0.author.deactivated', true));
+            ->where('posts.data.0.comments.0.author.deactivated', true)));
 
     $this->actingAs($this->admin)
         ->patch(route('settings.users.status', $member), ['status' => 'active'])
@@ -86,8 +86,8 @@ test('deactivating an author keeps their posts in the feed, marked', function ()
 
     $this->actingAs($this->admin)
         ->get(route('community'))
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('posts.data.0.author.deactivated', false));
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+            ->where('posts.data.0.author.deactivated', false)));
 });
 
 test('a school with accounts or posts cannot be deleted', function () {

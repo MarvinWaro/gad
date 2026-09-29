@@ -2,26 +2,33 @@
 
 namespace App\Support;
 
+use App\Enums\PostReactionType;
 use App\Enums\UserStatus;
 use App\Models\Post;
 use App\Models\PostAchieveItem;
 use App\Models\PostComment;
 use App\Models\PostImage;
+use App\Models\PostReaction;
 use App\Models\PostSdg;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Builds the community feed as the viewer sees it: newest first, with their
- * own like state and the actions they are allowed to take.
+ * own reaction and the actions they are allowed to take.
  */
 class CommunityFeed
 {
-    public const PER_PAGE = 10;
+    /** Posts per page: few enough to arrive quickly on a slow connection. */
+    public const PER_PAGE = 5;
 
     /** Latest comment threads sent with each post, each with all its replies. */
     public const COMMENTS_PER_POST = 20;
+
+    /** People named in a post's reactions tooltip; the full list is fetched on request. */
+    public const REACTORS_SHOWN = 10;
 
     /** @return Paginator<int, array<string, mixed>> */
     public static function page(User $viewer): Paginator
@@ -43,10 +50,106 @@ class CommunityFeed
         return self::present(self::query($viewer)->whereKey($post->id)->firstOrFail(), $viewer);
     }
 
+    /**
+     * How many posts would come before the given one in the viewer's feed
+     * (newest first, then by id), so a reader coming back can be offered
+     * them. Compared by posting time rather than by ULID, so posts carried
+     * over with their original dates never count as new.
+     */
+    public static function newerCount(User $viewer, CarbonInterface $postedAt, string $postId): int
+    {
+        return self::visibleTo($viewer)
+            ->where(fn (Builder $query) => $query
+                ->where('created_at', '>', $postedAt)
+                ->orWhere(fn (Builder $sameSecond) => $sameSecond
+                    ->where('created_at', $postedAt)
+                    ->where('id', '>', $postId)))
+            ->count();
+    }
+
+    /**
+     * Every post the viewer's feed may show: all of them for now. Scoping the
+     * feed by region belongs here, so the feed and its counts agree.
+     *
+     * @return Builder<Post>
+     */
+    private static function visibleTo(User $viewer): Builder
+    {
+        return Post::query();
+    }
+
+    /**
+     * The viewer's reaction summary for one post, fresh from the database.
+     *
+     * @return array<string, mixed>
+     */
+    public static function reactionsOf(Post $post, User $viewer): array
+    {
+        return self::reactionSummary(
+            self::withReactions(Post::query()->whereKey($post->getKey()), $viewer)->firstOrFail(),
+        );
+    }
+
+    /**
+     * Counts each reaction in SQL, adds the viewer's own, and loads the
+     * latest reactors for the tooltip.
+     *
+     * @param  Builder<Post>  $query
+     * @return Builder<Post>
+     */
+    private static function withReactions(Builder $query, User $viewer): Builder
+    {
+        $counts = ['reactions'];
+
+        foreach (PostReactionType::cases() as $type) {
+            $counts["reactions as {$type->value}_reactions_count"] = fn ($reactions) => $reactions->where('type', $type);
+        }
+
+        return $query
+            ->withCount($counts)
+            ->withMax(['reactions as viewer_reaction' => fn ($reactions) => $reactions->where('user_id', $viewer->id)], 'type')
+            ->with(['reactions' => fn ($reactions) => $reactions
+                ->with('user:id,name')
+                ->latest('id')
+                ->limit(self::REACTORS_SHOWN)]);
+    }
+
+    /**
+     * Totals per reaction code, the viewer's own reaction, and the latest
+     * reactors, from a post loaded through withReactions(). `recent` carries
+     * only what the tooltip shows; PostReactorResource is the full listing.
+     *
+     * @return array{total: int, counts: array<string, int>, mine: string|null, recent: array<int, array{id: int, name: string, type: string}>}
+     */
+    private static function reactionSummary(Post $post): array
+    {
+        $counts = [];
+
+        foreach (PostReactionType::cases() as $type) {
+            $counts[$type->value] = (int) $post->getAttribute("{$type->value}_reactions_count");
+        }
+
+        $mine = $post->getAttribute('viewer_reaction');
+
+        return [
+            'total' => (int) $post->getAttribute('reactions_count'),
+            'counts' => $counts,
+            'mine' => is_string($mine) ? $mine : null,
+            'recent' => $post->reactions
+                ->map(fn (PostReaction $reaction): array => [
+                    'id' => $reaction->user->id,
+                    'name' => $reaction->user->name,
+                    'type' => $reaction->type->value,
+                ])
+                ->values()
+                ->all(),
+        ];
+    }
+
     /** @return Builder<Post> */
     private static function query(User $viewer): Builder
     {
-        return Post::query()
+        return self::withReactions(self::visibleTo($viewer), $viewer)
             ->with([
                 'author:id,name,status,avatar_path',
                 'hei:id,name',
@@ -74,12 +177,10 @@ class CommunityFeed
                     ->limit(self::COMMENTS_PER_POST),
             ])
             ->withCount([
-                'likes',
                 'comments',
                 'shares',
                 'comments as threads_count' => fn ($query) => $query->whereNull('parent_id'),
-            ])
-            ->withExists(['likes as liked' => fn ($query) => $query->where('user_id', $viewer->id)]);
+            ]);
     }
 
     /** @return array<string, mixed> */
@@ -90,8 +191,7 @@ class CommunityFeed
             'edited' => $post->updated_at !== null && $post->created_at !== null
                 && $post->updated_at->gt($post->created_at->addMinute()),
             'shared_post' => $post->sharedPost ? self::content($post->sharedPost) : null,
-            'likes_count' => (int) ($post->likes_count ?? 0),
-            'liked' => (bool) ($post->liked ?? false),
+            'reactions' => self::reactionSummary($post),
             'comments_count' => (int) ($post->comments_count ?? 0),
             'shares_count' => (int) ($post->shares_count ?? 0),
             'comments' => $post->comments
