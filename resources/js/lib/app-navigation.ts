@@ -1,5 +1,6 @@
 import {
     CalendarDays,
+    ClipboardCheck,
     ClipboardList,
     House,
     Images,
@@ -27,12 +28,13 @@ export function appNavigationItems(
 
     return [
         { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
+        // A short label, so the top navigation still fits at 1024px.
         ...(permissions.includes('monitoring.view')
             ? [
                   {
-                      title: 'Monitoring Reports',
+                      title: 'Monitoring',
                       href: '/admin/monitoring',
-                      icon: ClipboardList,
+                      icon: ClipboardCheck,
                   },
               ]
             : []),

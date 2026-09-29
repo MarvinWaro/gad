@@ -13,6 +13,8 @@ return new class extends Migration
             $table->foreignId('survey_hei_id')->constrained()->restrictOnDelete();
             $table->foreignId('survey_cluster_id')->index()->constrained()->restrictOnDelete();
             $table->foreignId('survey_region_id')->constrained()->restrictOnDelete();
+            // The HEI's name when the report began: it is printed for signing
+            // and must not change if the directory later renames the HEI.
             $table->string('institution_name');
             $table->string('academic_year', 9)->index();
             $table->unsignedTinyInteger('semester');
@@ -26,12 +28,16 @@ return new class extends Migration
             $table->ulid('id')->primary();
             $table->foreignUlid('monitoring_report_id')->constrained()->cascadeOnDelete();
             $table->unsignedInteger('number');
-            $table->string('template_version')->default('2025-v3');
+            $table->string('template_version');
             $table->text('address')->nullable();
             $table->date('accomplished_on')->nullable();
             $table->string('president_name')->nullable();
             $table->string('focal_person_name')->nullable();
-            $table->json('institution_snapshot')->nullable();
+            // Finalizing locks the answers for signing; the hash of what was
+            // locked gives the document code printed on the signed copy.
+            $table->timestamp('finalized_at')->nullable();
+            $table->foreignId('finalized_by')->nullable()->index()->constrained('users')->nullOnDelete();
+            $table->char('content_hash', 64)->nullable();
             $table->timestamp('submitted_at')->nullable();
             $table->foreignId('submitted_by')->nullable()->index()->constrained('users')->nullOnDelete();
             $table->timestamps();
@@ -41,7 +47,8 @@ return new class extends Migration
             $table->id();
             $table->foreignUlid('monitoring_revision_id')->constrained()->cascadeOnDelete();
             $table->string('requirement_key');
-            $table->text('answer');
+            // Up to 20,000 characters, which can exceed MySQL's 64 KB TEXT.
+            $table->mediumText('answer');
             $table->unique(['monitoring_revision_id', 'requirement_key']);
         });
         Schema::create('monitoring_attachments', function (Blueprint $table) {
@@ -62,21 +69,11 @@ return new class extends Migration
             $table->text('comment')->nullable();
             $table->timestamps();
         });
-        Schema::create('monitoring_reviewer_access', function (Blueprint $table) {
-            $table->foreignId('user_id')->primary()->constrained()->cascadeOnDelete();
-            $table->boolean('national_access')->default(false);
-            $table->timestamps();
-        });
-        Schema::create('monitoring_reviewer_regions', function (Blueprint $table) {
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('survey_region_id')->index()->constrained()->cascadeOnDelete();
-            $table->primary(['user_id', 'survey_region_id']);
-        });
     }
 
     public function down(): void
     {
-        foreach (['monitoring_reviewer_regions', 'monitoring_reviewer_access', 'monitoring_reviews', 'monitoring_attachments', 'monitoring_answers', 'monitoring_revisions', 'monitoring_reports'] as $table) {
+        foreach (['monitoring_reviews', 'monitoring_attachments', 'monitoring_answers', 'monitoring_revisions', 'monitoring_reports'] as $table) {
             Schema::dropIfExists($table);
         }
     }

@@ -43,6 +43,7 @@
         "input-otp": "^1.4.2",
         "laravel-vite-plugin": "^3.0.0",
         "lucide-react": "^0.475.0",
+        "pdfmake": "^0.3.11",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "react-image-crop": "^11.1.2",
@@ -60,6 +61,7 @@
         "@playwright/test": "^1.63.0",
         "@rolldown/plugin-babel": "^0.2.3",
         "@types/node": "^22.13.5",
+        "@types/pdfmake": "^0.3.3",
         "babel-plugin-react-compiler": "^1.0.0",
         "vite-plus": "0.3.0"
     },

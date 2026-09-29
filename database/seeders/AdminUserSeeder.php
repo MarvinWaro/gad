@@ -21,8 +21,10 @@ class AdminUserSeeder extends Seeder
             ['name' => 'Administrator', 'password' => '12345678'],
         );
 
+        // The first administrator works for the Central Office, so they can
+        // place every other staff account in its office.
         if ($admin->wasRecentlyCreated) {
-            $admin->forceFill(['email_verified_at' => now()])->save();
+            $admin->forceFill(['email_verified_at' => now(), 'national_access' => true])->save();
         }
 
         $admin->assignRole('admin');

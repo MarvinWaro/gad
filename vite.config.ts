@@ -28,6 +28,11 @@ export default defineConfig({
             formVariants: true,
         }),
     ]),
+    // Loaded on demand for monitoring PDFs; prebundled so the dev server does
+    // not reload the page the first time someone downloads one.
+    optimizeDeps: {
+        include: ['pdfmake/build/pdfmake'],
+    },
     server: {
         watch: {
             ignored: [

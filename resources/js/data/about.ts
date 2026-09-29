@@ -24,8 +24,12 @@ export const aboutTopics: AboutTopic[] = [
         href: '/about/gad-herstory',
         summary: `${herstory.length} milestones`,
     },
-    // The earlier site's chart has not been supplied yet.
-    { id: 'organization', title: 'Organizational Chart' },
+    {
+        id: 'organization',
+        title: 'Organizational Chart',
+        href: '/about#organization',
+        summary: 'Leadership, members and secretariat',
+    },
     {
         id: 'phlgadis',
         title: 'What is PHLGADIS?',

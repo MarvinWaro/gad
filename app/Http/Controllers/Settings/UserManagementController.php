@@ -8,6 +8,7 @@ use App\Http\Requests\Settings\StoreManagedUserRequest;
 use App\Http\Requests\Settings\UpdateManagedUserRequest;
 use App\Models\Role;
 use App\Models\SurveyHei;
+use App\Models\SurveyRegion;
 use App\Models\User;
 use App\Support\CountPhrase;
 use Illuminate\Http\RedirectResponse;
@@ -27,8 +28,9 @@ class UserManagementController extends Controller
         $actorPermissions = $request->user()->permissionSlugs();
         $canEdit = $request->user()->can('users.create') || $request->user()->can('users.update');
 
+        $actor = $request->user();
         $users = User::query()
-            ->with(['roles:id,name,slug', 'hei:id,name'])
+            ->with(['roles:id,name,slug', 'hei:id,name', 'officeRegion:id,name'])
             ->when($status !== null, fn ($query) => $query->where('status', $status))
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($query) use ($search): void {
@@ -53,9 +55,14 @@ class UserManagementController extends Controller
                 'sex' => $user->sex,
                 'status' => $user->status->value,
                 'roles' => $user->roles->map->only(['id', 'name', 'slug'])->values(),
+                'office' => [
+                    'national' => $user->national_access,
+                    'region' => $user->officeRegion?->only(['id', 'name']),
+                ],
                 'created_at' => $user->created_at?->toISOString(),
-                'is_current_user' => $user->is($request->user()),
-                'can_manage' => array_diff($user->permissionSlugs(), $actorPermissions) === [],
+                'is_current_user' => $user->is($actor),
+                'can_manage' => array_diff($user->permissionSlugs(), $actorPermissions) === []
+                    && $this->reachesOffice($actor, $user),
             ]);
 
         $roles = Role::query()
@@ -87,6 +94,17 @@ class UserManagementController extends Controller
                     ->orderBy('name')
                     ->get(['id', 'name'])
                 : [],
+            // Offices this manager may place accounts in: every region from
+            // the Central Office, otherwise only their own.
+            'offices' => [
+                'national' => $actor->national_access,
+                'regions' => $canEdit
+                    ? SurveyRegion::query()
+                        ->when(! $actor->national_access, fn ($query) => $query->whereKey($actor->survey_region_id))
+                        ->orderBy('name')
+                        ->get(['id', 'name'])
+                    : [],
+            ],
             'statusCounts' => collect(UserStatus::cases())
                 ->mapWithKeys(fn (UserStatus $case): array => [$case->value => (int) ($counts[$case->value] ?? 0)]),
             'filters' => ['search' => $search, 'status' => $status->value ?? ''],
@@ -102,8 +120,10 @@ class UserManagementController extends Controller
     {
         $validated = $request->validated();
         $this->ensureRolesAreAssignable($request->user(), $validated['role_ids']);
+        $office = $this->officeFrom($validated);
+        $this->ensureOfficeIsAssignable($request->user(), $office);
 
-        DB::transaction(function () use ($validated): void {
+        DB::transaction(function () use ($validated, $office): void {
             $user = User::query()->create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -114,6 +134,11 @@ class UserManagementController extends Controller
                 'status' => UserStatus::Active,
                 'email_verified_at' => now(),
             ]);
+
+            // The office is not mass assignable, so a form elsewhere cannot grant it.
+            if ($office !== null) {
+                $user->forceFill($office)->save();
+            }
 
             $user->roles()->sync($validated['role_ids']);
         });
@@ -132,8 +157,10 @@ class UserManagementController extends Controller
         $this->ensureUserIsManageable($request->user(), $user);
         $this->ensureRolesAreAssignable($request->user(), $validated['role_ids']);
         $this->ensureAdministratorRemains($user, $validated['role_ids']);
+        $office = $this->officeFrom($validated);
+        $this->ensureOfficeIsAssignable($request->user(), $office);
 
-        DB::transaction(function () use ($user, $validated): void {
+        DB::transaction(function () use ($user, $validated, $office): void {
             $attributes = [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -146,7 +173,13 @@ class UserManagementController extends Controller
                 $attributes['password'] = $validated['password'];
             }
 
-            $user->update($attributes);
+            $user->fill($attributes);
+
+            if ($office !== null) {
+                $user->forceFill($office);
+            }
+
+            $user->save();
             $user->roles()->sync($validated['role_ids']);
         });
 
@@ -316,6 +349,75 @@ class UserManagementController extends Controller
         if (array_diff($target->permissionSlugs(), $actor->permissionSlugs()) !== []) {
             throw ValidationException::withMessages([
                 'user' => __('You cannot manage a user with permissions above your own access.'),
+            ]);
+        }
+
+        if (! $this->reachesOffice($actor, $target)) {
+            throw ValidationException::withMessages([
+                'user' => __('You cannot manage an account in another office.'),
+            ]);
+        }
+    }
+
+    /**
+     * Central Office staff manage everyone. Others manage accounts in their
+     * own regional office and accounts with no office, such as HEI users.
+     */
+    private function reachesOffice(User $actor, User $target): bool
+    {
+        return $actor->national_access || (! $target->national_access
+            && ($target->survey_region_id === null || $target->survey_region_id === $actor->survey_region_id));
+    }
+
+    /**
+     * The office a create or update sets, or null to keep the current one.
+     * HEI-only accounts never hold one: their region comes through the HEI.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array{national_access: bool, survey_region_id: int|null}|null
+     */
+    private function officeFrom(array $validated): ?array
+    {
+        $slugs = Role::query()->whereKey($validated['role_ids'])->pluck('slug')->all();
+
+        if ($slugs === ['hei']) {
+            return ['national_access' => false, 'survey_region_id' => null];
+        }
+
+        if (! array_key_exists('national_access', $validated) && ! array_key_exists('survey_region_id', $validated)) {
+            return null;
+        }
+
+        $national = (bool) ($validated['national_access'] ?? false);
+        $region = $validated['survey_region_id'] ?? null;
+
+        return [
+            'national_access' => $national,
+            'survey_region_id' => $national || $region === null ? null : (int) $region,
+        ];
+    }
+
+    /**
+     * Only Central Office staff grant national access or place accounts in
+     * any region; regional staff may place them only in their own office.
+     *
+     * @param  array{national_access: bool, survey_region_id: int|null}|null  $office
+     */
+    private function ensureOfficeIsAssignable(User $actor, ?array $office): void
+    {
+        if ($office === null || $actor->national_access) {
+            return;
+        }
+
+        if ($office['national_access']) {
+            throw ValidationException::withMessages([
+                'national_access' => __('Only Central Office staff can give national access.'),
+            ]);
+        }
+
+        if ($office['survey_region_id'] !== null && ! $actor->reachesRegion($office['survey_region_id'])) {
+            throw ValidationException::withMessages([
+                'survey_region_id' => __('You can only place accounts in your own regional office.'),
             ]);
         }
     }

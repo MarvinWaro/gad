@@ -18,6 +18,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // A monitoring draft is saved exactly as typed: each field is only
+        // written if it still matches what the person started from, so trimming
+        // or nulling the text would turn every save into a conflict.
+        $isDraftSave = fn (Request $request): bool => $request->is('monitoring/*/draft');
+        $middleware->trimStrings(except: [$isDraftSave]);
+        $middleware->convertEmptyStringsToNull(except: [$isDraftSave]);
+
         $middleware->web(append: [
             EnsureUserIsActive::class,
             HandleAppearance::class,

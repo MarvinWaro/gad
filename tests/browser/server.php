@@ -9,10 +9,10 @@ use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
+use Database\Seeders\SurveyDirectorySeeder;
 use Database\Seeders\SurveySeeder;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Support\Facades\DB;
 use Symfony\Component\Process\Process;
 
 require __DIR__.'/../../vendor/autoload.php';
@@ -54,8 +54,8 @@ if (config('database.default') !== 'sqlite' || config('database.connections.sqli
 $kernel->call('migrate', ['--force' => true]);
 $kernel->call('db:seed', ['--class' => RbacSeeder::class, '--force' => true]);
 $kernel->call('db:seed', ['--class' => SurveySeeder::class, '--force' => true]);
-$kernel->call('monitoring:setup');
 $region = SurveyRegion::query()->sole();
+$region->update(SurveyDirectorySeeder::REGION_XII_OFFICE);
 $cluster = SurveyCluster::query()->create(['name' => 'Browser Test Cluster', 'survey_region_id' => $region->id, 'is_active' => true]);
 $hei = SurveyHei::query()->create(['name' => 'Browser Test HEI', 'survey_cluster_id' => $cluster->id, 'is_active' => true]);
 foreach (Survey::query()->get() as $survey) {
@@ -64,9 +64,9 @@ foreach (Survey::query()->get() as $survey) {
     $next = $draft->replicate(['published_at', 'published_by']);
     $next->fill(['version' => 2, 'status' => 'draft'])->save();
 }
-$admin = User::factory()->create(['email' => 'browser-admin@example.test', 'password' => 'browser-password']);
+// A regional administrator, so monitoring review runs within one office.
+$admin = User::factory()->regionalOffice($region)->create(['email' => 'browser-admin@example.test', 'password' => 'browser-password']);
 $admin->assignRole('admin');
-DB::table('monitoring_reviewer_regions')->insert(['user_id' => $admin->id, 'survey_region_id' => $region->id]);
 $monitoringMember = User::factory()->create(['name' => 'Fictional Monitoring Member', 'email' => 'browser-monitoring@example.test', 'password' => 'browser-password', 'survey_hei_id' => $hei->id]);
 $monitoringMember->assignRole('hei');
 

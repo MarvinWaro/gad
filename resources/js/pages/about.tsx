@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from '@inertiajs/react';
 import { ArrowRight, ArrowUpRight, History } from 'lucide-react';
 import { PhlgadisLogo } from '@/components/public/phlgadis-logo';
+import { OrganizationalChart } from '@/components/public/organizational-chart';
 import { PublicPage } from '@/components/public/public-page';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,6 +20,7 @@ import '../../css/public.css';
 const tabs = [
     { id: 'phlgadis', label: 'What is PHLGADIS?' },
     { id: 'logo', label: 'The Logo' },
+    { id: 'organization', label: 'Organizational Chart' },
     { id: 'achieve', label: 'A.C.H.I.E.V.E. Agenda' },
     { id: 'goals', label: 'Sustainable Development Goals' },
 ] as const;
@@ -77,7 +79,7 @@ export default function About() {
             title="About PHLGADIS"
             eyebrow="About us"
             back={{ href: '/#about', label: 'Back to home' }}
-            metaDescription="What PHLGADIS is, its logo, CHED's A.C.H.I.E.V.E. Agenda, the Sustainable Development Goals, and a link to the GAD Herstory timeline."
+            metaDescription="What PHLGADIS is, its logo, organizational chart, CHED's A.C.H.I.E.V.E. Agenda, the Sustainable Development Goals, and a link to the GAD Herstory timeline."
         >
             <div className="public-container about-page">
                 <Tabs
@@ -140,6 +142,9 @@ export default function About() {
                                 </div>
                             </section>
                         </div>
+                    </TabsContent>
+                    <TabsContent value="organization" className="about-panel">
+                        <OrganizationalChart />
                     </TabsContent>
                     <TabsContent value="achieve" className="about-panel">
                         <AchieveAgenda />

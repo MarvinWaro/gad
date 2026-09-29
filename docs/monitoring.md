@@ -1,51 +1,95 @@
 # Monitoring reports
 
-## Use
+The GAD monitoring report replaces the old portal's "Upload Monitoring". The HEI fills in CHED's monitoring form in PHLGADIS, prints it, has it signed, and uploads the signed copy. CHED staff then review it for their region.
 
-- HEI: open **Monitoring Report** from Home, select an academic year and semester, and enter the narrative answers. The same period opens the institution's existing report for all its HEI users.
-- Save the draft, then use **Print / Save PDF** to prepare the document for both signatures. Upload the signed PDF (maximum 20 MB), confirm it matches the answers, and submit.
-- **Records** shows drafts, submitted reports, correction requests, and reviewed reports. A returned report opens a new revision. Every submitted revision, its file, and its review remain in History.
-- Staff: **Monitoring Reports** offers institution/period/status and geographic filters. Reviewer access is managed at `/admin/monitoring/access`, also linked from Settings for user managers.
-- Reviewed means the documents were reviewed; it does not certify legal compliance. There is no calculated compliance score.
+## The HEI's three steps
+
+1. **Fill out.** Home → **Monitoring Report** opens the start page (`/monitoring`).
+    - The HEI picks an academic year and semester. The defaults are today's period in Philippine time: August–December is the first semester of that year; January–July is the second semester of the year before.
+    - Colleagues at an HEI share one report per period. Opening a period that a colleague started continues their report.
+    - Answers save as they are typed (`PATCH /monitoring/{report}/draft`), after a short pause, when a field loses focus, when the tab is hidden, and before leaving the page.
+    - Any answer may stay blank. CHED's form asks for the actual situation per item, so finalizing first lists what is blank.
+2. **Print and sign.** **Finalize for signing** locks the answers and gives the revision a document code, such as `A101-7BF7`.
+    - **Download PDF for signing** builds the official form in the browser. Staff print it on 8.5 × 13 in (long bond) paper, and the President and the GAD Focal Person sign over their printed names.
+    - **Edit answers** unlocks the report again. The code is cleared, so copies already printed no longer match.
+3. **Upload and submit.** One PDF of the signed pages, up to 20 MB, is sent together with a confirmation that it shows the document code.
+
+**Records** (`/records`) lists the HEI's reports and their review. CHED can **return a report for correction** with a note. That opens the next revision with the same answers, for the HEI to correct, sign and submit again. Earlier revisions, their signed copies and their reviews stay under **History**.
+
+"Reviewed" records that CHED reviewed the report and its signed copy. It does not certify legal compliance, and there is no compliance score.
+
+## The printable form
+
+`resources/js/lib/monitoring-pdf.ts` lays out CHED's Word template (`public/assets/document/CHEDRO_XII_GAD_MONITORING _TEMPLATE_2025.docx`). pdfmake renders it in the browser, loaded only when someone downloads a PDF (`monitoring-pdf-download.ts`).
+
+- **Why pdfmake.** Answers often run over several pages inside one table row, as in the HEIs' own signed copies. PHP's dompdf and mPDF cannot split a row across pages; pdfmake can.
+- **Page layout:**
+    - 8.5 × 13 in pages with 1 in margins, as in the Word file.
+    - The letterhead on every page: the CHED seal, CHED's national lines, the region's office name and city, and Bagong Pilipinas.
+    - The footer: the office's address, email, website and phone.
+    - Under the footer, a small line with the period, the revision, the document code and "Page N of M".
+    - Drafts carry a "DRAFT — NOT FOR SIGNATURE" watermark.
+- **What was left out of the Word file:** its last page ("Remove this page before uploading"), an empty row, and a page number that overlapped the footer. "OFFICE OF THE PRESIDE NT" is printed "OFFICE OF THE PRESIDENT", as agreed on 2026-09-29.
+- **Fonts.** Word's Arial Narrow and Bookman Old Style cannot be shipped, so these open fonts stand in. They are in `public/fonts/pdf/` with their licences:
+    - Liberation Sans Narrow 1.07.5: Arial Narrow's metrics, so lines wrap as in Word. GPLv2 with the font exception, which allows embedding in documents.
+    - TeX Gyre Bonum, for the Bookman letterhead. GUST Font License.
+    - Liberation Sans 2.1.5, for characters the narrow face lacks, such as ₱. SIL OFL. It downloads only when a report uses one of those characters.
+- **Images, used as they are:**
+    - the CHED seal, `public/assets/img/ched_logo.png`
+    - the Bagong Pilipinas mark with its wordmark, and the envelope and phone icons, copied out of the Word file into `public/assets/img/letterhead/`
+- **Letterhead details** come from the report's region (`survey_regions.office_*`), editable in Settings → Regions → **Office details**. A blank field leaves its line out. Region XII's details are seeded from the Word file.
+
+**The document code** is the first eight characters of a SHA-256 over what the signers put their names to: the template version, report, revision, HEI name, period, details and answers (`App\Support\MonitoringDocument`). Reviewers compare it with the printed copy.
+
+## Staff access
+
+Reviewers need two things:
+
+- **Permissions.** `monitoring.view` (the **Monitoring** list in the staff navigation, and the reports) and `monitoring.review` (decisions). `RbacSeeder` gives both to `admin` and `gad-focal-person`.
+- **An office.** Set it in Settings → Users → edit → **Office**:
+    - **Central Office — all regions** (`users.national_access`)
+    - one regional office (`users.survey_region_id`)
+
+    Staff with no office see an empty list and cannot open reports. HEI accounts never hold an office: their region comes through their HEI.
+
+Other offices' accounts are protected:
+
+- Only Central Office staff can grant national access or place accounts in any region. Regional staff place accounts only in their own office.
+- Accounts in another office, or in the Central Office, are beyond a regional manager's reach.
+
+The seeded administrator is Central Office staff.
+
+Scoping lives in `App\Models\Concerns\BelongsToRegion` (`withinReachOf`) and `User::reachesRegion()`, ready for other modules to adopt.
+
+## Data and rules
+
+- **One report per HEI, year and semester.** The unique key is `survey_hei_id`, `academic_year`, `semester`.
+    - The HEI's name is kept as it was when the report began, since it is printed for signing.
+    - The report's cluster and region are fixed at creation, so routing stays with the original office.
+- **Statuses** are stable codes: `draft`, `returned`, `submitted`, `reviewed`.
+    - "Ready to sign" is derived: the current revision is finalized but not submitted.
+    - The page's stage pill shows whose turn it is: amber while the HEI has work to do, brand while CHED reviews, emerald once reviewed.
+- **Revisions** hold the details and one answer row per requirement key (`MonitoringTemplate`, version `2025`).
+    - Answers are stored exactly as typed (`mediumText`). `bootstrap/app.php` exempts the draft route from trimming.
+    - A signed copy exists only on a submitted revision, on the private `monitoring` disk (`storage/app/private/monitoring-files`).
+- **Concurrent edits.** Every change claims the report with an update on `lock_version`, the row lock in MySQL and the write lock in SQLite.
+    - An autosave writes a field only if it still holds the value its editor started from. Otherwise the field comes back as a conflict: the editor keeps their text and picks **Use their version** or **Keep mine**.
+    - Finalizing, unlocking, submitting and reviewing are refused if the report changed since the person loaded it.
+- **Signed copies.** `/monitoring/{report}/revisions/{revision}/attachment` downloads the file; `?inline=1` shows it in the reviewer's split view. Both check the report and that the revision belongs to it.
+- **Structure.** The code uses Form Requests, `MonitoringReportPolicy` (`create`, `edit`, `view`, `review`, `viewRecords`), the `ManageMonitoringReport` action, and `MonitoringReportResource` / `MonitoringRevisionResource`.
+- **Not built.** There is no public API, email, deadline, notification or deletion flow yet.
 
 ## Setup
 
-Run the additive migration and permission setup after deploying the code:
-
-```text
-php artisan migrate
-php artisan monitoring:setup
-```
-
-The setup command only adds monitoring view/review grants to the existing administrator and GAD focal person roles. It does not reset existing permissions, create reports, or assign national access. Run it after any intentional reseeding of the default RBAC roles.
-
-An administrator with `users.update` must explicitly assign a region or national access to each reviewer, including themselves. Unassigned staff see an empty queue and cannot open reports. Regional assignments affect only this module. HEI access requires the HEI role and the institution linked to the account; creating/editing additionally requires an active HEI, cluster, and region.
-
-PHP and the reverse proxy must allow a 20 MB PDF plus multipart overhead (`upload_max_filesize >= 20M`, `post_max_size > 20M`). The dedicated `monitoring` disk stores documents under `storage/app/private/monitoring-files`; do not expose this directory through a public storage link. Include it in database-consistent backups.
-
-## Data and workflow
-
-`MonitoringTemplate` holds the versioned transcription of the supplied 2025 DOCX. Stable keys identify narrative answers. The source document remains unchanged. Version `2025-v3` presents requirements 1–12 in order, with 20 answer boxes. Requirements 1, 3–6, 11, and 12 are headings for their lettered subitems; #4 has separate hiring and admissions answers. Requirements 2 and 7–10 each have one answer box. Versions `2025-v1` and `2025-v2` remain available for submitted history and printing. Existing editable drafts move to v3 without losing answers. Earlier combined GFPS or Equal Opportunity answers appear as read-only notes, and old draft attachments are invalidated so a corrected signed copy can be uploaded.
-
-Reports have a unique HEI/academic-year/semester key. Academic years are consecutive years, entered as `2026-2027`; semesters are first and second. Narrative answers, address, date, and signatory names may remain blank when saving, attaching a PDF, or submitting. The signed PDF and confirmation are required for submission. An HEI can explain non-applicability in a narrative field.
-
-Institution identity and geographic names are snapshotted at report creation and carried into revisions, so the name printed for signing does not change underneath an uploaded document. Report routing remains with that original regional office if directories later move an institution. Historical records are retained through restrictive directory foreign keys.
-
-Draft and returned reports are editable by colleagues from the same HEI. Every mutation checks `lock_version` atomically. Stale requests fail with a reload message rather than overwriting current work. Submitted/reviewed answers are locked. Returning a report requires a comment and copies the answers into a new unsigned draft using the current template. Signed attachments are never copied into a new revision.
-
-Changes to answers, address, date, or signatory names invalidate and remove the draft attachment after the transaction commits. Replacing a draft attachment removes the previous draft file. Submitted attachments are retained. File routes authorize the report and verify that the requested revision belongs to it.
-
-The module uses Form Requests, policies, `ManageMonitoringReport`, and `MonitoringReportResource`. The browser receives stable status codes and revision shapes defined in `resources/js/types/monitoring.ts`. No public API, anonymous submissions, emails, deadlines, deletion workflow, or old PDF import is introduced.
+Before launch, migrations are edited in place: run `php artisan migrate:fresh --seed` after pulling. PHP and the web server must accept a 20 MB upload plus overhead (`upload_max_filesize >= 20M`, `post_max_size > 20M`). Back up the `monitoring` disk with the database, and never expose it through a public link.
 
 ## Checks
 
 ```text
-php artisan test --compact
-npm run types:check
-npm run check
-npm run test:frontend
+php artisan test --compact tests/Feature/Monitoring tests/Feature/Settings/UserOfficeTest.php tests/Feature/Settings/RegionOfficeTest.php tests/Unit/AcademicPeriodTest.php
+node --test tests/frontend/monitoring-pdf.test.ts tests/frontend/monitoring-draft.test.ts
 npm run build
-npx playwright test tests/browser/monitoring.spec.ts tests/browser/dashboard.spec.ts tests/browser/settings-appearance.spec.ts
+npx playwright test tests/browser/monitoring.spec.ts
 ```
 
-Browser fixtures use a temporary SQLite database and separate private uploads. They do not populate the application database. Screenshots and a long-answer print PDF are produced under `test-results`.
+The browser test fills in, finalizes, downloads, signs (by uploading the downloaded PDF), returns, corrects and reviews a report. It saves screenshots and both PDFs under `test-results`.

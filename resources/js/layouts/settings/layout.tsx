@@ -43,15 +43,6 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
     const { auth } = usePage<{ auth: Auth }>().props;
     const managementNavItems: NavItem[] = [
-        ...(auth.permissions.includes('users.update')
-            ? [
-                  {
-                      title: 'Monitoring access',
-                      href: '/admin/monitoring/access',
-                      icon: ShieldCheck,
-                  },
-              ]
-            : []),
         ...(auth.permissions.includes('users.view')
             ? [
                   {

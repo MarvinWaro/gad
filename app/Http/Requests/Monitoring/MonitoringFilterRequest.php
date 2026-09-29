@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Monitoring;
 
+use App\Models\MonitoringReport;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class MonitoringFilterRequest extends FormRequest
 {
@@ -17,7 +19,7 @@ class MonitoringFilterRequest extends FormRequest
         return [
             'academic_year' => ['nullable', 'regex:/^\d{4}-\d{4}$/'],
             'semester' => ['nullable', 'in:1,2'],
-            'status' => ['nullable', 'in:draft,submitted,returned,reviewed'],
+            'status' => ['nullable', Rule::in(MonitoringReport::STATUSES)],
             'region' => ['nullable', 'integer', 'exists:survey_regions,id'],
             'cluster' => ['nullable', 'integer', 'exists:survey_clusters,id'],
             'hei' => ['nullable', 'integer', 'exists:survey_heis,id'],

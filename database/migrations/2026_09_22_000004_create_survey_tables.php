@@ -12,6 +12,13 @@ return new class extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->boolean('is_active')->default(true)->index();
+            // The regional office's letterhead, printed on its documents.
+            // The name above is the office line, e.g. "Regional Office XII".
+            $table->string('office_city')->nullable();
+            $table->string('office_address')->nullable();
+            $table->string('office_email')->nullable();
+            $table->string('office_website')->nullable();
+            $table->string('office_phone')->nullable();
             $table->timestamps();
         });
 

@@ -1,20 +1,46 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, ArrowRight, FileText } from 'lucide-react';
-import { Errors, Field, fieldClass } from '@/components/monitoring/shared';
+import { ArrowLeft, ArrowRight, ArrowUpRight, FileText } from 'lucide-react';
+import type { FormEvent } from 'react';
+import MonitoringController from '@/actions/App/Http/Controllers/MonitoringController';
+import {
+    Field,
+    fieldClass,
+    localDate,
+    periodLabel,
+    StagePill,
+} from '@/components/monitoring/shared';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { stageOf } from '@/lib/monitoring-draft';
+import type { AcademicPeriod, MonitoringReport } from '@/types/monitoring';
 
-export default function Create({ institution }: { institution: string }) {
-    const year = new Date().getFullYear();
+export default function Create({
+    institution,
+    period,
+    academicYears,
+    openReports,
+}: {
+    institution: string | null;
+    period: AcademicPeriod;
+    academicYears: string[];
+    openReports: MonitoringReport[];
+}) {
     const form = useForm({
-        academic_year: `${year}-${year + 1}`,
-        semester: '1',
+        academic_year: period.academic_year,
+        semester: String(period.semester),
     });
+
+    function submit(event: FormEvent) {
+        event.preventDefault();
+        form.post(MonitoringController.store.url());
+    }
+
     return (
         <>
-            <Head title="Monitoring Report" />
+            <Head title="Monitoring report" />
             <div className="mx-auto w-full max-w-5xl space-y-8 p-4 sm:p-8">
                 <Link
-                    href="/records"
+                    href={MonitoringController.records.url()}
                     className="inline-flex min-h-11 items-center gap-2 text-sm underline-offset-4 hover:underline"
                 >
                     <ArrowLeft className="size-4" />
@@ -28,69 +54,123 @@ export default function Create({ institution }: { institution: string }) {
                         Your GAD work, on record.
                     </h1>
                     <p className="mt-3 max-w-2xl text-muted-foreground">
-                        Complete your monitoring report, prepare a copy for
-                        signatures, and submit it to CHED for review.
+                        Fill in the monitoring report here, print it for
+                        signing, and send the signed copy to CHED for review.
                     </p>
                 </header>
+
+                {openReports.length > 0 && (
+                    <section
+                        aria-labelledby="open-heading"
+                        className="space-y-3"
+                    >
+                        <h2 id="open-heading" className="text-lg font-medium">
+                            Continue where you left off
+                        </h2>
+                        <ul className="grid gap-3 sm:grid-cols-2">
+                            {openReports.map((report) => (
+                                <li key={report.id}>
+                                    <Link
+                                        href={MonitoringController.show.url(
+                                            report.id,
+                                        )}
+                                        className="flex h-full flex-col gap-3 rounded-xl border bg-card p-5 transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                    >
+                                        <span className="flex flex-wrap items-center justify-between gap-2">
+                                            <span className="font-medium">
+                                                {periodLabel(report)}
+                                            </span>
+                                            <StagePill
+                                                stage={stageOf(report)}
+                                            />
+                                        </span>
+                                        <span className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+                                            Updated{' '}
+                                            {localDate(report.updated_at)}
+                                            <ArrowUpRight
+                                                aria-hidden
+                                                className="size-4 shrink-0"
+                                            />
+                                        </span>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
+
                 <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_18rem]">
                     <form
-                        onSubmit={(event) => {
-                            event.preventDefault();
-                            form.post('/monitoring');
-                        }}
+                        onSubmit={submit}
                         className="space-y-6 rounded-xl border bg-card p-5 sm:p-8"
                     >
                         <div>
                             <h2 className="text-xl font-medium">
-                                Start or resume a report
+                                Start or open a report
                             </h2>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                                {institution}
-                            </p>
+                            {institution && (
+                                <p className="mt-2 text-sm text-muted-foreground">
+                                    {institution}
+                                </p>
+                            )}
                         </div>
-                        <Errors errors={form.errors} />
-                        <Field
-                            label="Academic year"
-                            id="academic-year"
-                            error={form.errors.academic_year}
-                        >
-                            <input
+                        <div className="grid gap-5 sm:grid-cols-2">
+                            <Field
+                                label="Academic year"
                                 id="academic-year"
-                                className={fieldClass}
-                                placeholder="2026-2027"
-                                value={form.data.academic_year}
-                                onChange={(e) =>
-                                    form.setData(
-                                        'academic_year',
-                                        e.target.value.replace('–', '-'),
-                                    )
-                                }
-                                required
-                                aria-invalid={!!form.errors.academic_year}
-                            />
-                        </Field>
-                        <Field label="Semester" id="semester">
-                            <select
-                                id="semester"
-                                className={fieldClass}
-                                value={form.data.semester}
-                                onChange={(e) =>
-                                    form.setData('semester', e.target.value)
-                                }
+                                error={form.errors.academic_year}
                             >
-                                <option value="1">First Semester</option>
-                                <option value="2">Second Semester</option>
-                            </select>
-                        </Field>
+                                <select
+                                    id="academic-year"
+                                    className={fieldClass}
+                                    value={form.data.academic_year}
+                                    onChange={(event) =>
+                                        form.setData(
+                                            'academic_year',
+                                            event.target.value,
+                                        )
+                                    }
+                                    aria-invalid={Boolean(
+                                        form.errors.academic_year,
+                                    )}
+                                >
+                                    {academicYears.map((year) => (
+                                        <option key={year} value={year}>
+                                            {year}
+                                        </option>
+                                    ))}
+                                </select>
+                            </Field>
+                            <Field
+                                label="Semester"
+                                id="semester"
+                                error={form.errors.semester}
+                            >
+                                <select
+                                    id="semester"
+                                    className={fieldClass}
+                                    value={form.data.semester}
+                                    onChange={(event) =>
+                                        form.setData(
+                                            'semester',
+                                            event.target.value,
+                                        )
+                                    }
+                                >
+                                    <option value="1">First Semester</option>
+                                    <option value="2">Second Semester</option>
+                                </select>
+                            </Field>
+                        </div>
                         <p className="text-sm text-muted-foreground">
-                            One shared report per institution and semester. If a
-                            report already exists, you’ll open it here.
+                            Your institution shares one report per semester. If
+                            a colleague already started it, you&rsquo;ll pick up
+                            from their answers.
                         </p>
                         <Button disabled={form.processing} type="submit">
-                            {form.processing
-                                ? 'Opening…'
-                                : 'Continue to report'}
-                            <ArrowRight className="size-4" />
+                            {form.processing && <Spinner />}
+                            Continue to report
+                            <ArrowRight />
                         </Button>
                     </form>
                     <aside className="self-start rounded-xl bg-signature-violet p-6 text-on-signature">
@@ -100,16 +180,16 @@ export default function Create({ institution }: { institution: string }) {
                         </h2>
                         <ol className="mt-5 list-decimal space-y-4 pl-5 text-sm leading-relaxed">
                             <li>
-                                Describe your institution’s actual situation
-                                where you have information. Save and return when
-                                needed.
+                                Describe your institution&rsquo;s actual
+                                situation for each requirement. Answers save as
+                                you type.
                             </li>
                             <li>
-                                Print the saved report for the President and GAD
-                                Focal Person to sign.
+                                Finalize the report, then print the PDF for the
+                                President and the GAD Focal Person to sign.
                             </li>
                             <li>
-                                Upload the signed PDF and submit. Follow its
+                                Upload the signed PDF and submit it. Follow its
                                 review in Records.
                             </li>
                         </ol>

@@ -1,330 +1,415 @@
 <?php
 
+use App\Models\MonitoringAnswer;
 use App\Models\MonitoringReport;
-use App\Models\Permission;
-use App\Models\Role;
+use App\Models\MonitoringRevision;
 use App\Models\SurveyRegion;
 use App\Models\User;
 use App\Support\MonitoringTemplate;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
+    // The first semester of 2026-2027, in Philippine time.
+    $this->travelTo('2026-09-29 02:00:00');
     $this->seed(RbacSeeder::class);
-    $this->artisan('monitoring:setup')->assertSuccessful();
     Storage::fake('monitoring');
     $this->hei = createSurveyHei(['name' => 'Fictional Monitoring HEI']);
     $this->member = User::factory()->create(['survey_hei_id' => $this->hei->id]);
     $this->member->assignRole('hei');
-    $this->reviewer = User::factory()->create();
-    $this->reviewer->assignRole('admin');
+    $this->region = $this->hei->cluster->region;
 });
 
-function monitoringDraft($test): MonitoringReport
+function monitoringReport($test): MonitoringReport
 {
-    $test->actingAs($test->member)->post('/monitoring', ['academic_year' => '2026-2027', 'semester' => 1])->assertRedirect();
+    $test->actingAs($test->member)
+        ->post('/monitoring', ['academic_year' => '2026-2027', 'semester' => 1])
+        ->assertRedirect();
 
     return MonitoringReport::query()->sole();
 }
 
-function monitoringAnswers(MonitoringReport $report): array
+/** @param  array<string, string>  $answers */
+function monitoringSave($test, MonitoringReport $report, array $answers = [], array $details = []): TestResponse
 {
-    return [
+    $revision = $report->fresh()->currentRevision;
+    $stored = $revision->answers->pluck('answer', 'requirement_key');
+    $current = $revision->details();
+
+    return $test->actingAs($test->member)->patchJson('/monitoring/'.$report->id.'/draft', array_filter([
+        'answers' => collect($answers)->map(fn (string $value, string $key): array => ['base' => $stored[$key] ?? '', 'value' => $value])->all(),
+        'details' => collect($details)->map(fn (string $value, string $key): array => ['base' => $current[$key], 'value' => $value])->all(),
+    ]));
+}
+
+function monitoringFinalize($test, MonitoringReport $report): TestResponse
+{
+    return $test->actingAs($test->member)
+        ->post('/monitoring/'.$report->id.'/finalize', ['lock_version' => $report->fresh()->lock_version]);
+}
+
+function monitoringPdf(string $name = 'signed.pdf'): UploadedFile
+{
+    return UploadedFile::fake()->createWithContent($name, "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF");
+}
+
+function monitoringSubmit($test, MonitoringReport $report): TestResponse
+{
+    return $test->actingAs($test->member)->post('/monitoring/'.$report->id.'/submit', [
         'lock_version' => $report->fresh()->lock_version,
-        'address' => 'Fictional campus address', 'accomplished_on' => '2026-09-29',
-        'president_name' => 'Example President', 'focal_person_name' => 'Example Focal Person',
-        'answers' => array_fill_keys(MonitoringTemplate::keys(), 'Documented institutional activities and actual situation.'),
-    ];
+        'confirmed' => true,
+        'file' => monitoringPdf(),
+    ]);
 }
 
-function monitoringPdf(): UploadedFile
+/** A full answer set, submitted: the state CHED reviews. */
+function monitoringSubmitted($test): MonitoringReport
 {
-    return UploadedFile::fake()->createWithContent('signed.pdf', "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF");
+    $report = monitoringReport($test);
+    monitoringSave($test, $report, array_fill_keys(MonitoringTemplate::keys(), 'Actual situation.'), [
+        'address' => 'Fictional campus address',
+        'accomplished_on' => '2026-09-29',
+        'president_name' => 'Example President',
+        'focal_person_name' => 'Example Focal Person',
+    ])->assertOk();
+    monitoringFinalize($test, $report)->assertSessionHasNoErrors();
+    monitoringSubmit($test, $report)->assertSessionHasNoErrors();
+
+    return $report->fresh();
 }
 
-function monitoringReady($test, MonitoringReport $report): void
+function monitoringStaff(?SurveyRegion $region = null, bool $national = false, string $role = 'admin'): User
 {
-    $test->actingAs($test->member)->put('/monitoring/'.$report->id, monitoringAnswers($report))->assertSessionHasNoErrors();
-    $test->post('/monitoring/'.$report->id.'/attachment', ['lock_version' => $report->fresh()->lock_version, 'file' => monitoringPdf()])->assertSessionHasNoErrors();
+    $factory = User::factory();
+    $factory = $national ? $factory->nationalOffice() : ($region ? $factory->regionalOffice($region) : $factory);
+    $staff = $factory->create();
+    $staff->assignRole($role);
+
+    return $staff;
 }
 
-function monitoringSubmit($test, MonitoringReport $report): void
-{
-    monitoringReady($test, $report);
-    $test->post('/monitoring/'.$report->id.'/submit', ['lock_version' => $report->fresh()->lock_version, 'confirmed' => true])->assertSessionHasNoErrors();
-}
-
-function monitoringAssign($test): void
-{
-    DB::table('monitoring_reviewer_regions')->insert(['user_id' => $test->reviewer->id, 'survey_region_id' => $test->hei->cluster->survey_region_id]);
-}
-
-test('drafts are shared within an institution and report periods are unique', function () {
-    $report = monitoringDraft($this);
+test('colleagues at an HEI share one report per period', function () {
+    $report = monitoringReport($this);
     $colleague = User::factory()->create(['survey_hei_id' => $this->hei->id]);
     $colleague->assignRole('hei');
-    $this->actingAs($colleague)->post('/monitoring', ['academic_year' => '2026-2027', 'semester' => 1])->assertRedirect('/monitoring/'.$report->id);
-    expect(MonitoringReport::query()->count())->toBe(1);
-    $this->get('/monitoring/'.$report->id)->assertInertia(fn (Assert $page) => $page->component('monitoring/show')->where('report.can_edit', true));
-    $this->put('/monitoring/'.$report->id, ['lock_version' => 0, 'address' => 'Partial draft', 'answers' => ['gfps-membership' => 'In progress']])->assertSessionHasNoErrors();
-    expect($report->currentRevision()->address)->toBe('Partial draft');
+
+    $this->actingAs($colleague)
+        ->post('/monitoring', ['academic_year' => '2026-2027', 'semester' => 1])
+        ->assertRedirect('/monitoring/'.$report->id);
+
+    expect(MonitoringReport::query()->count())->toBe(1)
+        ->and(MonitoringAnswer::query()->count())->toBe(20)
+        ->and($report->survey_region_id)->toBe($this->region->id);
+
+    $this->get('/monitoring/'.$report->id)->assertInertia(fn (Assert $page) => $page
+        ->component('monitoring/show')
+        ->where('viewer', 'hei')
+        ->where('report.abilities.edit', true)
+        ->where('report.abilities.sign', false)
+        ->where('report.place.hei.name', 'Fictional Monitoring HEI')
+        ->where('report.place.region.name', 'Regional Office XII')
+        ->where('office.name', 'Regional Office XII')
+        ->has('templates.2025.sections', 12)
+        ->has('report.revisions', 1));
+
+    $this->post('/monitoring', ['academic_year' => '2019-2020', 'semester' => 1])->assertSessionHasErrors('academic_year');
     $this->post('/monitoring', ['academic_year' => '2026-2028', 'semester' => 1])->assertSessionHasErrors('academic_year');
     $this->post('/monitoring', ['academic_year' => '2026-2027', 'semester' => 3])->assertSessionHasErrors('semester');
 });
 
-test('stale saves and uploads are rejected without replacing current answers or attachments', function () {
-    $report = monitoringDraft($this);
-    $payload = monitoringAnswers($report);
-    $this->put('/monitoring/'.$report->id, $payload)->assertSessionHasNoErrors();
-    $payload['address'] = 'Stale overwrite';
-    $this->put('/monitoring/'.$report->id, $payload)->assertSessionHasErrors('lock_version');
-    $this->post('/monitoring/'.$report->id.'/attachment', ['lock_version' => 0, 'file' => monitoringPdf()])->assertSessionHasErrors('lock_version');
-    expect($report->currentRevision()->address)->toBe('Fictional campus address');
-    expect(Storage::disk('monitoring')->allFiles())->toBe([]);
+test('the start page offers the current period and the HEI\'s open reports', function () {
+    $report = monitoringReport($this);
+
+    $this->get('/monitoring')->assertInertia(fn (Assert $page) => $page
+        ->component('monitoring/create')
+        ->where('period.academic_year', '2026-2027')
+        ->where('period.semester', 1)
+        ->where('academicYears.0', '2027-2028')
+        ->where('openReports.0.id', $report->id));
 });
 
-test('blank form fields are allowed but submission needs a signed PDF and confirmation', function () {
-    $report = monitoringDraft($this);
-    $this->post('/monitoring/'.$report->id.'/submit', ['lock_version' => 0, 'confirmed' => true])->assertSessionHasErrors('file');
-    $this->put('/monitoring/'.$report->id, [
-        'lock_version' => 0, 'address' => '', 'accomplished_on' => '',
-        'president_name' => '', 'focal_person_name' => '', 'answers' => [],
-    ])->assertSessionHasNoErrors();
-    $this->post('/monitoring/'.$report->id.'/submit', ['lock_version' => 1, 'confirmed' => true])->assertSessionHasErrors('file');
-    $this->post('/monitoring/'.$report->id.'/attachment', ['lock_version' => 1, 'file' => monitoringPdf()])->assertSessionHasNoErrors();
-    $this->post('/monitoring/'.$report->id.'/submit', ['lock_version' => 2, 'confirmed' => false])->assertSessionHasErrors('confirmed');
-    $this->post('/monitoring/'.$report->id.'/submit', ['lock_version' => 2, 'confirmed' => true])->assertSessionHasNoErrors();
-    expect($report->fresh()->status)->toBe('submitted');
-    expect($report->currentRevision()->answers()->where('answer', '')->count())->toBe(20);
-    $this->put('/monitoring/'.$report->id, monitoringAnswers($report))->assertForbidden();
-    $this->post('/monitoring/'.$report->id.'/attachment', ['lock_version' => 3, 'file' => monitoringPdf()])->assertForbidden();
-});
+test('autosave keeps text exactly as typed and merges colleagues\' changes', function () {
+    $report = monitoringReport($this);
 
-test('PDF uploads validate content and size and edits invalidate the signed draft', function () {
-    $report = monitoringDraft($this);
-    monitoringReady($this, $report);
-    $revision = $report->currentRevision();
-    $old = $revision->attachment->path;
-    $this->post('/monitoring/'.$report->id.'/attachment', ['lock_version' => 2, 'file' => UploadedFile::fake()->createWithContent('fake.pdf', 'not a pdf')])->assertSessionHasErrors('file');
-    $this->post('/monitoring/'.$report->id.'/attachment', ['lock_version' => 2, 'file' => UploadedFile::fake()->create('large.pdf', 20481, 'application/pdf')])->assertSessionHasErrors('file');
-    $payload = monitoringAnswers($report);
-    $payload['president_name'] = 'New President';
-    $this->put('/monitoring/'.$report->id, $payload)->assertSessionHasNoErrors();
-    expect($revision->fresh()->attachment)->toBeNull();
-    // Test transactions defer physical cleanup until commit; metadata is invalid immediately.
-    $this->post('/monitoring/'.$report->id.'/submit', ['lock_version' => 3, 'confirmed' => true])->assertSessionHasErrors('file');
-});
+    monitoringSave($this, $report, ['gfps-membership' => "  Chair and members\r\n\n"], ['address' => ' Campus road '])
+        ->assertOk()
+        ->assertJsonPath('lock_version', 1)
+        ->assertJsonPath('conflicts.answers', [])
+        ->assertJsonPath('conflicts.details', []);
 
-test('returned reports preserve immutable submissions and accept a newly signed revision', function () {
-    $report = monitoringDraft($this);
-    monitoringSubmit($this, $report);
-    $original = $report->currentRevision();
-    $originalFile = $original->attachment->path;
-    monitoringAssign($this);
-    $this->actingAs($this->reviewer)->post('/admin/monitoring/'.$report->id.'/review', ['lock_version' => 3, 'decision' => 'returned', 'comment' => ''])->assertSessionHasErrors('comment');
-    $this->post('/admin/monitoring/'.$report->id.'/review', ['lock_version' => 3, 'decision' => 'returned', 'comment' => 'Please describe the training dates.'])->assertSessionHasNoErrors();
-    expect($report->fresh()->status)->toBe('returned');
-    expect($report->currentRevision()->number)->toBe(2);
-    expect($report->currentRevision()->submitted_at)->toBeNull();
-    expect($report->currentRevision()->attachment)->toBeNull();
-    expect($original->fresh()->attachment->path)->toBe($originalFile);
-    monitoringSubmit($this, $report);
-    $this->actingAs($this->reviewer)->post('/admin/monitoring/'.$report->id.'/review', ['lock_version' => $report->fresh()->lock_version, 'decision' => 'reviewed', 'comment' => 'Reviewed documents.'])->assertSessionHasNoErrors();
-    expect($report->fresh()->status)->toBe('reviewed');
-    expect($report->revisions()->count())->toBe(2);
-    expect($original->fresh()->submitted_at)->not->toBeNull();
-    Storage::disk('monitoring')->assertExists($originalFile);
-    $this->actingAs($this->member)->get('/monitoring/'.$report->id)->assertInertia(fn (Assert $page) => $page->where('report.can_edit', false)->has('report.revisions', 2));
-});
+    $revision = $report->fresh()->currentRevision;
+    expect($revision->answers->firstWhere('requirement_key', 'gfps-membership')->answer)->toBe("  Chair and members\n\n")
+        ->and($revision->address)->toBe(' Campus road ');
 
-test('institution and regional boundaries protect reports printouts and files', function () {
-    $report = monitoringDraft($this);
-    monitoringSubmit($this, $report);
-    $revision = $report->currentRevision();
-    $stranger = User::factory()->create(['survey_hei_id' => createSurveyHei(['name' => 'Other institution'])->id]);
-    $stranger->assignRole('hei');
-    foreach ([$stranger, $this->reviewer] as $viewer) {
-        $this->actingAs($viewer)->get('/monitoring/'.$report->id)->assertForbidden();
-        $this->get('/monitoring/'.$report->id.'/revisions/'.$revision->id.'/attachment')->assertForbidden();
-        $this->get('/monitoring/'.$report->id.'/revisions/'.$revision->id.'/print')->assertForbidden();
-    }
-    $otherRegion = SurveyRegion::query()->create(['name' => 'Fictional Other Region', 'is_active' => true]);
-    DB::table('monitoring_reviewer_regions')->insert(['user_id' => $this->reviewer->id, 'survey_region_id' => $otherRegion->id]);
-    $this->actingAs($this->reviewer)->get('/admin/monitoring')->assertInertia(fn (Assert $page) => $page->has('reports.data', 0));
-    $this->post('/admin/monitoring/'.$report->id.'/review', ['lock_version' => 3, 'decision' => 'reviewed'])->assertForbidden();
-    monitoringAssign($this);
-    $this->get('/admin/monitoring?region='.$this->hei->cluster->survey_region_id)->assertInertia(fn (Assert $page) => $page->has('reports.data', 1));
-    $this->get('/monitoring/'.$report->id.'/revisions/'.$revision->id.'/attachment')->assertDownload();
-    $this->get('/monitoring/'.$report->id.'/revisions/'.$revision->id.'/print')->assertOk()->assertSee('Example President');
-});
-
-test('national access is explicit and only user managers can assign monitoring access', function () {
-    $report = monitoringDraft($this);
-    monitoringSubmit($this, $report);
-    $this->actingAs($this->member)->put('/admin/monitoring/access/'.$this->reviewer->id, ['national_access' => true, 'regions' => []])->assertForbidden();
-    $this->actingAs($this->reviewer)->put('/admin/monitoring/access/'.$this->reviewer->id, ['national_access' => true, 'regions' => []])->assertSessionHasNoErrors();
-    $this->get('/monitoring/'.$report->id)->assertOk();
-    $this->put('/admin/monitoring/access/'.$this->reviewer->id, ['national_access' => false, 'regions' => []])->assertSessionHasNoErrors();
-    $this->get('/monitoring/'.$report->id)->assertForbidden();
-});
-
-test('submitted identity survives directory changes and print output escapes answers', function () {
-    $report = monitoringDraft($this);
-    $payload = monitoringAnswers($report);
-    $payload['answers']['gfps-membership'] = '<script>alert(1)</script>';
-    $this->put('/monitoring/'.$report->id, $payload)->assertSessionHasNoErrors();
-    $revision = $report->currentRevision();
-    $this->hei->update(['name' => 'Renamed later']);
-    $this->get('/monitoring/'.$report->id.'/revisions/'.$revision->id.'/print')->assertSee('Fictional Monitoring HEI')->assertDontSee('<script>alert(1)</script>', false)->assertSee('&lt;script&gt;', false);
-});
-
-test('setup adds permissions idempotently without replacing custom grants or geographic assignments', function () {
-    $role = Role::query()->where('slug', 'admin')->sole();
-    $custom = Permission::query()->create(['name' => 'Custom', 'slug' => 'custom.permission', 'group' => 'Custom']);
-    $role->permissions()->attach($custom);
-    monitoringAssign($this);
-    $this->artisan('monitoring:setup')->assertSuccessful();
-    $this->artisan('monitoring:setup')->assertSuccessful();
-    expect($role->permissions()->where('slug', 'custom.permission')->exists())->toBeTrue();
-    expect(Permission::query()->where('slug', 'monitoring.view')->count())->toBe(1);
-    expect(DB::table('monitoring_reviewer_access')->count())->toBe(0);
-    expect(DB::table('monitoring_reviewer_regions')->count())->toBe(1);
-});
-
-test('current template has twelve official requirements and twenty answer boxes', function () {
-    $sections = MonitoringTemplate::definition()['sections'];
-    expect(array_column($sections, 'number'))->toBe(range(1, 12));
-    expect(MonitoringTemplate::keys())->toHaveCount(20)->not->toContain('gfps-establishment', 'opportunity');
-    expect($sections[3]['standalone'])->toBeFalse();
-    expect(array_column($sections[3]['items'], 'key'))->toBe(['opportunity-hiring', 'opportunity-admission']);
-    expect(array_column($sections[3]['items'], 'label'))->toBe(['Hiring of administrators/faculty/personnel', 'Admission of students']);
-    expect($sections[11]['standalone'])->toBeFalse();
-    expect($sections[11]['items'][0]['label'])->toBe('Programs for PWDs, Senior Citizens, Indigenous Peoples, Solo Parents, LGBTQA++, etc.');
-    expect($sections[1]['standalone'])->toBeTrue();
-    expect(array_column($sections, 'key'))->toContain('gad-corner', 'breastfeeding', 'child-minding');
-    expect($sections[6]['title'])->toBe('GAD Corner in the HEI or GAD section in the library');
-    expect($sections[9]['number'])->toBe(10);
-    expect($sections[11]['title'])->toBe('Support to Gender Equality, Disability and Social Inclusion (GEDSI)');
-    expect(MonitoringTemplate::keys(MonitoringTemplate::PREVIOUS_VERSION))->toHaveCount(19)->toContain('opportunity');
-    expect(MonitoringTemplate::keys(MonitoringTemplate::LEGACY_VERSION))->toHaveCount(20)->toContain('gfps-establishment');
-});
-
-test('editable legacy drafts retain answers while their old signed attachment is invalidated', function () {
-    $report = monitoringDraft($this);
-    $draft = $report->currentRevision();
-    $draft->update(['template_version' => MonitoringTemplate::LEGACY_VERSION]);
-    $draft->answers()->create(['requirement_key' => 'gfps-establishment', 'answer' => 'Earlier parent answer']);
-    $draft->answers()->create(['requirement_key' => 'gfps-membership', 'answer' => 'Earlier membership answer']);
-    $this->post('/monitoring/'.$report->id.'/attachment', ['lock_version' => 0, 'file' => monitoringPdf()])->assertSessionHasNoErrors();
-
-    $submitted = $this->actingAs($this->member)->post('/monitoring', ['academic_year' => '2027-2028', 'semester' => 1]);
-    $submitted->assertRedirect();
-    $olderReport = MonitoringReport::query()->where('academic_year', '2027-2028')->firstOrFail();
-    $older = $olderReport->currentRevision();
-    $this->post('/monitoring/'.$olderReport->id.'/attachment', ['lock_version' => 0, 'file' => monitoringPdf()])->assertSessionHasNoErrors();
-    $submittedFile = $older->fresh()->attachment->path;
-    $older->update(['template_version' => MonitoringTemplate::LEGACY_VERSION, 'submitted_at' => now()]);
-    $olderReport->update(['status' => 'submitted']);
-    $older->answers()->create(['requirement_key' => 'gfps-establishment', 'answer' => 'Historical submitted answer']);
-
-    $migration = require base_path('database/migrations/2026_09_29_000001_upgrade_editable_monitoring_templates.php');
-    $migration->up();
-
-    expect($draft->fresh()->template_version)->toBe(MonitoringTemplate::PREVIOUS_VERSION);
-    expect($draft->fresh()->attachment)->toBeNull();
-    expect($report->fresh()->lock_version)->toBe(2);
-    $this->put('/monitoring/'.$report->id, ['lock_version' => 1, 'answers' => []])->assertSessionHasErrors('lock_version');
-    $preserved = $draft->answers()->pluck('answer', 'requirement_key')->all();
-    expect($preserved['gfps-establishment'])->toBe('Earlier parent answer');
-    expect($preserved['gfps-membership'])->toBe('Earlier membership answer');
-    expect($older->fresh()->template_version)->toBe(MonitoringTemplate::LEGACY_VERSION);
-    expect($older->answers()->firstWhere('requirement_key', 'gfps-establishment')->answer)->toBe('Historical submitted answer');
-    Storage::disk('monitoring')->assertExists($submittedFile);
-    $this->get('/monitoring/'.$report->id)->assertInertia(fn (Assert $page) => $page->where('report.revisions.0.legacy_overview', 'Earlier parent answer'));
-    $this->get('/monitoring/'.$report->id.'/revisions/'.$draft->id.'/print')->assertOk()->assertSee('Earlier GFPS overview answer')->assertSee('Earlier parent answer');
-    $this->get('/monitoring/'.$olderReport->id.'/revisions/'.$older->id.'/print')->assertOk()->assertSee('Historical submitted answer');
-
-    $nextMigration = require base_path('database/migrations/2026_09_29_000002_split_equal_opportunity_answers.php');
-    $nextMigration->up();
-    expect($draft->fresh()->template_version)->toBe(MonitoringTemplate::VERSION);
-    expect($report->fresh()->lock_version)->toBe(3);
-    expect($draft->answers()->firstWhere('requirement_key', 'gfps-establishment')->answer)->toBe('Earlier parent answer');
-
-    monitoringAssign($this);
-    $this->actingAs($this->reviewer)->post('/admin/monitoring/'.$olderReport->id.'/review', [
-        'lock_version' => $olderReport->fresh()->lock_version,
-        'decision' => 'returned', 'comment' => 'Please update the signed copy.',
-    ])->assertSessionHasNoErrors();
-    expect($olderReport->currentRevision()->template_version)->toBe(MonitoringTemplate::VERSION);
-    expect($olderReport->currentRevision()->answers()->firstWhere('requirement_key', 'gfps-establishment')->answer)->toBe('Historical submitted answer');
-    expect($older->fresh()->template_version)->toBe(MonitoringTemplate::LEGACY_VERSION);
-    Storage::disk('monitoring')->assertExists($submittedFile);
-
-    $this->actingAs($this->member);
-    $this->put('/monitoring/'.$report->id, [
-        'lock_version' => $report->fresh()->lock_version,
-        'answers' => ['gfps-membership' => 'Revised membership answer'],
-    ])->assertSessionHasNoErrors();
-    expect($draft->answers()->firstWhere('requirement_key', 'gfps-establishment')->answer)->toBe('Earlier parent answer');
-});
-
-test('splitting item four preserves combined answers and submitted v2 history', function () {
-    $report = monitoringDraft($this);
-    $draft = $report->currentRevision();
-    $draft->update(['template_version' => MonitoringTemplate::PREVIOUS_VERSION]);
-    $this->put('/monitoring/'.$report->id, [
-        'lock_version' => 0, 'answers' => ['opportunity' => 'Earlier hiring and admissions summary'],
-    ])->assertSessionHasNoErrors();
-    $this->post('/monitoring/'.$report->id.'/attachment', [
-        'lock_version' => 1, 'file' => monitoringPdf(),
-    ])->assertSessionHasNoErrors();
-
-    $this->post('/monitoring', ['academic_year' => '2027-2028', 'semester' => 1])->assertRedirect();
-    $submittedReport = MonitoringReport::query()->where('academic_year', '2027-2028')->firstOrFail();
-    $submitted = $submittedReport->currentRevision();
-    $submitted->update(['template_version' => MonitoringTemplate::PREVIOUS_VERSION]);
-    $this->put('/monitoring/'.$submittedReport->id, [
-        'lock_version' => 0, 'answers' => ['opportunity' => 'Submitted v2 answer'],
-    ])->assertSessionHasNoErrors();
-    $this->post('/monitoring/'.$submittedReport->id.'/attachment', [
-        'lock_version' => 1, 'file' => monitoringPdf(),
-    ])->assertSessionHasNoErrors();
-    $submittedFile = $submitted->fresh()->attachment->path;
-    $this->post('/monitoring/'.$submittedReport->id.'/submit', [
-        'lock_version' => 2, 'confirmed' => true,
-    ])->assertSessionHasNoErrors();
-
-    $migration = require base_path('database/migrations/2026_09_29_000002_split_equal_opportunity_answers.php');
-    $migration->up();
-
-    expect($draft->fresh()->template_version)->toBe(MonitoringTemplate::VERSION);
-    expect($draft->fresh()->attachment)->toBeNull();
-    expect($report->fresh()->lock_version)->toBe(3);
-    expect($draft->answers()->firstWhere('requirement_key', 'opportunity')->answer)->toBe('Earlier hiring and admissions summary');
-    $this->get('/monitoring/'.$report->id)->assertInertia(fn (Assert $page) => $page->where('report.revisions.0.legacy_opportunity', 'Earlier hiring and admissions summary'));
-    $this->get('/monitoring/'.$report->id.'/revisions/'.$draft->id.'/print')->assertOk()
-        ->assertSee('Earlier Equal Opportunity answer')->assertSee('a. Hiring of administrators/faculty/personnel')
-        ->assertSee('b. Admission of students');
-    $this->put('/monitoring/'.$report->id, [
-        'lock_version' => 3, 'answers' => [
-            'opportunity-hiring' => 'Hiring practices', 'opportunity-admission' => 'Admissions practices',
+    // A colleague started from the blank answer: their edit to it is refused,
+    // while their other field saves.
+    $this->actingAs($this->member)->patchJson('/monitoring/'.$report->id.'/draft', [
+        'answers' => [
+            'gfps-membership' => ['base' => '', 'value' => 'Their version'],
+            'gfps-policies' => ['base' => '', 'value' => 'Policy review done'],
         ],
-    ])->assertSessionHasNoErrors();
-    expect($draft->answers()->firstWhere('requirement_key', 'opportunity')->answer)->toBe('Earlier hiring and admissions summary');
+    ])
+        ->assertOk()
+        ->assertJsonPath('conflicts.answers.gfps-membership', "  Chair and members\n\n")
+        ->assertJsonMissingPath('conflicts.answers.gfps-policies');
 
-    expect($submitted->fresh()->template_version)->toBe(MonitoringTemplate::PREVIOUS_VERSION);
-    Storage::disk('monitoring')->assertExists($submittedFile);
-    $this->get('/monitoring/'.$submittedReport->id.'/revisions/'.$submitted->id.'/print')->assertOk()->assertSee('Submitted v2 answer');
-    monitoringAssign($this);
-    $this->actingAs($this->reviewer)->post('/admin/monitoring/'.$submittedReport->id.'/review', [
-        'lock_version' => $submittedReport->fresh()->lock_version,
-        'decision' => 'returned', 'comment' => 'Please address each part separately.',
+    $answers = $report->fresh()->currentRevision->answers->pluck('answer', 'requirement_key');
+    expect($answers['gfps-membership'])->toBe("  Chair and members\n\n")
+        ->and($answers['gfps-policies'])->toBe('Policy review done');
+
+    // Blanking a detail stores it as empty.
+    monitoringSave($this, $report, details: ['address' => ''])->assertOk();
+    expect($report->fresh()->currentRevision->address)->toBeNull();
+});
+
+test('autosave accepts only the form\'s fields', function () {
+    $report = monitoringReport($this);
+    $url = '/monitoring/'.$report->id.'/draft';
+
+    $this->actingAs($this->member)->patchJson($url, ['answers' => ['made-up' => ['base' => '', 'value' => 'x']]])
+        ->assertUnprocessable()->assertJsonValidationErrors('answers');
+    $this->patchJson($url, ['answers' => ['codi' => ['base' => '', 'value' => str_repeat('a', 20001)]]])
+        ->assertUnprocessable()->assertJsonValidationErrors('answers.codi.value');
+    $this->patchJson($url, ['details' => ['accomplished_on' => ['base' => '', 'value' => '29/09/2026']]])
+        ->assertUnprocessable()->assertJsonValidationErrors('details.accomplished_on.value');
+    $this->patchJson($url, ['details' => ['status' => ['base' => '', 'value' => 'reviewed']]])
+        ->assertUnprocessable()->assertJsonValidationErrors('details');
+
+    $stranger = User::factory()->create(['survey_hei_id' => createSurveyHei(['name' => 'Another HEI'])->id]);
+    $stranger->assignRole('hei');
+    $this->actingAs($stranger)->patchJson($url, ['answers' => ['codi' => ['base' => '', 'value' => 'x']]])->assertForbidden();
+});
+
+test('finalizing locks the answers under a document code', function () {
+    $report = monitoringReport($this);
+    monitoringSave($this, $report, ['codi' => 'CODI constituted'])->assertOk();
+
+    $this->actingAs($this->member)
+        ->post('/monitoring/'.$report->id.'/finalize', ['lock_version' => 0])
+        ->assertSessionHasErrors('lock_version');
+
+    monitoringFinalize($this, $report)->assertSessionHasNoErrors();
+    $revision = $report->fresh()->currentRevision;
+    $code = $revision->document_code;
+
+    expect($revision->finalized_at)->not->toBeNull()
+        ->and($revision->finalized_by)->toBe($this->member->id)
+        ->and($code)->toMatch('/^[0-9A-F]{4}-[0-9A-F]{4}$/');
+
+    monitoringSave($this, $report, ['codi' => 'Changed after signing'])
+        ->assertUnprocessable()->assertJsonValidationErrors('report');
+
+    $this->get('/monitoring/'.$report->id)->assertInertia(fn (Assert $page) => $page
+        ->where('report.abilities.edit', false)
+        ->where('report.abilities.sign', true)
+        ->where('report.revisions.0.document_code', $code));
+
+    // Unlocking clears the code; finalizing the same answers gives it back.
+    $this->post('/monitoring/'.$report->id.'/reopen', ['lock_version' => $report->fresh()->lock_version])->assertSessionHasNoErrors();
+    expect($report->fresh()->currentRevision->document_code)->toBeNull();
+    monitoringFinalize($this, $report)->assertSessionHasNoErrors();
+    expect($report->fresh()->currentRevision->document_code)->toBe($code);
+
+    $this->post('/monitoring/'.$report->id.'/reopen', ['lock_version' => $report->fresh()->lock_version])->assertSessionHasNoErrors();
+    monitoringSave($this, $report, ['codi' => 'CODI constituted and trained'])->assertOk();
+    monitoringFinalize($this, $report)->assertSessionHasNoErrors();
+    expect($report->fresh()->currentRevision->document_code)->not->toBe($code);
+});
+
+test('submitting needs a finalized report, a signed PDF and confirmation', function () {
+    $report = monitoringReport($this);
+
+    monitoringSubmit($this, $report)->assertSessionHasErrors('report');
+    expect(Storage::disk('monitoring')->allFiles())->toBe([]);
+
+    monitoringFinalize($this, $report)->assertSessionHasNoErrors();
+    $version = fn () => $report->fresh()->lock_version;
+
+    $this->post('/monitoring/'.$report->id.'/submit', ['lock_version' => $version(), 'confirmed' => true])
+        ->assertSessionHasErrors('file');
+    $this->post('/monitoring/'.$report->id.'/submit', [
+        'lock_version' => $version(), 'confirmed' => true,
+        'file' => UploadedFile::fake()->createWithContent('renamed.pdf', 'not a pdf'),
+    ])->assertSessionHasErrors('file');
+    $this->post('/monitoring/'.$report->id.'/submit', [
+        'lock_version' => $version(), 'confirmed' => true,
+        'file' => UploadedFile::fake()->create('huge.pdf', 20481, 'application/pdf'),
+    ])->assertSessionHasErrors('file');
+    $this->post('/monitoring/'.$report->id.'/submit', [
+        'lock_version' => $version(), 'confirmed' => false, 'file' => monitoringPdf(),
+    ])->assertSessionHasErrors('confirmed');
+
+    // A stale version is refused, and its upload is not kept.
+    $this->post('/monitoring/'.$report->id.'/submit', [
+        'lock_version' => 0, 'confirmed' => true, 'file' => monitoringPdf(),
+    ])->assertSessionHasErrors('lock_version');
+    expect(Storage::disk('monitoring')->allFiles())->toBe([]);
+
+    monitoringSubmit($this, $report)->assertSessionHasNoErrors();
+    $revision = $report->fresh()->currentRevision;
+
+    expect($report->fresh()->status)->toBe('submitted')
+        ->and($revision->submitted_by)->toBe($this->member->id)
+        ->and($revision->attachment)->not->toBeNull()
+        ->and(Storage::disk('monitoring')->allFiles())->toHaveCount(1);
+
+    monitoringSave($this, $report, ['codi' => 'Too late'])->assertUnprocessable();
+    $this->post('/monitoring/'.$report->id.'/reopen', ['lock_version' => $report->fresh()->lock_version])
+        ->assertSessionHasErrors('report');
+});
+
+test('a returned report opens the next revision with the same answers', function () {
+    $report = monitoringSubmitted($this);
+    $staff = monitoringStaff(national: true);
+    $firstFile = $report->currentRevision->attachment->path;
+
+    $this->actingAs($staff)
+        ->post('/admin/monitoring/'.$report->id.'/review', ['lock_version' => $report->lock_version, 'decision' => 'returned'])
+        ->assertSessionHasErrors('comment');
+    $this->post('/admin/monitoring/'.$report->id.'/review', [
+        'lock_version' => $report->lock_version, 'decision' => 'returned', 'comment' => 'Attach the CODI roster.',
     ])->assertSessionHasNoErrors();
-    expect($submittedReport->currentRevision()->template_version)->toBe(MonitoringTemplate::VERSION);
-    expect($submittedReport->currentRevision()->answers()->firstWhere('requirement_key', 'opportunity')->answer)->toBe('Submitted v2 answer');
-    expect($submitted->fresh()->template_version)->toBe(MonitoringTemplate::PREVIOUS_VERSION);
-    Storage::disk('monitoring')->assertExists($submittedFile);
+
+    $report->refresh();
+    $next = $report->currentRevision;
+
+    expect($report->status)->toBe('returned')
+        ->and($next->number)->toBe(2)
+        ->and($next->finalized_at)->toBeNull()
+        ->and($next->attachment)->toBeNull()
+        ->and($next->president_name)->toBe('Example President')
+        ->and($next->answers->pluck('answer', 'requirement_key')['codi'])->toBe('Actual situation.')
+        ->and(Storage::disk('monitoring')->exists($firstFile))->toBeTrue();
+
+    // The HEI corrects, signs again and resubmits; CHED marks it reviewed.
+    monitoringSave($this, $report, ['codi' => 'Roster attached.'])->assertOk();
+    monitoringFinalize($this, $report)->assertSessionHasNoErrors();
+    monitoringSubmit($this, $report)->assertSessionHasNoErrors();
+
+    $this->actingAs($staff)->post('/admin/monitoring/'.$report->id.'/review', [
+        'lock_version' => $report->fresh()->lock_version, 'decision' => 'reviewed',
+    ])->assertSessionHasNoErrors();
+
+    expect($report->fresh()->status)->toBe('reviewed')
+        ->and(MonitoringRevision::query()->count())->toBe(2);
+
+    $this->post('/admin/monitoring/'.$report->id.'/review', [
+        'lock_version' => $report->fresh()->lock_version, 'decision' => 'reviewed',
+    ])->assertSessionHasErrors('report');
+
+    $this->actingAs($this->member)->get('/monitoring/'.$report->id)->assertInertia(fn (Assert $page) => $page
+        ->where('report.status', 'reviewed')
+        ->where('report.abilities.edit', false)
+        ->has('report.revisions', 2)
+        ->where('report.revisions.1.reviews.0.decision', 'returned'));
+});
+
+test('staff see and review only reports their office covers', function () {
+    $report = monitoringSubmitted($this);
+    $elsewhere = SurveyRegion::query()->create(['name' => 'Regional Office XI']);
+    $review = ['lock_version' => $report->lock_version, 'decision' => 'reviewed'];
+
+    foreach ([monitoringStaff($elsewhere), monitoringStaff()] as $outsider) {
+        $this->actingAs($outsider)->get('/admin/monitoring')
+            ->assertInertia(fn (Assert $page) => $page->component('monitoring/records')->has('reports.data', 0));
+        $this->get('/monitoring/'.$report->id)->assertForbidden();
+        $this->post('/admin/monitoring/'.$report->id.'/review', $review)->assertForbidden();
+    }
+
+    $this->actingAs(monitoringStaff())->get('/admin/monitoring')
+        ->assertInertia(fn (Assert $page) => $page->where('hasOffice', false));
+
+    $regional = monitoringStaff($this->region, role: 'gad-focal-person');
+    $this->actingAs($regional)->get('/admin/monitoring')->assertInertia(fn (Assert $page) => $page
+        ->has('reports.data', 1)
+        ->where('reports.data.0.abilities.review', true)
+        ->has('regions', 1));
+    $this->get('/monitoring/'.$report->id)->assertInertia(fn (Assert $page) => $page
+        ->where('viewer', 'staff')
+        ->where('report.abilities.review', true)
+        ->where('report.abilities.edit', false));
+
+    $this->actingAs(monitoringStaff(national: true))->get('/admin/monitoring?region='.$elsewhere->id)
+        ->assertInertia(fn (Assert $page) => $page->has('reports.data', 0));
+    $this->get('/admin/monitoring?region='.$this->region->id)
+        ->assertInertia(fn (Assert $page) => $page->has('reports.data', 1));
+
+    $stranger = User::factory()->create(['survey_hei_id' => createSurveyHei(['name' => 'Another HEI'])->id]);
+    $stranger->assignRole('hei');
+    $this->actingAs($stranger)->get('/monitoring/'.$report->id)->assertForbidden();
+    $this->get('/admin/monitoring')->assertForbidden();
+});
+
+test('signed copies open inline or download only for people who can view them', function () {
+    $report = monitoringSubmitted($this);
+    $revision = $report->currentRevision;
+    $url = '/monitoring/'.$report->id.'/revisions/'.$revision->id.'/attachment';
+
+    $this->actingAs($this->member)->get($url)
+        ->assertOk()
+        ->assertDownload('GAD-Monitoring-Report_2026-2027_S1_Rev1_signed.pdf');
+    $this->get($url.'?inline=1')
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/pdf')
+        ->assertHeader('X-Content-Type-Options', 'nosniff');
+    expect($this->get($url.'?inline=1')->headers->get('Content-Disposition'))->toStartWith('inline');
+
+    $otherHei = createSurveyHei(['name' => 'Second HEI']);
+    $otherMember = User::factory()->create(['survey_hei_id' => $otherHei->id]);
+    $otherMember->assignRole('hei');
+    $this->actingAs($otherMember)->post('/monitoring', ['academic_year' => '2026-2027', 'semester' => 1]);
+    $other = MonitoringReport::query()->where('survey_hei_id', $otherHei->id)->sole();
+
+    $this->get($url)->assertForbidden();
+    // A revision is only reachable through its own report.
+    $this->get('/monitoring/'.$other->id.'/revisions/'.$revision->id.'/attachment')->assertNotFound();
+});
+
+test('the name printed for signing survives a rename in the directory', function () {
+    $report = monitoringReport($this);
+    $this->hei->update(['name' => 'Renamed By Sync']);
+
+    $this->get('/monitoring/'.$report->id)
+        ->assertInertia(fn (Assert $page) => $page->where('report.place.hei.name', 'Fictional Monitoring HEI'));
+});
+
+test('records list the institution\'s own reports', function () {
+    $report = monitoringReport($this);
+    $other = User::factory()->create(['survey_hei_id' => createSurveyHei(['name' => 'Another HEI'])->id]);
+    $other->assignRole('hei');
+    $this->actingAs($other)->post('/monitoring', ['academic_year' => '2026-2027', 'semester' => 1]);
+
+    $this->actingAs($this->member)->get('/records')->assertInertia(fn (Assert $page) => $page
+        ->component('monitoring/records')
+        ->has('reports.data', 1)
+        ->where('reports.data.0.id', $report->id)
+        ->where('canCreate', true));
+    $this->get('/records?status=submitted')->assertInertia(fn (Assert $page) => $page->has('reports.data', 0));
+
+    $this->actingAs(monitoringStaff(national: true))->get('/records')->assertForbidden();
+});
+
+test('the template transcribes the official form', function () {
+    $template = MonitoringTemplate::definition();
+    $sections = collect($template['sections']);
+
+    expect($sections->pluck('number')->all())->toBe(['1)', '2)', '3)', '4)', '5)', '6)', '7)', '8)', '9)', '10)', '11)', '12.'])
+        ->and($sections->pluck('layout')->all())->toBe(['rows', 'single', 'rows', 'combined', 'rows', 'rows', 'single', 'single', 'single', 'single', 'rows', 'combined'])
+        ->and($sections->where('bold', true)->pluck('key')->all())->toBe(['gfps', 'curriculum', 'opportunity', 'research', 'extension', 'gedsi'])
+        ->and(MonitoringTemplate::keys())->toBe([
+            'gfps-membership', 'gfps-policies', 'gfps-tasks', 'plan-budget',
+            'curriculum-noted', 'curriculum-training', 'curriculum-materials', 'curriculum-nstp',
+            'opportunity-hiring', 'opportunity-admission', 'research-topics',
+            'extension-inclusion', 'extension-partnerships', 'gad-corner', 'breastfeeding',
+            'child-minding', 'sex-disaggregated-data', 'codi', 'complaint-reports', 'gedsi-programs',
+        ])
+        ->and($sections[1]['detail'])->toBe('GAD Program, Activities and Projects implemented by HEI per AY')
+        ->and($sections[3]['items'][0]['label'])->toBe('Hiring of administrators/faculty/personnel')
+        ->and($sections[11]['title'])->toBe('Support to Gender Equality, Disability and Social Inclusion (GEDSI)')
+        ->and($template['columns']['instruction'])->toBe('Please state actual situations per item.');
+
+    expect(fn () => MonitoringTemplate::definition('2025-v1'))->toThrow(InvalidArgumentException::class);
 });

@@ -45,6 +45,8 @@ class RbacSeeder extends Seeder
             ['name' => 'Export site ratings', 'slug' => 'site-ratings.export', 'group' => 'Site ratings'],
             ['name' => 'Delete site ratings', 'slug' => 'site-ratings.delete', 'group' => 'Site ratings'],
             ['name' => 'Manage the rating button', 'slug' => 'site-ratings.update', 'group' => 'Site ratings'],
+            ['name' => 'View monitoring reports', 'slug' => 'monitoring.view', 'group' => 'Monitoring'],
+            ['name' => 'Review monitoring reports', 'slug' => 'monitoring.review', 'group' => 'Monitoring'],
         ])->mapWithKeys(function (array $attributes): array {
             $permission = Permission::query()->updateOrCreate(
                 ['slug' => $attributes['slug']],
@@ -68,6 +70,7 @@ class RbacSeeder extends Seeder
                     'surveys.view', 'surveys.create', 'surveys.update',
                     'events.view', 'events.create', 'events.update',
                     'site-ratings.view',
+                    'monitoring.view', 'monitoring.review',
                 ],
             ],
             'hei' => [

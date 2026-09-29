@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\UserStatus;
+use App\Models\SurveyRegion;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -55,6 +56,28 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => UserStatus::Inactive,
+        ]);
+    }
+
+    /**
+     * Place the staff account in the Central Office, which covers every region.
+     */
+    public function nationalOffice(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'national_access' => true,
+            'survey_region_id' => null,
+        ]);
+    }
+
+    /**
+     * Place the staff account in a regional office.
+     */
+    public function regionalOffice(SurveyRegion|int $region): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'national_access' => false,
+            'survey_region_id' => $region instanceof SurveyRegion ? $region->id : $region,
         ]);
     }
 
