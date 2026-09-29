@@ -12,13 +12,11 @@ import {
 import { PersonAvatar } from '@/components/person-avatar';
 import { achieveAgenda, achievePage, type AchieveCode } from '@/data/achieve';
 import { sdgsFor, sustainableGoals } from '@/data/sdgs';
+import { CHED_LABEL } from '@/lib/ched-label';
 import { POST_FEELINGS } from '@/lib/post-feelings';
 import { MAX_ACHIEVE_ITEMS, MAX_SDGS, sdgLabel } from '@/lib/post-goals';
 import { cn } from '@/lib/utils';
 import type { TaggedUser } from '@/types';
-
-/** CHED staff have no school; this is what stands in for one. */
-export const CHED_LABEL = 'CHED Regional Office XII';
 
 function SearchField({
     value,

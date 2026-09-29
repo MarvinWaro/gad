@@ -83,9 +83,9 @@ test('the feed shows authors with their photo', function () {
 
     $this->actingAs($author)
         ->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
             ->where('posts.data.0.author.avatar', Storage::disk('public')->url('avatars/rhyemann.jpg'))
-            ->where('posts.data.0.comments.0.author.avatar', Storage::disk('public')->url('avatars/rhyemann.jpg')));
+            ->where('posts.data.0.comments.0.author.avatar', Storage::disk('public')->url('avatars/rhyemann.jpg'))));
 });
 
 test('deleting an account deletes its photo', function () {

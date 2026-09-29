@@ -64,8 +64,8 @@ export function SharePostDialog({
                     </DialogClose>
                 </header>
                 <DialogDescription className="sr-only">
-                    Share this post to the Region XII community feed, with a
-                    message if you like.
+                    Share this post to Gender Mainstreaming, with a message if
+                    you like.
                 </DialogDescription>
 
                 <form
@@ -84,7 +84,7 @@ export function SharePostDialog({
                                     {auth.user.name}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                    Sharing to the Region XII community
+                                    Sharing to Gender Mainstreaming
                                 </p>
                             </div>
                         </div>

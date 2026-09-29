@@ -40,7 +40,8 @@ class DashboardController extends Controller
             'surveys' => fn (): array => $this->surveys($user->survey_hei_id),
             'calendar' => fn (): array => EventCalendar::month($request->string('month')->toString() ?: null),
             'upcoming' => fn (): array => EventCalendar::upcoming(),
-            'posts' => Inertia::scroll(fn () => CommunityFeed::page($user)),
+            // Loaded just after the page appears, which shows skeletons meanwhile.
+            'posts' => Inertia::scroll(fn () => CommunityFeed::page($user))->defer(),
             // The HEI modules from the old portal. None is built yet, so each
             // has no href and shows as "Soon"; give one an href when it ships.
             'quickLinks' => [

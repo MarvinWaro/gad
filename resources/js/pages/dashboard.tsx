@@ -70,7 +70,7 @@ export default function Dashboard() {
                         <Button asChild>
                             <Link href="/community">
                                 <MessagesSquare aria-hidden="true" />
-                                Open community
+                                Open Gender Mainstreaming
                                 <ArrowUpRight aria-hidden="true" />
                             </Link>
                         </Button>
@@ -136,7 +136,7 @@ export default function Dashboard() {
                             detail: `Of ${data.institutions} registered institutions`,
                         },
                         {
-                            label: 'Community posts',
+                            label: 'Posts shared',
                             value: formatCount(data.posts),
                             icon: MessagesSquare,
                             note: data.postGrowth
@@ -145,7 +145,7 @@ export default function Dashboard() {
                             detail: 'Updates shared by the network',
                         },
                         {
-                            label: 'Community interactions',
+                            label: 'Post interactions',
                             value: formatCount(data.interactions),
                             icon: Heart,
                             note: `${data.contributors} contributing HEIs`,
@@ -302,7 +302,7 @@ export default function Dashboard() {
                                 id="community-title"
                                 className="text-lg font-medium"
                             >
-                                A community taking shape
+                                Gender mainstreaming efforts
                             </h2>
                             <MessagesSquare
                                 aria-hidden="true"
@@ -367,7 +367,7 @@ export default function Dashboard() {
                         {can('posts.moderate') && (
                             <div className="mt-auto border-t pt-3">
                                 <ModuleLink href="/community">
-                                    Visit the community
+                                    Visit Gender Mainstreaming
                                 </ModuleLink>
                             </div>
                         )}

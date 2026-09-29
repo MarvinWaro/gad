@@ -33,11 +33,16 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('post_likes', function (Blueprint $table) {
+        Schema::create('post_reactions', function (Blueprint $table) {
+            $table->id();
             $table->foreignUlid('post_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            // A code from App\Enums\PostReaction: heart, care or clap.
+            $table->string('type', 16);
             $table->timestamps();
-            $table->primary(['post_id', 'user_id']);
+            // One reaction per person; choosing another replaces it.
+            $table->unique(['post_id', 'user_id']);
+            $table->index(['post_id', 'type']);
         });
 
         Schema::create('post_comments', function (Blueprint $table) {
@@ -52,7 +57,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('post_comments');
-        Schema::dropIfExists('post_likes');
+        Schema::dropIfExists('post_reactions');
         Schema::dropIfExists('post_images');
         Schema::dropIfExists('posts');
     }

@@ -11,7 +11,6 @@ import {
     SharedPostEmbed,
     sourceOf,
 } from '@/components/hei/post-parts';
-import type { LikeState } from '@/components/hei/post-parts';
 import { SharePostDialog } from '@/components/hei/post-share-dialog';
 import InputError from '@/components/input-error';
 import { ConfirmPopover } from '@/components/confirm-popover';
@@ -23,8 +22,14 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { applyReaction } from '@/lib/post-reactions';
 import { cn } from '@/lib/utils';
-import type { Post, PostComment } from '@/types';
+import type {
+    Post,
+    PostComment,
+    PostReactionType,
+    ReactionSummary,
+} from '@/types';
 
 export function PostCard({
     post,
@@ -38,18 +43,15 @@ export function PostCard({
     const source = sourceOf(post);
 
     // Server data wins whenever the feed reloads; local state covers the
-    // likes and comments made since.
+    // reactions and comments made since.
     const [synced, setSynced] = useState(post);
-    const [like, setLike] = useState<LikeState>({
-        liked: post.liked,
-        likes_count: post.likes_count,
-    });
+    const [reactions, setReactions] = useState(post.reactions);
     const [thread, setThread] = useState(post.comments);
     const [commentsCount, setCommentsCount] = useState(post.comments_count);
 
     if (synced !== post) {
         setSynced(post);
-        setLike({ liked: post.liked, likes_count: post.likes_count });
+        setReactions(post.reactions);
         setThread(post.comments);
         setCommentsCount(post.comments_count);
     }
@@ -65,7 +67,14 @@ export function PostCard({
     const [shareOpen, setShareOpen] = useState(false);
     const bodyRef = useRef<HTMLParagraphElement>(null);
     const composerRef = useRef<HTMLTextAreaElement>(null);
-    const likeRequest = useHttp<Record<string, never>, LikeState>({});
+    const reactRequest = useHttp<
+        { type: PostReactionType | null },
+        ReactionSummary
+    >({ type: null });
+    // Quick changes go to the server one at a time, in order, and only the
+    // latest one's answer is shown.
+    const reactQueue = useRef<Promise<unknown>>(Promise.resolve());
+    const reactAttempt = useRef(0);
     const edit = useForm({ body: post.body ?? '' });
 
     useLayoutEffect(() => {
@@ -76,30 +85,44 @@ export function PostCard({
         }
     }, [post.body, expanded, editing]);
 
-    function toggleLike() {
-        const previous = like;
-        const next = {
-            liked: !like.liked,
-            likes_count: like.likes_count + (like.liked ? -1 : 1),
-        };
-        setLike(next);
+    /** Give a reaction (or take it back, with null), showing it at once. */
+    function react(type: PostReactionType | null) {
+        const previous = reactions;
+        const attempt = ++reactAttempt.current;
+        const isLatest = () => attempt === reactAttempt.current;
+        setReactions(applyReaction(previous, type, auth.user));
 
-        const url = `/posts/${post.id}/like`;
+        const url = `/posts/${post.id}/reaction`;
         const options = {
-            onSuccess: (response: LikeState) => setLike(response),
+            onSuccess: (response: ReactionSummary) => {
+                if (isLatest()) {
+                    setReactions(response);
+                }
+            },
             onHttpException: () => {
-                setLike(previous);
-                toast.error('That did not go through. Try again.');
+                if (isLatest()) {
+                    setReactions(previous);
+                    toast.error('That did not go through. Try again.');
+                }
             },
             onNetworkError: () => {
-                setLike(previous);
-                toast.error('You appear to be offline.');
+                if (isLatest()) {
+                    setReactions(previous);
+                    toast.error('You appear to be offline.');
+                }
             },
         };
 
-        void (previous.liked
-            ? likeRequest.delete(url, options)
-            : likeRequest.post(url, options));
+        reactQueue.current = reactQueue.current
+            .then(() => {
+                reactRequest.transform(() => ({ type }));
+
+                return type
+                    ? reactRequest.put(url, options)
+                    : reactRequest.delete(url, options);
+            })
+            // Failures are handled above; the queue carries on.
+            .catch(() => undefined);
     }
 
     function saveEdit(event: FormEvent<HTMLFormElement>) {
@@ -155,8 +178,8 @@ export function PostCard({
     function actions(onComment: () => void) {
         return (
             <PostActions
-                like={like}
-                onToggleLike={toggleLike}
+                reactions={reactions}
+                onReact={react}
                 commentsCount={commentsCount}
                 onComment={onComment}
                 sharesCount={post.shares_count}
@@ -165,7 +188,7 @@ export function PostCard({
                     title: `${source} on PHLGADIS`,
                     text:
                         post.body?.slice(0, 140) ??
-                        `A post from ${source} in the Region XII community.`,
+                        `A Gender Mainstreaming post from ${source}.`,
                     onShareToFeed: () => setShareOpen(true),
                 }}
             />
@@ -190,7 +213,7 @@ export function PostCard({
                                 at the options button. */}
                             <ConfirmPopover
                                 title="Delete this post?"
-                                description="The post, its photos, likes, comments, and shares will be removed for everyone. This cannot be undone."
+                                description="The post, its photos, reactions, comments, and shares will be removed for everyone. This cannot be undone."
                                 confirmLabel="Delete post"
                                 open={confirmDelete}
                                 onOpenChange={setConfirmDelete}

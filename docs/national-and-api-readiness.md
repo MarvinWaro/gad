@@ -17,19 +17,14 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 
 **HEI area and community.**
 
-- [ ] `CHED_LABEL = 'CHED Regional Office XII'` is defined twice, in `components/hei/post-parts.tsx` and `components/hei/post-composer-views.tsx`. It should be one value, taken from the author's office.
-- [ ] "Region XII community" in:
-    - `post-share-dialog.tsx`
-    - `post-card.tsx`
-
-    (`post-composer.tsx` no longer says it, as of 2026-09-28.)
-
+- [ ] `CHED_LABEL = 'CHED Regional Office XII'` (`lib/ched-label.ts`, one definition since 2026-09-29) labels staff posts, tags and reactors. It should come from the author's office.
+- [x] "Region XII community": gone from the composer (2026-09-28), the share dialog, post-card and the HEI home feed heading (2026-09-29), which now name the feed "Gender Mainstreaming".
 - [ ] "CHED Regional Office XII" or "Region XII" in:
     - `welcome-band.tsx`
     - `upcoming-events.tsx`
     - `next-event-card.tsx`
     - `pages/hei/events.tsx`
-    - `pages/hei/home.tsx`
+    - `pages/community/index.tsx` (the composer's CHED label and placeholder)
 
 **Data and sync.**
 
@@ -62,7 +57,7 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 ## Missing for the API
 
 - [ ] **No API routes yet:** no `routes/api.php` and no token authentication. Laravel Sanctum is the likely fit.
-- [ ] **No API Resource classes:** controllers build arrays inline, for example `SurveyResponseController::serialize` and `SiteRatingManagementController::index`. Move each model's shape into one Resource as it is touched.
+- [ ] **Few API Resource classes:** only `PostReactorResource` (a post's reactions list, cursor-paginated with Laravel's `meta`) so far. Other controllers build arrays inline, for example `SurveyResponseController::serialize` and `SiteRatingManagementController::index`. Move each model's shape into one Resource as it is touched.
 - [ ] **Validation is mostly inline** `$request->validate(...)`. Move rules into Form Requests as endpoints are touched, so web and API share them.
 - [ ] **First endpoints to offer, read-only:**
     - directories (regions, clusters, HEIs)

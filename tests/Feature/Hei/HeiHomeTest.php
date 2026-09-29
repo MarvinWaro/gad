@@ -7,6 +7,7 @@ use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyResponse;
 use App\Models\User;
+use App\Support\CommunityFeed;
 use Carbon\CarbonImmutable;
 use Database\Seeders\RbacSeeder;
 use Database\Seeders\SurveySeeder;
@@ -61,7 +62,9 @@ test('HEI users get the HEI home with their institution and the law surveys', fu
             ->where('quickLinks.3.label', 'Records')
             ->where('quickLinks.0.href', null)
             ->missing('comingSoon')
-            ->has('posts.data', 0));
+            // The feed loads just after the page, behind its skeleton.
+            ->missing('posts')
+            ->loadDeferredProps(fn (Assert $reload) => $reload->has('posts.data', 0)));
 });
 
 test('staff keep the standard dashboard', function () {
@@ -193,7 +196,7 @@ test('the placeholder cluster is left out of the greeting', function () {
         ->assertInertia(fn (Assert $page) => $page->where('hei.cluster', null));
 });
 
-test('the feed shows the newest posts first, ten at a time', function () {
+test('the feed shows the newest posts first, five at a time', function () {
     $author = heiHomeMember();
 
     foreach (range(1, 12) as $index) {
@@ -204,8 +207,8 @@ test('the feed shows the newest posts first, ten at a time', function () {
 
     $this->actingAs($author)
         ->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page
-            ->has('posts.data', 10)
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+            ->has('posts.data', CommunityFeed::PER_PAGE)
             ->where('posts.data.0.body', 'Post 12')
-            ->where('posts.data.9.body', 'Post 3'));
+            ->where('posts.data.4.body', 'Post 8')));
 });

@@ -263,6 +263,20 @@
     }
 }
 
+/*
+ * The app's top bar sticks while the page scrolls. The layouts set
+ * --app-header to how far down its bottom edge sits (app-shell.tsx and
+ * app-sidebar-layout.tsx), and sticky rails and in-page jumps stop 24px
+ * below it.
+ */
+@utility top-below-header {
+    top: calc(var(--app-header, 0px) + 1.5rem);
+}
+
+@utility scroll-mt-below-header {
+    scroll-margin-top: calc(var(--app-header, 0px) + 1.5rem);
+}
+
 /* Paints --callout-gradient over bg-callout's solid colour. */
 @utility bg-callout-gradient {
     background-image: var(--callout-gradient);

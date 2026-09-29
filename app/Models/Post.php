@@ -76,10 +76,10 @@ class Post extends Model
         return $this->hasMany(PostComment::class);
     }
 
-    /** @return BelongsToMany<User, $this> */
-    public function likes(): BelongsToMany
+    /** @return HasMany<PostReaction, $this> */
+    public function reactions(): HasMany
     {
-        return $this->belongsToMany(User::class, 'post_likes')->withTimestamps();
+        return $this->hasMany(PostReaction::class);
     }
 
     /**

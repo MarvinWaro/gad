@@ -49,6 +49,28 @@ export type PostComment = {
     can_delete: boolean;
 };
 
+/** A reaction code; App\Enums\PostReactionType is the source of truth. */
+export type PostReactionType = 'heart' | 'care' | 'clap';
+
+/** Someone named in a post's reactions tooltip, with what they chose. */
+export type ReactorRef = PersonRef & { type: PostReactionType };
+
+/** One person in a post's full reactions list. */
+export type Reactor = ReactorRef & {
+    avatar: string | null;
+    hei: string | null;
+};
+
+/** A post's reactions as the viewer sees them. */
+export type ReactionSummary = {
+    total: number;
+    counts: Record<PostReactionType, number>;
+    /** The viewer's own reaction, if they gave one. */
+    mine: PostReactionType | null;
+    /** The latest reactors, newest first, up to ten. */
+    recent: ReactorRef[];
+};
+
 /** What a post says and shows; a shared original carries only this. */
 export type PostContent = {
     /** A ULID. */
@@ -70,8 +92,7 @@ export type Post = PostContent & {
     edited: boolean;
     /** The original, when this post is a share of it. */
     shared_post: PostContent | null;
-    likes_count: number;
-    liked: boolean;
+    reactions: ReactionSummary;
     comments_count: number;
     shares_count: number;
     comments: PostComment[];

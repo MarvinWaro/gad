@@ -402,9 +402,9 @@ export function PostComposer({
                         )}
                     </header>
                     <DialogDescription className="sr-only">
-                        Write a post for the community, add up to ten photos,
-                        tag people, add a feeling, or pick the SDGs and
-                        A.C.H.I.E.V.E. items it supports.
+                        Write a post, add up to ten photos, tag people, add a
+                        feeling, or pick the SDGs and A.C.H.I.E.V.E. items it
+                        supports.
                     </DialogDescription>
 
                     <div

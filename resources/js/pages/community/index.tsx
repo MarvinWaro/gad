@@ -4,15 +4,20 @@ import { PostComposer } from '@/components/hei/post-composer';
 import Heading from '@/components/heading';
 import type { Post, ScrollPage } from '@/types';
 
-/** The community feed for moderators, inside the staff shell. */
-export default function Community({ posts }: { posts: ScrollPage<Post> }) {
+/** The Gender Mainstreaming feed for moderators, inside the staff shell. */
+export default function Community({
+    posts,
+}: {
+    /** Deferred: arrives just after the page. */
+    posts?: ScrollPage<Post>;
+}) {
     return (
         <>
-            <Head title="Community" />
+            <Head title="Gender Mainstreaming" />
             <div className="mx-auto w-full max-w-2xl space-y-6 p-4 sm:p-6">
                 <Heading
-                    title="Community"
-                    description="Posts from HEIs across Region XII. Remove anything that breaks the community's standards from a post's menu."
+                    title="HEI Gender Mainstreaming Efforts"
+                    description="Posts from HEIs on promoting gender equality and inclusivity. Remove anything that breaks the community's standards from a post's menu."
                 />
                 <PostComposer
                     authorLabel="CHED Regional Office XII"
@@ -29,5 +34,5 @@ export default function Community({ posts }: { posts: ScrollPage<Post> }) {
 }
 
 Community.layout = {
-    breadcrumbs: [{ title: 'Community', href: '/community' }],
+    breadcrumbs: [{ title: 'Gender Mainstreaming', href: '/community' }],
 };

@@ -14,6 +14,68 @@ async function openRa9262Draft(page: Page) {
         .click();
 }
 
+test('the top bar stays in view, and the section rails stop below it', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openRa9262Draft(page);
+    const bar = page.locator('header').filter({
+        has: page.getByRole('button', { name: 'Toggle sidebar' }),
+    });
+    const railHeading = page.getByRole('heading', { name: 'Survey details' });
+    await expect(railHeading).toBeVisible();
+
+    // On desktop it holds just inside the inset card's 8px frame.
+    await page.mouse.wheel(0, 1400);
+    await expect.poll(async () => (await bar.boundingBox())?.y).toBe(8);
+    const barBox = (await bar.boundingBox())!;
+    const railBox = (await railHeading.boundingBox())!;
+    expect(railBox.y).toBeGreaterThanOrEqual(barBox.y + barBox.height + 24);
+
+    // On a phone it sits at the very top.
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.mouse.wheel(0, 400);
+    await expect.poll(async () => (await bar.boundingBox())?.y).toBe(0);
+    await expect(
+        bar.getByRole('button', { name: 'Toggle sidebar' }),
+    ).toBeVisible();
+});
+
+// Inertia rebuilds a page from its history entry on Back, so the list once
+// kept showing what it had before the draft was saved or published.
+test('going back to the survey list shows the saved changes', async ({
+    page,
+}) => {
+    await openRa9262Draft(page);
+
+    const lawTitle = page.getByLabel('Law title', { exact: true });
+    const original = await lawTitle.inputValue();
+    const edited = `${original} (edited)`;
+
+    await lawTitle.fill(edited);
+    await page.getByRole('button', { name: 'Save draft' }).click();
+    await expect(page.getByText('Unsaved changes')).toHaveCount(0);
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/admin\/surveys$/);
+    await expect(
+        page.getByRole('row').filter({ hasText: 'RA 9262' }),
+    ).toContainText(edited);
+
+    // Put the title back. The first save's toast may still cover Save draft,
+    // so submit with Enter from the field.
+    await page.goForward();
+    await lawTitle.fill(original);
+    const restored = page.waitForResponse(
+        (response) =>
+            response.request().method() === 'PUT' &&
+            response.url().includes('/admin/surveys/'),
+    );
+    await lawTitle.press('Enter');
+    await restored;
+    await expect(page.getByText('Unsaved changes')).toHaveCount(0);
+});
+
 test('survey sections collapse and option editors accept new lines', async ({
     page,
 }) => {

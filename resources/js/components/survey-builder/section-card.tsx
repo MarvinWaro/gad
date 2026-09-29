@@ -53,7 +53,10 @@ export function SectionCard({
 }) {
     return (
         <Collapsible open={open} onOpenChange={onOpenChange}>
-            <Card id={`section-${section.id}`} className="scroll-mt-6">
+            <Card
+                id={`section-${section.id}`}
+                className="scroll-mt-below-header"
+            >
                 <CardHeader className="flex-row items-center gap-3">
                     <CollapsibleTrigger asChild>
                         <Button

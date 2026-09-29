@@ -2,12 +2,15 @@
 
 use App\Enums\AchieveItem;
 use App\Enums\PostFeeling;
+use App\Enums\PostReactionType;
 use App\Enums\SustainableDevelopmentGoal;
 use App\Models\Post;
 use App\Models\PostAchieveItem;
 use App\Models\PostComment;
+use App\Models\PostReaction;
 use App\Models\PostSdg;
 use App\Models\User;
+use App\Support\CommunityFeed;
 use App\Support\InstitutionName;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Http\UploadedFile;
@@ -72,11 +75,11 @@ test('HEI users share a post with photos, tagged with their institution', functi
     // before the photo loads.
     $this->actingAs($user)
         ->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
             ->where('posts.data.0.images.0.width', 1200)
             ->where('posts.data.0.images.0.height', 800)
             ->where('posts.data.0.images.1.width', 800)
-            ->where('posts.data.0.images.1.height', 800));
+            ->where('posts.data.0.images.1.height', 800)));
 });
 
 test('a phone photo turned by its Exif tag is stored with its upright size', function () {
@@ -156,13 +159,13 @@ test('authors add a feeling and tag active people, and the feed shows both', fun
 
     $this->actingAs($author)
         ->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
             ->where('posts.data.0.feeling', ['value' => 'proud', 'label' => 'proud', 'emoji' => '🏅'])
             ->has('posts.data.0.tags', 2)
             ->where('posts.data.0.tags.0.name', 'Ana Cruz')
             ->where('posts.data.0.tags.0.hei', InstitutionName::display($colleague->hei->name))
             ->where('posts.data.0.tags.1.name', 'Ben Reyes')
-            ->where('posts.data.0.tags.1.hei', null));
+            ->where('posts.data.0.tags.1.hei', null)));
 });
 
 test('a post without a feeling or tags shows neither', function () {
@@ -171,9 +174,9 @@ test('a post without a feeling or tags shows neither', function () {
 
     $this->actingAs($author)
         ->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
             ->where('posts.data.0.feeling', null)
-            ->has('posts.data.0.tags', 0));
+            ->has('posts.data.0.tags', 0)));
 });
 
 test('feelings and tags are validated', function () {
@@ -221,9 +224,9 @@ test('authors say which SDGs and A.C.H.I.E.V.E. items a post supports, and the f
 
     $this->actingAs($author)
         ->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
             ->where('posts.data.0.sdgs', [4, 5])
-            ->where('posts.data.0.achieve_items', ['lifelong-learning', 'research-innovation']));
+            ->where('posts.data.0.achieve_items', ['lifelong-learning', 'research-innovation'])));
 });
 
 test('a post without SDGs or A.C.H.I.E.V.E. items lists none', function () {
@@ -232,9 +235,9 @@ test('a post without SDGs or A.C.H.I.E.V.E. items lists none', function () {
 
     $this->actingAs($author)
         ->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
             ->has('posts.data.0.sdgs', 0)
-            ->has('posts.data.0.achieve_items', 0));
+            ->has('posts.data.0.achieve_items', 0)));
 });
 
 test('SDGs and A.C.H.I.E.V.E. items are validated', function (array $payload, string $field) {
@@ -264,10 +267,10 @@ test('a share carries its original\'s SDGs and A.C.H.I.E.V.E. items, not its own
 
     $this->actingAs($sharer)
         ->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
             ->has('posts.data.0.sdgs', 0)
             ->where('posts.data.0.shared_post.sdgs', [5])
-            ->where('posts.data.0.shared_post.achieve_items', ['governance']));
+            ->where('posts.data.0.shared_post.achieve_items', ['governance'])));
 });
 
 test('removing a post removes its SDGs and A.C.H.I.E.V.E. items', function () {
@@ -300,34 +303,175 @@ test('SDG numbers and A.C.H.I.E.V.E. codes stay stable', function () {
         ]);
 });
 
-test('likes are idempotent and report the new count', function () {
+test('members give one reaction per post, change it, and take it back', function () {
     $post = communityPost(communityMember());
     $reader = communityMember();
+    $summary = fn (array $counts, int $total, ?string $mine) => [
+        'total' => $total,
+        'counts' => $counts,
+        'mine' => $mine,
+        'recent' => $mine === null ? [] : [['id' => $reader->id, 'name' => $reader->name, 'type' => $mine]],
+    ];
 
-    $this->actingAs($reader)->postJson(route('posts.like', $post))->assertExactJson(['liked' => true, 'likes_count' => 1]);
-    $this->actingAs($reader)->postJson(route('posts.like', $post))->assertExactJson(['liked' => true, 'likes_count' => 1]);
-    $this->actingAs($reader)->deleteJson(route('posts.unlike', $post))->assertExactJson(['liked' => false, 'likes_count' => 0]);
+    $this->actingAs($reader)->putJson(route('posts.reaction.update', $post), ['type' => 'heart'])
+        ->assertExactJson($summary(['heart' => 1, 'care' => 0, 'clap' => 0], 1, 'heart'));
+    $this->actingAs($reader)->putJson(route('posts.reaction.update', $post), ['type' => 'heart'])
+        ->assertExactJson($summary(['heart' => 1, 'care' => 0, 'clap' => 0], 1, 'heart'));
+    $this->actingAs($reader)->putJson(route('posts.reaction.update', $post), ['type' => 'clap'])
+        ->assertExactJson($summary(['heart' => 0, 'care' => 0, 'clap' => 1], 1, 'clap'));
+    $this->actingAs($reader)->deleteJson(route('posts.reaction.destroy', $post))
+        ->assertExactJson($summary(['heart' => 0, 'care' => 0, 'clap' => 0], 0, null));
+
+    expect(PostReaction::query()->count())->toBe(0);
 });
 
-test('the feed reflects the viewer\'s likes and permissions', function () {
+test('reactions are validated', function () {
+    $post = communityPost(communityMember());
+
+    $this->actingAs(communityMember())
+        ->putJson(route('posts.reaction.update', $post), ['type' => 'like'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('type');
+
+    $this->actingAs(communityMember())
+        ->getJson(route('posts.reactions.index', ['post' => $post, 'type' => 'angry']))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('type');
+});
+
+test('the feed sums reactions and names the latest ten reactors', function () {
     $author = communityMember();
     $post = communityPost($author);
-    $post->likes()->attach($author->id);
+    $reactors = User::factory()->count(11)->create();
+    $reactors->each(fn (User $user, int $index) => $post->reactions()->create([
+        'user_id' => $user->id,
+        'type' => $index < 6 ? PostReactionType::Heart : PostReactionType::Care,
+    ]));
+    $post->reactions()->create(['user_id' => $author->id, 'type' => PostReactionType::Clap]);
 
     $this->actingAs($author)
         ->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('posts.data.0.liked', true)
-            ->where('posts.data.0.likes_count', 1)
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+            ->where('posts.data.0.reactions.total', 12)
+            ->where('posts.data.0.reactions.counts', ['heart' => 6, 'care' => 5, 'clap' => 1])
+            ->where('posts.data.0.reactions.mine', 'clap')
+            ->has('posts.data.0.reactions.recent', CommunityFeed::REACTORS_SHOWN)
+            ->where('posts.data.0.reactions.recent.0', ['id' => $author->id, 'name' => $author->name, 'type' => 'clap'])
             ->where('posts.data.0.can_edit', true)
-            ->where('posts.data.0.can_delete', true));
+            ->where('posts.data.0.can_delete', true)));
 
     $this->actingAs(communityMember())
         ->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('posts.data.0.liked', false)
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+            ->where('posts.data.0.reactions.mine', null)
             ->where('posts.data.0.can_edit', false)
-            ->where('posts.data.0.can_delete', false));
+            ->where('posts.data.0.can_delete', false)));
+});
+
+test('the reactions list pages newest first, filters by reaction, and shares no private details', function () {
+    $post = communityPost(communityMember());
+    $member = communityMember();
+    User::factory()->count(24)->create()->each(fn (User $user, int $index) => $post->reactions()->create([
+        'user_id' => $user->id,
+        'type' => $index % 3 === 0 ? PostReactionType::Clap : PostReactionType::Heart,
+    ]));
+    $post->reactions()->create(['user_id' => $member->id, 'type' => PostReactionType::Care]);
+
+    $first = $this->actingAs($member)->getJson(route('posts.reactions.index', $post))->assertOk();
+
+    expect($first->json('data'))->toHaveCount(20)
+        ->and($first->json('data.0'))->toBe([
+            'id' => $member->id,
+            'name' => $member->name,
+            'avatar' => null,
+            'hei' => InstitutionName::display($member->hei->name),
+            'type' => 'care',
+        ])
+        ->and($first->json('meta.next_cursor'))->not->toBeNull();
+
+    $second = $this->actingAs($member)
+        ->getJson(route('posts.reactions.index', ['post' => $post, 'cursor' => $first->json('meta.next_cursor')]))
+        ->assertOk()
+        ->assertJsonCount(5, 'data')
+        ->assertJsonPath('meta.next_cursor', null);
+
+    // The two pages together list everyone exactly once.
+    expect(collect([...$first->json('data'), ...$second->json('data')])->pluck('id')->unique())->toHaveCount(25);
+
+    $claps = $this->actingAs($member)->getJson(route('posts.reactions.index', ['post' => $post, 'type' => 'clap']));
+
+    expect(collect($claps->json('data'))->pluck('type')->unique()->all())->toBe(['clap'])
+        ->and($claps->json('data'))->toHaveCount(8);
+});
+
+test('removing a post removes its reactions', function () {
+    $author = communityMember();
+    $post = communityPost($author);
+    $post->reactions()->create(['user_id' => communityMember()->id, 'type' => PostReactionType::Heart]);
+
+    $this->actingAs($author)->delete(route('posts.destroy', $post))->assertRedirect();
+
+    expect(PostReaction::query()->count())->toBe(0);
+});
+
+test('a returning reader learns how many posts are newer than the ones they have', function () {
+    $reader = communityMember();
+    $seen = communityPost(communityMember());
+    // Posted within the same second: the id breaks the tie.
+    communityPost(communityMember());
+    $share = Post::query()->create([
+        'user_id' => $reader->id,
+        'survey_hei_id' => $reader->survey_hei_id,
+        'shared_post_id' => $seen->id,
+    ]);
+    // Carried over with its original date: a newer id, but an older post.
+    Post::query()->forceCreate([
+        'user_id' => $reader->id,
+        'survey_hei_id' => $reader->survey_hei_id,
+        'body' => 'Imported from the old system.',
+        'created_at' => now()->subYear(),
+        'updated_at' => now()->subYear(),
+    ]);
+
+    $this->actingAs($reader)
+        ->getJson(route('posts.newer', ['after' => $seen->id, 'at' => $seen->created_at?->toIso8601String()]))
+        ->assertExactJson(['count' => 2]);
+    // Any offset works; ids may come in either case.
+    $this->actingAs($reader)
+        ->getJson(route('posts.newer', [
+            'after' => strtoupper($share->id),
+            'at' => $share->created_at?->setTimezone('Asia/Manila')->toIso8601String(),
+        ]))
+        ->assertExactJson(['count' => 0]);
+});
+
+test('checking for newer posts needs a post, its time, and a signed-in member', function () {
+    $post = communityPost(communityMember());
+    $at = $post->created_at?->toIso8601String();
+
+    $this->actingAs(communityMember())
+        ->getJson(route('posts.newer', ['after' => 'not-a-post', 'at' => $at]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('after');
+    $this->actingAs(communityMember())
+        ->getJson(route('posts.newer', ['after' => $post->id, 'at' => 'yesterday-ish']))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('at');
+    $this->actingAs(communityMember())
+        ->getJson(route('posts.newer'))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['after', 'at']);
+
+    auth()->logout();
+    $this->getJson(route('posts.newer', ['after' => $post->id, 'at' => $at]))->assertUnauthorized();
+});
+
+test('guests can neither react nor see who reacted', function () {
+    $post = communityPost(communityMember());
+
+    $this->putJson(route('posts.reaction.update', $post), ['type' => 'heart'])->assertUnauthorized();
+    $this->deleteJson(route('posts.reaction.destroy', $post))->assertUnauthorized();
+    $this->getJson(route('posts.reactions.index', $post))->assertUnauthorized();
 });
 
 test('members comment, and remove only their own comments', function () {
@@ -413,8 +557,11 @@ test('the community page is for moderators', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('community/index')
-            ->has('posts.data', 1)
-            ->where('posts.data.0.can_delete', true));
+            // The feed loads just after the page, behind its skeleton.
+            ->missing('posts')
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->has('posts.data', 1)
+                ->where('posts.data.0.can_delete', true)));
 
     $this->actingAs(communityMember())->get(route('community'))->assertForbidden();
 });
@@ -448,14 +595,14 @@ test('members share a post to the feed with an optional message', function () {
 
     $this->actingAs($sharer)
         ->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
             ->where('posts.data.0.id', $share->id)
             ->where('posts.data.0.shared_post.id', $original->id)
             ->where('posts.data.0.shared_post.author.name', $author->name)
             ->where('posts.data.0.shared_post.feeling.value', 'proud')
             ->where('posts.data.1.id', $original->id)
             ->where('posts.data.1.shares_count', 1)
-            ->where('posts.data.1.shared_post', null));
+            ->where('posts.data.1.shared_post', null)));
 });
 
 test('a share can have no message of its own, and keeps it empty when edited', function () {
@@ -592,7 +739,7 @@ test('the feed nests replies under their comment', function () {
 
     $this->actingAs($ana)
         ->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
             ->has('posts.data.0.comments', 1)
             ->where('posts.data.0.comments_count', 2)
             ->where('posts.data.0.has_more_comments', false)
@@ -600,7 +747,7 @@ test('the feed nests replies under their comment', function () {
             ->has('posts.data.0.comments.0.replies', 1)
             ->where('posts.data.0.comments.0.replies.0.body', 'Thank you!')
             ->where('posts.data.0.comments.0.replies.0.is_post_author', true)
-            ->where('posts.data.0.comments.0.replies.0.reply_to.name', $ana->name));
+            ->where('posts.data.0.comments.0.replies.0.reply_to.name', $ana->name)));
 });
 
 test('replies must answer a comment on the same post', function () {

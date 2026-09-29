@@ -2,6 +2,7 @@
 
 // This server always creates its own database. Never reuse a development server
 // or load cached application configuration for browser tests.
+use App\Models\Post;
 use App\Models\Survey;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
@@ -54,7 +55,7 @@ $kernel->call('db:seed', ['--class' => RbacSeeder::class, '--force' => true]);
 $kernel->call('db:seed', ['--class' => SurveySeeder::class, '--force' => true]);
 $region = SurveyRegion::query()->sole();
 $cluster = SurveyCluster::query()->create(['name' => 'Browser Test Cluster', 'survey_region_id' => $region->id, 'is_active' => true]);
-SurveyHei::query()->create(['name' => 'Browser Test HEI', 'survey_cluster_id' => $cluster->id, 'is_active' => true]);
+$hei = SurveyHei::query()->create(['name' => 'Browser Test HEI', 'survey_cluster_id' => $cluster->id, 'is_active' => true]);
 foreach (Survey::query()->get() as $survey) {
     $draft = $survey->draftVersion();
     $draft->update(['retention_days' => 365, 'status' => 'published', 'published_at' => now()]);
@@ -63,6 +64,21 @@ foreach (Survey::query()->get() as $survey) {
 }
 $admin = User::factory()->create(['email' => 'browser-admin@example.test', 'password' => 'browser-password']);
 $admin->assignRole('admin');
+
+// Eleven older posts from an HEI, so the community feed has a second page
+// to load. They sit below anything a test posts.
+$member = User::factory()->create(['name' => 'Browser Test Member', 'survey_hei_id' => $hei->id]);
+$member->assignRole('hei');
+foreach (range(1, 11) as $daysAgo) {
+    $postedAt = now()->subDays(30 + $daysAgo);
+    Post::query()->forceCreate([
+        'user_id' => $member->id,
+        'survey_hei_id' => $hei->id,
+        'body' => "Browser seed post {$daysAgo}: an earlier GAD activity.",
+        'created_at' => $postedAt,
+        'updated_at' => $postedAt,
+    ]);
+}
 
 $server = new Process([PHP_BINARY, '-S', '127.0.0.1:8016', '-t', 'public', 'tests/browser/router.php'], dirname(__DIR__, 2));
 $server->setTimeout(null);

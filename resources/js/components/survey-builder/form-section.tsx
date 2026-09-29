@@ -34,7 +34,7 @@ export function FormSection({
         >
             <div
                 className={cn(
-                    'lg:sticky lg:top-6 lg:self-start',
+                    'lg:sticky lg:top-below-header lg:self-start',
                     railClassName,
                 )}
             >

@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useReloadOnBack } from '@/hooks/use-reload-on-back';
 
 type Survey = {
     id: number;
@@ -64,6 +65,9 @@ export default function SurveyIndex({
     surveys: Survey[];
     permissions: Permissions;
 }) {
+    // Publishing happens in the builder; Back must not show the old status.
+    useReloadOnBack();
+
     return (
         <>
             <Head title="Survey management" />

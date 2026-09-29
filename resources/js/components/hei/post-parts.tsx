@@ -1,6 +1,5 @@
 import {
     Forward,
-    Heart,
     Link2,
     Mail,
     MessageCircle,
@@ -10,6 +9,10 @@ import {
 import type { ReactNode } from 'react';
 import { toast } from '@/lib/toast';
 import { hasPostMedia, PostMedia } from '@/components/hei/post-goals';
+import {
+    ReactionButton,
+    ReactionsSummary,
+} from '@/components/hei/post-reactions';
 import { SourceAvatar } from '@/components/hei/source-avatar';
 import {
     DropdownMenu,
@@ -24,13 +27,10 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useClipboard } from '@/hooks/use-clipboard';
+import { CHED_LABEL } from '@/lib/ched-label';
 import { formatFull, formatRelative } from '@/lib/relative-time';
 import { cn } from '@/lib/utils';
-import type { PostContent } from '@/types';
-
-export const CHED_LABEL = 'CHED Regional Office XII';
-
-export type LikeState = { liked: boolean; likes_count: number };
+import type { PostContent, PostReactionType, ReactionSummary } from '@/types';
 
 /** Who a post speaks for: its school, or CHED for staff posts. */
 export function sourceOf(post: PostContent): string {
@@ -205,7 +205,12 @@ export function SharedPostEmbed({ post }: { post: PostContent }) {
 }
 
 const actionClass =
-    'inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm tabular-nums transition-colors duration-150 outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50';
+    'inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-md px-2 text-sm tabular-nums transition-colors duration-150 outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50';
+
+/** "3 comments" for screen readers; nothing when there are none. */
+function countLabel(count: number, noun: string): string {
+    return count > 0 ? `, ${count} ${noun}${count === 1 ? '' : 's'}` : '';
+}
 
 /** What the Share menu needs: the post to link and how to repost it. */
 export type ShareTarget = {
@@ -277,12 +282,10 @@ function ShareMenu({
                         'text-muted-foreground hover:text-foreground data-[state=open]:bg-muted data-[state=open]:text-foreground',
                     )}
                 >
-                    <Forward aria-hidden className="size-4" />
-                    {sharesCount > 0 ? sharesCount : 'Share'}
+                    <Forward aria-hidden className="size-4.5" />
+                    {sharesCount > 0 && <span aria-hidden>{sharesCount}</span>}
                     <span className="sr-only">
-                        {sharesCount > 0 &&
-                            (sharesCount === 1 ? ' share' : ' shares')}
-                        , share options
+                        Share{countLabel(sharesCount, 'share')}
                     </span>
                 </button>
             </DropdownMenuTrigger>
@@ -314,17 +317,20 @@ function ShareMenu({
     );
 }
 
-/** Like, Comment, and Share, each showing its count once it has one. */
+/**
+ * React, Comment, and Share as icons (Comment and Share with their counts
+ * once they have any), and the reactions so far at the far end.
+ */
 export function PostActions({
-    like,
-    onToggleLike,
+    reactions,
+    onReact,
     commentsCount,
     onComment,
     sharesCount,
     share,
 }: {
-    like: LikeState;
-    onToggleLike: () => void;
+    reactions: ReactionSummary;
+    onReact: (type: PostReactionType | null) => void;
     commentsCount: number;
     onComment: () => void;
     sharesCount: number;
@@ -332,31 +338,11 @@ export function PostActions({
 }) {
     return (
         <div className="flex items-center gap-1 border-t px-2 py-1.5 sm:px-3">
-            <button
-                type="button"
-                onClick={onToggleLike}
-                aria-pressed={like.liked}
-                className={cn(
-                    actionClass,
-                    like.liked
-                        ? 'text-signature-red'
-                        : 'text-muted-foreground hover:text-foreground',
-                )}
-            >
-                <Heart
-                    aria-hidden
-                    className={cn(
-                        'size-4 transition-transform duration-200 ease-out',
-                        like.liked && 'scale-110 fill-current',
-                    )}
-                />
-                <span>{like.likes_count > 0 ? like.likes_count : 'Like'}</span>
-                <span className="sr-only">
-                    {like.likes_count > 0 &&
-                        (like.likes_count === 1 ? ' like' : ' likes')}
-                    {like.liked ? ', you liked this' : ''}
-                </span>
-            </button>
+            <ReactionButton
+                mine={reactions.mine}
+                onReact={onReact}
+                className={actionClass}
+            />
             <button
                 type="button"
                 onClick={onComment}
@@ -365,14 +351,14 @@ export function PostActions({
                     'text-muted-foreground hover:text-foreground',
                 )}
             >
-                <MessageCircle aria-hidden className="size-4" />
-                {commentsCount > 0 ? commentsCount : 'Comment'}
+                <MessageCircle aria-hidden className="size-4.5" />
+                {commentsCount > 0 && <span aria-hidden>{commentsCount}</span>}
                 <span className="sr-only">
-                    {commentsCount > 0 &&
-                        (commentsCount === 1 ? ' comment' : ' comments')}
+                    Comment{countLabel(commentsCount, 'comment')}
                 </span>
             </button>
             <ShareMenu sharesCount={sharesCount} share={share} />
+            <ReactionsSummary postId={share.postId} summary={reactions} />
         </div>
     );
 }

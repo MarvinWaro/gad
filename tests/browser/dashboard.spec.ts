@@ -30,10 +30,10 @@ test('admin preview filters keep overview, chart and breakdowns consistent', asy
         .click();
     await expect(activity.getByRole('table')).toContainText('284');
     await activity
-        .getByRole('button', { name: 'Community posts', exact: true })
+        .getByRole('button', { name: 'Posts shared', exact: true })
         .click();
     await expect(
-        activity.getByRole('columnheader', { name: 'Community posts' }),
+        activity.getByRole('columnheader', { name: 'Posts shared' }),
     ).toBeVisible();
     await expect(
         activity.getByRole('cell', { name: '12', exact: true }),
@@ -66,7 +66,7 @@ test('admin preview filters keep overview, chart and breakdowns consistent', asy
         .click();
     await expect(activity.locator('.recharts-area')).toHaveCount(1);
     await expect(
-        page.getByRole('link', { name: 'Open community' }),
+        page.getByRole('link', { name: 'Open Gender Mainstreaming' }),
     ).toHaveAttribute('href', '/community');
     await expect(
         page.getByRole('link', { name: 'Manage law surveys' }),
@@ -137,7 +137,7 @@ test('all reporting periods update both metrics and retain the annual event cale
         await expect(overview).toContainText(item.comparison);
         for (const [label, total] of [
             ['Survey responses', item.responses],
-            ['Community posts', item.posts],
+            ['Posts shared', item.posts],
         ] as const) {
             await activity
                 .getByRole('button', { name: label, exact: true })

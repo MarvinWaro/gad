@@ -54,8 +54,7 @@ export function ActivityChart({
 }) {
     const [metric, setMetric] = useState<ActivityMetric>('responses');
     const [table, setTable] = useState(false);
-    const label =
-        metric === 'responses' ? 'Survey responses' : 'Community posts';
+    const label = metric === 'responses' ? 'Survey responses' : 'Posts shared';
     return (
         <section
             aria-labelledby="activity-title"
@@ -101,7 +100,7 @@ export function ActivityChart({
                         >
                             {value === 'responses'
                                 ? 'Survey responses'
-                                : 'Community posts'}
+                                : 'Posts shared'}
                         </button>
                     ))}
                 </div>
