@@ -31,6 +31,7 @@ $app = require __DIR__.'/../../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 if ($uploads) {
     config(['filesystems.disks.public.root' => $uploads]);
+    config(['filesystems.disks.monitoring.root' => $uploads.'-private']);
 }
 // Browser tests exercise built assets even when a developer has Vite running.
 Vite::useHotFile(sys_get_temp_dir().'/phlgadis-browser-no-hot-file');

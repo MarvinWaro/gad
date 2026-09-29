@@ -1,0 +1,51 @@
+// Transcribed verbatim from the old-system Organizational Chart screenshots
+// supplied on 2026-09-29. Preserve the source's names, credentials and order.
+export const organization = {
+    oversight: {
+        role: 'Oversight Commissioner',
+        name: 'ALDRIN A. DARILAG, PhD, RMT, RN',
+    },
+    chairs: [
+        { role: 'Chairperson', name: 'MS. EDNA IMELDA F. LEGAZPI' },
+        {
+            role: 'Co-Chairperson',
+            name: 'DR. CHERRIE MELANIE ANCHETA-DIEGO, CESO III',
+        },
+    ],
+    members: [
+        'DR. MARIVIC V. IRIBERRI',
+        'ATTY. FREDERICK MIKHAIL I. FAROLAN',
+        'LUISA S. VALENCIA, CESO IV',
+        'DR. CHRISTIANNE LYNNETTE C. CASEM, CESE',
+        'ATTY. LILY FREIDA C. MACABANGUN-MILLA, CESO IV',
+    ],
+    secretariat: [
+        'MS. CAROLYNE PATAYAN',
+        'MR. RENZ GIORGIO TIGBAR',
+        'MS. CRISTINA MAGALLANES',
+        'MS. SOCORRO HERNANDEZ',
+        'MR. ALVIN LAURAYA',
+        'MR. MOISES CABREROS JR.',
+        'MS. CORAZON NUALDA',
+        'MS. ADELMA TERCIA',
+        'MS. GRACE PEDRAJAS',
+        'MR. EMERSON FLORDELIZA',
+        'MR. JOHN PAUL DELA CRUZ',
+        'MS. THERESA MAESTRO',
+        'MS. ROWENA BUENCONCEJO',
+        'MR. RUEL CAPANZANA',
+        'MS. YVET MADLANGSAKAY',
+        'MS. IRMA RESURECCION',
+        'MS. RITA SESCAR',
+        'MS. MITZI FUGNIT',
+        'MS. JOCELYN BALANAG',
+        'MS. EVA PASIGPASIGAN',
+        'MS. SEVILLA GUARIN',
+        'MS. MARIVIC MAGNO',
+        'MS. ZSARA MAE DALAYOAN',
+        'MS. GOLDEY MALABANAN',
+        'MS. CATHERINE MALAPO',
+        'MS. PRINCESS SHAINE ABANTE',
+        'ATTY. AARON MARC DIMAANO',
+    ],
+} as const;

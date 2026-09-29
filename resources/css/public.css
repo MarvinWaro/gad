@@ -1752,6 +1752,257 @@
 .about-timeline-link {
     margin-top: 56px;
 }
+/* The old site's organizational chart, with a connected leadership tier. */
+.org-chart {
+    max-width: 1040px;
+    margin-inline: auto;
+}
+.org-intro {
+    margin-bottom: 32px;
+}
+.org-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    color: var(--brand);
+    font-size: 12px;
+    font-weight: 500;
+}
+.org-eyebrow svg {
+    width: 16px;
+    height: 16px;
+}
+.org-intro h2 {
+    font-size: clamp(24px, 3vw, 32px);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+.org-intro p {
+    margin-top: 8px;
+    color: var(--muted-foreground);
+}
+.org-stage {
+    margin-bottom: 48px;
+    padding: 24px 40px 40px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--muted);
+}
+.org-stage-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+.org-leadership {
+    max-width: 760px;
+    margin-inline: auto;
+}
+.org-person {
+    padding: 28px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+    text-align: center;
+}
+.org-person h3 {
+    margin-bottom: 12px;
+    color: var(--brand);
+    font-size: 14px;
+    font-weight: 500;
+}
+.org-person p {
+    font-size: 17px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+.org-person-icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 20px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--muted);
+    color: var(--brand);
+}
+.org-person-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 1.5;
+}
+.org-oversight {
+    position: relative;
+    max-width: 368px;
+    margin-inline: auto;
+    background: var(--signature-violet);
+    color: var(--on-signature);
+    border-color: var(--signature-violet);
+}
+.org-oversight h3 {
+    color: var(--on-signature);
+}
+.org-oversight .org-person-icon {
+    background: transparent;
+    color: var(--on-signature);
+    border-color: color-mix(in srgb, var(--on-signature) 30%, transparent);
+}
+.org-oversight::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    height: 24px;
+    border-left: 1px solid var(--brand);
+}
+.org-chairs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    padding-top: 48px;
+}
+.org-chairs .org-person {
+    position: relative;
+}
+.org-chairs .org-person::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    width: calc(50% + 13px);
+    height: 24px;
+    border-top: 1px solid var(--brand);
+    border-left: 1px solid var(--brand);
+}
+.org-chairs .org-person:last-child::before {
+    left: auto;
+    right: 50%;
+    border-left: 0;
+    border-right: 1px solid var(--brand);
+}
+.org-roster {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
+    gap: 32px;
+    padding-block: 32px;
+    border-top: 1px solid var(--border);
+}
+.org-roster-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+.org-roster-heading > svg {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 8px;
+    color: var(--brand);
+    stroke-width: 1.5;
+}
+.org-roster-heading h3 {
+    font-size: 20px;
+    font-weight: 500;
+}
+.org-roster-heading span {
+    color: var(--muted-foreground);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+.org-roster ul {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.org-roster li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 18px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+.org-roster li > svg {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    color: var(--subtle-foreground);
+    stroke-width: 1.5;
+}
+.org-roster[data-group='members'] ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.org-roster[data-group='members'] li {
+    padding: 22px;
+    border-left: 2px solid var(--brand);
+    font-size: 14px;
+}
+.org-roster[data-group='members'] li > svg {
+    color: var(--brand);
+}
+@media (max-width: 900px) {
+    .org-roster {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 20px;
+    }
+    .org-roster-heading {
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+    }
+    .org-roster-heading > svg {
+        margin-bottom: 0;
+    }
+    .org-roster-heading span {
+        margin-left: auto;
+    }
+    .org-roster ul {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 600px) {
+    .org-stage {
+        padding: 20px 16px 24px;
+        margin-bottom: 32px;
+    }
+    .org-chairs,
+    .org-roster ul,
+    .org-roster[data-group='members'] ul {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .org-chairs {
+        padding-top: 24px;
+        gap: 12px;
+    }
+    .org-chairs .org-person::before {
+        display: none;
+    }
+    .org-person {
+        padding: 20px;
+    }
+    .org-chairs .org-person {
+        text-align: left;
+    }
+    .org-chairs .org-person-icon {
+        margin-left: 0;
+    }
+    .org-person p {
+        font-size: 15px;
+    }
+}
+
 /* The A.C.H.I.E.V.E. Agenda tab: CHED's lettered tiles in rows on
    hairlines under an ink rule. */
 .achieve-header {

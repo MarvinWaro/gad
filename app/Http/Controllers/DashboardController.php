@@ -42,13 +42,12 @@ class DashboardController extends Controller
             'upcoming' => fn (): array => EventCalendar::upcoming(),
             // Loaded just after the page appears, which shows skeletons meanwhile.
             'posts' => Inertia::scroll(fn () => CommunityFeed::page($user))->defer(),
-            // The HEI modules from the old portal. None is built yet, so each
-            // has no href and shows as "Soon"; give one an href when it ships.
+            // Only implemented modules receive links.
             'quickLinks' => [
-                ['key' => 'upload-monitoring', 'label' => 'Upload Monitoring', 'href' => null],
+                ['key' => 'upload-monitoring', 'label' => 'Monitoring Report', 'href' => route('monitoring.create')],
                 ['key' => 'gad-training-survey', 'label' => 'GAD Training Survey', 'href' => null],
                 ['key' => 'gad-compliance-survey', 'label' => 'GAD Compliance Survey', 'href' => null],
-                ['key' => 'records', 'label' => 'Records', 'href' => null],
+                ['key' => 'records', 'label' => 'Records', 'href' => route('monitoring.records')],
             ],
         ]);
     }

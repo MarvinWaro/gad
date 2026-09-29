@@ -9,6 +9,7 @@ use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
+use Database\Seeders\SurveyDirectorySeeder;
 use Database\Seeders\SurveySeeder;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Filesystem\Filesystem;
@@ -54,6 +55,7 @@ $kernel->call('migrate', ['--force' => true]);
 $kernel->call('db:seed', ['--class' => RbacSeeder::class, '--force' => true]);
 $kernel->call('db:seed', ['--class' => SurveySeeder::class, '--force' => true]);
 $region = SurveyRegion::query()->sole();
+$region->update(SurveyDirectorySeeder::REGION_XII_OFFICE);
 $cluster = SurveyCluster::query()->create(['name' => 'Browser Test Cluster', 'survey_region_id' => $region->id, 'is_active' => true]);
 $hei = SurveyHei::query()->create(['name' => 'Browser Test HEI', 'survey_cluster_id' => $cluster->id, 'is_active' => true]);
 foreach (Survey::query()->get() as $survey) {
@@ -62,8 +64,11 @@ foreach (Survey::query()->get() as $survey) {
     $next = $draft->replicate(['published_at', 'published_by']);
     $next->fill(['version' => 2, 'status' => 'draft'])->save();
 }
-$admin = User::factory()->create(['email' => 'browser-admin@example.test', 'password' => 'browser-password']);
+// A regional administrator, so monitoring review runs within one office.
+$admin = User::factory()->regionalOffice($region)->create(['email' => 'browser-admin@example.test', 'password' => 'browser-password']);
 $admin->assignRole('admin');
+$monitoringMember = User::factory()->create(['name' => 'Fictional Monitoring Member', 'email' => 'browser-monitoring@example.test', 'password' => 'browser-password', 'survey_hei_id' => $hei->id]);
+$monitoringMember->assignRole('hei');
 
 // Eleven older posts from an HEI, so the community feed has a second page
 // to load. They sit below anything a test posts.
@@ -96,5 +101,8 @@ try {
     }
     if (is_dir($uploads)) {
         (new Filesystem)->deleteDirectory($uploads);
+    }
+    if (is_dir($uploads.'-private')) {
+        (new Filesystem)->deleteDirectory($uploads.'-private');
     }
 }

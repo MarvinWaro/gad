@@ -4,15 +4,18 @@ import { expect, test } from '@playwright/test';
 const wcag = ['wcag2a', 'wcag2aa', 'wcag21aa'];
 
 // Homepage order. GAD Herstory opens its timeline page, the other topics
-// with content their /about tab; the organizational chart stays static
-// until its source file is supplied.
+// with content their /about tab.
 const topics: { title: string; summary?: string; href?: string }[] = [
     {
         title: 'GAD Herstory',
         summary: '13 milestones',
         href: '/about/gad-herstory',
     },
-    { title: 'Organizational Chart' },
+    {
+        title: 'Organizational Chart',
+        summary: 'Leadership, members and secretariat',
+        href: '/about#organization',
+    },
     {
         title: 'What is PHLGADIS?',
         summary: 'Overview and logo',
@@ -33,6 +36,7 @@ const topics: { title: string; summary?: string; href?: string }[] = [
 const tabs = [
     'What is PHLGADIS?',
     'The Logo',
+    'Organizational Chart',
     'A.C.H.I.E.V.E. Agenda',
     'Sustainable Development Goals',
 ];
@@ -335,7 +339,53 @@ test('the About tabs stay pinned under the header while you scroll', async ({
         .toBe(0);
 });
 
+test('the organizational chart opens from home and retains the supplied roster', async ({
+    page,
+}) => {
+    await page.goto('/');
+    await page
+        .locator('#about')
+        .getByRole('link', { name: /Organizational Chart/ })
+        .click();
+    await expect(page).toHaveURL(/\/about#organization$/);
+    const panel = page.getByRole('tabpanel', { name: 'Organizational Chart' });
+    await expect(panel.getByRole('heading')).toHaveText([
+        'Organizational Chart',
+        'Oversight Commissioner',
+        'Chairperson',
+        'Co-Chairperson',
+        'Members',
+        'Secretariat',
+    ]);
+    await expect(panel.locator('.org-person p')).toHaveText([
+        'ALDRIN A. DARILAG, PhD, RMT, RN',
+        'MS. EDNA IMELDA F. LEGAZPI',
+        'DR. CHERRIE MELANIE ANCHETA-DIEGO, CESO III',
+    ]);
+    await expect(
+        panel
+            .getByRole('region', { name: 'Members', exact: true })
+            .getByRole('listitem'),
+    ).toHaveCount(5);
+    const secretariat = panel
+        .getByRole('region', { name: 'Secretariat', exact: true })
+        .getByRole('listitem');
+    await expect(secretariat).toHaveCount(27);
+    await expect(secretariat.first()).toHaveText('MS. CAROLYNE PATAYAN');
+    await expect(secretariat.last()).toHaveText('ATTY. AARON MARC DIMAANO');
+    await page.reload();
+    await expect(panel).toBeVisible();
+    await page.getByRole('tab', { name: 'Organizational Chart' }).focus();
+    await page.keyboard.press('ArrowLeft');
+    await expect(page).toHaveURL(/\/about#logo$/);
+    await page.keyboard.press('ArrowRight');
+    await expect(panel).toBeVisible();
+    await page.getByRole('link', { name: 'Back to home' }).click();
+    await expect(page).toHaveURL(/\/#about$/);
+});
+
 for (const [path, name] of [
+    ['/about#organization', 'organization'],
     ['/about#logo', 'about'],
     ['/about#achieve', 'achieve'],
     ['/about/gad-herstory', 'herstory'],
@@ -365,6 +415,13 @@ for (const [path, name] of [
                     );
                     // The sideways-scrolling bar brings the chosen tab
                     // into view, even on a phone.
+                    await expect(
+                        page.getByRole('tab', { selected: true }),
+                    ).toBeInViewport({ ratio: 1 });
+                } else if (name === 'organization') {
+                    await expect(page.locator('.org-roster li')).toHaveCount(
+                        32,
+                    );
                     await expect(
                         page.getByRole('tab', { selected: true }),
                     ).toBeInViewport({ ratio: 1 });

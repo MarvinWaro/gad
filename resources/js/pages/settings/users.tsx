@@ -36,6 +36,9 @@ import { cn } from '@/lib/utils';
 
 type Role = { id: number; name: string; slug: string };
 type UserStatus = 'pending' | 'active' | 'inactive';
+type Region = { id: number; name: string };
+/** The offices this manager may place accounts in. */
+type Offices = { national: boolean; regions: Region[] };
 type ManagedUser = {
     id: number;
     name: string;
@@ -45,6 +48,7 @@ type ManagedUser = {
     sex: string | null;
     status: UserStatus;
     roles: Role[];
+    office: { national: boolean; region: Region | null };
     created_at: string | null;
     is_current_user: boolean;
     can_manage: boolean;
@@ -69,7 +73,23 @@ type UserForm = {
     password: string;
     password_confirmation: string;
     role_ids: number[];
+    /** '' for no office, 'national' for the Central Office, or a region's id. */
+    office: string;
 };
+
+const NATIONAL_OFFICE = 'national';
+
+function officeValue(office: ManagedUser['office'] | undefined): string {
+    if (office?.national) return NATIONAL_OFFICE;
+
+    return office?.region ? String(office.region.id) : '';
+}
+
+function officeLabel(office: ManagedUser['office']): string | null {
+    if (office.national) return 'Central Office · all regions';
+
+    return office.region?.name ?? null;
+}
 
 const statusTabs: { value: UserStatus | ''; label: string }[] = [
     { value: '', label: 'All' },
@@ -104,6 +124,7 @@ export default function Users({
     users,
     roles,
     heis,
+    offices,
     statusCounts,
     filters,
     permissions,
@@ -111,6 +132,7 @@ export default function Users({
     users: PaginatedUsers;
     roles: Role[];
     heis: HeiOption[];
+    offices: Offices;
     statusCounts: Record<UserStatus, number>;
     filters: Filters;
     permissions: PagePermissions;
@@ -162,7 +184,12 @@ export default function Users({
                         description="Approve registrations, create accounts, and assign their access roles."
                     />
                     {permissions.create && (
-                        <UserDialog mode="create" roles={roles} heis={heis} />
+                        <UserDialog
+                            mode="create"
+                            roles={roles}
+                            heis={heis}
+                            offices={offices}
+                        />
                     )}
                 </div>
 
@@ -323,6 +350,14 @@ export default function Users({
                                                         </Badge>
                                                     ))}
                                                 </div>
+                                                {officeLabel(user.office) && (
+                                                    <p className="mt-1.5 text-xs text-muted-foreground">
+                                                        Office:{' '}
+                                                        {officeLabel(
+                                                            user.office,
+                                                        )}
+                                                    </p>
+                                                )}
                                                 <p className="mt-1.5 text-xs whitespace-nowrap text-muted-foreground">
                                                     Joined{' '}
                                                     {formatDate(
@@ -349,6 +384,9 @@ export default function Users({
                                                                         roles
                                                                     }
                                                                     heis={heis}
+                                                                    offices={
+                                                                        offices
+                                                                    }
                                                                 />
                                                             )}
                                                         {permissions.delete &&
@@ -471,11 +509,13 @@ function UserDialog({
     mode,
     roles,
     heis,
+    offices,
     user,
 }: {
     mode: 'create' | 'edit';
     roles: Role[];
     heis: HeiOption[];
+    offices: Offices;
     user?: ManagedUser;
 }) {
     const [open, setOpen] = useState(false);
@@ -489,7 +529,29 @@ function UserDialog({
         password: '',
         password_confirmation: '',
         role_ids: user?.roles.map((role) => role.id) ?? [],
+        office: officeValue(user?.office),
     });
+    // Offices belong to CHED staff; an HEI user's region comes from the HEI.
+    const staff = roles.some(
+        (role) => role.slug !== 'hei' && form.data.role_ids.includes(role.id),
+    );
+    // The server validates the two fields the office select is sent as.
+    const errors: Partial<Record<string, string>> = form.errors;
+    const officeError = errors.survey_region_id ?? errors.national_access;
+    const officeOptions = [
+        ...(offices.national
+            ? [
+                  {
+                      value: NATIONAL_OFFICE,
+                      label: 'Central Office — all regions',
+                  },
+              ]
+            : []),
+        ...offices.regions.map((region) => ({
+            value: String(region.id),
+            label: region.name,
+        })),
+    ];
 
     function toggleRole(roleId: number, checked: boolean) {
         form.setData(
@@ -509,6 +571,15 @@ function UserDialog({
                 form.reset();
             },
         };
+
+        form.transform(({ office, ...data }) => ({
+            ...data,
+            national_access: staff && office === NATIONAL_OFFICE,
+            survey_region_id:
+                staff && office !== '' && office !== NATIONAL_OFFICE
+                    ? Number(office)
+                    : null,
+        }));
 
         if (mode === 'create') {
             form.post('/settings/users', options);
@@ -692,6 +763,32 @@ function UserDialog({
                         ))}
                         <InputError message={form.errors.role_ids} />
                     </fieldset>
+                    {staff && (
+                        <div className="grid gap-2">
+                            <Label htmlFor={`${fieldId}-office`}>Office</Label>
+                            <FormSelect
+                                id={`${fieldId}-office`}
+                                value={form.data.office}
+                                onChange={(value) =>
+                                    form.setData('office', value)
+                                }
+                                placeholder="No office"
+                                options={officeOptions}
+                                allowEmpty
+                                aria-describedby={`${fieldId}-office-help`}
+                                aria-invalid={Boolean(officeError)}
+                                className="rounded-[6px] data-[size=default]:h-11"
+                            />
+                            <p
+                                id={`${fieldId}-office-help`}
+                                className="text-xs text-muted-foreground"
+                            >
+                                Staff see monitoring reports from their office's
+                                region. The Central Office sees every region.
+                            </p>
+                            <InputError message={officeError} />
+                        </div>
+                    )}
                     <DialogFooter>
                         <Button
                             type="button"

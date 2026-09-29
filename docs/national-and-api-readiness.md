@@ -17,7 +17,7 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 
 **HEI area and community.**
 
-- [ ] `CHED_LABEL = 'CHED Regional Office XII'` (`lib/ched-label.ts`, one definition since 2026-09-29) labels staff posts, tags and reactors. It should come from the author's office.
+- [ ] `CHED_LABEL = 'CHED Regional Office XII'` (`lib/ched-label.ts`, one definition since 2026-09-29) labels staff posts, tags and reactors. It should come from the author's office, which staff accounts now carry (`users.survey_region_id`, or `national_access` for the Central Office).
 - [x] "Region XII community": gone from the composer (2026-09-28), the share dialog, post-card and the HEI home feed heading (2026-09-29), which now name the feed "Gender Mainstreaming".
 - [ ] "CHED Regional Office XII" or "Region XII" in:
     - `welcome-band.tsx`
@@ -41,16 +41,18 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 
 ## Missing for national scope
 
-- [ ] **Staff accounts carry no region.** HEI users reach a region through HEI → cluster → region, but staff accounts don't. Give users and roles a scope: region or national. Then limit these to the staff member's region:
-    - account approval
-    - user management
-    - directories
-    - survey responses and exports
-    - events
-    - community moderation
-    - statistics
-    - site ratings
-- [ ] **Office details per region:** display name, contact email and hotline, stored in data and not in constants.
+- [ ] **Staff scope in every module.** Since 2026-09-29 each staff account has an office (Settings → Users → Office): one region (`users.survey_region_id`) or the Central Office (`users.national_access`). HEI users still reach a region through HEI → cluster → region.
+    - Done: monitoring reports use it (`BelongsToRegion::scopeWithinReachOf`, `User::reachesRegion`).
+    - Done: user management places and manages accounts only within the manager's office.
+    - Still to limit to the staff member's region:
+        - account approval
+        - directories
+        - survey responses and exports
+        - events
+        - community moderation
+        - statistics
+        - site ratings
+- [ ] **Office details per region:** the letterhead is in data since 2026-09-29 (`survey_regions.office_city`, `office_address`, `office_email`, `office_website`, `office_phone`; Settings → Regions → Office details) and prints on monitoring reports. `resources/js/data/contact.ts` (the footer and FAQ hotline) still hard-codes Region XII and should read the viewer's office instead.
 - [ ] **Filters and exports:** every statistic and export takes a region, cluster and HEI filter.
 - [ ] **Philippine time:** dates show in Asia/Manila time throughout. The app timezone stays UTC for storage.
 

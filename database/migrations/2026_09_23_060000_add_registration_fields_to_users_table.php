@@ -15,6 +15,10 @@ return new class extends Migration
             // Existing and admin-created accounts are active; public
             // registrations set pending explicitly and wait for approval.
             $table->string('status', 20)->default('active')->index()->after('sex');
+            // A CHED staff account's office: one region, or the whole country.
+            // HEI accounts leave both empty; their region comes through the HEI.
+            $table->foreignId('survey_region_id')->nullable()->after('status')->constrained('survey_regions')->restrictOnDelete();
+            $table->boolean('national_access')->default(false)->after('survey_region_id');
         });
     }
 
@@ -22,8 +26,9 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropConstrainedForeignId('survey_hei_id');
+            $table->dropConstrainedForeignId('survey_region_id');
             $table->dropIndex(['status']);
-            $table->dropColumn(['mobile_number', 'sex', 'status']);
+            $table->dropColumn(['mobile_number', 'sex', 'status', 'national_access']);
         });
     }
 };

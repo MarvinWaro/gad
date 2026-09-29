@@ -25,6 +25,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string $name
  * @property string $email
  * @property int|null $survey_hei_id
+ * @property int|null $survey_region_id
+ * @property bool $national_access
  * @property string|null $mobile_number
  * @property string|null $sex
  * @property string|null $avatar_path
@@ -56,6 +58,7 @@ class User extends Authenticatable implements PasskeyUser
      */
     protected $attributes = [
         'status' => 'active',
+        'national_access' => false,
     ];
 
     /**
@@ -70,6 +73,8 @@ class User extends Authenticatable implements PasskeyUser
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'status' => UserStatus::class,
+            'survey_region_id' => 'integer',
+            'national_access' => 'boolean',
         ];
     }
 
@@ -99,6 +104,30 @@ class User extends Authenticatable implements PasskeyUser
     public function hei(): BelongsTo
     {
         return $this->belongsTo(SurveyHei::class, 'survey_hei_id');
+    }
+
+    /**
+     * A staff account's regional office. HEI accounts have none: their region
+     * comes through the HEI.
+     *
+     * @return BelongsTo<SurveyRegion, $this>
+     */
+    public function officeRegion(): BelongsTo
+    {
+        return $this->belongsTo(SurveyRegion::class, 'survey_region_id');
+    }
+
+    /** Whether the account is placed in an office, so it sees some region's data. */
+    public function hasOffice(): bool
+    {
+        return $this->national_access || $this->survey_region_id !== null;
+    }
+
+    /** Whether the account's office covers a region: its own, or all of them. */
+    public function reachesRegion(?int $regionId): bool
+    {
+        return $this->national_access
+            || ($regionId !== null && $this->survey_region_id === $regionId);
     }
 
     /** @return HasMany<Post, $this> */

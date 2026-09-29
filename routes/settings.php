@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Settings\ProfileAvatarController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Settings\RegionOfficeController;
 use App\Http\Controllers\Settings\RoleManagementController;
 use App\Http\Controllers\Settings\SecurityController;
 use App\Http\Controllers\Settings\SiteRatingManagementController;
@@ -67,6 +68,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:survey-directories.view')->name('settings.respondent-groups.index');
     Route::get('settings/regions', [SurveyDirectoryController::class, 'regions'])
         ->middleware('can:survey-directories.view')->name('settings.regions.index');
+    Route::put('settings/regions/{region}/office', [RegionOfficeController::class, 'update'])
+        ->middleware('can:survey-directories.update')->name('settings.regions.office');
     Route::get('settings/clusters', [SurveyDirectoryController::class, 'clusters'])
         ->middleware('can:survey-directories.view')->name('settings.clusters.index');
     Route::get('settings/heis', [SurveyDirectoryController::class, 'heis'])

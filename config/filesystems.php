@@ -30,6 +30,13 @@ return [
 
     'disks' => [
 
+        'monitoring' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/monitoring-files'),
+            'throw' => true,
+            'visibility' => 'private',
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),

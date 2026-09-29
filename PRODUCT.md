@@ -27,7 +27,8 @@ PHLGADIS (Philippine Higher Education Gender and Development Information System)
 ## Capabilities and Constraints
 
 - Surveys: RA 7877 (Anti-Sexual Harassment Act), RA 9262 (Anti-VAWC Act), RA 9710 (Magna Carta of Women), RA 11313 (Safe Spaces Act).
-- Not built yet (show as coming soon, never as working): Upload Monitoring, Records, GAD Training Survey, GAD Compliance Survey.
+- Monitoring reports: one shared HEI report per academic year and semester, filled in online with autosave, finalized under a document code, downloaded as a PDF in CHED's official form layout for signing, and submitted with the signed copy. CHED reviews it or returns it for correction as a new revision. Records holds the history. Reviewers see the regions their office covers (Settings → Users → Office).
+- Not built yet (show as coming soon, never as working): GAD Training Survey and GAD Compliance Survey, including their Records categories.
 - Stack: Laravel 13, Fortify, Inertia React, Tailwind 4, shadcn/ui. Role-based access through custom roles and permissions (`admin`, `gad-focal-person`, `hei`).
 
 ## Brand Commitments

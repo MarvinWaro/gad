@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Settings;
 
 use App\Concerns\RegistrationDetailsRules;
+use App\Concerns\StaffOfficeRules;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -10,7 +11,7 @@ use Illuminate\Validation\Rules\Password;
 
 class UpdateManagedUserRequest extends FormRequest
 {
-    use RegistrationDetailsRules;
+    use RegistrationDetailsRules, StaffOfficeRules;
 
     public function authorize(): bool
     {
@@ -39,6 +40,7 @@ class UpdateManagedUserRequest extends FormRequest
             'sex' => $this->sexRules(required: false),
             'role_ids' => ['required', 'array', 'min:1'],
             'role_ids.*' => ['integer', Rule::exists('roles', 'id')],
+            ...$this->officeRules(),
         ];
     }
 

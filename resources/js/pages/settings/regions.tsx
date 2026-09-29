@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -25,7 +26,45 @@ type Region = {
     name: string;
     is_active: boolean;
     clusters_count: number;
+    office_city: string | null;
+    office_address: string | null;
+    office_email: string | null;
+    office_website: string | null;
+    office_phone: string | null;
 };
+
+const officeFields = [
+    {
+        key: 'office_city',
+        label: 'City',
+        placeholder: 'e.g. Koronadal City',
+        type: 'text',
+    },
+    {
+        key: 'office_address',
+        label: 'Address',
+        placeholder: 'Building, street, city',
+        type: 'text',
+    },
+    {
+        key: 'office_email',
+        label: 'Email',
+        placeholder: 'e.g. chedro12@ched.gov.ph',
+        type: 'email',
+    },
+    {
+        key: 'office_website',
+        label: 'Website',
+        placeholder: 'e.g. chedro12.gov.ph',
+        type: 'text',
+    },
+    {
+        key: 'office_phone',
+        label: 'Phone and fax',
+        placeholder: 'e.g. (083) 228-7572; Tel. fax. 083-2281130',
+        type: 'text',
+    },
+] as const;
 type Permissions = { create: boolean; update: boolean; delete: boolean };
 
 export default function Regions({
@@ -91,6 +130,11 @@ export default function Regions({
                                         </td>
                                         <td className="px-5 py-4">
                                             <div className="flex justify-end gap-1">
+                                                {permissions.update && (
+                                                    <OfficeDialog
+                                                        region={region}
+                                                    />
+                                                )}
                                                 {permissions.update &&
                                                     (region.is_active ? (
                                                         <ConfirmPopover
@@ -167,6 +211,86 @@ function toggleActive(region: Region, visit?: ConfirmVisit) {
         `/settings/survey-directories/regions/${region.id}`,
         { name: region.name, is_active: !region.is_active },
         { preserveScroll: true, ...visit },
+    );
+}
+
+/** The letterhead printed on the office's documents, such as monitoring reports. */
+function OfficeDialog({ region }: { region: Region }) {
+    const [open, setOpen] = useState(false);
+    const form = useForm({
+        office_city: region.office_city ?? '',
+        office_address: region.office_address ?? '',
+        office_email: region.office_email ?? '',
+        office_website: region.office_website ?? '',
+        office_phone: region.office_phone ?? '',
+    });
+
+    function submit(event: FormEvent) {
+        event.preventDefault();
+        form.put(`/settings/regions/${region.id}/office`, {
+            preserveScroll: true,
+            onSuccess: () => setOpen(false),
+        });
+    }
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={(next) => {
+                setOpen(next);
+                if (!next) form.clearErrors();
+            }}
+        >
+            <DialogTrigger asChild>
+                <Button size="sm" variant="outline">
+                    Office details
+                    <span className="sr-only"> for {region.name}</span>
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>{region.name} office</DialogTitle>
+                    <DialogDescription>
+                        Printed on the letterhead of this office's documents,
+                        such as monitoring reports. Leave a field blank to leave
+                        its line out.
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={submit} className="space-y-4">
+                    {officeFields.map((field) => (
+                        <div key={field.key}>
+                            <Label htmlFor={`${field.key}-${region.id}`}>
+                                {field.label}
+                            </Label>
+                            <Input
+                                id={`${field.key}-${region.id}`}
+                                type={field.type}
+                                className="mt-1.5"
+                                placeholder={field.placeholder}
+                                value={form.data[field.key]}
+                                onChange={(event) =>
+                                    form.setData(field.key, event.target.value)
+                                }
+                                aria-invalid={Boolean(form.errors[field.key])}
+                            />
+                            <InputError message={form.errors[field.key]} />
+                        </div>
+                    ))}
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button disabled={form.processing}>
+                            Save office details
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }
 

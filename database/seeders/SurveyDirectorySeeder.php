@@ -16,12 +16,28 @@ use Illuminate\Database\Seeder;
  */
 class SurveyDirectorySeeder extends Seeder
 {
+    /** Regional Office XII's letterhead, as printed on its 2025 monitoring template. */
+    public const REGION_XII_OFFICE = [
+        'office_city' => 'Koronadal City',
+        'office_address' => 'PRIME Government Center, Brgy. Carpenter Hill, City of Koronadal, Philippines',
+        'office_email' => 'chedro12@ched.gov.ph',
+        'office_website' => 'chedro12.gov.ph',
+        'office_phone' => '(083) 228-7572; Tel. fax. 083-2281130',
+    ];
+
     public function run(): void
     {
         $region = SurveyRegion::query()->firstOrCreate(
             ['name' => 'Regional Office XII'],
             ['is_active' => true],
         );
+
+        // Fill only what is missing, so re-seeding keeps the office's own edits.
+        $region->fill(array_filter(
+            self::REGION_XII_OFFICE,
+            fn (string $field): bool => blank($region->{$field}),
+            ARRAY_FILTER_USE_KEY,
+        ))->save();
 
         $clusters = [
             'South Cotabato',
