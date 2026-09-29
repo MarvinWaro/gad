@@ -27,6 +27,15 @@ export function appNavigationItems(
 
     return [
         { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
+        ...(permissions.includes('monitoring.view')
+            ? [
+                  {
+                      title: 'Monitoring Reports',
+                      href: '/admin/monitoring',
+                      icon: ClipboardList,
+                  },
+              ]
+            : []),
         ...(permissions.includes('carousel.view')
             ? [{ title: 'Carousel', href: '/admin/carousels', icon: Images }]
             : []),
