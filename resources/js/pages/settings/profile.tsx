@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label';
 import { edit } from '@/routes/profile';
 import type { Auth } from '@/types';
 import { send } from '@/routes/verification';
+import { isMyProfileView } from '@/lib/my-profile';
+import MyProfilePreview from './my-profile-preview';
 
 type PageProps = {
     auth: Auth;
@@ -28,7 +30,12 @@ export default function Profile({
     /** The account's HEI (read-only here); null for CHED staff. */
     institution: string | null;
 }) {
-    const { auth } = usePage<PageProps>().props;
+    const page = usePage<PageProps>();
+    const { auth } = page.props;
+
+    if (isMyProfileView(page.url)) {
+        return <MyProfilePreview auth={auth} institution={institution} />;
+    }
 
     return (
         <>

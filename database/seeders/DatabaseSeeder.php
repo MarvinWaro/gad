@@ -23,5 +23,10 @@ class DatabaseSeeder extends Seeder
         $this->call(SurveySeeder::class);
         $this->call(SurveyDirectorySeeder::class);
         $this->call(SurveyHeiSeeder::class);
+
+        // One account per role to try the app with; never outside local.
+        if (app()->environment('local')) {
+            $this->call(DemoUserSeeder::class);
+        }
     }
 }

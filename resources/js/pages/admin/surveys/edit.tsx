@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Lock } from 'lucide-react';
 import type { FormEvent } from 'react';
 import {
     formatWhen,
@@ -8,6 +8,7 @@ import {
 } from '@/components/survey-builder/definition';
 import { PublicationPanel } from '@/components/survey-builder/publication-panel';
 import { QuestionStructureSection } from '@/components/survey-builder/question-structure-section';
+import { ReadOnlyContext } from '@/components/survey-builder/read-only';
 import { SurveyDetailsSection } from '@/components/survey-builder/survey-details-section';
 import type {
     BuilderSurvey,
@@ -46,6 +47,8 @@ export default function SurveyBuilder({
         definition: withClientKeys(draft.definition),
     });
     const savedAt = formatWhen(draft.updated_at);
+    // Reading without `surveys.update`: nothing here may look editable.
+    const readOnly = !permissions.update;
 
     function changeDefinition(mutate: (definition: Definition) => void) {
         const definition = structuredClone(form.data.definition);
@@ -62,7 +65,7 @@ export default function SurveyBuilder({
     }
 
     return (
-        <>
+        <ReadOnlyContext value={readOnly}>
             <Head title={`${survey.code} survey builder`} />
             <div className="@container mx-auto w-full max-w-[120rem] flex-1 p-4 md:p-6">
                 <div className="mx-auto max-w-6xl pb-8 @min-[88rem]:max-w-none">
@@ -84,6 +87,23 @@ export default function SurveyBuilder({
                         {survey.law_title}
                     </p>
                 </div>
+
+                {readOnly && (
+                    <div className="mx-auto mb-8 flex max-w-6xl gap-3 rounded-xl border bg-muted/50 p-4 text-sm @min-[88rem]:max-w-none">
+                        <Lock
+                            aria-hidden
+                            className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                        />
+                        <div>
+                            <p className="font-medium">View only</p>
+                            <p className="mt-1 text-muted-foreground">
+                                You can read this draft but not change it. An
+                                administrator can give your role &ldquo;Update
+                                survey drafts&rdquo;.
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 <div className="mx-auto max-w-6xl @min-[88rem]:grid @min-[88rem]:max-w-none @min-[88rem]:grid-cols-[minmax(0,1fr)_21rem] @min-[88rem]:items-start @min-[88rem]:gap-x-12">
                     <div className="@min-[88rem]:sticky @min-[88rem]:top-below-header @min-[88rem]:col-start-2 @min-[88rem]:row-start-1 @min-[88rem]:-mx-1 @min-[88rem]:max-h-[calc(100svh-var(--app-header,0px)-3rem)] @min-[88rem]:overflow-y-auto @min-[88rem]:px-1">
@@ -108,7 +128,7 @@ export default function SurveyBuilder({
                             onChange={changeDefinition}
                         />
 
-                        {permissions.update ? (
+                        {!readOnly && (
                             <div className="sticky bottom-4 z-10 mt-2 flex items-center justify-between gap-4 rounded-xl border bg-background/95 px-4 py-3 shadow-lg backdrop-blur">
                                 <p className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <span
@@ -133,14 +153,10 @@ export default function SurveyBuilder({
                                     {form.processing ? 'Saving…' : 'Save draft'}
                                 </Button>
                             </div>
-                        ) : (
-                            <p className="mt-2 text-sm text-muted-foreground">
-                                You have read-only access to this draft.
-                            </p>
                         )}
                     </form>
                 </div>
             </div>
-        </>
+        </ReadOnlyContext>
     );
 }

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { moveWithin, newSection } from '@/components/survey-builder/definition';
 import { FormSection } from '@/components/survey-builder/form-section';
+import { useReadOnly } from '@/components/survey-builder/read-only';
 import { SectionCard } from '@/components/survey-builder/section-card';
 import type { Definition } from '@/components/survey-builder/types';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ export function QuestionStructureSection({
     /** Edits a copy of the definition, which then replaces it. */
     onChange: (mutate: (definition: Definition) => void) => void;
 }) {
+    const readOnly = useReadOnly();
     const [expandedSectionId, setExpandedSectionId] = useState<string | null>(
         definition.sections[0]?.id ?? null,
     );
@@ -79,16 +81,18 @@ export function QuestionStructureSection({
                             </ol>
                         </nav>
                     )}
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={addSection}
-                        className="mt-5"
-                    >
-                        <Plus />
-                        Add section
-                    </Button>
+                    {!readOnly && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={addSection}
+                            className="mt-5"
+                        >
+                            <Plus />
+                            Add section
+                        </Button>
+                    )}
                 </>
             }
         >
@@ -100,15 +104,17 @@ export function QuestionStructureSection({
                             A survey needs at least one section holding at least
                             one question before it can be published.
                         </p>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="mt-4"
-                            onClick={addSection}
-                        >
-                            <Plus />
-                            Add the first section
-                        </Button>
+                        {!readOnly && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="mt-4"
+                                onClick={addSection}
+                            >
+                                <Plus />
+                                Add the first section
+                            </Button>
+                        )}
                     </div>
                 )}
 

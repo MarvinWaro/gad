@@ -29,9 +29,9 @@ export default defineConfig({
         }),
     ]),
     // Loaded on demand for monitoring PDFs; prebundled so the dev server does
-    // not reload the page the first time someone downloads one.
+    // not reload the page the first time someone downloads or previews one.
     optimizeDeps: {
-        include: ['pdfmake/build/pdfmake'],
+        include: ['pdfmake/build/pdfmake', 'pdfjs-dist'],
     },
     server: {
         watch: {

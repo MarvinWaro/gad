@@ -8,11 +8,9 @@ use App\Http\Requests\Monitoring\MonitoringFilterRequest;
 use App\Http\Requests\Monitoring\ReviewMonitoringRequest;
 use App\Http\Resources\MonitoringReportResource;
 use App\Models\MonitoringReport;
-use App\Models\SurveyCluster;
-use App\Models\SurveyHei;
-use App\Models\SurveyRegion;
 use App\Models\User;
 use App\Support\AcademicPeriod;
+use App\Support\PlaceFilters;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,27 +27,17 @@ class MonitoringReviewController extends Controller
             ->withinReachOf($user)
             ->with(['currentRevision', 'cluster:id,name', 'region:id,name']);
 
-        foreach (['academic_year' => 'academic_year', 'semester' => 'semester', 'status' => 'status', 'region' => 'survey_region_id', 'cluster' => 'survey_cluster_id', 'hei' => 'survey_hei_id'] as $filter => $column) {
-            if (! empty($filters[$filter])) {
-                $reports->where($column, $filters[$filter]);
+        PlaceFilters::apply($reports, $filters);
+
+        foreach (['semester', 'status'] as $field) {
+            if (! empty($filters[$field])) {
+                $reports->where($field, $filters[$field]);
             }
         }
 
         if (! empty($filters['search'])) {
             $reports->where('institution_name', 'like', '%'.$filters['search'].'%');
         }
-
-        // A regional office has one region to filter; the Central Office picks.
-        $regions = SurveyRegion::query()
-            ->when(! $user->national_access, fn ($query) => $query->whereKey($user->survey_region_id))
-            ->orderBy('name')
-            ->get(['id', 'name']);
-        $regionId = $user->national_access ? (int) ($filters['region'] ?? 0) : (int) $user->survey_region_id;
-        $regionId = $regions->contains('id', $regionId) ? $regionId : null;
-        $clusters = $regionId
-            ? SurveyCluster::query()->where('survey_region_id', $regionId)->orderBy('name')->get(['id', 'name'])
-            : collect();
-        $clusterId = $clusters->contains('id', (int) ($filters['cluster'] ?? 0)) ? (int) $filters['cluster'] : null;
 
         return Inertia::render('monitoring/records', [
             'reports' => MonitoringReportResource::collection(
@@ -60,11 +48,7 @@ class MonitoringReviewController extends Controller
             'staff' => true,
             'canCreate' => false,
             'hasOffice' => $user->hasOffice(),
-            'regions' => $regions,
-            'clusters' => $clusters,
-            'heis' => $clusterId
-                ? SurveyHei::query()->where('survey_cluster_id', $clusterId)->orderBy('name')->get(['id', 'name'])
-                : [],
+            ...PlaceFilters::options($user, $filters),
         ]);
     }
 

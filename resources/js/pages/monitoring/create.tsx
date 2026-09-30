@@ -4,12 +4,14 @@ import type { FormEvent } from 'react';
 import MonitoringController from '@/actions/App/Http/Controllers/MonitoringController';
 import {
     Field,
-    fieldClass,
     localDate,
     periodLabel,
+    selectClass,
+    semesterOptions,
     StagePill,
 } from '@/components/monitoring/shared';
 import { Button } from '@/components/ui/button';
+import { FormSelect } from '@/components/ui/form-select';
 import { Spinner } from '@/components/ui/spinner';
 import { stageOf } from '@/lib/monitoring-draft';
 import type { AcademicPeriod, MonitoringReport } from '@/types/monitoring';
@@ -120,46 +122,39 @@ export default function Create({
                                 id="academic-year"
                                 error={form.errors.academic_year}
                             >
-                                <select
+                                <FormSelect
                                     id="academic-year"
-                                    className={fieldClass}
+                                    className={selectClass}
                                     value={form.data.academic_year}
-                                    onChange={(event) =>
-                                        form.setData(
-                                            'academic_year',
-                                            event.target.value,
-                                        )
+                                    onChange={(value) =>
+                                        form.setData('academic_year', value)
                                     }
+                                    placeholder="Choose an academic year"
+                                    options={academicYears.map((year) => ({
+                                        value: year,
+                                        label: year,
+                                    }))}
                                     aria-invalid={Boolean(
                                         form.errors.academic_year,
                                     )}
-                                >
-                                    {academicYears.map((year) => (
-                                        <option key={year} value={year}>
-                                            {year}
-                                        </option>
-                                    ))}
-                                </select>
+                                />
                             </Field>
                             <Field
                                 label="Semester"
                                 id="semester"
                                 error={form.errors.semester}
                             >
-                                <select
+                                <FormSelect
                                     id="semester"
-                                    className={fieldClass}
+                                    className={selectClass}
                                     value={form.data.semester}
-                                    onChange={(event) =>
-                                        form.setData(
-                                            'semester',
-                                            event.target.value,
-                                        )
+                                    onChange={(value) =>
+                                        form.setData('semester', value)
                                     }
-                                >
-                                    <option value="1">First Semester</option>
-                                    <option value="2">Second Semester</option>
-                                </select>
+                                    placeholder="Choose a semester"
+                                    options={semesterOptions}
+                                    aria-invalid={Boolean(form.errors.semester)}
+                                />
                             </Field>
                         </div>
                         <p className="text-sm text-muted-foreground">

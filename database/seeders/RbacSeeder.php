@@ -40,12 +40,14 @@ class RbacSeeder extends Seeder
             ['name' => 'Create GAD events', 'slug' => 'events.create', 'group' => 'GAD events'],
             ['name' => 'Update GAD events', 'slug' => 'events.update', 'group' => 'GAD events'],
             ['name' => 'Delete GAD events', 'slug' => 'events.delete', 'group' => 'GAD events'],
+            ['name' => 'View and post in Gender Mainstreaming', 'slug' => 'posts.view', 'group' => 'Community'],
             ['name' => 'Moderate community posts', 'slug' => 'posts.moderate', 'group' => 'Community'],
             ['name' => 'View site ratings', 'slug' => 'site-ratings.view', 'group' => 'Site ratings'],
             ['name' => 'Export site ratings', 'slug' => 'site-ratings.export', 'group' => 'Site ratings'],
             ['name' => 'Delete site ratings', 'slug' => 'site-ratings.delete', 'group' => 'Site ratings'],
             ['name' => 'Manage the rating button', 'slug' => 'site-ratings.update', 'group' => 'Site ratings'],
-            ['name' => 'View monitoring reports', 'slug' => 'monitoring.view', 'group' => 'Monitoring'],
+            ['name' => 'Prepare and submit monitoring reports and GAD surveys', 'slug' => 'monitoring.submit', 'group' => 'Monitoring'],
+            ['name' => 'View monitoring reports and GAD surveys', 'slug' => 'monitoring.view', 'group' => 'Monitoring'],
             ['name' => 'Review monitoring reports', 'slug' => 'monitoring.review', 'group' => 'Monitoring'],
         ])->mapWithKeys(function (array $attributes): array {
             $permission = Permission::query()->updateOrCreate(
@@ -73,10 +75,28 @@ class RbacSeeder extends Seeder
                     'monitoring.view', 'monitoring.review',
                 ],
             ],
+            // CHED staff. Each account's office (a region, or the Central
+            // Office) decides whose reports it sees.
+            'ched-focal' => [
+                'name' => 'CHED Focal',
+                'description' => 'Reviews the monitoring reports of HEIs in their office\'s region, sees their GAD surveys, and posts in Gender Mainstreaming.',
+                'permissions' => ['monitoring.view', 'monitoring.review', 'posts.view'],
+            ],
+            'ched-employee' => [
+                'name' => 'CHED Employee',
+                'description' => 'Views the monitoring reports and GAD surveys of their office\'s region and posts in Gender Mainstreaming.',
+                'permissions' => ['monitoring.view', 'posts.view'],
+            ],
+            // An HEI's own people (Role::HEI_SLUGS), placed through their HEI.
             'hei' => [
                 'name' => 'HEI User',
                 'description' => 'Registered HEI account. Dashboard only.',
                 'permissions' => [],
+            ],
+            'hei-focal' => [
+                'name' => 'HEI Focal',
+                'description' => 'The HEI\'s GAD focal person: everything an HEI user has, plus the monitoring report and the GAD surveys.',
+                'permissions' => ['monitoring.submit'],
             ],
         ])->mapWithKeys(function (array $attributes, string $slug) use ($permissions): array {
             $role = Role::query()->updateOrCreate(

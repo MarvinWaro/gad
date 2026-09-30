@@ -12,17 +12,17 @@ use App\Models\User;
  */
 class MonitoringReportPolicy
 {
-    /** HEI users of an active HEI, in an active cluster and region. */
+    /** HEI focal persons of an active HEI, in an active cluster and region. */
     public function create(User $user): bool
     {
-        return $user->hasRole('hei') && $user->hei?->is_active
+        return $user->hasPermissionTo('monitoring.submit') && $user->hei?->is_active
             && $user->hei->cluster?->is_active && $user->hei->cluster->region?->is_active;
     }
 
-    /** HEI users see their institution's reports in Records. */
+    /** HEI focal persons see their institution's reports in Records. */
     public function viewRecords(User $user): bool
     {
-        return $user->hasRole('hei') && $user->survey_hei_id !== null;
+        return $user->hasPermissionTo('monitoring.submit') && $user->survey_hei_id !== null;
     }
 
     /** Colleagues at the report's HEI share one report per period. */
@@ -31,10 +31,10 @@ class MonitoringReportPolicy
         return $this->create($user) && $user->survey_hei_id === $report->survey_hei_id;
     }
 
-    /** The HEI's own users, and CHED staff whose office covers its region. */
+    /** The HEI's focal persons, and CHED staff whose office covers its region. */
     public function view(User $user, MonitoringReport $report): bool
     {
-        return ($user->hasRole('hei') && $user->survey_hei_id === $report->survey_hei_id)
+        return ($user->hasPermissionTo('monitoring.submit') && $user->survey_hei_id === $report->survey_hei_id)
             || ($user->hasPermissionTo('monitoring.view') && $user->reachesRegion($report->survey_region_id));
     }
 

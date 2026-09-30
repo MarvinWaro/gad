@@ -18,10 +18,10 @@ beforeEach(function () {
     $this->seed([RbacSeeder::class, SurveySeeder::class]);
 });
 
-function heiHomeMember(?SurveyHei $hei = null): User
+function heiHomeMember(?SurveyHei $hei = null, string $role = 'hei'): User
 {
     $user = User::factory()->create(['survey_hei_id' => ($hei ?? createSurveyHei())->id]);
-    $user->assignRole('hei');
+    $user->assignRole($role);
 
     return $user;
 }
@@ -57,26 +57,44 @@ test('HEI users get the HEI home with their institution and the law surveys', fu
             ->where('surveys.0.code', 'RA 7877')
             ->where('surveys.3.code', 'RA 11313')
             ->where('surveys.0.is_open', false)
-            ->has('quickLinks', 4)
-            ->where('quickLinks.0.label', 'Monitoring Report')
-            ->where('quickLinks.3.label', 'Records')
-            ->where('quickLinks.0.href', route('monitoring.create'))
-            ->where('quickLinks.3.href', route('monitoring.records'))
-            ->where('quickLinks.1.href', null)
-            ->where('quickLinks.2.href', null)
+            ->where('auth.heiOnly', true)
+            // The reporting quick links belong to the HEI's focal persons.
+            ->has('quickLinks', 0)
             ->missing('comingSoon')
             // The feed loads just after the page, behind its skeleton.
             ->missing('posts')
             ->loadDeferredProps(fn (Assert $reload) => $reload->has('posts.data', 0)));
 });
 
-test('staff keep the standard dashboard', function () {
-    $admin = User::factory()->create();
-    $admin->assignRole('admin');
-
-    $this->actingAs($admin)
+test('HEI focal persons get the same home, plus the reporting quick links', function () {
+    $this->actingAs(heiHomeMember(role: 'hei-focal'))
         ->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page->component('dashboard'));
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('hei/home')
+            ->where('auth.heiOnly', true)
+            ->has('quickLinks', 4)
+            ->where('quickLinks.0.label', 'Monitoring Report')
+            ->where('quickLinks.3.label', 'Records')
+            ->where('quickLinks.0.href', route('monitoring.create'))
+            ->where('quickLinks.3.href', route('monitoring.records'))
+            ->where('quickLinks.1.label', 'GAD Training Survey')
+            ->where('quickLinks.1.href', route('checklists.show', 'training'))
+            ->where('quickLinks.2.label', 'GAD Compliance Survey')
+            ->where('quickLinks.2.href', route('checklists.show', 'compliance')));
+});
+
+test('staff keep the standard dashboard', function () {
+    foreach (['admin', 'ched-focal', 'ched-employee'] as $role) {
+        $staff = User::factory()->create();
+        $staff->assignRole($role);
+
+        $this->actingAs($staff)
+            ->get(route('dashboard'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard')
+                ->where('auth.heiOnly', false));
+    }
 });
 
 test('survey response counts only include the viewer\'s institution', function () {

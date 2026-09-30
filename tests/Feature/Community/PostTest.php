@@ -549,8 +549,8 @@ test('moderators remove any post or comment', function () {
     expect(Post::query()->exists())->toBeFalse();
 });
 
-test('the community page is for moderators', function () {
-    communityPost(communityMember());
+test('the community page is for CHED staff, and only moderators remove others\' posts', function () {
+    $post = communityPost(communityMember());
 
     $this->actingAs(communityModerator())
         ->get(route('community'))
@@ -562,6 +562,19 @@ test('the community page is for moderators', function () {
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('posts.data', 1)
                 ->where('posts.data.0.can_delete', true)));
+
+    // CHED employees read and post in Gender Mainstreaming without moderating it.
+    $employee = User::factory()->create();
+    $employee->assignRole('ched-employee');
+    $this->actingAs($employee)
+        ->get(route('community'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+            ->where('posts.data.0.can_delete', false)));
+    $this->delete(route('posts.destroy', $post))->assertForbidden();
+    $this->post(route('posts.store'), ['body' => 'An announcement from the regional office.'])->assertSessionHasNoErrors();
+    expect(Post::query()->where('user_id', $employee->id)->exists())->toBeTrue();
+    $this->get(route('posts.show', $post))->assertInertia(fn (Assert $page) => $page->where('feedUrl', route('community')));
 
     $this->actingAs(communityMember())->get(route('community'))->assertForbidden();
 });

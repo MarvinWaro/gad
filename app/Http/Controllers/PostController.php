@@ -88,9 +88,9 @@ class PostController extends Controller
         return back();
     }
 
-    /** Where this person reads the feed: moderators in the staff shell. */
+    /** Where this person reads the feed: CHED staff in the staff shell. */
     private function feedUrl(User $user): string
     {
-        return $user->hasPermissionTo('posts.moderate') ? route('community') : route('dashboard');
+        return $user->hasPermissionTo('posts.view') ? route('community') : route('dashboard');
     }
 }

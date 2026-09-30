@@ -8,6 +8,7 @@ import {
 } from '@/components/survey-builder/definition';
 import { Field } from '@/components/survey-builder/field';
 import { QuestionEditor } from '@/components/survey-builder/question-editor';
+import { useReadOnly } from '@/components/survey-builder/read-only';
 import type { Section } from '@/components/survey-builder/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -51,6 +52,8 @@ export function SectionCard({
     /** Edits a copy of this section, which then replaces it. */
     onChange: (mutate: (section: Section) => void) => void;
 }) {
+    const readOnly = useReadOnly();
+
     return (
         <Collapsible open={open} onOpenChange={onOpenChange}>
             <Card
@@ -82,32 +85,34 @@ export function SectionCard({
                             </span>
                         </Button>
                     </CollapsibleTrigger>
-                    <div className="flex shrink-0 items-center gap-1">
-                        <IconAction
-                            type="button"
-                            label="Move section earlier"
-                            disabled={isFirst}
-                            onClick={() => onMove(-1)}
-                        >
-                            <ArrowUp />
-                        </IconAction>
-                        <IconAction
-                            type="button"
-                            label="Move section later"
-                            disabled={isLast}
-                            onClick={() => onMove(1)}
-                        >
-                            <ArrowDown />
-                        </IconAction>
-                        <IconAction
-                            type="button"
-                            label="Remove this section and its questions"
-                            className="text-muted-foreground hover:text-destructive"
-                            onClick={onRemove}
-                        >
-                            <Trash2 />
-                        </IconAction>
-                    </div>
+                    {!readOnly && (
+                        <div className="flex shrink-0 items-center gap-1">
+                            <IconAction
+                                type="button"
+                                label="Move section earlier"
+                                disabled={isFirst}
+                                onClick={() => onMove(-1)}
+                            >
+                                <ArrowUp />
+                            </IconAction>
+                            <IconAction
+                                type="button"
+                                label="Move section later"
+                                disabled={isLast}
+                                onClick={() => onMove(1)}
+                            >
+                                <ArrowDown />
+                            </IconAction>
+                            <IconAction
+                                type="button"
+                                label="Remove this section and its questions"
+                                className="text-muted-foreground hover:text-destructive"
+                                onClick={onRemove}
+                            >
+                                <Trash2 />
+                            </IconAction>
+                        </div>
+                    )}
                 </CardHeader>
                 <CollapsibleContent asChild>
                     <CardContent className="space-y-4">
@@ -175,33 +180,39 @@ export function SectionCard({
                                 }
                             />
                         ))}
-                        <div className="flex flex-wrap items-center gap-2 border-t pt-4">
-                            <span className="mr-1 text-xs text-muted-foreground">
-                                Add a question
-                            </span>
-                            {questionTypes.map((type) => (
-                                <Tooltip key={type.value}>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() =>
-                                                onChange((target) =>
-                                                    target.questions.push(
-                                                        newQuestion(type.value),
-                                                    ),
-                                                )
-                                            }
-                                        >
-                                            <Plus />
-                                            {type.label}
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>{type.hint}</TooltipContent>
-                                </Tooltip>
-                            ))}
-                        </div>
+                        {!readOnly && (
+                            <div className="flex flex-wrap items-center gap-2 border-t pt-4">
+                                <span className="mr-1 text-xs text-muted-foreground">
+                                    Add a question
+                                </span>
+                                {questionTypes.map((type) => (
+                                    <Tooltip key={type.value}>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() =>
+                                                    onChange((target) =>
+                                                        target.questions.push(
+                                                            newQuestion(
+                                                                type.value,
+                                                            ),
+                                                        ),
+                                                    )
+                                                }
+                                            >
+                                                <Plus />
+                                                {type.label}
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            {type.hint}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                ))}
+                            </div>
+                        )}
                     </CardContent>
                 </CollapsibleContent>
             </Card>

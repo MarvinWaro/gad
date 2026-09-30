@@ -1,4 +1,3 @@
-import { Link } from '@inertiajs/react';
 import {
     CircleAlert,
     CircleCheck,
@@ -8,7 +7,6 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { MonitoringStage } from '@/types/monitoring';
 
@@ -80,6 +78,11 @@ export function semesterLabel(semester: number): string {
     return semester === 1 ? 'First Semester' : 'Second Semester';
 }
 
+export const semesterOptions = [1, 2].map((semester) => ({
+    value: String(semester),
+    label: semesterLabel(semester),
+}));
+
 export function periodLabel(report: {
     academic_year: string;
     semester: number;
@@ -98,6 +101,10 @@ export function localDate(value: string): string {
 
 export const fieldClass =
     'min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-destructive sm:text-sm';
+
+/** Sizes shadcn select triggers to sit level with `fieldClass` inputs. */
+export const selectClass =
+    'rounded-md bg-background data-[size=default]:h-11 dark:bg-background';
 
 export const panelClass = 'rounded-xl border bg-card p-5 sm:p-6';
 
@@ -135,52 +142,5 @@ export function Field({
                 </p>
             )}
         </div>
-    );
-}
-
-export function Pagination({
-    prev,
-    next,
-    page,
-    last,
-}: {
-    prev: string | null;
-    next: string | null;
-    page: number;
-    last: number;
-}) {
-    if (last <= 1) {
-        return null;
-    }
-
-    return (
-        <nav
-            aria-label="Pagination"
-            className="flex flex-wrap items-center justify-between gap-3 border-t pt-4"
-        >
-            <p className="text-sm text-muted-foreground">
-                Page {page} of {last}
-            </p>
-            <div className="flex gap-2">
-                {prev ? (
-                    <Button variant="outline" asChild>
-                        <Link href={prev}>Previous</Link>
-                    </Button>
-                ) : (
-                    <Button variant="outline" disabled>
-                        Previous
-                    </Button>
-                )}
-                {next ? (
-                    <Button variant="outline" asChild>
-                        <Link href={next}>Next</Link>
-                    </Button>
-                ) : (
-                    <Button variant="outline" disabled>
-                        Next
-                    </Button>
-                )}
-            </div>
-        </nav>
     );
 }

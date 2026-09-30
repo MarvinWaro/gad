@@ -15,6 +15,7 @@ import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
+import { isMyProfileView } from '@/lib/my-profile';
 import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
@@ -41,7 +42,11 @@ const accountNavItems: NavItem[] = [
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
-    const { auth } = usePage<{ auth: Auth }>().props;
+    const page = usePage<{ auth: Auth }>();
+    const { auth } = page.props;
+    if (isMyProfileView(page.url)) {
+        return <>{children}</>;
+    }
     const managementNavItems: NavItem[] = [
         ...(auth.permissions.includes('users.view')
             ? [

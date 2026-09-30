@@ -15,12 +15,13 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import type { MonitoringReport, MonitoringRevision } from '@/types/monitoring';
 import { Field, fieldClass, localDate, panelClass } from './shared';
+import { SignedCopyPreview } from './signed-copy-preview';
 
 type Decision = 'reviewed' | 'returned';
 
 /**
- * The reviewer's side: the signed copy beside the answers, and the decision.
- * On narrow screens the copy opens in its own tab instead.
+ * The reviewer's side: the signed copy's first page beside the answers, and
+ * the decision. The whole copy opens in its own tab.
  */
 export function ReviewPanel({
     report,
@@ -111,10 +112,10 @@ export function ReviewPanel({
                 )}
             </div>
             {attachment ? (
-                <iframe
-                    src={attachment.inline_url}
-                    title={`Signed copy, revision ${revision.number}`}
-                    className="hidden h-[70vh] w-full rounded-lg border bg-muted lg:block"
+                <SignedCopyPreview
+                    key={attachment.inline_url}
+                    url={attachment.inline_url}
+                    revision={revision.number}
                 />
             ) : (
                 <p className="text-sm text-muted-foreground">

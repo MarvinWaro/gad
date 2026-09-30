@@ -65,6 +65,13 @@ test('HEI fills in, signs and submits a report; CHED returns it, then reviews th
         errors.push(`${page.url()}: ${error.message}`),
     );
     await login(page, 'browser-monitoring@example.test');
+    // An HEI Focal: the HEI header, with Monitoring beside Home and Events.
+    await expect(
+        page
+            .getByRole('navigation')
+            .getByRole('link', { name: 'Monitoring', exact: true })
+            .first(),
+    ).toHaveAttribute('href', /\/records$/);
     await page
         .getByRole('link', { name: 'Monitoring Report', exact: true })
         .first()
@@ -200,7 +207,11 @@ test('HEI fills in, signs and submits a report; CHED returns it, then reviews th
     await login(admin, 'browser-admin@example.test');
     await admin.getByRole('link', { name: 'Monitoring', exact: true }).click();
     await admin.getByRole('link', { name: /^Review/ }).click();
-    await expect(admin.getByTitle('Signed copy, revision 1')).toBeVisible();
+    await expect(
+        admin.getByRole('img', {
+            name: 'First page of the signed copy, revision 1',
+        }),
+    ).toBeVisible();
     await admin.screenshot({
         path: testInfo.outputPath('monitoring-review-1440.png'),
     });
@@ -246,10 +257,60 @@ test('HEI fills in, signs and submits a report; CHED returns it, then reviews th
         page.getByRole('listitem').getByText('Reviewed', { exact: true }),
     ).toBeVisible();
     await page.getByRole('link', { name: /^View/ }).click();
-    await page
-        .getByLabel('History', { exact: true })
-        .selectOption({ index: 1 });
+    await page.getByRole('combobox', { name: 'History' }).click();
+    await page.getByRole('option', { name: /^Revision 1 · submitted/ }).click();
     await expect(page.getByText(narrative)).toBeVisible();
+
+    // CHED's list filters as soon as a filter changes; no Apply button.
+    await admin.goto('/admin/monitoring');
+    const reports = admin.getByRole('main').getByRole('listitem');
+    await expect(reports).toHaveCount(1);
+    await expect(
+        admin.getByRole('button', { name: 'Apply filters' }),
+    ).toHaveCount(0);
+    await admin.getByRole('combobox', { name: 'Status' }).click();
+    await admin
+        .getByRole('option', { name: 'Returned for correction' })
+        .click();
+    await expect(admin).toHaveURL(/status=returned/);
+    await expect(
+        admin.getByText('No reports match these filters'),
+    ).toBeVisible();
+    await admin.getByRole('button', { name: 'Clear filters' }).click();
+    await expect(reports).toHaveCount(1);
+    await admin.getByLabel('Search', { exact: true }).fill('Browser Test');
+    await expect(admin).toHaveURL(/search=Browser/);
+    await expect(reports).toHaveCount(1);
+    await expect(admin.getByText(/Showing 1–1 of 1 report/)).toBeVisible();
+    for (const theme of ['light', 'dark'] as const) {
+        await admin.evaluate(
+            (dark) => document.documentElement.classList.toggle('dark', dark),
+            theme === 'dark',
+        );
+        for (const width of [375, 1440, 1920]) {
+            await admin.setViewportSize({ width, height: 900 });
+            expect(
+                await admin.evaluate(
+                    () =>
+                        document.documentElement.scrollWidth <=
+                        window.innerWidth,
+                ),
+            ).toBe(true);
+            await admin.screenshot({
+                path: testInfo.outputPath(
+                    `monitoring-list-${theme}-${width}.png`,
+                ),
+            });
+        }
+        expect(
+            (
+                await new AxeBuilder({ page: admin })
+                    .include('main')
+                    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+                    .analyze()
+            ).violations,
+        ).toEqual([]);
+    }
 
     expect(errors).toEqual([]);
     await adminContext.close();

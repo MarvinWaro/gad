@@ -15,18 +15,20 @@ import {
     ReviewPanel,
 } from '@/components/monitoring/review-panel';
 import {
-    fieldClass,
     localDate,
     panelClass,
     periodLabel,
+    selectClass,
     StagePill,
 } from '@/components/monitoring/shared';
 import {
     SigningPanel,
     SubmittedPanel,
 } from '@/components/monitoring/signing-panel';
+import { FormSelect } from '@/components/ui/form-select';
 import { useReloadOnBack } from '@/hooks/use-reload-on-back';
 import { fieldsOf, stageOf } from '@/lib/monitoring-draft';
+import { cn } from '@/lib/utils';
 import type {
     MonitoringReport,
     MonitoringRevision,
@@ -72,14 +74,14 @@ function ReportPage({ report, templates, office, viewer }: Props) {
     return (
         <>
             <Head title={`Monitoring report · ${periodLabel(report)}`} />
-            <div className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
+            <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <Link
                     href={
                         viewer === 'hei'
                             ? MonitoringController.records.url()
                             : MonitoringReviewController.index.url()
                     }
-                    className="inline-flex min-h-11 items-center gap-2 text-sm underline-offset-4 hover:underline"
+                    className="inline-flex min-h-11 items-center gap-2 self-start text-sm underline-offset-4 hover:underline"
                 >
                     <ArrowLeft className="size-4" />
                     {viewer === 'hei' ? 'Records' : 'Monitoring reports'}
@@ -111,26 +113,21 @@ function ReportPage({ report, templates, office, viewer }: Props) {
                                 <History aria-hidden className="size-4" />
                                 History
                             </label>
-                            <select
+                            <FormSelect
                                 id="revision"
-                                className={fieldClass}
+                                className={cn(selectClass, 'w-auto min-w-64')}
                                 value={selected.id}
-                                onChange={(event) =>
-                                    setSelectedId(event.target.value)
-                                }
-                            >
-                                {revisions.map((revision) => (
-                                    <option
-                                        key={revision.id}
-                                        value={revision.id}
-                                    >
-                                        Revision {revision.number}
-                                        {revision.submitted_at
+                                onChange={setSelectedId}
+                                placeholder="Choose a revision"
+                                options={revisions.map((revision) => ({
+                                    value: revision.id,
+                                    label: `Revision ${revision.number}${
+                                        revision.submitted_at
                                             ? ` · submitted ${localDate(revision.submitted_at)}`
-                                            : ' · current'}
-                                    </option>
-                                ))}
-                            </select>
+                                            : ' · current'
+                                    }`,
+                                }))}
+                            />
                         </div>
                     )}
                 </header>

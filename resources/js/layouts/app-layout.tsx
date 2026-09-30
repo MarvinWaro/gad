@@ -1,8 +1,8 @@
 import { usePage } from '@inertiajs/react';
 import { useNavigationStyle } from '@/hooks/use-navigation-style';
+import { isMyProfileView, myProfileHref } from '@/lib/my-profile';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
 import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
-import { isHeiOnly } from '@/lib/app-navigation';
 import type { BreadcrumbItem } from '@/types';
 
 export default function AppLayout({
@@ -13,19 +13,23 @@ export default function AppLayout({
     children: React.ReactNode;
 }) {
     const { style } = useNavigationStyle();
-    const { auth } = usePage().props;
+    const page = usePage();
+    const { auth } = page.props;
+    const pageBreadcrumbs = isMyProfileView(page.url)
+        ? [{ title: 'My Profile', href: myProfileHref }]
+        : breadcrumbs;
 
     // HEI accounts always get the top header; staff keep their preference.
-    if (style === 'header' || isHeiOnly(auth.roles ?? [])) {
+    if (style === 'header' || auth.heiOnly) {
         return (
-            <AppHeaderLayout breadcrumbs={breadcrumbs}>
+            <AppHeaderLayout breadcrumbs={pageBreadcrumbs}>
                 {children}
             </AppHeaderLayout>
         );
     }
 
     return (
-        <AppSidebarLayout breadcrumbs={breadcrumbs}>
+        <AppSidebarLayout breadcrumbs={pageBreadcrumbs}>
             {children}
         </AppSidebarLayout>
     );

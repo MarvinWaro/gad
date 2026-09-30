@@ -1,22 +1,37 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { ArrowUpRight, FileText, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { ArrowUpRight, Plus } from 'lucide-react';
 import MonitoringReviewController from '@/actions/App/Http/Controllers/Admin/MonitoringReviewController';
 import MonitoringController from '@/actions/App/Http/Controllers/MonitoringController';
 import {
-    Field,
-    fieldClass,
+    EmptyList,
+    Filter,
+    FilterBar,
+    NoOfficeNotice,
+    PlaceFilters,
+    placeFilterCount,
+    SearchFilter,
+    useRecordFilters,
+    YearFilter,
+} from '@/components/monitoring/record-filters';
+import { RecordsTabs } from '@/components/monitoring/records-tabs';
+import {
     localDate,
-    Pagination,
     periodLabel,
+    selectClass,
+    semesterLabel,
+    semesterOptions,
     StagePill,
     statusOptions,
 } from '@/components/monitoring/shared';
+import { Pagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
+import { FormSelect } from '@/components/ui/form-select';
 import { stageOf } from '@/lib/monitoring-draft';
+import { cn } from '@/lib/utils';
 import type {
     DirectoryOption,
     MonitoringPage,
+    MonitoringReport,
     ReportFilters,
 } from '@/types/monitoring';
 
@@ -43,46 +58,20 @@ export default function Records({
     clusters = [],
     heis = [],
 }: Props) {
-    const [values, setValues] = useState<ReportFilters>(filters);
-    const path = staff
-        ? MonitoringReviewController.index.url()
-        : MonitoringController.records.url();
-    // A regional office has its one region; only the Central Office picks.
-    const pickRegion = regions.length > 1;
-    const places = [
-        ...(pickRegion
-            ? [
-                  {
-                      key: 'region' as const,
-                      label: 'Region',
-                      all: 'All regions',
-                      options: regions,
-                  },
-              ]
-            : []),
-        {
-            key: 'cluster' as const,
-            label: 'Cluster',
-            all: 'All clusters',
-            options: clusters,
-        },
-        { key: 'hei' as const, label: 'HEI', all: 'All HEIs', options: heis },
-    ];
-
-    function apply(next: ReportFilters) {
-        router.get(
-            path,
-            Object.fromEntries(
-                Object.entries(next).filter(([, value]) => value),
-            ),
-            { preserveScroll: true, preserveState: true },
+    const { values, loading, filtered, apply, change, search, pick } =
+        useRecordFilters(
+            staff
+                ? MonitoringReviewController.index.url()
+                : MonitoringController.records.url(),
+            filters,
         );
-    }
+    const total = reports.meta.total;
+    const noun = total === 1 ? 'report' : 'reports';
 
     return (
         <>
             <Head title={staff ? 'Monitoring reports' : 'Records'} />
-            <div className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
+            <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <header className="flex flex-wrap items-end justify-between gap-4">
                     <div>
                         <p className="mb-2 text-sm text-muted-foreground">
@@ -109,245 +98,216 @@ export default function Records({
                     )}
                 </header>
 
-                {!staff && (
-                    <div className="flex flex-wrap gap-5 border-b pb-3 text-sm">
-                        <span className="font-medium text-brand">
-                            Monitoring
-                        </span>
-                        <span className="text-muted-foreground">
-                            Training Survey · Soon
-                        </span>
-                        <span className="text-muted-foreground">
-                            Compliance Survey · Soon
-                        </span>
-                    </div>
-                )}
+                <RecordsTabs current="monitoring" staff={staff} />
 
-                {staff && !hasOffice && (
-                    <div
-                        role="status"
-                        className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4 text-sm"
+                {staff && !hasOffice && <NoOfficeNotice noun="reports" />}
+
+                <div className="@container overflow-hidden rounded-xl border bg-card">
+                    <FilterBar
+                        label="Filter reports"
+                        filters={3 + (staff ? placeFilterCount(regions) : 0)}
                     >
-                        Your account has no office yet, so no reports are shown.
-                        A user manager can set your office in Settings → Users.
-                    </div>
-                )}
-
-                <form
-                    className="grid gap-4 rounded-xl border bg-card p-5 sm:grid-cols-2 lg:grid-cols-4"
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        apply(values);
-                    }}
-                >
-                    {staff && (
-                        <Field label="Search institution" id="search">
-                            <input
-                                id="search"
-                                type="search"
-                                className={fieldClass}
+                        {staff && (
+                            <SearchFilter
                                 value={values.search ?? ''}
-                                onChange={(event) =>
-                                    setValues({
-                                        ...values,
-                                        search: event.target.value,
-                                    })
-                                }
+                                placeholder="Institution name"
+                                onSearch={search}
+                                onSubmit={() => apply(values)}
                             />
-                        </Field>
-                    )}
-                    <Field label="Academic year" id="year">
-                        <select
-                            id="year"
-                            className={fieldClass}
+                        )}
+                        <YearFilter
                             value={values.academic_year ?? ''}
-                            onChange={(event) =>
-                                setValues({
-                                    ...values,
-                                    academic_year: event.target.value,
-                                })
+                            years={academicYears}
+                            onChange={(value) =>
+                                change({ ...values, academic_year: value })
                             }
-                        >
-                            <option value="">All academic years</option>
-                            {academicYears.map((year) => (
-                                <option key={year} value={year}>
-                                    {year}
-                                </option>
-                            ))}
-                        </select>
-                    </Field>
-                    <Field label="Semester" id="semester">
-                        <select
-                            id="semester"
-                            className={fieldClass}
-                            value={values.semester ?? ''}
-                            onChange={(event) =>
-                                setValues({
-                                    ...values,
-                                    semester: event.target.value,
-                                })
-                            }
-                        >
-                            <option value="">All semesters</option>
-                            <option value="1">First Semester</option>
-                            <option value="2">Second Semester</option>
-                        </select>
-                    </Field>
-                    <Field label="Status" id="status">
-                        <select
-                            id="status"
-                            className={fieldClass}
-                            value={values.status ?? ''}
-                            onChange={(event) =>
-                                setValues({
-                                    ...values,
-                                    status: event.target.value,
-                                })
-                            }
-                        >
-                            <option value="">All statuses</option>
-                            {statusOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </Field>
-                    {staff &&
-                        places.map(({ key, label, all, options }) => (
-                            <Field key={key} label={label} id={key}>
-                                <select
-                                    id={key}
-                                    className={fieldClass}
-                                    disabled={options.length === 0}
-                                    value={values[key] ?? ''}
-                                    onChange={(event) => {
-                                        const next = {
-                                            ...values,
-                                            [key]: event.target.value,
-                                            ...(key === 'region'
-                                                ? { cluster: '', hei: '' }
-                                                : key === 'cluster'
-                                                  ? { hei: '' }
-                                                  : {}),
-                                        };
-                                        setValues(next);
-                                        // Picking a place loads the next list.
-                                        apply(next);
-                                    }}
-                                >
-                                    <option value="">{all}</option>
-                                    {options.map((option) => (
-                                        <option
-                                            key={option.id}
-                                            value={option.id}
-                                        >
-                                            {option.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </Field>
-                        ))}
-                    <div className="flex items-end gap-2">
-                        <Button type="submit" variant="outline">
-                            Apply filters
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => {
-                                setValues({});
-                                apply({});
-                            }}
-                        >
-                            Reset
-                        </Button>
-                    </div>
-                </form>
-
-                <p className="text-sm text-muted-foreground" role="status">
-                    {reports.meta.total}{' '}
-                    {reports.meta.total === 1 ? 'report' : 'reports'}
-                </p>
-
-                {reports.data.length ? (
-                    <ul className="space-y-3">
-                        {reports.data.map((report) => (
-                            <li
-                                key={report.id}
-                                className="flex flex-col gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
-                            >
-                                <div className="min-w-0">
-                                    <div className="mb-2 flex flex-wrap items-center gap-3">
-                                        <h2 className="text-lg font-medium">
-                                            {periodLabel(report)}
-                                        </h2>
-                                        <StagePill stage={stageOf(report)} />
-                                    </div>
-                                    <p className="text-sm break-words">
-                                        {report.place.hei.name}
-                                    </p>
-                                    <p className="mt-1 text-xs text-muted-foreground">
-                                        {[
-                                            report.place.cluster?.name,
-                                            report.place.region?.name,
-                                        ]
-                                            .filter(Boolean)
-                                            .join(' · ')}
-                                        {report.current &&
-                                            report.current.number > 1 &&
-                                            ` · Revision ${report.current.number}`}
-                                    </p>
-                                    <p className="mt-2 text-xs text-muted-foreground">
-                                        Updated {localDate(report.updated_at)}
-                                    </p>
-                                </div>
-                                <Button variant="outline" asChild>
-                                    <Link
-                                        href={MonitoringController.show.url(
-                                            report.id,
-                                        )}
-                                    >
-                                        {report.abilities.edit ||
-                                        report.abilities.sign
-                                            ? 'Continue'
-                                            : report.abilities.review
-                                              ? 'Review'
-                                              : 'View'}
-                                        <span className="sr-only">
-                                            {' '}
-                                            {periodLabel(report)} report
-                                        </span>
-                                        <ArrowUpRight />
-                                    </Link>
-                                </Button>
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <div className="rounded-xl border border-dashed px-6 py-16 text-center">
-                        <FileText
-                            aria-hidden
-                            className="mx-auto mb-4 size-8 text-muted-foreground"
                         />
-                        <h2 className="text-lg font-medium">
-                            No reports to show
-                        </h2>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                            {canCreate
-                                ? 'Start a monitoring report, or change the filters.'
-                                : 'Reports that match your office and filters will appear here.'}
-                        </p>
-                    </div>
-                )}
+                        <Filter label="Semester" id="semester">
+                            <FormSelect
+                                id="semester"
+                                className={selectClass}
+                                value={values.semester ?? ''}
+                                onChange={(value) =>
+                                    change({ ...values, semester: value })
+                                }
+                                placeholder="All semesters"
+                                allowEmpty
+                                options={semesterOptions}
+                            />
+                        </Filter>
+                        <Filter label="Status" id="status">
+                            <FormSelect
+                                id="status"
+                                className={selectClass}
+                                value={values.status ?? ''}
+                                onChange={(value) =>
+                                    change({ ...values, status: value })
+                                }
+                                placeholder="All statuses"
+                                allowEmpty
+                                options={statusOptions}
+                            />
+                        </Filter>
+                        {staff && (
+                            <PlaceFilters
+                                values={values}
+                                onPick={pick}
+                                regions={regions}
+                                clusters={clusters}
+                                heis={heis}
+                            />
+                        )}
+                    </FilterBar>
 
-                <Pagination
-                    prev={reports.links.prev}
-                    next={reports.links.next}
-                    page={reports.meta.current_page}
-                    last={reports.meta.last_page}
-                />
+                    <p role="status" className="sr-only">
+                        {total} {noun}
+                    </p>
+
+                    {reports.data.length ? (
+                        <div
+                            aria-busy={loading}
+                            className={cn(
+                                'transition-opacity @4xl:grid @4xl:gap-x-6',
+                                staff
+                                    ? '@4xl:grid-cols-[minmax(0,2fr)_repeat(3,minmax(max-content,1fr))_auto]'
+                                    : '@4xl:grid-cols-[minmax(0,2fr)_repeat(2,minmax(max-content,1fr))_auto]',
+                                loading && 'opacity-60',
+                            )}
+                        >
+                            <div
+                                aria-hidden
+                                className="hidden border-b bg-muted/50 px-5 py-3 text-xs font-medium text-muted-foreground @4xl:col-span-full @4xl:grid @4xl:grid-cols-subgrid @4xl:gap-x-6"
+                            >
+                                {staff && <span>Institution</span>}
+                                <span>Period</span>
+                                <span>Status</span>
+                                <span>Last updated</span>
+                                <span />
+                            </div>
+                            <ul className="divide-y @4xl:col-span-full @4xl:grid @4xl:grid-cols-subgrid">
+                                {reports.data.map((report) => (
+                                    <ReportRow
+                                        key={report.id}
+                                        report={report}
+                                        staff={staff}
+                                    />
+                                ))}
+                            </ul>
+                        </div>
+                    ) : (
+                        <EmptyList
+                            filtered={filtered}
+                            title={
+                                filtered
+                                    ? 'No reports match these filters'
+                                    : 'No reports yet'
+                            }
+                            text={
+                                filtered
+                                    ? 'Try another year, status or place, or clear the filters to see every report.'
+                                    : canCreate
+                                      ? 'Start a monitoring report and it will be kept here.'
+                                      : 'Reports from the institutions your office covers will appear here.'
+                            }
+                            onClear={() => change({})}
+                        />
+                    )}
+
+                    {total > 0 && (
+                        <Pagination
+                            page={reports.meta}
+                            label={noun}
+                            persistent
+                            className="sm:px-5"
+                        />
+                    )}
+                </div>
             </div>
         </>
+    );
+}
+
+/**
+ * One report: a table row on wide cards, a stacked summary on narrow ones.
+ * The action link stretches over the whole row, so any part of it opens the
+ * report.
+ */
+function ReportRow({
+    report,
+    staff,
+}: {
+    report: MonitoringReport;
+    staff: boolean;
+}) {
+    const place = [report.place.cluster?.name, report.place.region?.name]
+        .filter(Boolean)
+        .join(' · ');
+    const revision = report.current?.number ?? 1;
+    const action =
+        report.abilities.edit || report.abilities.sign
+            ? 'Continue'
+            : report.abilities.review
+              ? 'Review'
+              : 'View';
+
+    return (
+        <li className="relative flex flex-col gap-3 px-4 py-4 transition-colors hover:bg-muted/40 has-[a:focus-visible]:bg-muted/40 sm:px-5 @4xl:col-span-full @4xl:grid @4xl:grid-cols-subgrid @4xl:items-center @4xl:gap-x-6">
+            <div className="flex items-start justify-between gap-4 @4xl:contents">
+                {staff && (
+                    <div className="min-w-0">
+                        <p className="font-medium break-words">
+                            {report.place.hei.name}
+                        </p>
+                        {place && (
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                {place}
+                            </p>
+                        )}
+                    </div>
+                )}
+                <div
+                    className={cn(
+                        'shrink-0',
+                        staff && 'text-right @4xl:text-left',
+                    )}
+                >
+                    <p className={cn('tabular-nums', !staff && 'font-medium')}>
+                        {report.academic_year}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                        {semesterLabel(report.semester)}
+                        {revision > 1 && ` · Revision ${revision}`}
+                    </p>
+                </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 @4xl:contents">
+                <div>
+                    <StagePill stage={stageOf(report)} />
+                </div>
+                <p className="text-xs text-muted-foreground tabular-nums @4xl:text-sm @4xl:whitespace-nowrap">
+                    <span className="@4xl:sr-only">Updated </span>
+                    {localDate(report.updated_at)}
+                </p>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="ml-auto @4xl:justify-self-end"
+                >
+                    <Link
+                        href={MonitoringController.show.url(report.id)}
+                        className="after:absolute after:inset-0"
+                    >
+                        {action}
+                        <span className="sr-only">
+                            {' '}
+                            {staff && `${report.place.hei.name}, `}
+                            {periodLabel(report)} report
+                        </span>
+                        <ArrowUpRight />
+                    </Link>
+                </Button>
+            </div>
+        </li>
     );
 }

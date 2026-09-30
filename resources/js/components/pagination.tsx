@@ -19,6 +19,9 @@ export type Paginated<T> = {
     last_page: number;
 };
 
+/** What the controls read: a Laravel paginator, or an API resource's `meta`. */
+export type PaginationMeta = Omit<Paginated<unknown>, 'data'>;
+
 /**
  * Page controls for a Laravel paginator.
  *
@@ -28,13 +31,16 @@ export type Paginated<T> = {
 export function Pagination({
     page,
     label = 'results',
+    persistent = false,
     className,
 }: {
-    page: Paginated<unknown>;
+    page: PaginationMeta;
     label?: string;
+    /** Keep the bar on a single page, where it still gives the count. */
+    persistent?: boolean;
     className?: string;
 }) {
-    if (page.last_page <= 1) {
+    if (page.last_page <= 1 && !persistent) {
         return null;
     }
 

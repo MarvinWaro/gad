@@ -34,6 +34,10 @@ export function QuickLinks({
 }) {
     const titleId = useId();
 
+    if (links.length === 0) {
+        return null;
+    }
+
     return (
         <section
             aria-labelledby={titleId}
