@@ -10,7 +10,8 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavGroup } from '@/types';
 
 export function NavMain({ groups }: { groups: NavGroup[] }) {
-    const { isCurrentUrl } = useCurrentUrl();
+    // A page inside a section (a Records tab) keeps its item active.
+    const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return groups.map((group) => (
         <SidebarGroup key={group.label} className="px-2 py-0">
@@ -20,7 +21,7 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                     <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                             asChild
-                            isActive={isCurrentUrl(item.href)}
+                            isActive={isCurrentOrParentUrl(item.href)}
                             tooltip={{ children: item.title }}
                         >
                             <Link href={item.href} prefetch>

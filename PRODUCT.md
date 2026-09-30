@@ -28,7 +28,7 @@ PHLGADIS (Philippine Higher Education Gender and Development Information System)
 
 - Surveys: RA 7877 (Anti-Sexual Harassment Act), RA 9262 (Anti-VAWC Act), RA 9710 (Magna Carta of Women), RA 11313 (Safe Spaces Act).
 - Monitoring reports: one shared HEI report per academic year and semester, filled in online with autosave, finalized under a document code, downloaded as a PDF in CHED's official form layout for signing, and submitted with the signed copy. CHED reviews it or returns it for correction as a new revision. Records holds the history. Reviewers see the regions their office covers (Settings → Users → Office).
-- Not built yet (show as coming soon, never as working): GAD Training Survey and GAD Compliance Survey, including their Records categories.
+- GAD Training Survey and GAD Compliance Survey: the old portal's two checklists, word for word. HEI Focal accounts answer each once per academic year (submitting again replaces the answer) under Records → Training Survey and Compliance Survey; CHED staff read the answers for the regions their office covers.
 - Stack: Laravel 13, Fortify, Inertia React, Tailwind 4, shadcn/ui. Role-based access through custom roles and permissions (`admin`, `ched-focal`, `ched-employee`, `gad-focal-person`, `hei-focal`, `hei`). CHED roles are placed by their office's region; HEI roles by their HEI.
 
 ## Brand Commitments

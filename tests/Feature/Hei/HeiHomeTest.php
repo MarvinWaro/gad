@@ -78,8 +78,10 @@ test('HEI focal persons get the same home, plus the reporting quick links', func
             ->where('quickLinks.3.label', 'Records')
             ->where('quickLinks.0.href', route('monitoring.create'))
             ->where('quickLinks.3.href', route('monitoring.records'))
-            ->where('quickLinks.1.href', null)
-            ->where('quickLinks.2.href', null));
+            ->where('quickLinks.1.label', 'GAD Training Survey')
+            ->where('quickLinks.1.href', route('checklists.show', 'training'))
+            ->where('quickLinks.2.label', 'GAD Compliance Survey')
+            ->where('quickLinks.2.href', route('checklists.show', 'compliance')));
 });
 
 test('staff keep the standard dashboard', function () {

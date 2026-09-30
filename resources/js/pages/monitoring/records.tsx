@@ -1,12 +1,20 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { ArrowUpRight, FileText, Plus, Search } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { ArrowUpRight, Plus } from 'lucide-react';
 import MonitoringReviewController from '@/actions/App/Http/Controllers/Admin/MonitoringReviewController';
 import MonitoringController from '@/actions/App/Http/Controllers/MonitoringController';
-import { HeiCombobox } from '@/components/hei-combobox';
 import {
-    fieldClass,
+    EmptyList,
+    Filter,
+    FilterBar,
+    NoOfficeNotice,
+    PlaceFilters,
+    placeFilterCount,
+    SearchFilter,
+    useRecordFilters,
+    YearFilter,
+} from '@/components/monitoring/record-filters';
+import { RecordsTabs } from '@/components/monitoring/records-tabs';
+import {
     localDate,
     periodLabel,
     selectClass,
@@ -39,11 +47,6 @@ type Props = {
     heis?: DirectoryOption[];
 };
 
-type PlaceKey = 'region' | 'cluster' | 'hei';
-
-/** How long typing pauses before the search runs. */
-const SEARCH_DELAY = 350;
-
 export default function Records({
     reports,
     filters,
@@ -55,97 +58,15 @@ export default function Records({
     clusters = [],
     heis = [],
 }: Props) {
-    const [values, setValues] = useState<ReportFilters>(filters);
-    const [loading, setLoading] = useState(false);
-    const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-    const path = staff
-        ? MonitoringReviewController.index.url()
-        : MonitoringController.records.url();
-    // A regional office has its one region; only the Central Office picks.
-    const pickRegion = regions.length > 1;
-    const places: {
-        key: PlaceKey;
-        label: string;
-        all: string;
-        options: DirectoryOption[];
-        /** The place that has to be chosen before this list fills. */
-        parent?: PlaceKey;
-    }[] = [
-        ...(pickRegion
-            ? [
-                  {
-                      key: 'region' as const,
-                      label: 'Region',
-                      all: 'All regions',
-                      options: regions,
-                  },
-              ]
-            : []),
-        {
-            key: 'cluster',
-            label: 'Cluster',
-            all: 'All clusters',
-            options: clusters,
-            parent: pickRegion ? 'region' : undefined,
-        },
-        {
-            key: 'hei',
-            label: 'HEI',
-            all: 'All HEIs',
-            options: heis,
-            parent: 'cluster',
-        },
-    ];
-    const filtered = Object.values(filters).some(Boolean);
+    const { values, loading, filtered, apply, change, search, pick } =
+        useRecordFilters(
+            staff
+                ? MonitoringReviewController.index.url()
+                : MonitoringController.records.url(),
+            filters,
+        );
     const total = reports.meta.total;
     const noun = total === 1 ? 'report' : 'reports';
-
-    useEffect(() => () => clearTimeout(searchTimer.current), []);
-
-    /** Filters apply as soon as they change, starting again from page 1. */
-    function apply(next: ReportFilters) {
-        clearTimeout(searchTimer.current);
-        router.get(
-            path,
-            Object.fromEntries(
-                Object.entries({ ...next, search: next.search?.trim() }).filter(
-                    ([, value]) => value,
-                ),
-            ),
-            {
-                preserveScroll: true,
-                preserveState: true,
-                replace: true,
-                onStart: () => setLoading(true),
-                onFinish: () => setLoading(false),
-            },
-        );
-    }
-
-    function change(next: ReportFilters) {
-        setValues(next);
-        apply(next);
-    }
-
-    function search(text: string) {
-        const next = { ...values, search: text };
-        setValues(next);
-        clearTimeout(searchTimer.current);
-        searchTimer.current = setTimeout(() => apply(next), SEARCH_DELAY);
-    }
-
-    /** Picking a place clears the places below it. */
-    function pick(key: PlaceKey, value: string) {
-        change({
-            ...values,
-            [key]: value,
-            ...(key === 'region'
-                ? { cluster: '', hei: '' }
-                : key === 'cluster'
-                  ? { hei: '' }
-                  : {}),
-        });
-    }
 
     return (
         <>
@@ -177,88 +98,30 @@ export default function Records({
                     )}
                 </header>
 
-                {/* The three reports of the old PHLGADIS, for HEIs and CHED alike. */}
-                <div className="flex flex-wrap gap-5 border-b pb-3 text-sm">
-                    <span className="font-medium text-brand">Monitoring</span>
-                    <span className="text-muted-foreground">
-                        Training Survey · Soon
-                    </span>
-                    <span className="text-muted-foreground">
-                        Compliance Survey · Soon
-                    </span>
-                </div>
+                <RecordsTabs current="monitoring" staff={staff} />
 
-                {staff && !hasOffice && (
-                    <div
-                        role="status"
-                        className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4 text-sm"
-                    >
-                        Your account has no office yet, so no reports are shown.
-                        A user manager can set your office in Settings → Users.
-                    </div>
-                )}
+                {staff && !hasOffice && <NoOfficeNotice noun="reports" />}
 
                 <div className="@container overflow-hidden rounded-xl border bg-card">
-                    <div
-                        role="group"
-                        aria-label="Filter reports"
-                        className={cn(
-                            // One row when the card is wide enough; otherwise
-                            // search, period and status, then the places.
-                            'grid grid-cols-2 gap-3 border-b p-4 sm:p-5 @3xl:grid-cols-4 @7xl:auto-cols-fr @7xl:grid-flow-col @7xl:grid-cols-none',
-                            // Two to a row on phones; a filter left alone
-                            // takes the whole row so its text isn't cut.
-                            (3 + (staff ? places.length : 0)) % 2 === 1 &&
-                                '*:last:col-span-2 @3xl:*:last:col-span-1',
-                        )}
+                    <FilterBar
+                        label="Filter reports"
+                        filters={3 + (staff ? placeFilterCount(regions) : 0)}
                     >
                         {staff && (
-                            <form
-                                role="search"
-                                className="col-span-2 @3xl:col-span-1"
-                                onSubmit={(event) => {
-                                    event.preventDefault();
-                                    apply(values);
-                                }}
-                            >
-                                <Filter label="Search" id="search">
-                                    <div className="relative">
-                                        <Search
-                                            aria-hidden
-                                            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                                        />
-                                        <input
-                                            id="search"
-                                            type="search"
-                                            autoComplete="off"
-                                            maxLength={150}
-                                            placeholder="Institution name"
-                                            className={cn(fieldClass, 'pl-9')}
-                                            value={values.search ?? ''}
-                                            onChange={(event) =>
-                                                search(event.target.value)
-                                            }
-                                        />
-                                    </div>
-                                </Filter>
-                            </form>
-                        )}
-                        <Filter label="Academic year" id="year">
-                            <FormSelect
-                                id="year"
-                                className={selectClass}
-                                value={values.academic_year ?? ''}
-                                onChange={(value) =>
-                                    change({ ...values, academic_year: value })
-                                }
-                                placeholder="All years"
-                                allowEmpty
-                                options={academicYears.map((year) => ({
-                                    value: year,
-                                    label: year,
-                                }))}
+                            <SearchFilter
+                                value={values.search ?? ''}
+                                placeholder="Institution name"
+                                onSearch={search}
+                                onSubmit={() => apply(values)}
                             />
-                        </Filter>
+                        )}
+                        <YearFilter
+                            value={values.academic_year ?? ''}
+                            years={academicYears}
+                            onChange={(value) =>
+                                change({ ...values, academic_year: value })
+                            }
+                        />
                         <Filter label="Semester" id="semester">
                             <FormSelect
                                 id="semester"
@@ -285,68 +148,16 @@ export default function Records({
                                 options={statusOptions}
                             />
                         </Filter>
-                        {staff &&
-                            places.map(
-                                ({ key, label, all, options, parent }) => {
-                                    const waiting =
-                                        options.length === 0 &&
-                                        parent !== undefined &&
-                                        !values[parent];
-                                    const placeholder = waiting
-                                        ? `Choose a ${parent} first`
-                                        : all;
-
-                                    return (
-                                        <Filter
-                                            key={key}
-                                            label={label}
-                                            id={key}
-                                        >
-                                            {key === 'hei' ? (
-                                                <HeiCombobox
-                                                    id={key}
-                                                    className="rounded-md bg-background"
-                                                    disabled={
-                                                        options.length === 0
-                                                    }
-                                                    value={values.hei ?? ''}
-                                                    onChange={(value) =>
-                                                        pick(key, value)
-                                                    }
-                                                    options={options}
-                                                    placeholder={placeholder}
-                                                    allowClear
-                                                    clearLabel={all}
-                                                />
-                                            ) : (
-                                                <FormSelect
-                                                    id={key}
-                                                    className={selectClass}
-                                                    disabled={
-                                                        options.length === 0
-                                                    }
-                                                    value={values[key] ?? ''}
-                                                    onChange={(value) =>
-                                                        pick(key, value)
-                                                    }
-                                                    placeholder={placeholder}
-                                                    allowEmpty
-                                                    emptyLabel={all}
-                                                    options={options.map(
-                                                        (option) => ({
-                                                            value: String(
-                                                                option.id,
-                                                            ),
-                                                            label: option.name,
-                                                        }),
-                                                    )}
-                                                />
-                                            )}
-                                        </Filter>
-                                    );
-                                },
-                            )}
-                    </div>
+                        {staff && (
+                            <PlaceFilters
+                                values={values}
+                                onPick={pick}
+                                regions={regions}
+                                clusters={clusters}
+                                heis={heis}
+                            />
+                        )}
+                    </FilterBar>
 
                     <p role="status" className="sr-only">
                         {total} {noun}
@@ -384,36 +195,22 @@ export default function Records({
                             </ul>
                         </div>
                     ) : (
-                        <div className="flex min-h-64 flex-col items-center justify-center px-6 py-12 text-center">
-                            <span className="flex size-12 items-center justify-center rounded-full bg-muted">
-                                <FileText
-                                    aria-hidden
-                                    className="size-5 text-muted-foreground"
-                                />
-                            </span>
-                            <h2 className="mt-4 font-medium">
-                                {filtered
+                        <EmptyList
+                            filtered={filtered}
+                            title={
+                                filtered
                                     ? 'No reports match these filters'
-                                    : 'No reports yet'}
-                            </h2>
-                            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                                {filtered
+                                    : 'No reports yet'
+                            }
+                            text={
+                                filtered
                                     ? 'Try another year, status or place, or clear the filters to see every report.'
                                     : canCreate
                                       ? 'Start a monitoring report and it will be kept here.'
-                                      : 'Reports from the institutions your office covers will appear here.'}
-                            </p>
-                            {filtered && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="mt-5"
-                                    onClick={() => change({})}
-                                >
-                                    Clear filters
-                                </Button>
-                            )}
-                        </div>
+                                      : 'Reports from the institutions your office covers will appear here.'
+                            }
+                            onClear={() => change({})}
+                        />
                     )}
 
                     {total > 0 && (
@@ -427,29 +224,6 @@ export default function Records({
                 </div>
             </div>
         </>
-    );
-}
-
-/** A filter's small label over its control. */
-function Filter({
-    label,
-    id,
-    children,
-}: {
-    label: string;
-    id: string;
-    children: ReactNode;
-}) {
-    return (
-        <div className="min-w-0">
-            <label
-                htmlFor={id}
-                className="mb-1.5 block text-xs text-muted-foreground"
-            >
-                {label}
-            </label>
-            {children}
-        </div>
     );
 }
 

@@ -136,3 +136,33 @@ export type MonitoringPage = {
 };
 
 export type AcademicPeriod = { academic_year: string; semester: 1 | 2 };
+
+/** The GAD checklists' stable codes. */
+export type ChecklistType = 'training' | 'compliance';
+
+/** A GAD checklist as the old PHLGADIS words it, sent by the server. */
+export type ChecklistDefinition = {
+    type: ChecklistType;
+    name: string;
+    title: string;
+    instruction: string;
+    items: TemplateItem[];
+};
+
+/** An HEI's answer to a checklist for one academic year. */
+export type ChecklistResponse = {
+    id: string;
+    type: ChecklistType;
+    academic_year: string;
+    /** The checked item keys. */
+    items: string[];
+    submitted_at: string;
+    submitted_by: string | null;
+    /** Filled in on CHED's list. */
+    place: Partial<MonitoringPlace>;
+};
+
+export type ChecklistResponsePage = {
+    data: ChecklistResponse[];
+    meta: PaginationMeta;
+};

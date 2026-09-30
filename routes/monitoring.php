@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\ChecklistResponseController;
 use App\Http\Controllers\Admin\MonitoringReviewController;
+use App\Http\Controllers\ChecklistController;
 use App\Http\Controllers\MonitoringController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,4 +27,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/admin/monitoring', [MonitoringReviewController::class, 'index'])
         ->middleware('can:monitoring.view')->name('admin.monitoring.index');
+
+    // The GAD Training and Compliance Surveys; an unknown type is a 404.
+    Route::get('/records/{type}', [ChecklistController::class, 'show'])->name('checklists.show');
+    Route::post('/records/{type}', [ChecklistController::class, 'store'])
+        ->middleware('throttle:20,1')->name('checklists.store');
+    Route::get('/admin/monitoring/{type}', [ChecklistResponseController::class, 'index'])
+        ->middleware('can:monitoring.view')->name('admin.checklists.index');
 });

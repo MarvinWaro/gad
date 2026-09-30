@@ -44,7 +44,8 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     const { auth } = page.props;
     const mainNavItems = appNavigationItems(auth.permissions, auth.heiOnly);
     const getInitials = useInitials();
-    const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
+    // A page inside a section (a Records tab) keeps its nav item active.
+    const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
         <>
@@ -114,10 +115,9 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                             className={cn(
                                                 navigationMenuTriggerStyle(),
                                                 'h-9 cursor-pointer px-3 text-muted-foreground',
-                                                whenCurrentUrl(
+                                                isCurrentOrParentUrl(
                                                     item.href,
-                                                    activeItemStyles,
-                                                ),
+                                                ) && activeItemStyles,
                                             )}
                                         >
                                             {item.icon && (
@@ -125,7 +125,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                             )}
                                             {item.title}
                                         </Link>
-                                        {isCurrentUrl(item.href) && (
+                                        {isCurrentOrParentUrl(item.href) && (
                                             <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-foreground"></div>
                                         )}
                                     </NavigationMenuItem>

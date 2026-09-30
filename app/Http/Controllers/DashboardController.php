@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ChecklistType;
 use App\Models\MonitoringReport;
 use App\Models\Survey;
 use App\Models\SurveyCluster;
@@ -47,8 +48,8 @@ class DashboardController extends Controller
             // implemented modules receive links.
             'quickLinks' => $user->can('viewRecords', MonitoringReport::class) ? [
                 ['key' => 'upload-monitoring', 'label' => 'Monitoring Report', 'href' => route('monitoring.create')],
-                ['key' => 'gad-training-survey', 'label' => 'GAD Training Survey', 'href' => null],
-                ['key' => 'gad-compliance-survey', 'label' => 'GAD Compliance Survey', 'href' => null],
+                ['key' => 'gad-training-survey', 'label' => ChecklistType::Training->label(), 'href' => route('checklists.show', ChecklistType::Training)],
+                ['key' => 'gad-compliance-survey', 'label' => ChecklistType::Compliance->label(), 'href' => route('checklists.show', ChecklistType::Compliance)],
                 ['key' => 'records', 'label' => 'Records', 'href' => route('monitoring.records')],
             ] : [],
         ]);

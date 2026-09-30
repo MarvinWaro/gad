@@ -46,8 +46,8 @@ class RbacSeeder extends Seeder
             ['name' => 'Export site ratings', 'slug' => 'site-ratings.export', 'group' => 'Site ratings'],
             ['name' => 'Delete site ratings', 'slug' => 'site-ratings.delete', 'group' => 'Site ratings'],
             ['name' => 'Manage the rating button', 'slug' => 'site-ratings.update', 'group' => 'Site ratings'],
-            ['name' => 'Prepare and submit monitoring reports', 'slug' => 'monitoring.submit', 'group' => 'Monitoring'],
-            ['name' => 'View monitoring reports', 'slug' => 'monitoring.view', 'group' => 'Monitoring'],
+            ['name' => 'Prepare and submit monitoring reports and GAD surveys', 'slug' => 'monitoring.submit', 'group' => 'Monitoring'],
+            ['name' => 'View monitoring reports and GAD surveys', 'slug' => 'monitoring.view', 'group' => 'Monitoring'],
             ['name' => 'Review monitoring reports', 'slug' => 'monitoring.review', 'group' => 'Monitoring'],
         ])->mapWithKeys(function (array $attributes): array {
             $permission = Permission::query()->updateOrCreate(
@@ -79,12 +79,12 @@ class RbacSeeder extends Seeder
             // Office) decides whose reports it sees.
             'ched-focal' => [
                 'name' => 'CHED Focal',
-                'description' => 'Reviews the monitoring reports of HEIs in their office\'s region and posts in Gender Mainstreaming.',
+                'description' => 'Reviews the monitoring reports of HEIs in their office\'s region, sees their GAD surveys, and posts in Gender Mainstreaming.',
                 'permissions' => ['monitoring.view', 'monitoring.review', 'posts.view'],
             ],
             'ched-employee' => [
                 'name' => 'CHED Employee',
-                'description' => 'Views the monitoring reports of their office\'s region and posts in Gender Mainstreaming.',
+                'description' => 'Views the monitoring reports and GAD surveys of their office\'s region and posts in Gender Mainstreaming.',
                 'permissions' => ['monitoring.view', 'posts.view'],
             ],
             // An HEI's own people (Role::HEI_SLUGS), placed through their HEI.
@@ -95,7 +95,7 @@ class RbacSeeder extends Seeder
             ],
             'hei-focal' => [
                 'name' => 'HEI Focal',
-                'description' => 'The HEI\'s GAD focal person: everything an HEI user has, plus the monitoring report.',
+                'description' => 'The HEI\'s GAD focal person: everything an HEI user has, plus the monitoring report and the GAD surveys.',
                 'permissions' => ['monitoring.submit'],
             ],
         ])->mapWithKeys(function (array $attributes, string $slug) use ($permissions): array {

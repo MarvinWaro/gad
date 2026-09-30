@@ -79,6 +79,21 @@ Scoping lives in `App\Models\Concerns\BelongsToRegion` (`withinReachOf`) and `Us
 - **Structure.** The code uses Form Requests, `MonitoringReportPolicy` (`create`, `edit`, `view`, `review`, `viewRecords`), the `ManageMonitoringReport` action, and `MonitoringReportResource` / `MonitoringRevisionResource`.
 - **Not built.** There is no public API, email, deadline, notification or deletion flow yet.
 
+## GAD Training Survey and GAD Compliance Survey
+
+The old portal's two other HEI checklists sit beside the report, as the **Training Survey** and **Compliance Survey** tabs of Records (`/records/training`, `/records/compliance`) and of CHED's Monitoring (`/admin/monitoring/training`, `/admin/monitoring/compliance`). The HEI's quick links open them.
+
+- **Wording.** `App\Enums\ChecklistType` holds each checklist's title, instruction and items, word for word from the old PHLGADIS modals, in their order. The old page needs a login, so the source is the user's screenshots of it, taken 2026-09-30. Item keys are stable codes; never reuse one for different wording.
+- **Who.** The same rules as the report (`ChecklistResponsePolicy` defers to `MonitoringReportPolicy`):
+    - HEI Focal accounts of an active HEI answer;
+    - staff with `monitoring.view` read the answers from the regions their office covers.
+- **One answer per HEI, checklist and academic year.** Picking a year shows that year's answer. Submitting again replaces the checked items and records who submitted and when. Checking none is an answer too.
+- **Data.**
+    - `checklist_responses` holds `type`, the HEI, and the cluster and region fixed at the first answer. Its unique key is `survey_hei_id`, `type`, `academic_year`.
+    - `checklist_answers` holds one row per checked item key.
+    - The code is the `SubmitChecklist` action, `SubmitChecklistRequest` / `ChecklistFilterRequest`, and `ChecklistResponseResource`.
+    - The staff lists share their year and place filters with the monitoring list (`App\Support\PlaceFilters`, `components/monitoring/record-filters.tsx`).
+
 ## Setup
 
 Before launch, migrations are edited in place: run `php artisan migrate:fresh --seed` after pulling. PHP and the web server must accept a 20 MB upload plus overhead (`upload_max_filesize >= 20M`, `post_max_size > 20M`). Back up the `monitoring` disk with the database, and never expose it through a public link.
@@ -89,7 +104,7 @@ Before launch, migrations are edited in place: run `php artisan migrate:fresh --
 php artisan test --compact tests/Feature/Monitoring tests/Feature/Settings/UserOfficeTest.php tests/Feature/Settings/RegionOfficeTest.php tests/Unit/AcademicPeriodTest.php
 node --test tests/frontend/monitoring-pdf.test.ts tests/frontend/monitoring-draft.test.ts
 npm run build
-npx playwright test tests/browser/monitoring.spec.ts
+npx playwright test tests/browser/monitoring.spec.ts tests/browser/checklists.spec.ts
 ```
 
 The browser test fills in, finalizes, downloads, signs (by uploading the downloaded PDF), returns, corrects and reviews a report. It saves screenshots and both PDFs under `test-results`.
