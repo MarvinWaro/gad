@@ -8,59 +8,105 @@ import {
     MessagesSquare,
 } from 'lucide-react';
 import { dashboard } from '@/routes';
-import type { NavItem } from '@/types';
+import type { NavGroup, NavItem } from '@/types';
 
-/** An HEI account with no staff role gets the HEI home and header shell. */
-export function isHeiOnly(roles: string[]): boolean {
-    return roles.length === 1 && roles[0] === 'hei';
-}
-
-export function appNavigationItems(
+/**
+ * The main navigation, grouped under the sidebar's labels. `heiOnly` (shared
+ * as `auth.heiOnly`) marks an account with HEI roles only, which gets the HEI
+ * home and header shell. Groups the account has nothing in are left out.
+ */
+export function appNavigationGroups(
     permissions: string[],
-    roles: string[] = [],
-): NavItem[] {
-    if (isHeiOnly(roles)) {
+    heiOnly = false,
+): NavGroup[] {
+    const can = (permission: string) => permissions.includes(permission);
+    // Short labels, so the top navigation still fits at 1024px.
+    const monitoring: NavItem = {
+        title: 'Monitoring',
+        href: heiOnly ? '/records' : '/admin/monitoring',
+        icon: ClipboardCheck,
+    };
+
+    if (heiOnly) {
         return [
-            { title: 'Home', href: dashboard(), icon: House },
-            { title: 'Events', href: '/events', icon: CalendarDays },
+            {
+                label: 'Menu',
+                items: [
+                    { title: 'Home', href: dashboard(), icon: House },
+                    // HEI focal persons prepare and submit the monitoring report.
+                    ...(can('monitoring.submit') ? [monitoring] : []),
+                    { title: 'Events', href: '/events', icon: CalendarDays },
+                ],
+            },
         ];
     }
 
     return [
-        { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
-        // A short label, so the top navigation still fits at 1024px.
-        ...(permissions.includes('monitoring.view')
-            ? [
-                  {
-                      title: 'Monitoring',
-                      href: '/admin/monitoring',
-                      icon: ClipboardCheck,
-                  },
-              ]
-            : []),
-        ...(permissions.includes('carousel.view')
-            ? [{ title: 'Carousel', href: '/admin/carousels', icon: Images }]
-            : []),
-        ...(permissions.includes('surveys.view')
-            ? [
-                  {
-                      title: 'Surveys',
-                      href: '/admin/surveys',
-                      icon: ClipboardList,
-                  },
-              ]
-            : []),
-        ...(permissions.includes('events.view')
-            ? [{ title: 'Events', href: '/admin/events', icon: CalendarDays }]
-            : []),
-        ...(permissions.includes('posts.moderate')
-            ? [
-                  {
-                      title: 'Gender Mainstreaming',
-                      href: '/community',
-                      icon: MessagesSquare,
-                  },
-              ]
-            : []),
-    ];
+        {
+            label: 'Overview',
+            items: [
+                { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
+            ],
+        },
+        {
+            label: 'Reporting',
+            items: can('monitoring.view') ? [monitoring] : [],
+        },
+        {
+            label: 'Community',
+            items: [
+                ...(can('posts.view')
+                    ? [
+                          {
+                              title: 'Gender Mainstreaming',
+                              href: '/community',
+                              icon: MessagesSquare,
+                          },
+                      ]
+                    : []),
+                ...(can('events.view')
+                    ? [
+                          {
+                              title: 'Events',
+                              href: '/admin/events',
+                              icon: CalendarDays,
+                          },
+                      ]
+                    : []),
+            ],
+        },
+        {
+            label: 'Public site',
+            items: [
+                ...(can('surveys.view')
+                    ? [
+                          {
+                              title: 'Surveys',
+                              href: '/admin/surveys',
+                              icon: ClipboardList,
+                          },
+                      ]
+                    : []),
+                ...(can('carousel.view')
+                    ? [
+                          {
+                              title: 'Carousel',
+                              href: '/admin/carousels',
+                              icon: Images,
+                          },
+                      ]
+                    : []),
+            ],
+        },
+    ].filter((group) => group.items.length > 0);
+}
+
+/** The same navigation in one row, for the top bar. */
+export function appNavigationItems(
+    permissions: string[],
+    heiOnly = false,
+): NavItem[] {
+    return appNavigationGroups(permissions, heiOnly).flatMap(
+        (group) => group.items,
+    );
 }

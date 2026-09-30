@@ -35,6 +35,8 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 type Role = { id: number; name: string; slug: string };
+/** A role this manager may assign; `hei` roles never hold an office. */
+type AssignableRole = Role & { hei: boolean };
 type UserStatus = 'pending' | 'active' | 'inactive';
 type Region = { id: number; name: string };
 /** The offices this manager may place accounts in. */
@@ -130,7 +132,7 @@ export default function Users({
     permissions,
 }: {
     users: PaginatedUsers;
-    roles: Role[];
+    roles: AssignableRole[];
     heis: HeiOption[];
     offices: Offices;
     statusCounts: Record<UserStatus, number>;
@@ -513,7 +515,7 @@ function UserDialog({
     user,
 }: {
     mode: 'create' | 'edit';
-    roles: Role[];
+    roles: AssignableRole[];
     heis: HeiOption[];
     offices: Offices;
     user?: ManagedUser;
@@ -533,7 +535,7 @@ function UserDialog({
     });
     // Offices belong to CHED staff; an HEI user's region comes from the HEI.
     const staff = roles.some(
-        (role) => role.slug !== 'hei' && form.data.role_ids.includes(role.id),
+        (role) => !role.hei && form.data.role_ids.includes(role.id),
     );
     // The server validates the two fields the office select is sent as.
     const errors: Partial<Record<string, string>> = form.errors;

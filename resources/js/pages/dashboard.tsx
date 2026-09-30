@@ -66,7 +66,7 @@ export default function Dashboard() {
                             and the work ahead.
                         </p>
                     </div>
-                    {can('posts.moderate') && (
+                    {can('posts.view') && (
                         <Button asChild>
                             <Link href="/community">
                                 <MessagesSquare aria-hidden="true" />
@@ -364,7 +364,7 @@ export default function Dashboard() {
                             A little encouragement can keep a campus
                             conversation going.
                         </p>
-                        {can('posts.moderate') && (
+                        {can('posts.view') && (
                             <div className="mt-auto border-t pt-3">
                                 <ModuleLink href="/community">
                                     Visit Gender Mainstreaming

@@ -12,3 +12,9 @@ export type NavItem = {
     icon?: LucideIcon | null;
     isActive?: boolean;
 };
+
+/** Navigation items under one label, as the sidebar groups them. */
+export type NavGroup = {
+    label: string;
+    items: NavItem[];
+};

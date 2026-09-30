@@ -19,7 +19,7 @@ beforeEach(function () {
     Storage::fake('monitoring');
     $this->hei = createSurveyHei(['name' => 'Fictional Monitoring HEI']);
     $this->member = User::factory()->create(['survey_hei_id' => $this->hei->id]);
-    $this->member->assignRole('hei');
+    $this->member->assignRole('hei-focal');
     $this->region = $this->hei->cluster->region;
 });
 
@@ -94,7 +94,7 @@ function monitoringStaff(?SurveyRegion $region = null, bool $national = false, s
 test('colleagues at an HEI share one report per period', function () {
     $report = monitoringReport($this);
     $colleague = User::factory()->create(['survey_hei_id' => $this->hei->id]);
-    $colleague->assignRole('hei');
+    $colleague->assignRole('hei-focal');
 
     $this->actingAs($colleague)
         ->post('/monitoring', ['academic_year' => '2026-2027', 'semester' => 1])
@@ -179,7 +179,7 @@ test('autosave accepts only the form\'s fields', function () {
         ->assertUnprocessable()->assertJsonValidationErrors('details');
 
     $stranger = User::factory()->create(['survey_hei_id' => createSurveyHei(['name' => 'Another HEI'])->id]);
-    $stranger->assignRole('hei');
+    $stranger->assignRole('hei-focal');
     $this->actingAs($stranger)->patchJson($url, ['answers' => ['codi' => ['base' => '', 'value' => 'x']]])->assertForbidden();
 });
 
@@ -322,7 +322,7 @@ test('staff see and review only reports their office covers', function () {
     $this->actingAs(monitoringStaff())->get('/admin/monitoring')
         ->assertInertia(fn (Assert $page) => $page->where('hasOffice', false));
 
-    $regional = monitoringStaff($this->region, role: 'gad-focal-person');
+    $regional = monitoringStaff($this->region, role: 'ched-focal');
     $this->actingAs($regional)->get('/admin/monitoring')->assertInertia(fn (Assert $page) => $page
         ->has('reports.data', 1)
         ->where('reports.data.0.abilities.review', true)
@@ -338,9 +338,36 @@ test('staff see and review only reports their office covers', function () {
         ->assertInertia(fn (Assert $page) => $page->has('reports.data', 1));
 
     $stranger = User::factory()->create(['survey_hei_id' => createSurveyHei(['name' => 'Another HEI'])->id]);
-    $stranger->assignRole('hei');
+    $stranger->assignRole('hei-focal');
     $this->actingAs($stranger)->get('/monitoring/'.$report->id)->assertForbidden();
     $this->get('/admin/monitoring')->assertForbidden();
+});
+
+test('CHED employees see their region\'s reports but cannot review them', function () {
+    $report = monitoringSubmitted($this);
+    $employee = monitoringStaff($this->region, role: 'ched-employee');
+
+    $this->actingAs($employee)->get('/admin/monitoring')->assertInertia(fn (Assert $page) => $page
+        ->has('reports.data', 1)
+        ->where('reports.data.0.abilities.review', false));
+    $this->get('/monitoring/'.$report->id)->assertInertia(fn (Assert $page) => $page
+        ->where('viewer', 'staff')
+        ->where('report.abilities.review', false));
+    $this->post('/admin/monitoring/'.$report->id.'/review', [
+        'lock_version' => $report->lock_version,
+        'decision' => 'reviewed',
+    ])->assertForbidden();
+});
+
+test('only the HEI\'s focal persons work on its monitoring report', function () {
+    $report = monitoringReport($this);
+    $member = User::factory()->create(['survey_hei_id' => $this->hei->id]);
+    $member->assignRole('hei');
+
+    $this->actingAs($member)->get('/records')->assertForbidden();
+    $this->get('/monitoring')->assertForbidden();
+    $this->post('/monitoring', ['academic_year' => '2026-2027', 'semester' => 1])->assertForbidden();
+    $this->get('/monitoring/'.$report->id)->assertForbidden();
 });
 
 test('signed copies open inline or download only for people who can view them', function () {
@@ -359,7 +386,7 @@ test('signed copies open inline or download only for people who can view them', 
 
     $otherHei = createSurveyHei(['name' => 'Second HEI']);
     $otherMember = User::factory()->create(['survey_hei_id' => $otherHei->id]);
-    $otherMember->assignRole('hei');
+    $otherMember->assignRole('hei-focal');
     $this->actingAs($otherMember)->post('/monitoring', ['academic_year' => '2026-2027', 'semester' => 1]);
     $other = MonitoringReport::query()->where('survey_hei_id', $otherHei->id)->sole();
 
@@ -379,7 +406,7 @@ test('the name printed for signing survives a rename in the directory', function
 test('records list the institution\'s own reports', function () {
     $report = monitoringReport($this);
     $other = User::factory()->create(['survey_hei_id' => createSurveyHei(['name' => 'Another HEI'])->id]);
-    $other->assignRole('hei');
+    $other->assignRole('hei-focal');
     $this->actingAs($other)->post('/monitoring', ['academic_year' => '2026-2027', 'semester' => 1]);
 
     $this->actingAs($this->member)->get('/records')->assertInertia(fn (Assert $page) => $page

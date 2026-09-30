@@ -42,7 +42,7 @@ const activeItemStyles = 'text-foreground';
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage();
     const { auth } = page.props;
-    const mainNavItems = appNavigationItems(auth.permissions, auth.roles);
+    const mainNavItems = appNavigationItems(auth.permissions, auth.heiOnly);
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
 

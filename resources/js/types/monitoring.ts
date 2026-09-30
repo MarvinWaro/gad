@@ -1,3 +1,5 @@
+import type { PaginationMeta } from '@/components/pagination';
+
 export type MonitoringStatus = 'draft' | 'submitted' | 'returned' | 'reviewed';
 
 /** Where a report stands for the people working on it, derived from its status and current revision. */
@@ -130,8 +132,7 @@ export type ReportFilters = {
 
 export type MonitoringPage = {
     data: MonitoringReport[];
-    meta: { current_page: number; last_page: number; total: number };
-    links: { prev: string | null; next: string | null };
+    meta: PaginationMeta;
 };
 
 export type AcademicPeriod = { academic_year: string; semester: 1 | 2 };

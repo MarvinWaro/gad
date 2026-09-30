@@ -73,7 +73,8 @@ class UserManagementController extends Controller
                 $role->permissions->pluck('slug')->all(),
                 $actorPermissions,
             ) === [])
-            ->map->only(['id', 'name', 'slug'])
+            // HEI roles never hold an office, so the form hides the office for them.
+            ->map(fn (Role $role): array => [...$role->only(['id', 'name', 'slug']), 'hei' => $role->isHei()])
             ->values();
 
         $counts = User::query()
@@ -380,7 +381,7 @@ class UserManagementController extends Controller
     {
         $slugs = Role::query()->whereKey($validated['role_ids'])->pluck('slug')->all();
 
-        if ($slugs === ['hei']) {
+        if (Role::onlyHei($slugs)) {
             return ['national_access' => false, 'survey_region_id' => null];
         }
 

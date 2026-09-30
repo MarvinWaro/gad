@@ -2,7 +2,9 @@
 
 // This server always creates its own database. Never reuse a development server
 // or load cached application configuration for browser tests.
+use App\Models\Permission;
 use App\Models\Post;
+use App\Models\Role;
 use App\Models\Survey;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
@@ -68,7 +70,13 @@ foreach (Survey::query()->get() as $survey) {
 $admin = User::factory()->regionalOffice($region)->create(['email' => 'browser-admin@example.test', 'password' => 'browser-password']);
 $admin->assignRole('admin');
 $monitoringMember = User::factory()->create(['name' => 'Fictional Monitoring Member', 'email' => 'browser-monitoring@example.test', 'password' => 'browser-password', 'survey_hei_id' => $hei->id]);
-$monitoringMember->assignRole('hei');
+// The HEI's focal person, who prepares and submits its monitoring report.
+$monitoringMember->assignRole('hei-focal');
+// Staff who may read survey drafts but not change them.
+$viewerRole = Role::query()->create(['name' => 'Survey Viewer', 'slug' => 'survey-viewer']);
+$viewerRole->permissions()->sync(Permission::query()->where('slug', 'surveys.view')->pluck('id'));
+$viewer = User::factory()->regionalOffice($region)->create(['email' => 'browser-survey-viewer@example.test', 'password' => 'browser-password']);
+$viewer->assignRole('survey-viewer');
 
 // Eleven older posts from an HEI, so the community feed has a second page
 // to load. They sit below anything a test posts.

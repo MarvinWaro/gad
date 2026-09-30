@@ -110,7 +110,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('posts.comments.store');
     Route::delete('comments/{comment}', [PostCommentController::class, 'destroy'])->name('comments.destroy');
 
-    Route::get('community', CommunityController::class)->middleware('can:posts.moderate')->name('community');
+    Route::get('community', CommunityController::class)->middleware('can:posts.view')->name('community');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('events', [GadEventController::class, 'index'])->middleware('can:events.view')->name('events.index');

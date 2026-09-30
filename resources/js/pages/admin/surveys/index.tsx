@@ -5,6 +5,7 @@ import {
     ExternalLink,
     Eye,
     FilePenLine,
+    FileText,
     Plus,
     Trash2,
 } from 'lucide-react';
@@ -169,12 +170,16 @@ export default function SurveyIndex({
                                                     <div className="flex justify-end gap-1">
                                                         <IconAction
                                                             asChild
-                                                            label={`Edit the draft for ${survey.title}`}
+                                                            label={`${permissions.update ? 'Edit' : 'View'} the draft for ${survey.title}`}
                                                         >
                                                             <Link
                                                                 href={`/admin/surveys/${survey.id}/edit`}
                                                             >
-                                                                <FilePenLine />
+                                                                {permissions.update ? (
+                                                                    <FilePenLine />
+                                                                ) : (
+                                                                    <FileText />
+                                                                )}
                                                             </Link>
                                                         </IconAction>
                                                         {survey.public_url && (

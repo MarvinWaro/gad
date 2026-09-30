@@ -3,6 +3,10 @@ import { IconAction } from '@/components/icon-action';
 import { OptionLines } from '@/components/option-lines';
 import { typeLabel } from '@/components/survey-builder/definition';
 import { Field, textareaClass } from '@/components/survey-builder/field';
+import {
+    readOnlyControlClass,
+    useReadOnly,
+} from '@/components/survey-builder/read-only';
 import type { Question } from '@/components/survey-builder/types';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -34,17 +38,24 @@ export function QuestionEditor({
     /** Edits a copy of this question, which then replaces it. */
     onChange: ChangeQuestion;
 }) {
+    const readOnly = useReadOnly();
+
     return (
         <div className="rounded-lg border p-4">
             <div className="flex flex-wrap items-center gap-3">
                 <Badge variant="secondary">{typeLabel(question.type)}</Badge>
                 <Label
                     htmlFor={`${idPrefix}-required`}
-                    className="inline-flex cursor-pointer items-center gap-2 text-xs font-normal text-muted-foreground"
+                    className={cn(
+                        'inline-flex items-center gap-2 text-xs font-normal text-muted-foreground',
+                        !readOnly && 'cursor-pointer',
+                    )}
                 >
                     <Checkbox
                         id={`${idPrefix}-required`}
                         checked={question.required}
+                        disabled={readOnly}
+                        className={cn(readOnly && readOnlyControlClass)}
                         onCheckedChange={(checked) =>
                             onChange((target) => {
                                 target.required = checked === true;
@@ -53,32 +64,34 @@ export function QuestionEditor({
                     />
                     Required
                 </Label>
-                <div className="ml-auto flex items-center gap-1">
-                    <IconAction
-                        type="button"
-                        label="Move question earlier"
-                        disabled={isFirst}
-                        onClick={() => onMove(-1)}
-                    >
-                        <ArrowUp />
-                    </IconAction>
-                    <IconAction
-                        type="button"
-                        label="Move question later"
-                        disabled={isLast}
-                        onClick={() => onMove(1)}
-                    >
-                        <ArrowDown />
-                    </IconAction>
-                    <IconAction
-                        type="button"
-                        label="Remove this question"
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={onRemove}
-                    >
-                        <Trash2 />
-                    </IconAction>
-                </div>
+                {!readOnly && (
+                    <div className="ml-auto flex items-center gap-1">
+                        <IconAction
+                            type="button"
+                            label="Move question earlier"
+                            disabled={isFirst}
+                            onClick={() => onMove(-1)}
+                        >
+                            <ArrowUp />
+                        </IconAction>
+                        <IconAction
+                            type="button"
+                            label="Move question later"
+                            disabled={isLast}
+                            onClick={() => onMove(1)}
+                        >
+                            <ArrowDown />
+                        </IconAction>
+                        <IconAction
+                            type="button"
+                            label="Remove this question"
+                            className="text-muted-foreground hover:text-destructive"
+                            onClick={onRemove}
+                        >
+                            <Trash2 />
+                        </IconAction>
+                    </div>
+                )}
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                 <Field label="Question label">
@@ -131,6 +144,8 @@ function ChoiceSettings({
     idPrefix: string;
     onChange: ChangeQuestion;
 }) {
+    const readOnly = useReadOnly();
+
     return (
         <div className="mt-4">
             <Field
@@ -166,16 +181,21 @@ function ChoiceSettings({
                         placeholder="No default; respondent chooses"
                         options={question.options ?? []}
                         allowEmpty
+                        disabled={readOnly}
                     />
                 </Field>
                 <Label
                     htmlFor={`${idPrefix}-locked`}
-                    className="mt-3 inline-flex cursor-pointer items-center gap-2 text-xs font-normal text-muted-foreground"
+                    className={cn(
+                        'mt-3 inline-flex items-center gap-2 text-xs font-normal text-muted-foreground',
+                        !readOnly && 'cursor-pointer',
+                    )}
                 >
                     <Checkbox
                         id={`${idPrefix}-locked`}
                         checked={question.locked === true}
-                        disabled={!question.default}
+                        disabled={readOnly || !question.default}
+                        className={cn(readOnly && readOnlyControlClass)}
                         onCheckedChange={(checked) =>
                             onChange((target) => {
                                 if (checked === true) {

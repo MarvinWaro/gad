@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MonitoringReport;
 use App\Models\Survey;
 use App\Models\SurveyCluster;
 use App\Models\SurveyResponse;
@@ -42,13 +43,14 @@ class DashboardController extends Controller
             'upcoming' => fn (): array => EventCalendar::upcoming(),
             // Loaded just after the page appears, which shows skeletons meanwhile.
             'posts' => Inertia::scroll(fn () => CommunityFeed::page($user))->defer(),
-            // Only implemented modules receive links.
-            'quickLinks' => [
+            // The institution's reporting, which its focal persons do. Only
+            // implemented modules receive links.
+            'quickLinks' => $user->can('viewRecords', MonitoringReport::class) ? [
                 ['key' => 'upload-monitoring', 'label' => 'Monitoring Report', 'href' => route('monitoring.create')],
                 ['key' => 'gad-training-survey', 'label' => 'GAD Training Survey', 'href' => null],
                 ['key' => 'gad-compliance-survey', 'label' => 'GAD Compliance Survey', 'href' => null],
                 ['key' => 'records', 'label' => 'Records', 'href' => route('monitoring.records')],
-            ],
+            ] : [],
         ]);
     }
 

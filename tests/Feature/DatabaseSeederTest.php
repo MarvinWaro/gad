@@ -6,6 +6,7 @@ use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\DemoUserSeeder;
 use Database\Seeders\SurveyDirectorySeeder;
 use Database\Seeders\SurveyHeiSeeder;
 use Database\Seeders\SurveyRegionSeeder;
@@ -47,6 +48,37 @@ test('default seed creates the admin, survey drafts and all 129 supplied HEIs', 
     $this->post(route('login.store'), ['email' => 'admin@gmail.com', 'password' => '12345678'])
         ->assertSessionHasNoErrors()->assertRedirect(route('dashboard', absolute: false));
     $this->assertAuthenticatedAs($admin);
+});
+
+test('the local demo seed adds one account per role, placed in Region XII', function () {
+    // DatabaseSeeder only runs this in the local environment.
+    $this->seed(DatabaseSeeder::class);
+    $this->seed(DemoUserSeeder::class);
+    $region = SurveyRegion::query()->where('name', 'Regional Office XII')->sole();
+    $accounts = User::query()->where('email', 'like', '%@phlgadis.test')->with('roles', 'hei.cluster')->get()->keyBy('email');
+
+    expect($accounts)->toHaveCount(4);
+    foreach (['ched-focal', 'ched-employee'] as $role) {
+        $staff = $accounts["{$role}@phlgadis.test"];
+        expect($staff->hasRole($role))->toBeTrue()
+            ->and($staff->survey_region_id)->toBe($region->id)
+            ->and($staff->national_access)->toBeFalse()
+            ->and($staff->isHeiOnly())->toBeFalse();
+    }
+    foreach (['hei-focal', 'hei'] as $role) {
+        $member = $accounts["{$role}@phlgadis.test"];
+        expect($member->hasRole($role))->toBeTrue()
+            ->and($member->hei->cluster->survey_region_id)->toBe($region->id)
+            ->and($member->survey_region_id)->toBeNull()
+            ->and($member->isHeiOnly())->toBeTrue();
+    }
+    expect($accounts['hei-focal@phlgadis.test']->can('monitoring.submit'))->toBeTrue()
+        ->and($accounts['hei@phlgadis.test']->can('monitoring.submit'))->toBeFalse()
+        ->and($accounts['ched-focal@phlgadis.test']->can('monitoring.review'))->toBeTrue()
+        ->and($accounts['ched-employee@phlgadis.test']->can('monitoring.review'))->toBeFalse();
+
+    $this->post(route('login.store'), ['email' => 'hei-focal@phlgadis.test', 'password' => '12345678'])
+        ->assertSessionHasNoErrors()->assertRedirect(route('dashboard', absolute: false));
 });
 
 test('repeat seeding keeps HEI IDs, operator edits, deactivations and changed admin passwords', function () {

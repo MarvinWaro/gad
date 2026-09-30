@@ -29,6 +29,8 @@ export function HeiCombobox({
     name,
     placeholder = 'Search or select your HEI',
     allowClear = false,
+    clearLabel = 'No institution',
+    disabled = false,
     tabIndex,
     className,
     'aria-invalid': invalid,
@@ -40,6 +42,8 @@ export function HeiCombobox({
     name?: string;
     placeholder?: string;
     allowClear?: boolean;
+    clearLabel?: string;
+    disabled?: boolean;
     tabIndex?: number;
     className?: string;
     'aria-invalid'?: boolean;
@@ -65,9 +69,10 @@ export function HeiCombobox({
                     role="combobox"
                     aria-expanded={open}
                     aria-invalid={invalid}
+                    disabled={disabled}
                     tabIndex={tabIndex}
                     className={cn(
-                        'flex h-11 w-full min-w-0 items-center justify-between gap-2 rounded-[6px] border border-input bg-transparent px-3 py-1 text-left text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm',
+                        'flex h-11 w-full min-w-0 items-center justify-between gap-2 rounded-[6px] border border-input bg-transparent px-3 py-1 text-left text-base shadow-xs transition-[color,box-shadow] outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
                         'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
                         'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
                         className,
@@ -99,7 +104,7 @@ export function HeiCombobox({
                                     onSelect={() => select('')}
                                     className="text-muted-foreground"
                                 >
-                                    No institution
+                                    {clearLabel}
                                 </CommandItem>
                             )}
                             {options.map((option) => (

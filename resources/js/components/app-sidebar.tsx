@@ -12,11 +12,11 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { appNavigationItems } from '@/lib/app-navigation';
+import { appNavigationGroups } from '@/lib/app-navigation';
 
 export function AppSidebar() {
     const { auth } = usePage().props;
-    const mainNavItems = appNavigationItems(auth.permissions, auth.roles);
+    const navGroups = appNavigationGroups(auth.permissions, auth.heiOnly);
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -33,7 +33,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain groups={navGroups} />
             </SidebarContent>
 
             <SidebarFooter>

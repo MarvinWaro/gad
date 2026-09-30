@@ -4,7 +4,6 @@ import { IconAction } from '@/components/icon-action';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useNavigationStyle } from '@/hooks/use-navigation-style';
 import type { NavigationStyle } from '@/hooks/use-navigation-style';
-import { isHeiOnly } from '@/lib/app-navigation';
 import { cn } from '@/lib/utils';
 
 const buttonClass = 'size-8 text-muted-foreground hover:text-foreground';
@@ -25,7 +24,7 @@ export function HeaderActions({
     const { auth } = usePage().props;
     const { updateStyle } = useNavigationStyle();
     // HEI accounts always get the top header, so they have nothing to switch.
-    const canSwitchNavigation = !isHeiOnly(auth.roles ?? []);
+    const canSwitchNavigation = !auth.heiOnly;
 
     return (
         <div className={cn('flex items-center gap-0.5', className)}>

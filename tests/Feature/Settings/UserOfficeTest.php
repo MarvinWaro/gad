@@ -93,6 +93,19 @@ test('HEI accounts never hold an office and cannot set one themselves', function
     $hei = User::query()->where('email', 'staff@example.test')->sole();
     expect($hei->national_access)->toBeFalse()->and($hei->survey_region_id)->toBeNull();
 
+    // An HEI's focal person is an HEI account too; their region comes through the HEI.
+    $heiFocalRole = Role::query()->where('slug', 'hei-focal')->sole();
+    $this->post(route('settings.users.store'), officeUserPayload([$this->heiRole->id, $heiFocalRole->id], [
+        'email' => 'focal@example.test', 'survey_region_id' => $this->xi->id,
+    ]))->assertSessionHasNoErrors();
+    $focal = User::query()->where('email', 'focal@example.test')->sole();
+    expect($focal->national_access)->toBeFalse()->and($focal->survey_region_id)->toBeNull();
+
+    $this->get(route('settings.users.index'))->assertInertia(fn (Assert $page) => $page
+        ->where('roles', fn ($roles) => collect($roles)->mapWithKeys(fn (array $role): array => [$role['slug'] => $role['hei']])->all() === [
+            'admin' => false, 'ched-employee' => false, 'ched-focal' => false, 'gad-focal-person' => false, 'hei-focal' => true, 'hei' => true,
+        ]));
+
     $this->post(route('settings.users.store'), officeUserPayload([$this->focalRole->id], [
         'email' => 'both@example.test', 'national_access' => true, 'survey_region_id' => $this->xi->id,
     ]))->assertSessionHasErrors('survey_region_id');

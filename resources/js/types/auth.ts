@@ -14,6 +14,8 @@ export type Auth = {
     user: User;
     roles: string[];
     permissions: string[];
+    /** HEI roles only: the HEI home and header shell. */
+    heiOnly: boolean;
 };
 
 export type Passkey = {

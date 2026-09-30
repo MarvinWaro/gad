@@ -44,6 +44,8 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
                 'roles' => fn (): array => $user?->roles()->pluck('slug')->all() ?? [],
                 'permissions' => fn (): array => $user?->permissionSlugs() ?? [],
+                // HEI roles only: the HEI home and header shell.
+                'heiOnly' => fn (): bool => $user?->isHeiOnly() ?? false,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

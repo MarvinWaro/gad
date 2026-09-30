@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
 async function openRa9262Draft(page: Page) {
@@ -151,4 +152,56 @@ test('an answer key can be typed out, and saves without builder-only keys', asyn
         'answering_for',
     );
     await expect(page.getByText('Unsaved changes')).toHaveCount(0);
+});
+
+// Someone who may only view surveys reads the draft; nothing looks editable.
+test('without the update permission the draft is view only', async ({
+    page,
+}, testInfo) => {
+    await page.goto('/login');
+    await page
+        .getByLabel('Email address')
+        .fill('browser-survey-viewer@example.test');
+    await page.getByLabel('Password', { exact: true }).fill('browser-password');
+    await page.getByRole('button', { name: 'Log in', exact: true }).click();
+    await expect(page).toHaveURL(/dashboard/);
+    await page.goto('/admin/surveys');
+
+    const row = page.getByRole('row').filter({ hasText: 'RA 9262' });
+    await expect(
+        row.getByRole('link', { name: 'Edit the draft for RA 9262 Survey' }),
+    ).toHaveCount(0);
+    await row
+        .getByRole('link', { name: 'View the draft for RA 9262 Survey' })
+        .click();
+
+    await expect(page.getByText('View only', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Survey title')).not.toBeEditable();
+    await expect(page.getByLabel('Privacy notice')).not.toBeEditable();
+    for (const name of ['Save draft', 'Add section', /^Remove this/]) {
+        await expect(page.getByRole('button', { name })).toHaveCount(0);
+    }
+    await page.screenshot({
+        path: testInfo.outputPath('survey-view-only.png'),
+        fullPage: true,
+    });
+
+    // Sections still open, to read every question.
+    const violence = page.getByRole('button', {
+        name: /Violence Experiences.*1 question/i,
+    });
+    await violence.click();
+    await expect(violence).toHaveAttribute('aria-expanded', 'true');
+    await expect(
+        page.getByLabel('Experiences', { exact: true }),
+    ).not.toBeEditable();
+
+    expect(
+        (
+            await new AxeBuilder({ page })
+                .include('main')
+                .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+                .analyze()
+        ).violations,
+    ).toEqual([]);
 });

@@ -1,10 +1,10 @@
 # Monitoring reports
 
-The GAD monitoring report replaces the old portal's "Upload Monitoring". The HEI fills in CHED's monitoring form in PHLGADIS, prints it, has it signed, and uploads the signed copy. CHED staff then review it for their region.
+The GAD monitoring report replaces the old portal's "Upload Monitoring". The HEI's focal persons (the **HEI Focal** role, permission `monitoring.submit`) fill in CHED's monitoring form in PHLGADIS, print it, have it signed, and upload the signed copy. CHED staff then review it for their region. Plain HEI users don't see Monitoring.
 
 ## The HEI's three steps
 
-1. **Fill out.** Home → **Monitoring Report** opens the start page (`/monitoring`).
+1. **Fill out.** Home → **Monitoring Report** opens the start page (`/monitoring`). The HEI Focal's top navigation also has **Monitoring**, which opens Records.
     - The HEI picks an academic year and semester. The defaults are today's period in Philippine time: August–December is the first semester of that year; January–July is the second semester of the year before.
     - Colleagues at an HEI share one report per period. Opening a period that a colleague started continues their report.
     - Answers save as they are typed (`PATCH /monitoring/{report}/draft`), after a short pause, when a field loses focus, when the tab is hidden, and before leaving the page.
@@ -45,7 +45,7 @@ The GAD monitoring report replaces the old portal's "Upload Monitoring". The HEI
 
 Reviewers need two things:
 
-- **Permissions.** `monitoring.view` (the **Monitoring** list in the staff navigation, and the reports) and `monitoring.review` (decisions). `RbacSeeder` gives both to `admin` and `gad-focal-person`.
+- **Permissions.** `monitoring.view` (the **Monitoring** list in the staff navigation, and the reports) and `monitoring.review` (decisions). `RbacSeeder` gives both to `admin`, `ched-focal` and `gad-focal-person`. `ched-employee` gets `monitoring.view` only, so it sees reports without the decision buttons.
 - **An office.** Set it in Settings → Users → edit → **Office**:
     - **Central Office — all regions** (`users.national_access`)
     - one regional office (`users.survey_region_id`)
