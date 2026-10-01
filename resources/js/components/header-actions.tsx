@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
-import { Bell, PanelLeft, PanelTop } from 'lucide-react';
+import { PanelLeft, PanelTop } from 'lucide-react';
 import { IconAction } from '@/components/icon-action';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useNavigationStyle } from '@/hooks/use-navigation-style';
 import type { NavigationStyle } from '@/hooks/use-navigation-style';
@@ -9,9 +10,9 @@ import { cn } from '@/lib/utils';
 const buttonClass = 'size-8 text-muted-foreground hover:text-foreground';
 
 /**
- * The compact icon row beside the account menu: notifications (a placeholder
- * until they ship), light/dark, and sidebar/top navigation. Theme and
- * navigation save the same way Settings → Appearance does.
+ * The compact icon row beside the account menu: notifications, light/dark,
+ * and sidebar/top navigation. Theme and navigation save the same way
+ * Settings → Appearance does.
  */
 export function HeaderActions({
     navigation,
@@ -28,13 +29,7 @@ export function HeaderActions({
 
     return (
         <div className={cn('flex items-center gap-0.5', className)}>
-            <IconAction
-                label="Notifications (coming soon)"
-                aria-disabled="true"
-                className={buttonClass}
-            >
-                <Bell className="size-4" />
-            </IconAction>
+            <NotificationBell className={buttonClass} />
             <ThemeToggle className={buttonClass} />
             {canSwitchNavigation && (
                 <IconAction

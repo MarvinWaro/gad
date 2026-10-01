@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MyProfileController;
 use App\Http\Controllers\NewerPostsController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostCommentController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostReactionController;
@@ -83,6 +84,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('events', [EventController::class, 'index'])->name('events.index');
     Route::get('profile', MyProfileController::class)->name('my-profile');
+
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    // The bell asks every 30 seconds, and again whenever it opens.
+    Route::get('notifications/recent', [NotificationController::class, 'recent'])
+        ->middleware('throttle:60,1')
+        ->name('notifications.recent');
+    Route::get('notifications/summary', [NotificationController::class, 'summary'])
+        ->middleware('throttle:60,1')
+        ->name('notifications.summary');
+    Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::whereUlid('notification')->group(function () {
+        Route::get('notifications/{notification}', [NotificationController::class, 'open'])->name('notifications.open');
+        Route::patch('notifications/{notification}', [NotificationController::class, 'update'])->name('notifications.update');
+        Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    });
 
     Route::post('posts', [PostController::class, 'store'])->middleware('throttle:20,1')->name('posts.store');
     Route::get('posts/tag-suggestions', PostTagSuggestionController::class)

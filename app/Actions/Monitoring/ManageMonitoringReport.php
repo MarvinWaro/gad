@@ -9,6 +9,7 @@ use App\Models\MonitoringReport;
 use App\Models\MonitoringRevision;
 use App\Models\User;
 use App\Services\ActivityRecorder;
+use App\Services\Notifier;
 use App\Support\MonitoringDocument;
 use App\Support\MonitoringTemplate;
 use Closure;
@@ -31,7 +32,10 @@ use Throwable;
  */
 class ManageMonitoringReport
 {
-    public function __construct(private readonly ActivityRecorder $activity) {}
+    public function __construct(
+        private readonly ActivityRecorder $activity,
+        private readonly Notifier $notifier,
+    ) {}
 
     /**
      * Open the HEI's report for a period, starting it if no colleague has.
@@ -180,10 +184,11 @@ class ManageMonitoringReport
                 ]);
                 $revision->forceFill(['submitted_at' => now(), 'submitted_by' => $user->id])->save();
                 $report->update(['status' => 'submitted']);
-                $this->activity->record(ActivityAction::Submitted, ActivityModule::Monitoring, $report, actor: $user, properties: [
+                $entry = $this->activity->record(ActivityAction::Submitted, ActivityModule::Monitoring, $report, actor: $user, properties: [
                     'revision' => $revision->number,
                     'file' => mb_substr(basename($file->getClientOriginalName()), 0, 255),
                 ]);
+                $this->notifier->reportSubmitted($report, $entry);
             });
         } catch (Throwable $exception) {
             // A refused submission must not leave its upload behind.
@@ -219,7 +224,7 @@ class ManageMonitoringReport
             }
 
             $report->update(['status' => $data['decision']]);
-            $this->activity->record(
+            $entry = $this->activity->record(
                 $data['decision'] === 'returned' ? ActivityAction::Returned : ActivityAction::Reviewed,
                 ActivityModule::Monitoring,
                 $report,
@@ -229,6 +234,7 @@ class ManageMonitoringReport
                     'comment' => $data['comment'] ?? null,
                 ]),
             );
+            $this->notifier->reportReviewed($report, $entry);
         });
     }
 

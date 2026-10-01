@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\NotificationInbox;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -47,6 +48,8 @@ class HandleInertiaRequests extends Middleware
                 // HEI roles only: the HEI home and header shell.
                 'heiOnly' => fn (): bool => $user?->isHeiOnly() ?? false,
             ],
+            // The bell's count. The browser asks for it again every 30 seconds.
+            'inbox' => fn (): ?array => $user !== null ? app(NotificationInbox::class)->summary($user) : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

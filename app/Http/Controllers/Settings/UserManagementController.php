@@ -15,6 +15,7 @@ use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\User;
 use App\Services\ActivityRecorder;
+use App\Services\Notifier;
 use App\Support\CountPhrase;
 use App\Support\PlaceFilters;
 use Illuminate\Http\RedirectResponse;
@@ -260,7 +261,7 @@ class UserManagementController extends Controller
         return to_route('settings.users.index');
     }
 
-    public function updateStatus(Request $request, User $user, ActivityRecorder $activity): RedirectResponse
+    public function updateStatus(Request $request, User $user, ActivityRecorder $activity, Notifier $notifier): RedirectResponse
     {
         $validated = $request->validate([
             'status' => ['required', Rule::enum(UserStatus::class)],
@@ -296,7 +297,11 @@ class UserManagementController extends Controller
         };
 
         $user->update(['status' => $status]);
-        $activity->record($action, ActivityModule::Users, $user, $activity->changesOf($user));
+        $entry = $activity->record($action, ActivityModule::Users, $user, $activity->changesOf($user));
+
+        if ($action === ActivityAction::Approved) {
+            $notifier->accountApproved($user, $entry);
+        }
 
         Inertia::flash('toast', [
             'type' => 'success',

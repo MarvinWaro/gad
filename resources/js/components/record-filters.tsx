@@ -85,15 +85,18 @@ export function useRecordFilters<
 
 /**
  * The filter grid: one row when the card is wide enough; otherwise search on
- * its own row, then two to a row. `filters` counts the filters after search.
+ * its own row, then two to a row. `filters` counts the filters after search;
+ * `className` can set the wide row's columns.
  */
 export function FilterBar({
     label,
     filters,
+    className,
     children,
 }: {
     label: string;
     filters: number;
+    className?: string;
     children: ReactNode;
 }) {
     return (
@@ -105,6 +108,7 @@ export function FilterBar({
                 // Two to a row on phones; a filter left alone takes the whole
                 // row so its text isn't cut.
                 filters % 2 === 1 && '*:last:col-span-2 @3xl:*:last:col-span-1',
+                className,
             )}
         >
             {children}

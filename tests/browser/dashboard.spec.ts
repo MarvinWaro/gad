@@ -42,9 +42,12 @@ test('admin preview filters keep overview, chart and breakdowns consistent', asy
     await page.getByRole('combobox', { name: 'View by' }).click();
     await page.getByRole('option', { name: 'Quarter' }).click();
     await expect(overview).toContainText('6,924');
-    await expect(page.getByRole('status')).toContainText(
-        '43 participating institutions',
-    );
+    // The page's own status line; the header's bell has one too.
+    await expect(
+        page
+            .getByRole('status')
+            .filter({ hasText: 'participating institutions' }),
+    ).toContainText('43 participating institutions');
     await expect(activity.getByRole('table')).toContainText('Jul 1–15');
     await expect(
         activity.getByRole('cell', { name: '36', exact: true }),

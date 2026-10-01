@@ -8,6 +8,7 @@ use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\SurveyRespondentGroup;
 use App\Models\SurveyResponse;
+use App\Services\Notifier;
 use App\Support\RespondentDetails;
 use App\Support\RespondentFollowUps;
 use Illuminate\Database\Eloquent\Collection;
@@ -60,7 +61,7 @@ class PublicSurveyController extends Controller
         ]);
     }
 
-    public function store(Request $request, Survey $survey): RedirectResponse
+    public function store(Request $request, Survey $survey, Notifier $notifier): RedirectResponse
     {
         abort_if($survey->status !== 'active', 404);
         $version = $survey->publishedVersion();
@@ -203,10 +204,14 @@ class PublicSurveyController extends Controller
             'expires_at' => now()->addDays($version->retention_days),
         ];
 
-        DB::transaction(function () use ($attributes, $chosenGroup, $validated): void {
+        $response = DB::transaction(function () use ($attributes, $chosenGroup, $validated): SurveyResponse {
             $response = SurveyResponse::query()->create($attributes);
             RespondentFollowUps::saveAnswers($response, $chosenGroup, $validated);
+
+            return $response;
         });
+        // Staff hear that answers came in, never who gave them.
+        $notifier->surveyResponseReceived($response);
 
         return to_route('surveys.show', ['law' => $survey->slug])->with('survey_confirmation', $reference);
     }

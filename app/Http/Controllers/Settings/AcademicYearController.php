@@ -44,7 +44,7 @@ class AcademicYearController extends Controller
 
     public function store(SaveAcademicYearRequest $request, ManageAcademicYear $manager): RedirectResponse
     {
-        $year = $manager->save($request->validated());
+        $year = $manager->save($request->yearData());
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':year added.', ['year' => $year->label])]);
 
         return back();
@@ -52,7 +52,7 @@ class AcademicYearController extends Controller
 
     public function update(SaveAcademicYearRequest $request, AcademicYear $academicYear, ManageAcademicYear $manager): RedirectResponse
     {
-        $year = $manager->save($request->validated(), $academicYear);
+        $year = $manager->save($request->yearData(), $academicYear);
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':year updated.', ['year' => $year->label])]);
 
         return back();

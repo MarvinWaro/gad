@@ -2,6 +2,9 @@
 
 // This server always creates its own database. Never reuse a development server
 // or load cached application configuration for browser tests.
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
+use App\Models\Notification;
 use App\Models\Permission;
 use App\Models\Post;
 use App\Models\Role;
@@ -10,6 +13,8 @@ use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\User;
+use App\Services\ActivityRecorder;
+use App\Services\Notifier;
 use Database\Seeders\RbacSeeder;
 use Database\Seeders\SurveyDirectorySeeder;
 use Database\Seeders\SurveySeeder;
@@ -80,7 +85,7 @@ $viewer->assignRole('survey-viewer');
 
 // Eleven older posts from an HEI, so the community feed has a second page
 // to load. They sit below anything a test posts.
-$member = User::factory()->create(['name' => 'Browser Test Member', 'survey_hei_id' => $hei->id]);
+$member = User::factory()->create(['name' => 'Browser Test Member', 'email' => 'browser-member@example.test', 'password' => 'browser-password', 'survey_hei_id' => $hei->id]);
 $member->assignRole('hei');
 foreach (range(1, 11) as $daysAgo) {
     $postedAt = now()->subDays(30 + $daysAgo);
@@ -90,6 +95,24 @@ foreach (range(1, 11) as $daysAgo) {
         'body' => "Browser seed post {$daysAgo}: an earlier GAD activity.",
         'created_at' => $postedAt,
         'updated_at' => $postedAt,
+    ]);
+}
+
+// Twelve notifications for the member, two of them read: comments on their
+// seed posts, written as the app writes them and dated days back, so the
+// bell's panel and the Notifications page have more to load.
+$seedPosts = Post::query()->whereBelongsTo($member, 'author')->oldest('created_at')->get();
+foreach (range(1, 12) as $index) {
+    $post = $seedPosts[($index - 1) % $seedPosts->count()];
+    $comment = $post->comments()->create(['user_id' => $monitoringMember->id, 'body' => "Seed comment {$index}."]);
+    $entry = app(ActivityRecorder::class)->record(ActivityAction::Commented, ActivityModule::Community, $post, properties: ['reply' => false], actor: $monitoringMember);
+    app(Notifier::class)->postCommented($post, $comment, $entry);
+    $at = now()->subDays(2)->subHours($index);
+    $entry?->forceFill(['created_at' => $at])->save();
+    Notification::query()->where('activity_log_id', $entry?->id)->update([
+        'notified_at' => $at,
+        'created_at' => $at,
+        'read_at' => $index > 10 ? $at : null,
     ]);
 }
 

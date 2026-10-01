@@ -9,6 +9,7 @@ use App\Http\Requests\StorePostRequest;
 use App\Models\Post;
 use App\Models\User;
 use App\Services\ActivityRecorder;
+use App\Services\Notifier;
 use App\Support\CommunityFeed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -73,7 +74,7 @@ class PostController extends Controller
         return back();
     }
 
-    public function destroy(Request $request, Post $post, ActivityRecorder $activity): RedirectResponse
+    public function destroy(Request $request, Post $post, ActivityRecorder $activity, Notifier $notifier): RedirectResponse
     {
         Gate::authorize('delete', $post);
 
@@ -82,9 +83,10 @@ class PostController extends Controller
         $post->delete();
         Storage::disk('public')->delete($paths);
         // A moderator removing someone else's post.
-        $activity->record(ActivityAction::Deleted, ActivityModule::Community, $post, properties: $post->user_id === $request->user()->id
+        $entry = $activity->record(ActivityAction::Deleted, ActivityModule::Community, $post, properties: $post->user_id === $request->user()->id
             ? []
             : ['moderated' => true, 'author' => $post->author()->value('name')]);
+        $notifier->postRemoved($post, $entry);
 
         Inertia::flash('toast', ['type' => 'deleted', 'message' => __('Post removed.')]);
 

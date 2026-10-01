@@ -8,6 +8,7 @@ use App\Enums\ChecklistType;
 use App\Models\ChecklistResponse;
 use App\Models\User;
 use App\Services\ActivityRecorder;
+use App\Services\Notifier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -18,7 +19,10 @@ use Illuminate\Support\Facades\Gate;
  */
 class SubmitChecklist
 {
-    public function __construct(private readonly ActivityRecorder $activity) {}
+    public function __construct(
+        private readonly ActivityRecorder $activity,
+        private readonly Notifier $notifier,
+    ) {}
 
     /** @param  list<string>  $items  keys from the checklist's items */
     public function handle(User $user, ChecklistType $type, string $academicYear, array $items): ChecklistResponse
@@ -46,13 +50,14 @@ class SubmitChecklist
                 fn (string $key): array => ['item_key' => $key],
                 $checked,
             ));
-            $this->activity->record(
+            $entry = $this->activity->record(
                 $response->wasRecentlyCreated ? ActivityAction::Submitted : ActivityAction::Updated,
                 ActivityModule::GadSurveys,
                 $response,
                 actor: $user,
                 properties: ['items_checked' => count($checked), 'items_total' => count($type->items())],
             );
+            $this->notifier->gadSurveySubmitted($response, $entry);
 
             return $response;
         });

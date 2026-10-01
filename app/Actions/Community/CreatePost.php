@@ -7,6 +7,7 @@ use App\Enums\ActivityModule;
 use App\Models\Post;
 use App\Models\User;
 use App\Services\ActivityRecorder;
+use App\Services\Notifier;
 use App\Support\PhotoDimensions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,10 @@ use Throwable;
  */
 class CreatePost
 {
-    public function __construct(private readonly ActivityRecorder $activity) {}
+    public function __construct(
+        private readonly ActivityRecorder $activity,
+        private readonly Notifier $notifier,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $data  Input validated by StorePostRequest: body, feeling, tags, sdgs and achieve_items.
@@ -66,9 +70,10 @@ class CreatePost
             throw $exception;
         }
 
-        $this->activity->record(ActivityAction::Created, ActivityModule::Community, $post, actor: $author, properties: array_filter([
+        $entry = $this->activity->record(ActivityAction::Created, ActivityModule::Community, $post, actor: $author, properties: array_filter([
             'photos' => count($photos),
         ]));
+        $this->notifier->postTagged($post, $entry);
 
         return $post;
     }
