@@ -61,7 +61,7 @@ test('an HEI answers the GAD Training Survey, and CHED reads the answer', async 
     );
     await login(page, 'browser-monitoring@example.test');
 
-    // The quick link leads to the survey's tab in Records. (It is followed
+    // The quick link leads to the survey's page. (It is followed
     // with goto: clicking scrolls the rail link into view, which can start
     // the feed's next page just as the page changes.)
     await expect(
@@ -74,11 +74,15 @@ test('an HEI answers the GAD Training Survey, and CHED reads the answer', async 
     await expect(
         page.getByRole('heading', { name: 'GAD Related Trainings' }),
     ).toBeVisible();
+    // The Monitoring menu marks the survey as the current page.
+    const monitoringMenu = page
+        .getByRole('navigation', { name: 'Main' })
+        .getByRole('button', { name: 'Monitoring' });
+    await monitoringMenu.click();
     await expect(
-        page
-            .getByRole('navigation', { name: 'Records' })
-            .getByRole('link', { name: 'Training Survey' }),
+        page.getByRole('menuitem', { name: 'Training Survey' }),
     ).toHaveAttribute('aria-current', 'page');
+    await page.keyboard.press('Escape');
     await expect(page.getByText('Nothing submitted yet.')).toBeVisible();
 
     // Check all, then leave one out: "Check all" shows some are checked.
@@ -105,11 +109,9 @@ test('an HEI answers the GAD Training Survey, and CHED reads the answer', async 
         page.getByRole('button', { name: 'Update answers' }),
     ).toBeVisible();
 
-    // The other survey is its own tab, still unanswered.
-    await page
-        .getByRole('navigation', { name: 'Records' })
-        .getByRole('link', { name: 'Compliance Survey' })
-        .click();
+    // The other survey is its own page in the menu, still unanswered.
+    await monitoringMenu.click();
+    await page.getByRole('menuitem', { name: 'Compliance Survey' }).click();
     await expect(
         page.getByRole('heading', {
             name: 'Implementing Rules and Regulations on Gender-Based Sexual Harassment in Higher Education Institutions',
@@ -118,7 +120,8 @@ test('an HEI answers the GAD Training Survey, and CHED reads the answer', async 
     await expect(page.getByText('0 of 12 checked')).toBeVisible();
 
     // CHED sees the HEI's answer in its region, and opens it.
-    const admin = await (await browser.newContext()).newPage();
+    const adminContext = await browser.newContext();
+    const admin = await adminContext.newPage();
     admin.on('pageerror', (error) =>
         errors.push(`${admin.url()}: ${error.message}`),
     );
@@ -158,4 +161,5 @@ test('an HEI answers the GAD Training Survey, and CHED reads the answer', async 
     ).toBeVisible();
 
     expect(errors).toEqual([]);
+    await adminContext.close();
 });

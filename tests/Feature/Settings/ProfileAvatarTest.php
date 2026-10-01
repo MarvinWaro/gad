@@ -15,6 +15,7 @@ test('members upload a profile photo, shared with every page', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
+        ->from(route('profile.edit'))
         ->post(route('profile.avatar.update'), ['avatar' => UploadedFile::fake()->image('me.jpg', 400, 400)])
         ->assertRedirect(route('profile.edit'))
         ->assertSessionHasNoErrors();
@@ -43,9 +44,11 @@ test('a new photo replaces the old file, and removing it deletes the file', func
     Storage::disk('public')->assertMissing($first);
     Storage::disk('public')->assertExists($second);
 
+    // Back to the page the photo was changed on: Settings, or My Profile.
     $this->actingAs($user)
+        ->from(route('my-profile'))
         ->delete(route('profile.avatar.destroy'))
-        ->assertRedirect(route('profile.edit'));
+        ->assertRedirect(route('my-profile'));
 
     expect($user->fresh()->avatar_path)->toBeNull();
     Storage::disk('public')->assertMissing($second);

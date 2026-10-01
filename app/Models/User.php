@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -128,6 +129,23 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->national_access
             || ($regionId !== null && $this->survey_region_id === $regionId);
+    }
+
+    /**
+     * Accounts placed in a region, cluster or HEI: HEI accounts through their
+     * institution, CHED staff through their regional office. Central Office
+     * staff belong to no one region.
+     *
+     * @param  Builder<User>  $query
+     */
+    public function scopePlacedIn(Builder $query, ?int $regionId = null, ?int $clusterId = null, ?int $heiId = null): void
+    {
+        $query
+            ->when($heiId, fn (Builder $query) => $query->where('survey_hei_id', $heiId))
+            ->when($clusterId, fn (Builder $query) => $query->whereHas('hei', fn (Builder $query) => $query->where('survey_cluster_id', $clusterId)))
+            ->when($regionId, fn (Builder $query) => $query->where(fn (Builder $query) => $query
+                ->where('survey_region_id', $regionId)
+                ->orWhereHas('hei.cluster', fn (Builder $query) => $query->where('survey_region_id', $regionId))));
     }
 
     /** @return HasMany<Post, $this> */

@@ -36,6 +36,10 @@ class RbacSeeder extends Seeder
             ['name' => 'Create survey directories', 'slug' => 'survey-directories.create', 'group' => 'Survey directories'],
             ['name' => 'Update survey directories', 'slug' => 'survey-directories.update', 'group' => 'Survey directories'],
             ['name' => 'Delete survey directories', 'slug' => 'survey-directories.delete', 'group' => 'Survey directories'],
+            ['name' => 'View academic years', 'slug' => 'academic-years.view', 'group' => 'Academic years'],
+            ['name' => 'Create academic years', 'slug' => 'academic-years.create', 'group' => 'Academic years'],
+            ['name' => 'Update academic years', 'slug' => 'academic-years.update', 'group' => 'Academic years'],
+            ['name' => 'Delete academic years', 'slug' => 'academic-years.delete', 'group' => 'Academic years'],
             ['name' => 'View GAD events', 'slug' => 'events.view', 'group' => 'GAD events'],
             ['name' => 'Create GAD events', 'slug' => 'events.create', 'group' => 'GAD events'],
             ['name' => 'Update GAD events', 'slug' => 'events.update', 'group' => 'GAD events'],
@@ -49,6 +53,7 @@ class RbacSeeder extends Seeder
             ['name' => 'Prepare and submit monitoring reports and GAD surveys', 'slug' => 'monitoring.submit', 'group' => 'Monitoring'],
             ['name' => 'View monitoring reports and GAD surveys', 'slug' => 'monitoring.view', 'group' => 'Monitoring'],
             ['name' => 'Review monitoring reports', 'slug' => 'monitoring.review', 'group' => 'Monitoring'],
+            ['name' => 'View activity logs', 'slug' => 'activity-logs.view', 'group' => 'Activity logs'],
         ])->mapWithKeys(function (array $attributes): array {
             $permission = Permission::query()->updateOrCreate(
                 ['slug' => $attributes['slug']],

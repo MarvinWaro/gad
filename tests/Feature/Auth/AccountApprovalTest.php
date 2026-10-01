@@ -89,29 +89,3 @@ test('registration requires an active institution', function () {
 
     expect(User::query()->count())->toBe(0);
 });
-
-test('registration validates the mobile number and sex', function (array $overrides, string $field) {
-    $this->post(route('register.store'), registrationPayload(createSurveyHei(), $overrides))
-        ->assertSessionHasErrors($field);
-
-    expect(User::query()->count())->toBe(0);
-})->with([
-    'missing mobile' => [['mobile_number' => ''], 'mobile_number'],
-    'landline' => [['mobile_number' => '083 552 1234'], 'mobile_number'],
-    'too short' => [['mobile_number' => '0917123'], 'mobile_number'],
-    'missing sex' => [['sex' => ''], 'sex'],
-    'unknown sex' => [['sex' => 'other'], 'sex'],
-]);
-
-test('mobile numbers are stored in the 09XXXXXXXXX form', function (string $input) {
-    $this->post(route('register.store'), registrationPayload(createSurveyHei(), [
-        'mobile_number' => $input,
-    ]))->assertSessionHasNoErrors();
-
-    expect(User::query()->sole()->mobile_number)->toBe('09171234567');
-})->with([
-    '+63 917 123 4567',
-    '639171234567',
-    '9171234567',
-    '0917-123-4567',
-]);

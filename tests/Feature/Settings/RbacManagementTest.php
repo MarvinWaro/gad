@@ -51,6 +51,7 @@ test('administrators can create update and delete users with roles', function ()
     $admin = managedUserWithRole('admin');
     $hei = Role::query()->where('slug', 'hei')->sole();
     $focal = Role::query()->where('slug', 'gad-focal-person')->sole();
+    $institution = createSurveyHei();
 
     $this->actingAs($admin)
         ->post(route('settings.users.store'), [
@@ -58,12 +59,14 @@ test('administrators can create update and delete users with roles', function ()
             'email' => 'regional@example.test',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'survey_hei_id' => $institution->id,
             'role_ids' => [$hei->id],
         ])
         ->assertRedirect(route('settings.users.index'));
 
     $user = User::query()->where('email', 'regional@example.test')->sole();
-    expect($user->hasRole('hei'))->toBeTrue();
+    expect($user->hasRole('hei'))->toBeTrue()
+        ->and($user->survey_hei_id)->toBe($institution->id);
 
     $this->actingAs($admin)
         ->put(route('settings.users.update', $user), [
@@ -78,7 +81,9 @@ test('administrators can create update and delete users with roles', function ()
     $user->refresh();
     expect($user->name)->toBe('Regional Focal Person')
         ->and($user->hasRole('gad-focal-person'))->toBeTrue()
-        ->and($user->hasRole('hei'))->toBeFalse();
+        ->and($user->hasRole('hei'))->toBeFalse()
+        // CHED staff are placed by an office, not an institution.
+        ->and($user->survey_hei_id)->toBeNull();
 
     $this->actingAs($admin)
         ->delete(route('settings.users.destroy', $user))
@@ -101,6 +106,7 @@ test('user management protects the current and last administrator accounts', fun
             'email' => $admin->email,
             'password' => '',
             'password_confirmation' => '',
+            'survey_hei_id' => createSurveyHei()->id,
             'role_ids' => [$hei->id],
         ])
         ->assertSessionHasErrors('role_ids');

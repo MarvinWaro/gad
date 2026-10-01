@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Http\Controllers\Controller;
 use App\Models\SiteRating;
 use App\Models\SiteSetting;
+use App\Services\ActivityRecorder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,10 +62,16 @@ class SiteRatingManagementController extends Controller
         ]);
     }
 
-    public function export(Request $request): StreamedResponse
+    public function export(Request $request, ActivityRecorder $activity): StreamedResponse
     {
         $rating = $this->ratingFilter($request);
         $file = 'phlgadis-ratings-'.now()->format('Y-m-d').'.csv';
+        $activity->record(
+            ActivityAction::Exported,
+            ActivityModule::SiteRatings,
+            properties: array_filter(['stars' => $rating, 'format' => 'csv']),
+            label: __('site ratings'),
+        );
 
         return response()->streamDownload(function () use ($rating): void {
             $handle = fopen('php://output', 'w');
@@ -81,9 +90,10 @@ class SiteRatingManagementController extends Controller
         }, $file, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
-    public function destroy(SiteRating $siteRating): RedirectResponse
+    public function destroy(SiteRating $siteRating, ActivityRecorder $activity): RedirectResponse
     {
         $siteRating->delete();
+        $activity->record(ActivityAction::Deleted, ActivityModule::SiteRatings, $siteRating);
 
         Inertia::flash('toast', [
             'type' => 'deleted',
@@ -93,10 +103,15 @@ class SiteRatingManagementController extends Controller
         return back();
     }
 
-    public function updateButton(Request $request): RedirectResponse
+    public function updateButton(Request $request, ActivityRecorder $activity): RedirectResponse
     {
         $validated = $request->validate(['enabled' => ['required', 'boolean']]);
         SiteSetting::write(SiteSetting::RATING_BUTTON, (bool) $validated['enabled']);
+        $activity->record(
+            $validated['enabled'] ? ActivityAction::Activated : ActivityAction::Deactivated,
+            ActivityModule::SiteRatings,
+            label: __('the Rate PHLGADIS button'),
+        );
 
         Inertia::flash('toast', [
             'type' => 'success',

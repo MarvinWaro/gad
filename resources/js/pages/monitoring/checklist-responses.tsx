@@ -11,8 +11,7 @@ import {
     SearchFilter,
     useRecordFilters,
     YearFilter,
-} from '@/components/monitoring/record-filters';
-import { RecordsTabs } from '@/components/monitoring/records-tabs';
+} from '@/components/record-filters';
 import { localDate } from '@/components/monitoring/shared';
 import { Pagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { placeLine } from '@/lib/places';
 import { cn } from '@/lib/utils';
 import type {
     ChecklistDefinition,
@@ -76,14 +76,12 @@ export default function ChecklistResponses({
                     </p>
                 </header>
 
-                <RecordsTabs current={checklist.type} staff />
-
                 {!hasOffice && <NoOfficeNotice noun="answers" />}
 
                 <div className="@container overflow-hidden rounded-xl border bg-card">
                     <FilterBar
                         label="Filter answers"
-                        filters={1 + placeFilterCount(regions)}
+                        filters={1 + placeFilterCount(regions, clusters)}
                     >
                         <SearchFilter
                             value={values.search ?? ''}
@@ -182,7 +180,7 @@ function ResponseRow({
     checklist: ChecklistDefinition;
 }) {
     const { hei, cluster, region } = response.place;
-    const place = [cluster?.name, region?.name].filter(Boolean).join(' · ');
+    const place = placeLine(cluster?.name, region?.name);
     const count = response.items.length;
     const all = checklist.items.length;
 

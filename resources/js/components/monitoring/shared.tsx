@@ -90,14 +90,8 @@ export function periodLabel(report: {
     return `${report.academic_year} · ${semesterLabel(report.semester)}`;
 }
 
-/** Dates and times in Philippine time, whatever the viewer's device says. */
-export function localDate(value: string): string {
-    return new Intl.DateTimeFormat('en-PH', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-        timeZone: 'Asia/Manila',
-    }).format(new Date(value));
-}
+// Dates and times in Philippine time; shared with other screens.
+export { localDate } from '@/lib/manila-time';
 
 export const fieldClass =
     'min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-destructive sm:text-sm';

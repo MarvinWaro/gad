@@ -2,10 +2,13 @@
 
 namespace App\Actions\Monitoring;
 
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Models\MonitoringAnswer;
 use App\Models\MonitoringReport;
 use App\Models\MonitoringRevision;
 use App\Models\User;
+use App\Services\ActivityRecorder;
 use App\Support\MonitoringDocument;
 use App\Support\MonitoringTemplate;
 use Closure;
@@ -28,6 +31,8 @@ use Throwable;
  */
 class ManageMonitoringReport
 {
+    public function __construct(private readonly ActivityRecorder $activity) {}
+
     /**
      * Open the HEI's report for a period, starting it if no colleague has.
      *
@@ -53,6 +58,7 @@ class ManageMonitoringReport
 
             if ($report->wasRecentlyCreated) {
                 $this->startRevision($report, 1);
+                $this->activity->record(ActivityAction::Created, ActivityModule::Monitoring, $report, actor: $user);
             }
 
             return $report;
@@ -69,9 +75,10 @@ class ManageMonitoringReport
      */
     public function saveDraft(User $user, MonitoringReport $report, array $changes): array
     {
-        return $this->locked($user, $report, null, 'edit', function (MonitoringReport $report, MonitoringRevision $revision) use ($changes): array {
+        return $this->locked($user, $report, null, 'edit', function (MonitoringReport $report, MonitoringRevision $revision) use ($user, $changes): array {
             $this->ensureEditable($report, $revision);
             $conflicts = ['details' => [], 'answers' => []];
+            $saved = ['details' => [], 'answers' => []];
             $details = $revision->details();
 
             foreach ($changes['details'] ?? [] as $field => $change) {
@@ -82,6 +89,7 @@ class ManageMonitoringReport
                 }
 
                 $revision->{$field} = self::text($change['value']) === '' ? null : self::text($change['value']);
+                $saved['details'][] = $field;
             }
 
             $revision->save();
@@ -102,6 +110,17 @@ class ManageMonitoringReport
                 }
 
                 $revision->answers()->updateOrCreate(['requirement_key' => $key], ['answer' => self::text($change['value'])]);
+                $saved['answers'][] = $key;
+            }
+
+            // Which fields were saved, never what was typed in them.
+            if ($saved['details'] !== [] || $saved['answers'] !== []) {
+                $this->activity->record(ActivityAction::DraftSaved, ActivityModule::Monitoring, $report, actor: $user, properties: [
+                    'revision' => $revision->number,
+                    'details' => $saved['details'],
+                    'requirements' => $saved['answers'],
+                    'conflicts' => count($conflicts['details']) + count($conflicts['answers']),
+                ]);
             }
 
             return [
@@ -123,15 +142,21 @@ class ManageMonitoringReport
                 'finalized_by' => $user->id,
                 'content_hash' => MonitoringDocument::contentHash($report, $revision),
             ])->save();
+            $this->activity->record(ActivityAction::Finalized, ActivityModule::Monitoring, $report, actor: $user, properties: [
+                'revision' => $revision->number,
+            ]);
         });
     }
 
     /** Unlock the answers again. Copies already printed no longer match. */
     public function reopen(User $user, MonitoringReport $report, int $version): void
     {
-        $this->locked($user, $report, $version, 'edit', function (MonitoringReport $report, MonitoringRevision $revision): void {
+        $this->locked($user, $report, $version, 'edit', function (MonitoringReport $report, MonitoringRevision $revision) use ($user): void {
             $this->ensureAwaitingSignature($report, $revision);
             $revision->forceFill(['finalized_at' => null, 'finalized_by' => null, 'content_hash' => null])->save();
+            $this->activity->record(ActivityAction::Reopened, ActivityModule::Monitoring, $report, actor: $user, properties: [
+                'revision' => $revision->number,
+            ]);
         });
     }
 
@@ -155,6 +180,10 @@ class ManageMonitoringReport
                 ]);
                 $revision->forceFill(['submitted_at' => now(), 'submitted_by' => $user->id])->save();
                 $report->update(['status' => 'submitted']);
+                $this->activity->record(ActivityAction::Submitted, ActivityModule::Monitoring, $report, actor: $user, properties: [
+                    'revision' => $revision->number,
+                    'file' => mb_substr(basename($file->getClientOriginalName()), 0, 255),
+                ]);
             });
         } catch (Throwable $exception) {
             // A refused submission must not leave its upload behind.
@@ -190,6 +219,16 @@ class ManageMonitoringReport
             }
 
             $report->update(['status' => $data['decision']]);
+            $this->activity->record(
+                $data['decision'] === 'returned' ? ActivityAction::Returned : ActivityAction::Reviewed,
+                ActivityModule::Monitoring,
+                $report,
+                actor: $user,
+                properties: array_filter([
+                    'revision' => $revision->number,
+                    'comment' => $data['comment'] ?? null,
+                ]),
+            );
         });
     }
 

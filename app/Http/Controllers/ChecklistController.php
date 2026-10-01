@@ -23,16 +23,19 @@ class ChecklistController extends Controller
         Gate::authorize('viewRecords', ChecklistResponse::class);
         /** @var User $user */
         $user = $request->user();
-        $years = AcademicPeriod::options();
-        $year = in_array($request->query('academic_year'), $years, true)
-            ? (string) $request->query('academic_year')
-            : AcademicPeriod::current()['academic_year'];
+        $activeYears = AcademicPeriod::options();
         $history = ChecklistResponse::query()
             ->where('survey_hei_id', $user->survey_hei_id)
             ->where('type', $type)
             ->with(['answers:id,checklist_response_id,item_key', 'submitter:id,name'])
             ->orderByDesc('academic_year')
             ->get();
+        $years = collect($activeYears)->merge($history->pluck('academic_year'))
+            ->unique()->sortDesc()->values()->all();
+        $year = in_array($request->query('academic_year'), $years, true)
+            ? (string) $request->query('academic_year')
+            : (in_array(AcademicPeriod::current()['academic_year'], $activeYears, true)
+                ? AcademicPeriod::current()['academic_year'] : ($activeYears[0] ?? $years[0] ?? ''));
 
         return Inertia::render('monitoring/checklist', [
             'checklist' => $type->definition(),

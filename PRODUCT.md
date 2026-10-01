@@ -18,7 +18,7 @@ PHLGADIS (Philippine Higher Education Gender and Development Information System)
 
 ## Operating Context
 
-- Accounts are approved by an administrator before first login; registration links each HEI user to one institution from the HEI directory (the directory is planned to sync from the CHED portal).
+- Accounts are approved by an administrator before first login, except while a region opens on-the-spot registration for an event (Settings → Users → Registration); registration links each HEI user to one institution from the HEI directory (the directory is planned to sync from the CHED portal).
 - Survey responses are anonymous but record the respondent's region, cluster, and HEI, so response counts per institution are real data.
 - The community feed is visible to logged-in users only. Posts publish immediately; administrators can remove any post or comment.
 - Regional GAD events (trainings, campaigns, deadlines, meetings) are created by CHED staff; HEI users view them.

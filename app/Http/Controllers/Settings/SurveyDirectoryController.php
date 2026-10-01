@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Settings\HeiFilterRequest;
 use App\Models\Post;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
@@ -10,9 +13,11 @@ use App\Models\SurveyRegion;
 use App\Models\SurveyRespondentGroup;
 use App\Models\SurveyResponse;
 use App\Models\User;
+use App\Services\ActivityRecorder;
 use App\Services\PortalHeiSync;
 use App\Support\CountPhrase;
 use App\Support\InstitutionName;
+use App\Support\PlaceFilters;
 use App\Support\RespondentFollowUps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -48,17 +53,41 @@ class SurveyDirectoryController extends Controller
         ]);
     }
 
-    public function heis(Request $request): Response
+    public function heis(HeiFilterRequest $request): Response
     {
+        $filters = $request->validated();
+        $search = trim((string) ($filters['search'] ?? ''));
+        $regionId = isset($filters['region']) ? (int) $filters['region'] : null;
+
         return Inertia::render('settings/heis', [
             'regions' => SurveyRegion::query()->orderBy('name')->get(['id', 'name']),
             'clusters' => SurveyCluster::query()->with('region:id,name')->orderBy('name')->get(),
-            // The directory runs to hundreds of institutions, so it is paged
-            // rather than rendered whole.
+            // The directory runs to thousands of institutions nationally, so
+            // it is filtered and paged rather than rendered whole.
             'heis' => SurveyHei::query()->with('cluster:id,name,survey_region_id', 'cluster.region:id,name')
+                ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('uii', 'like', "%{$search}%")))
+                ->when($regionId, fn ($query) => $query->whereHas('cluster', fn ($query) => $query->where('survey_region_id', $regionId)))
+                ->when($filters['cluster'] ?? null, fn ($query, $cluster) => $query->where('survey_cluster_id', $cluster))
+                ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('is_active', $status === 'active'))
+                ->when($filters['ownership'] ?? null, fn ($query, $ownership) => $ownership === 'none'
+                    ? $query->whereNull('ownership')
+                    : $query->where('ownership', $ownership))
                 ->orderBy('name')
                 ->paginate(10, ['id', 'survey_cluster_id', 'uii', 'name', 'ownership', 'is_active', 'portal_synced_at'])
                 ->withQueryString(),
+            'filters' => [
+                'search' => $search,
+                'region' => (string) ($filters['region'] ?? ''),
+                'cluster' => (string) ($filters['cluster'] ?? ''),
+                'status' => (string) ($filters['status'] ?? ''),
+                'ownership' => (string) ($filters['ownership'] ?? ''),
+            ],
+            // Offered only when the region's institutions sit in two or more
+            // clusters; until then (all "Unassigned", say) a region goes
+            // straight to its institutions.
+            'clusterOptions' => $regionId === null ? [] : PlaceFilters::clusterChoices($regionId),
             'permissions' => $this->permissions($request),
         ]);
     }
@@ -137,11 +166,11 @@ class SurveyDirectoryController extends Controller
         return back();
     }
 
-    public function store(Request $request, string $type): RedirectResponse
+    public function store(Request $request, string $type, ActivityRecorder $activity): RedirectResponse
     {
         $model = $this->modelFor($type);
         if ($type === 'respondent-groups') {
-            return $this->storeRespondentGroup($request);
+            return $this->storeRespondentGroup($request, $activity);
         }
         $parent = $type === 'clusters' ? 'survey_region_id' : ($type === 'heis' ? 'survey_cluster_id' : null);
         $table = $model->getTable();
@@ -151,7 +180,8 @@ class SurveyDirectoryController extends Controller
         }
         $rules += $this->heiRules($type);
         $validated = $request->validate($rules, [], self::ATTRIBUTE_NAMES);
-        $model->newQuery()->create([...$validated, 'is_active' => true]);
+        $record = $model->newQuery()->create([...$validated, 'is_active' => true]);
+        $activity->recordSave($this->moduleFor($type), $record);
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -166,7 +196,7 @@ class SurveyDirectoryController extends Controller
      * once when the group is created and never edited afterwards. The label is
      * free to change without touching the answers already gathered.
      */
-    private function storeRespondentGroup(Request $request): RedirectResponse
+    private function storeRespondentGroup(Request $request, ActivityRecorder $activity): RedirectResponse
     {
         $validated = $request->validate([
             'label' => ['required', 'string', 'max:120', Rule::unique('survey_respondent_groups', 'label')],
@@ -181,13 +211,14 @@ class SurveyDirectoryController extends Controller
             $suffix++;
         }
 
-        SurveyRespondentGroup::query()->create([
+        $group = SurveyRespondentGroup::query()->create([
             'value' => $candidate,
             'label' => $validated['label'],
             'requires_text' => (bool) ($validated['requires_text'] ?? false),
             'is_active' => true,
             'sort_order' => (int) SurveyRespondentGroup::query()->max('sort_order') + 1,
         ]);
+        $activity->recordSave(ActivityModule::RespondentGroups, $group);
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -202,7 +233,7 @@ class SurveyDirectoryController extends Controller
      * Each question keeps its answer key and each choice its value, so the
      * answers already collected keep their meaning.
      */
-    public function updateFollowUps(Request $request, SurveyRespondentGroup $group): RedirectResponse
+    public function updateFollowUps(Request $request, SurveyRespondentGroup $group, ActivityRecorder $activity): RedirectResponse
     {
         $validated = $request->validate(
             RespondentFollowUps::definitionRules(),
@@ -211,6 +242,9 @@ class SurveyDirectoryController extends Controller
         );
 
         RespondentFollowUps::sync($group, $validated['follow_ups']);
+        $activity->record(ActivityAction::Updated, ActivityModule::RespondentGroups, $group, properties: [
+            'follow_up_questions' => count($validated['follow_ups']),
+        ]);
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -220,7 +254,7 @@ class SurveyDirectoryController extends Controller
         return back();
     }
 
-    public function update(Request $request, string $type, int $id): RedirectResponse
+    public function update(Request $request, string $type, int $id, ActivityRecorder $activity): RedirectResponse
     {
         $record = $this->modelFor($type)->newQuery()->findOrFail($id);
         if ($type === 'respondent-groups') {
@@ -230,6 +264,7 @@ class SurveyDirectoryController extends Controller
                 'is_active' => ['required', 'boolean'],
                 'sort_order' => ['sometimes', 'integer', 'min:0', 'max:999'],
             ], [], ['label' => 'name']));
+            $activity->recordSave(ActivityModule::RespondentGroups, $record);
 
             Inertia::flash('toast', [
                 'type' => 'success',
@@ -250,6 +285,7 @@ class SurveyDirectoryController extends Controller
         }
         $rules += $this->heiRules($type, $record->getKey());
         $record->update($request->validate($rules, [], self::ATTRIBUTE_NAMES));
+        $activity->recordSave($this->moduleFor($type), $record);
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -280,7 +316,7 @@ class SurveyDirectoryController extends Controller
         ];
     }
 
-    public function destroy(string $type, int $id): RedirectResponse
+    public function destroy(string $type, int $id, ActivityRecorder $activity): RedirectResponse
     {
         $record = $this->modelFor($type)->newQuery()->findOrFail($id);
         if ($record instanceof SurveyRespondentGroup
@@ -312,6 +348,7 @@ class SurveyDirectoryController extends Controller
         } catch (\Throwable) {
             return $this->refuse(__('This directory record is in use. Deactivate it instead.'));
         }
+        $activity->record(ActivityAction::Deleted, $this->moduleFor($type), $record);
 
         Inertia::flash('toast', [
             'type' => 'deleted',
@@ -319,6 +356,16 @@ class SurveyDirectoryController extends Controller
         ]);
 
         return back();
+    }
+
+    private function moduleFor(string $type): ActivityModule
+    {
+        return match ($type) {
+            'regions' => ActivityModule::Regions,
+            'clusters' => ActivityModule::Clusters,
+            'heis' => ActivityModule::Heis,
+            default => ActivityModule::RespondentGroups,
+        };
     }
 
     private function modelFor(string $type): Model

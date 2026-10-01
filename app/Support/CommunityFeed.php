@@ -30,10 +30,15 @@ class CommunityFeed
     /** People named in a post's reactions tooltip; the full list is fetched on request. */
     public const REACTORS_SHOWN = 10;
 
-    /** @return Paginator<int, array<string, mixed>> */
-    public static function page(User $viewer): Paginator
+    /**
+     * A page of the feed, or of one author's posts for their profile.
+     *
+     * @return Paginator<int, array<string, mixed>>
+     */
+    public static function page(User $viewer, ?User $author = null): Paginator
     {
         return self::query($viewer)
+            ->when($author, fn (Builder $query, User $author) => $query->where('user_id', $author->id))
             ->latest()
             ->latest('id')
             ->simplePaginate(self::PER_PAGE)

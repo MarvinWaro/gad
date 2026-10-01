@@ -20,6 +20,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { FormSelect } from '@/components/ui/form-select';
 import { Label } from '@/components/ui/label';
+import { selectClass } from '@/components/monitoring/shared';
+import {
+    EmptyList,
+    Filter,
+    FilterBar,
+    SearchFilter,
+    useRecordFilters,
+} from '@/components/record-filters';
+import { UNASSIGNED_CLUSTER } from '@/lib/places';
+import { cn } from '@/lib/utils';
 
 type Region = { id: number; name: string };
 type Cluster = {
@@ -39,18 +49,47 @@ type Hei = {
     cluster: { id: number; name: string; region: { id: number; name: string } };
 };
 type Permissions = { create: boolean; update: boolean; delete: boolean };
+type HeiFilters = {
+    search: string;
+    region: string;
+    cluster: string;
+    status: string;
+    ownership: string;
+};
+
+const statusOptions = [
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
+];
+
+const ownershipOptions = [
+    { value: 'public', label: 'Public' },
+    { value: 'private', label: 'Private' },
+    { value: 'none', label: 'Not set' },
+];
 
 export default function Heis({
     regions,
     clusters,
     heis,
+    filters,
+    clusterOptions,
     permissions,
 }: {
     regions: Region[];
     clusters: Cluster[];
     heis: Paginated<Hei>;
+    filters: HeiFilters;
+    /** The chosen region's clusters, when there are two or more to pick. */
+    clusterOptions: Region[];
     permissions: Permissions;
 }) {
+    const { values, loading, filtered, apply, change, search } =
+        useRecordFilters('/settings/heis', filters);
+    // Region, status and ownership, plus the cluster when offered; the search
+    // takes its own row on phones.
+    const filterCount = 3 + (clusterOptions.length > 0 ? 1 : 0);
+
     return (
         <>
             <Head title="HEIs" />
@@ -65,8 +104,95 @@ export default function Heis({
                         <HeiDialog regions={regions} clusters={clusters} />
                     )}
                 </div>
-                <div className="overflow-hidden rounded-xl border bg-card">
-                    {heis.total === 0 ? (
+                <div className="@container overflow-hidden rounded-xl border bg-card">
+                    <FilterBar label="Filter HEIs" filters={filterCount}>
+                        <SearchFilter
+                            value={values.search}
+                            placeholder="Name or UII"
+                            onSearch={search}
+                            onSubmit={() => apply(values)}
+                        />
+                        <Filter label="Region" id="region">
+                            <FormSelect
+                                id="region"
+                                className={selectClass}
+                                value={values.region}
+                                onChange={(value) =>
+                                    change({
+                                        ...values,
+                                        region: value,
+                                        cluster: '',
+                                    })
+                                }
+                                placeholder="All regions"
+                                allowEmpty
+                                options={regions.map((region) => ({
+                                    value: String(region.id),
+                                    label: region.name,
+                                }))}
+                            />
+                        </Filter>
+                        {clusterOptions.length > 0 && (
+                            <Filter label="Cluster" id="cluster">
+                                <FormSelect
+                                    id="cluster"
+                                    className={selectClass}
+                                    value={values.cluster}
+                                    onChange={(value) =>
+                                        change({ ...values, cluster: value })
+                                    }
+                                    placeholder="All clusters"
+                                    allowEmpty
+                                    options={clusterOptions.map((cluster) => ({
+                                        value: String(cluster.id),
+                                        label: cluster.name,
+                                    }))}
+                                />
+                            </Filter>
+                        )}
+                        <Filter label="Status" id="status">
+                            <FormSelect
+                                id="status"
+                                className={selectClass}
+                                value={values.status}
+                                onChange={(value) =>
+                                    change({ ...values, status: value })
+                                }
+                                placeholder="Active and inactive"
+                                allowEmpty
+                                options={statusOptions}
+                            />
+                        </Filter>
+                        <Filter label="Ownership" id="ownership">
+                            <FormSelect
+                                id="ownership"
+                                className={selectClass}
+                                value={values.ownership}
+                                onChange={(value) =>
+                                    change({ ...values, ownership: value })
+                                }
+                                placeholder="Any ownership"
+                                allowEmpty
+                                options={ownershipOptions}
+                            />
+                        </Filter>
+                    </FilterBar>
+                    {heis.total === 0 && filtered ? (
+                        <EmptyList
+                            filtered
+                            title="No HEIs match these filters"
+                            text="Try another name, region, status or ownership, or clear the filters to see every institution."
+                            onClear={() =>
+                                change({
+                                    search: '',
+                                    region: '',
+                                    cluster: '',
+                                    status: '',
+                                    ownership: '',
+                                })
+                            }
+                        />
+                    ) : heis.total === 0 ? (
                         <div className="flex min-h-56 flex-col items-center justify-center p-8 text-center">
                             <GraduationCap className="size-7 text-muted-foreground" />
                             <h2 className="mt-3 font-medium">
@@ -79,7 +205,13 @@ export default function Heis({
                             </p>
                         </div>
                     ) : (
-                        <>
+                        <div
+                            aria-busy={loading}
+                            className={cn(
+                                'transition-opacity',
+                                loading && 'opacity-60',
+                            )}
+                        >
                             <HeiTable
                                 heis={heis.data}
                                 regions={regions}
@@ -87,7 +219,7 @@ export default function Heis({
                                 permissions={permissions}
                             />
                             <Pagination page={heis} label="institutions" />
-                        </>
+                        </div>
                     )}
                 </div>
             </div>
@@ -145,9 +277,12 @@ function HeiTable({
                             </td>
                             <td className="px-4 py-4">
                                 <p>{hei.cluster.region.name}</p>
-                                <p className="mt-0.5 text-xs text-muted-foreground">
-                                    {hei.cluster.name}
-                                </p>
+                                {/* The holding cluster is not a place. */}
+                                {hei.cluster.name !== UNASSIGNED_CLUSTER && (
+                                    <p className="mt-0.5 text-xs text-muted-foreground">
+                                        {hei.cluster.name}
+                                    </p>
+                                )}
                             </td>
                             <td className="px-4 py-4">
                                 {hei.ownership ? (
@@ -391,8 +526,9 @@ function HeiDialog({
                         </div>
                     </div>
                     <p className="-mt-1 text-xs text-muted-foreground">
-                        Respondents narrow Region, then Cluster, then HEI, so an
-                        institution needs both to be reachable.
+                        Respondents pick the region, then the HEI. Once a
+                        region&rsquo;s institutions sit in two or more clusters,
+                        they pick the cluster in between.
                     </p>
                     <div>
                         <Label htmlFor="hei-ownership">Ownership</Label>

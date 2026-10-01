@@ -38,8 +38,9 @@ export default function HeiHome({
 }: Props) {
     const { auth } = usePage().props;
     const [nextEvent, ...laterEvents] = upcoming;
-    // Clears AppHeader's sticky bar (h-16 plus its 1px border) by 24px.
-    const railRef = useStickyRail<HTMLElement>({ top: 65 + 24, bottom: 24 });
+    // Clears AppHeader's sticky navigation row (h-12 plus its 1px border),
+    // the part that stays on screen beside the rail, by 24px.
+    const railRef = useStickyRail<HTMLElement>({ top: 49 + 24, bottom: 24 });
 
     return (
         <>

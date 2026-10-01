@@ -9,21 +9,30 @@ async function logIn(page: import('@playwright/test').Page, email: string) {
     await expect(page).toHaveURL(/dashboard/);
 }
 
-test('My Profile preview works for staff and keeps account settings available', async ({
+test('My Profile shows my activity and keeps account settings available', async ({
     page,
 }) => {
     await logIn(page, 'browser-admin@example.test');
     await page.locator('[data-test="sidebar-menu-button"]').click();
     await page.getByRole('menuitem', { name: 'My Profile' }).click();
 
-    await expect(page).toHaveURL(/settings\/profile\?view=my-profile/);
+    await expect(page).toHaveURL(/\/profile$/);
     await expect(page.locator('h1#profile-name')).toBeVisible();
-    await expect(
-        page.getByRole('heading', { name: 'Your activity space' }),
-    ).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Posts' })).toHaveAttribute(
+        'aria-selected',
+        'true',
+    );
     await expect(
         page.getByRole('button', { name: 'Follow · coming soon' }),
     ).toBeDisabled();
+
+    await page.getByRole('tab', { name: 'Activity' }).click();
+    const activity = page.getByRole('list', {
+        name: 'Your activity, newest first',
+    });
+    await expect(activity.getByRole('article').first()).toContainText(
+        'Logged in',
+    );
 
     await page.getByRole('tab', { name: 'About' }).click();
     await expect(
@@ -33,7 +42,23 @@ test('My Profile preview works for staff and keeps account settings available', 
     await expect(page).toHaveURL(/settings\/profile$/);
     await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
 
+    // The old address still finds it.
     await page.goto('/settings/profile?view=my-profile');
+    await expect(page).toHaveURL(/\/profile$/);
+    await expect(page.locator('[data-test="profile-cover"]')).toHaveText('');
+
+    const photo = page.getByRole('button', {
+        name: 'Profile picture options',
+    });
+    await photo.click();
+    await expect(
+        page.getByRole('menuitem', { name: 'Choose profile picture' }),
+    ).toBeVisible();
+    await expect(
+        page.getByRole('menuitem', { name: 'See profile picture' }),
+    ).toHaveCount(0);
+    await page.keyboard.press('Escape');
+
     for (const width of [375, 768, 1280, 1536]) {
         await page.setViewportSize({ width, height: 900 });
         await expect(page.locator('body')).toHaveJSProperty(
@@ -57,6 +82,13 @@ test('My Profile preview works for staff and keeps account settings available', 
         }
         expect(rightGutter).toBeCloseTo(leftGutter, 0);
         expect(cover!.y).toBeCloseTo(appBar!.y + appBar!.height, 0);
+        const photoBox = await photo.boundingBox();
+        expect(photoBox).not.toBeNull();
+        expect(photoBox!.width).toBeCloseTo(
+            width >= 1024 ? 160 : width >= 640 ? 144 : 112,
+            0,
+        );
+        expect(photoBox!.y).toBeLessThan(cover!.y + cover!.height);
         const notice = await page
             .locator('[data-test="profile-notice"]')
             .boundingBox();
@@ -72,14 +104,55 @@ test('My Profile preview works for staff and keeps account settings available', 
     expect(accessibility.violations).toEqual([]);
 });
 
-test('HEI profile preview uses the institution attached to the account', async ({
-    page,
-}) => {
+test('HEI members see their own posts on their profile', async ({ page }) => {
+    const text = 'Browser test: our campus GAD orientation for new students.';
     await logIn(page, 'browser-monitoring@example.test');
-    await page.goto('/settings/profile?view=my-profile');
+    await page.getByRole('button', { name: /^Share a GAD activity/ }).click();
+    const composer = page.getByRole('dialog');
+    await composer.getByLabel('Post text').fill(text);
+    await composer.getByRole('button', { name: 'Post', exact: true }).click();
+    await expect(composer).toBeHidden({ timeout: 20_000 });
+
+    await page.goto('/profile');
     await expect(
         page.getByRole('heading', { name: 'Fictional Monitoring Member' }),
     ).toBeVisible();
     await expect(page.getByText('Browser Test HEI').first()).toBeVisible();
+    await expect(page.getByText(text)).toBeVisible();
     await expect(page.getByText('HEI Focal').first()).toBeVisible();
+});
+
+test('choosing a profile picture crops and saves it right on the profile', async ({
+    page,
+}) => {
+    await logIn(page, 'browser-monitoring@example.test');
+    await page.goto('/profile');
+
+    const photo = page.getByRole('button', {
+        name: 'Profile picture options',
+    });
+    await photo.click();
+    const chooser = page.waitForEvent('filechooser');
+    await page
+        .getByRole('menuitem', { name: 'Choose profile picture' })
+        .click();
+    await (await chooser).setFiles('public/assets/img/ched12_building.jpg');
+    const cropper = page.getByRole('dialog', { name: 'Crop profile photo' });
+    await expect(cropper).toBeVisible();
+    await cropper.getByRole('button', { name: 'Apply' }).click();
+    await expect(cropper).toBeHidden({ timeout: 20_000 });
+    await expect(page).toHaveURL(/\/profile$/);
+    await expect(photo.locator('img')).toBeVisible();
+
+    await photo.click();
+    await page.getByRole('menuitem', { name: 'See profile picture' }).click();
+    const viewer = page.getByRole('dialog');
+    await expect(
+        viewer.getByRole('img', {
+            name: 'Fictional Monitoring Member’s profile photo',
+        }),
+    ).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(viewer).toBeHidden();
+    await expect(photo).toBeFocused();
 });

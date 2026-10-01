@@ -19,6 +19,10 @@ return new class extends Migration
             $table->string('office_email')->nullable();
             $table->string('office_website')->nullable();
             $table->string('office_phone')->nullable();
+            // On-the-spot registration at the region's events: HEI accounts
+            // from this region sign in without approval, until the time set.
+            $table->boolean('instant_registration')->default(false);
+            $table->timestamp('instant_registration_until')->nullable();
             $table->timestamps();
         });
 

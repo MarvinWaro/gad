@@ -1,17 +1,15 @@
-import { Head, Link } from '@inertiajs/react';
-import {
-    Building2,
-    CalendarDays,
-    MapPin,
-    Pencil,
-    UserRound,
-    UsersRound,
-} from 'lucide-react';
-import { PersonAvatar } from '@/components/person-avatar';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { Building2, MapPin, Pencil, UsersRound } from 'lucide-react';
+import { ActivityTimeline } from '@/components/activity/activity-timeline';
+import { Feed } from '@/components/hei/feed';
+import { ProfilePhoto } from '@/components/profile-photo';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { myProfileHref } from '@/lib/my-profile';
+import { dashboard } from '@/routes';
 import { edit } from '@/routes/profile';
-import type { Auth } from '@/types';
+import type { Auth, Post, ScrollPage } from '@/types';
+import type { ActivityEntry } from '@/types/activity';
 
 const roleNames: Record<string, string> = {
     admin: 'Administrator',
@@ -29,30 +27,32 @@ function profileAffiliation(auth: Auth, institution: string | null) {
     return 'Affiliation not available in this preview';
 }
 
-function EmptyActivity() {
-    return (
-        <div className="rounded-xl border border-border bg-card px-6 py-12 text-center sm:px-10">
-            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-brand-soft text-brand">
-                <CalendarDays aria-hidden className="size-5" />
-            </div>
-            <h2 className="mt-5 text-lg font-medium">Your activity space</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-                Posts and events are not connected to this profile preview yet.
-                Your existing community activity is still available in its
-                current pages.
-            </p>
-        </div>
-    );
+/** Where this person posts: CHED staff in the staff feed, HEIs on their home. */
+function postingHref(auth: Auth): string | null {
+    if (auth.permissions.includes('posts.view')) return '/community';
+    if (auth.heiOnly) return dashboard().url;
+    return null;
 }
 
-export default function MyProfilePreview({
-    auth,
+/**
+ * The signed-in person's profile: their Gender Mainstreaming posts, their
+ * own activity log, and their account details. Posts and activity arrive
+ * just after the page and load more as they scroll.
+ */
+export default function MyProfile({
     institution,
+    posts,
+    activity,
 }: {
-    auth: Auth;
     institution: string | null;
+    /** Deferred. */
+    posts?: ScrollPage<Post>;
+    /** Deferred. */
+    activity?: ScrollPage<ActivityEntry>;
 }) {
+    const { auth } = usePage().props;
     const { user } = auth;
+    const feedHref = postingHref(auth);
     const affiliation = profileAffiliation(auth, institution);
     const roles = auth.roles.map((role) => roleNames[role] ?? role);
 
@@ -66,35 +66,23 @@ export default function MyProfilePreview({
                 >
                     <div className="bg-muted/50 lg:px-8">
                         <div
+                            aria-hidden
                             data-test="profile-cover"
-                            className="relative mx-auto flex min-h-56 w-full max-w-6xl items-end overflow-hidden bg-signature-violet px-4 py-6 text-on-signature sm:min-h-72 sm:px-6 lg:min-h-96 lg:px-12"
+                            className="relative mx-auto min-h-56 w-full max-w-6xl overflow-hidden bg-signature-violet sm:min-h-72 lg:min-h-96"
                         >
-                            <div
-                                aria-hidden
-                                className="absolute -top-20 right-0 size-64 rounded-full border border-on-signature/20 sm:right-16 sm:size-80"
-                            />
-                            <div
-                                aria-hidden
-                                className="absolute -top-12 right-10 size-64 rounded-full border border-on-signature/20 sm:right-28 sm:size-80"
-                            />
-                            <div className="relative max-w-lg">
-                                <p className="text-xs font-medium tracking-wide uppercase opacity-80">
-                                    PHLGADIS
-                                </p>
-                                <p className="mt-3 text-2xl leading-tight font-medium sm:text-3xl">
-                                    GAD work across higher education
-                                </p>
-                            </div>
+                            <div className="absolute -top-20 right-0 size-64 rounded-full border border-on-signature/20 sm:right-16 sm:size-80" />
+                            <div className="absolute -top-12 right-10 size-64 rounded-full border border-on-signature/20 sm:right-28 sm:size-80" />
                         </div>
                     </div>
-                    <div className="lg:px-8">
-                        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 pb-6 sm:flex-row sm:items-end sm:justify-between sm:px-6 lg:px-12">
+                    <div className="@container lg:px-8">
+                        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 pb-6 sm:px-6 lg:px-12 @3xl:flex-row @3xl:items-end @3xl:justify-between">
                             <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:gap-5">
-                                <PersonAvatar
+                                <ProfilePhoto
                                     name={user.name}
                                     src={user.avatar}
-                                    className="-mt-9 size-20 border-4 border-card shadow-sm sm:-mt-10 sm:size-24"
-                                    fallbackClassName="text-2xl"
+                                    editable
+                                    className="-mt-14 size-28 self-start sm:-mt-18 sm:size-36 lg:-mt-20 lg:size-40"
+                                    fallbackClassName="text-3xl sm:text-4xl"
                                 />
                                 <div className="min-w-0 sm:pb-1">
                                     <h1
@@ -115,7 +103,7 @@ export default function MyProfilePreview({
                             <Button
                                 asChild
                                 variant="outline"
-                                className="self-start sm:mb-1 sm:self-auto"
+                                className="self-start @3xl:mb-1 @3xl:self-auto"
                             >
                                 <Link href={edit()}>
                                     <Pencil aria-hidden />
@@ -133,22 +121,21 @@ export default function MyProfilePreview({
                             className="rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground"
                         >
                             <span className="font-medium text-foreground">
-                                Profile preview
+                                Only you can see your profile.
                             </span>{' '}
-                            · Only you can see this layout. Following and public
-                            profiles are not available yet.
+                            Following and public profiles are not available yet.
                         </div>
 
-                        <Tabs defaultValue="overview" className="mt-8 gap-6">
+                        <Tabs defaultValue="posts" className="mt-8 gap-6">
                             <TabsList
                                 aria-label="Profile sections"
                                 className="h-auto max-w-full justify-start overflow-x-auto bg-transparent p-0"
                             >
                                 <TabsTrigger
-                                    value="overview"
+                                    value="posts"
                                     className="min-h-11 px-4"
                                 >
-                                    Overview
+                                    Posts
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="activity"
@@ -164,35 +151,38 @@ export default function MyProfilePreview({
                                 </TabsTrigger>
                             </TabsList>
 
-                            <TabsContent value="overview">
+                            <TabsContent value="posts">
                                 <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
-                                    <div className="min-w-0 space-y-6">
-                                        <section className="rounded-xl border border-border bg-card p-6">
-                                            <div className="flex items-start gap-3">
-                                                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
-                                                    <UserRound
-                                                        aria-hidden
-                                                        className="size-5"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <h2 className="text-lg font-medium">
-                                                        Share your GAD work
-                                                    </h2>
-                                                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                                                        This space is designed
-                                                        to bring your
-                                                        activities, events, and
-                                                        contributions together.
-                                                        The profile timeline is
-                                                        a layout preview for
-                                                        now.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </section>
-                                        <EmptyActivity />
-                                    </div>
+                                    <section
+                                        aria-labelledby="profile-posts"
+                                        className="min-w-0"
+                                    >
+                                        <h2
+                                            id="profile-posts"
+                                            className="sr-only"
+                                        >
+                                            Your posts
+                                        </h2>
+                                        <Feed
+                                            posts={posts}
+                                            watchForNew={false}
+                                            emptyTitle="You haven’t posted yet"
+                                            emptyMessage="Your posts in Gender Mainstreaming will appear here: seminars, campaigns, and the other GAD work you share."
+                                            emptyAction={
+                                                feedHref && (
+                                                    <Button
+                                                        asChild
+                                                        variant="outline"
+                                                    >
+                                                        <Link href={feedHref}>
+                                                            Go to Gender
+                                                            Mainstreaming
+                                                        </Link>
+                                                    </Button>
+                                                )
+                                            }
+                                        />
+                                    </section>
 
                                     <aside
                                         className="min-w-0 space-y-6"
@@ -256,7 +246,18 @@ export default function MyProfilePreview({
                                 </div>
                             </TabsContent>
                             <TabsContent value="activity">
-                                <EmptyActivity />
+                                <section
+                                    aria-labelledby="profile-activity"
+                                    className="max-w-3xl"
+                                >
+                                    <h2
+                                        id="profile-activity"
+                                        className="sr-only"
+                                    >
+                                        Your activity
+                                    </h2>
+                                    <ActivityTimeline activity={activity} />
+                                </section>
                             </TabsContent>
                             <TabsContent value="about">
                                 <section className="max-w-2xl rounded-xl border border-border bg-card p-6">
@@ -313,3 +314,7 @@ export default function MyProfilePreview({
         </>
     );
 }
+
+MyProfile.layout = {
+    breadcrumbs: [{ title: 'My Profile', href: myProfileHref }],
+};

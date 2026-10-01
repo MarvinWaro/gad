@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\SurveyResponseController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\MyProfileController;
 use App\Http\Controllers\NewerPostsController;
 use App\Http\Controllers\PostCommentController;
 use App\Http\Controllers\PostController;
@@ -81,6 +82,7 @@ Route::post('/surveys/{survey:slug}/responses', [PublicSurveyController::class, 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('events', [EventController::class, 'index'])->name('events.index');
+    Route::get('profile', MyProfileController::class)->name('my-profile');
 
     Route::post('posts', [PostController::class, 'store'])->middleware('throttle:20,1')->name('posts.store');
     Route::get('posts/tag-suggestions', PostTagSuggestionController::class)

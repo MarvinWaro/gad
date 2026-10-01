@@ -2,6 +2,7 @@
 
 namespace App\Concerns;
 
+use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 
@@ -13,16 +14,20 @@ trait RegistrationDetailsRules
     /**
      * Get the validation rules for the user's institution. Public registration
      * only offers active institutions; administrators may keep an account on
-     * one that has since been deactivated.
+     * one that has since been deactivated. `$required` may be a check made
+     * when validating, such as whether an HEI role was chosen.
      *
+     * @param  bool|Closure(): bool  $required
      * @return array<int, ValidationRule|array<mixed>|string>
      */
-    protected function heiRules(bool $required = true, bool $activeOnly = true): array
+    protected function heiRules(bool|Closure $required = true, bool $activeOnly = true): array
     {
         $exists = Rule::exists('survey_heis', 'id');
 
         return [
-            $required ? 'required' : 'nullable',
+            ...($required instanceof Closure
+                ? [Rule::requiredIf($required), 'nullable']
+                : [$required ? 'required' : 'nullable']),
             'integer',
             $activeOnly ? $exists->where('is_active', true) : $exists,
         ];

@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\StoreRoleRequest;
 use App\Http\Requests\Settings\UpdateRoleRequest;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Services\ActivityRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,19 +73,25 @@ class RoleManagementController extends Controller
         ]);
     }
 
-    public function store(StoreRoleRequest $request): RedirectResponse
+    public function store(StoreRoleRequest $request, ActivityRecorder $activity): RedirectResponse
     {
         $validated = $request->validated();
         $this->ensurePermissionsAreAssignable($request, $validated['permission_ids']);
 
-        DB::transaction(function () use ($validated): void {
+        $role = DB::transaction(function () use ($validated): Role {
             $role = Role::query()->create([
                 'name' => $validated['name'],
                 'slug' => $this->uniqueSlug($validated['name']),
                 'description' => $validated['description'] ?? null,
             ]);
             $role->permissions()->sync($validated['permission_ids']);
+
+            return $role;
         });
+
+        $activity->record(ActivityAction::Created, ActivityModule::Roles, $role, properties: [
+            'permissions' => $role->permissions()->orderBy('name')->pluck('name')->all(),
+        ]);
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -92,12 +101,13 @@ class RoleManagementController extends Controller
         return to_route('settings.roles.index');
     }
 
-    public function update(UpdateRoleRequest $request, Role $role): RedirectResponse
+    public function update(UpdateRoleRequest $request, Role $role, ActivityRecorder $activity): RedirectResponse
     {
         $this->ensureRoleIsEditable($role);
         $this->ensureRoleIsManageable($request, $role);
         $validated = $request->validated();
         $this->ensurePermissionsAreAssignable($request, $validated['permission_ids']);
+        $permissionsBefore = $role->permissions()->pluck('name')->all();
 
         DB::transaction(function () use ($role, $validated): void {
             $role->update([
@@ -107,6 +117,13 @@ class RoleManagementController extends Controller
             $role->permissions()->sync($validated['permission_ids']);
         });
 
+        $changes = $activity->changesOf($role);
+        $permissions = $activity->listChange($permissionsBefore, $role->permissions()->pluck('name')->all());
+        if ($permissions !== null) {
+            $changes['permissions'] = $permissions;
+        }
+        $activity->record(ActivityAction::Updated, ActivityModule::Roles, $role, $changes);
+
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => __('Role updated.'),
@@ -115,7 +132,7 @@ class RoleManagementController extends Controller
         return to_route('settings.roles.index');
     }
 
-    public function destroy(Request $request, Role $role): RedirectResponse
+    public function destroy(Request $request, Role $role, ActivityRecorder $activity): RedirectResponse
     {
         $this->ensureRoleIsEditable($role);
         $this->ensureRoleIsManageable($request, $role);
@@ -127,6 +144,7 @@ class RoleManagementController extends Controller
         }
 
         $role->delete();
+        $activity->record(ActivityAction::Deleted, ActivityModule::Roles, $role);
 
         Inertia::flash('toast', [
             'type' => 'deleted',

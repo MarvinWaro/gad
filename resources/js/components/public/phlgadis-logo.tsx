@@ -1,7 +1,7 @@
+import { systemFullName } from '@/lib/brand';
 import { cn } from '@/lib/utils';
 
-const alt =
-    'PHLGADIS — Philippine Higher Education Gender and Development Information System';
+const alt = `PHLGADIS — ${systemFullName}`;
 
 // The PHLGADIS lockup: gadlogo.png on the light theme, and in dark mode the
 // compact gadlogo2.png on the same white plate as the header. CSS picks the

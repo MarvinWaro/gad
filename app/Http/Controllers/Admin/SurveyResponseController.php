@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Http\Controllers\Controller;
 use App\Models\Survey;
 use App\Models\SurveyGroupQuestion;
 use App\Models\SurveyRespondentGroup;
 use App\Models\SurveyResponse;
+use App\Services\ActivityRecorder;
 use App\Support\RespondentDetails;
 use App\Support\RespondentFollowUps;
 use Illuminate\Database\Eloquent\Builder;
@@ -50,9 +53,16 @@ class SurveyResponseController extends Controller
         ]);
     }
 
-    public function export(Request $request, Survey $survey): StreamedResponse
+    public function export(Request $request, Survey $survey, ActivityRecorder $activity): StreamedResponse
     {
         $file = str($survey->slug)->append('-responses-', now()->format('Y-m-d'), '.csv')->toString();
+        $activity->record(
+            ActivityAction::Exported,
+            ActivityModule::SurveyResponses,
+            $survey,
+            properties: array_filter($request->only(['search', 'sex', 'respondent_group'])) + ['format' => 'csv'],
+            label: __('responses to :title', ['title' => $survey->title]),
+        );
 
         return response()->streamDownload(function () use ($request, $survey): void {
             $handle = fopen('php://output', 'w');
@@ -93,10 +103,11 @@ class SurveyResponseController extends Controller
         }, $file, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
-    public function destroy(Survey $survey, SurveyResponse $surveyResponse): RedirectResponse
+    public function destroy(Survey $survey, SurveyResponse $surveyResponse, ActivityRecorder $activity): RedirectResponse
     {
         abort_unless($surveyResponse->version()->where('survey_id', $survey->id)->exists(), 404);
         $surveyResponse->delete();
+        $activity->record(ActivityAction::Deleted, ActivityModule::SurveyResponses, $surveyResponse, properties: ['survey' => $survey->title]);
 
         return to_route('admin.surveys.responses.index', $survey);
     }

@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Community\CreatePost;
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Http\Requests\StorePostRequest;
 use App\Models\Post;
 use App\Models\User;
+use App\Services\ActivityRecorder;
 use App\Support\CommunityFeed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -44,7 +47,7 @@ class PostController extends Controller
         return back();
     }
 
-    public function update(Request $request, Post $post): RedirectResponse
+    public function update(Request $request, Post $post, ActivityRecorder $activity): RedirectResponse
     {
         Gate::authorize('update', $post);
 
@@ -60,13 +63,17 @@ class PostController extends Controller
         }
 
         $post->update(['body' => $validated['body'] ?? null]);
+        $changes = $activity->changesOf($post);
+        if ($changes !== []) {
+            $activity->record(ActivityAction::Updated, ActivityModule::Community, $post, $changes);
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Post updated.')]);
 
         return back();
     }
 
-    public function destroy(Request $request, Post $post): RedirectResponse
+    public function destroy(Request $request, Post $post, ActivityRecorder $activity): RedirectResponse
     {
         Gate::authorize('delete', $post);
 
@@ -74,6 +81,10 @@ class PostController extends Controller
         $paths = $post->images()->pluck('path')->all();
         $post->delete();
         Storage::disk('public')->delete($paths);
+        // A moderator removing someone else's post.
+        $activity->record(ActivityAction::Deleted, ActivityModule::Community, $post, properties: $post->user_id === $request->user()->id
+            ? []
+            : ['moderated' => true, 'author' => $post->author()->value('name')]);
 
         Inertia::flash('toast', ['type' => 'deleted', 'message' => __('Post removed.')]);
 

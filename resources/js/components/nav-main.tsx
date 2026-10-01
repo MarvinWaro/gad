@@ -7,11 +7,12 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
+import { activeNavItem } from '@/lib/app-navigation';
 import type { NavGroup } from '@/types';
 
 export function NavMain({ groups }: { groups: NavGroup[] }) {
-    // A page inside a section (a Records tab) keeps its item active.
-    const { isCurrentOrParentUrl } = useCurrentUrl();
+    const { currentUrl } = useCurrentUrl();
+    const active = activeNavItem(groups, currentUrl);
 
     return groups.map((group) => (
         <SidebarGroup key={group.label} className="px-2 py-0">
@@ -21,10 +22,16 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                     <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                             asChild
-                            isActive={isCurrentOrParentUrl(item.href)}
+                            isActive={item === active}
                             tooltip={{ children: item.title }}
                         >
-                            <Link href={item.href} prefetch>
+                            <Link
+                                href={item.href}
+                                prefetch
+                                aria-current={
+                                    item === active ? 'page' : undefined
+                                }
+                            >
                                 {item.icon && <item.icon />}
                                 <span>{item.title}</span>
                             </Link>

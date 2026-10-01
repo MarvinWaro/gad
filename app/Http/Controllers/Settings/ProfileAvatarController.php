@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\ActivityRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +18,7 @@ use Inertia\Inertia;
  */
 class ProfileAvatarController extends Controller
 {
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request, ActivityRecorder $activity): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -37,12 +40,17 @@ class ProfileAvatarController extends Controller
             Storage::disk('public')->delete($previous);
         }
 
+        $activity->record(ActivityAction::Updated, ActivityModule::Account, $user, [
+            'profile_photo' => [$previous !== null ? 'Photo' : null, 'New photo'],
+        ]);
+
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile photo updated.')]);
 
-        return to_route('profile.edit');
+        // Back to Settings or the profile, wherever the photo was changed.
+        return back();
     }
 
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request, ActivityRecorder $activity): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -50,10 +58,13 @@ class ProfileAvatarController extends Controller
         if ($user->avatar_path !== null) {
             Storage::disk('public')->delete($user->avatar_path);
             $user->forceFill(['avatar_path' => null])->save();
+            $activity->record(ActivityAction::Updated, ActivityModule::Account, $user, [
+                'profile_photo' => ['Photo', null],
+            ]);
         }
 
         Inertia::flash('toast', ['type' => 'deleted', 'message' => __('Profile photo removed.')]);
 
-        return to_route('profile.edit');
+        return back();
     }
 }

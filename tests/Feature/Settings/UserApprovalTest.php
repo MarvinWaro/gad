@@ -126,9 +126,9 @@ test('pending registrations are listed first', function () {
             ->where('users.data.0.name', 'Zed Pending'));
 });
 
-test('administrators can set institution, mobile number, and sex on accounts', function () {
+test('administrators set an HEI account\'s institution; contact details stay the account holder\'s', function () {
     $hei = createSurveyHei();
-    $user = User::factory()->create();
+    $user = User::factory()->create(['mobile_number' => '09171234567', 'sex' => 'female']);
     $user->assignRole('hei');
     $heiRole = Role::query()->where('slug', 'hei')->sole();
 
@@ -147,6 +147,49 @@ test('administrators can set institution, mobile number, and sex on accounts', f
 
     $user->refresh();
     expect($user->survey_hei_id)->toBe($hei->id)
-        ->and($user->mobile_number)->toBe('09187654321')
-        ->and($user->sex)->toBe('male');
+        // Set by the account holder on their Profile, never overwritten here.
+        ->and($user->mobile_number)->toBe('09171234567')
+        ->and($user->sex)->toBe('female');
+});
+
+test('an HEI account needs its institution, and a CHED account has none', function () {
+    $hei = createSurveyHei();
+    $heiRole = Role::query()->where('slug', 'hei')->sole();
+    $heiFocalRole = Role::query()->where('slug', 'hei-focal')->sole();
+    $chedRole = Role::query()->where('slug', 'ched-employee')->sole();
+    $payload = fn (array $roleIds, array $overrides = []): array => [
+        'name' => 'New Account',
+        'email' => 'new-account@example.test',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'role_ids' => $roleIds,
+        ...$overrides,
+    ];
+
+    $this->actingAs($this->admin);
+    $this->post(route('settings.users.store'), $payload([$heiFocalRole->id]))
+        ->assertSessionHasErrors(['survey_hei_id' => 'Choose the institution this HEI account belongs to.']);
+    expect(User::query()->where('email', 'new-account@example.test')->exists())->toBeFalse();
+
+    // A CHED account is placed by its office, so an institution sent with it is dropped.
+    $this->post(route('settings.users.store'), $payload([$chedRole->id], ['survey_hei_id' => $hei->id]))
+        ->assertSessionHasNoErrors();
+    $staff = User::query()->where('email', 'new-account@example.test')->sole();
+    expect($staff->survey_hei_id)->toBeNull();
+
+    // Becoming an HEI account needs the institution too.
+    $this->put(route('settings.users.update', $staff), $payload([$heiRole->id], ['password' => '', 'password_confirmation' => '']))
+        ->assertSessionHasErrors('survey_hei_id');
+    $this->put(route('settings.users.update', $staff), $payload([$heiRole->id], [
+        'password' => '', 'password_confirmation' => '', 'survey_hei_id' => $hei->id,
+    ]))->assertSessionHasNoErrors();
+    expect($staff->fresh()->survey_hei_id)->toBe($hei->id);
+});
+
+test('the user form lists institutions with their region', function () {
+    $hei = createSurveyHei(['name' => 'Example College']);
+
+    $this->actingAs($this->admin)->get(route('settings.users.index'))->assertInertia(fn (Assert $page) => $page
+        ->where('heis', [['id' => $hei->id, 'name' => 'Example College', 'region_id' => $hei->cluster->survey_region_id]])
+        ->where('heiRegions', [['id' => $hei->cluster->survey_region_id, 'name' => 'Regional Office XII']]));
 });

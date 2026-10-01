@@ -25,11 +25,45 @@ and its cluster. `Role::HEI_SLUGS` lists the HEI roles: an account holding only
 those gets the HEI home and header, and every other account gets the staff
 interface.
 
+The Add user and Edit user form follows the roles. Choosing an HEI role asks
+for the Region, then the Institution, which is required: the institution is
+what places the account, and the region only narrows the list. Choosing a CHED
+role asks for the Office. A CHED-only account keeps no institution. Mobile
+number and sex are not on this form; account holders add them in Settings →
+Profile, and user management never overwrites them.
+
+The users list filters by role and by place, applying each filter as soon as
+it changes, the same way the monitoring lists do:
+
+- Places run region, then cluster, then HEI. Only the Central Office picks the
+  region.
+- HEI accounts are placed through their institution, and CHED staff through
+  their regional office (`User::scopePlacedIn`).
+- The status tabs count within the active filters and the search.
+
 New public registrations receive the `hei` role after the RBAC seed has been
 run. An administrator makes an HEI's GAD focal person an HEI Focal. The default seed creates `admin@gmail.com` with the initial password
 `12345678` and assigns that account the `admin` role. Change the password after
 the first login. Existing accounts without roles receive `hei`; no existing
 account is promoted to Administrator just because it was created first.
+
+**On-the-spot registration.** New registrations wait under Pending until a
+user manager approves them. For an event, where there is no time to approve
+each one, Settings → Users → **Registration** lets a region's HEIs in straight
+away:
+
+- It is set per region (`survey_regions.instant_registration`, optionally
+  `instant_registration_until`, stored in UTC and entered in Philippine time).
+  Other regions keep approval.
+- Anyone with `users.update` can switch the regions their office covers: the
+  Central Office any region, a regional office its own.
+- While it is open, a registrant whose HEI is in that region is created
+  active and goes straight to the HEI home. It closes when switched off or at
+  the time set, whichever comes first.
+- Everyone still joins as an HEI User (`hei`). A user manager makes the focal
+  persons HEI Focal afterwards; nobody can give themselves Monitoring.
+- Registration is not rate-limited by IP, because a venue's guests share one
+  address. The closing time is the safeguard.
 
 The named permissions are `carousel.view`, `carousel.create`,
 `carousel.update`, and `carousel.delete`. Routes and form requests enforce the
@@ -44,6 +78,10 @@ invent abilities that have no protected route or behavior.
 The Administrator role is system locked. The application also prevents users
 from deleting their own account, deleting an assigned role, or removing the
 last Administrator assignment.
+
+`activity-logs.view` opens Settings → Activity logs, the record of sign-ins
+and changes across every module, scoped to the account's office like the
+monitoring lists. Administrators have it. See `docs/activity-logs.md`.
 
 ## Carousel
 

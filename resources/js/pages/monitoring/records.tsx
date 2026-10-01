@@ -12,8 +12,7 @@ import {
     SearchFilter,
     useRecordFilters,
     YearFilter,
-} from '@/components/monitoring/record-filters';
-import { RecordsTabs } from '@/components/monitoring/records-tabs';
+} from '@/components/record-filters';
 import {
     localDate,
     periodLabel,
@@ -27,6 +26,7 @@ import { Pagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
 import { FormSelect } from '@/components/ui/form-select';
 import { stageOf } from '@/lib/monitoring-draft';
+import { placeLine } from '@/lib/places';
 import { cn } from '@/lib/utils';
 import type {
     DirectoryOption,
@@ -98,14 +98,15 @@ export default function Records({
                     )}
                 </header>
 
-                <RecordsTabs current="monitoring" staff={staff} />
-
                 {staff && !hasOffice && <NoOfficeNotice noun="reports" />}
 
                 <div className="@container overflow-hidden rounded-xl border bg-card">
                     <FilterBar
                         label="Filter reports"
-                        filters={3 + (staff ? placeFilterCount(regions) : 0)}
+                        filters={
+                            3 +
+                            (staff ? placeFilterCount(regions, clusters) : 0)
+                        }
                     >
                         {staff && (
                             <SearchFilter
@@ -239,9 +240,10 @@ function ReportRow({
     report: MonitoringReport;
     staff: boolean;
 }) {
-    const place = [report.place.cluster?.name, report.place.region?.name]
-        .filter(Boolean)
-        .join(' · ');
+    const place = placeLine(
+        report.place.cluster?.name,
+        report.place.region?.name,
+    );
     const revision = report.current?.number ?? 1;
     const action =
         report.abilities.edit || report.abilities.sign

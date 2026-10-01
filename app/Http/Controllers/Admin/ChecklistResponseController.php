@@ -43,7 +43,7 @@ class ChecklistResponseController extends Controller
                 $responses->latest('submitted_at')->orderBy('id')->paginate(15)->withQueryString(),
             ),
             'filters' => $filters,
-            'academicYears' => AcademicPeriod::options(),
+            'academicYears' => AcademicPeriod::recordOptions(),
             'hasOffice' => $user->hasOffice(),
             ...PlaceFilters::options($user, $filters),
         ]);

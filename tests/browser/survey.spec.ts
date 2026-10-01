@@ -97,11 +97,13 @@ test('respondent detail fields are reachable by their visible labels', async ({
         /^Sex/,
         /^Respondent group/,
         /^Region/,
-        /^Cluster/,
         /^Name of HEI/,
     ]) {
         await expect(page.getByLabel(label)).toHaveCount(1);
     }
+    // The cluster is asked only once a region's institutions sit in two or
+    // more clusters; the fixture's sit in one.
+    await expect(page.getByLabel(/^Cluster/)).toHaveCount(0);
 });
 
 test('survey choices open in a rounded accessible menu', async ({ page }) => {
@@ -123,7 +125,8 @@ test('survey choices open in a rounded accessible menu', async ({ page }) => {
 });
 
 // A cluster with no institutions used to leave a required, empty, enabled
-// dropdown with no way forward.
+// dropdown with no way forward. A region whose institutions sit in one
+// cluster skips the step: the region picks it, and its HEIs list at once.
 test('a cluster with no institutions explains itself instead of dead-ending', async ({
     page,
 }) => {
@@ -136,6 +139,15 @@ test('a cluster with no institutions explains itself instead of dead-ending', as
     await page.getByRole('option').nth(1).click();
 
     const cluster = page.getByLabel(/^Cluster/);
+    if ((await cluster.count()) === 0) {
+        const institution = page.getByLabel(/^Name of HEI/);
+        await expect(institution).toBeEnabled();
+        await institution.click();
+        expect(await page.getByRole('option').count()).toBeGreaterThan(1);
+        await page.keyboard.press('Escape');
+
+        return;
+    }
     await cluster.click();
     const clusterCount = await page.getByRole('option').count();
     await page.keyboard.press('Escape');

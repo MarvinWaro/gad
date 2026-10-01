@@ -616,6 +616,9 @@ test('a reader coming back gets the posts shared while they were away', async ({
     await page.clock.install();
     await logIn(page);
     await page.goto('/community');
+    // The check starts with the feed, which is deferred: wait for it, or a
+    // slow server lets the first absences pass unwatched.
+    await expect(page.getByRole('article').first()).toBeVisible();
 
     const setVisibility = (state: 'hidden' | 'visible') =>
         page.evaluate((value) => {

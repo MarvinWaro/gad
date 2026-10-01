@@ -49,6 +49,11 @@ class PlaceFilters
      * one region; only the Central Office picks. Clusters list once a region
      * is set, and HEIs once a cluster is.
      *
+     * A cluster is only a choice when the region's institutions sit in two or
+     * more. Until then (all of them "Unassigned", say) no clusters are offered
+     * and the region's institutions list straight away; assigning them to
+     * clusters brings the step back by itself.
+     *
      * @param  array<string, mixed>  $filters
      * @return array{regions: Collection<int, SurveyRegion>, clusters: Collection<int, SurveyCluster>, heis: Collection<int, SurveyHei>}
      */
@@ -60,17 +65,38 @@ class PlaceFilters
             ->get(['id', 'name']);
         $regionId = $user->national_access ? (int) ($filters['region'] ?? 0) : (int) $user->survey_region_id;
         $regionId = $regions->contains('id', $regionId) ? $regionId : null;
-        $clusters = $regionId
-            ? SurveyCluster::query()->where('survey_region_id', $regionId)->orderBy('name')->get(['id', 'name'])
-            : new Collection;
+        $clusters = $regionId ? self::clusterChoices($regionId) : new Collection;
         $clusterId = $clusters->contains('id', (int) ($filters['cluster'] ?? 0)) ? (int) $filters['cluster'] : null;
+        $heis = SurveyHei::query()->orderBy('name');
 
         return [
             'regions' => $regions,
             'clusters' => $clusters,
-            'heis' => $clusterId
-                ? SurveyHei::query()->where('survey_cluster_id', $clusterId)->orderBy('name')->get(['id', 'name'])
-                : new Collection,
+            'heis' => match (true) {
+                $clusterId !== null => $heis->where('survey_cluster_id', $clusterId)->get(['id', 'name']),
+                // No cluster to choose: the region's institutions straight away.
+                $regionId !== null && $clusters->isEmpty() => $heis
+                    ->whereHas('cluster', fn (Builder $query) => $query->where('survey_region_id', $regionId))
+                    ->get(['id', 'name']),
+                default => new Collection,
+            },
         ];
+    }
+
+    /**
+     * A region's clusters that hold institutions, when there are two or more
+     * to choose between; otherwise none.
+     *
+     * @return Collection<int, SurveyCluster>
+     */
+    public static function clusterChoices(int $regionId): Collection
+    {
+        $clusters = SurveyCluster::query()
+            ->where('survey_region_id', $regionId)
+            ->whereHas('heis')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return $clusters->count() > 1 ? $clusters : new Collection;
     }
 }
