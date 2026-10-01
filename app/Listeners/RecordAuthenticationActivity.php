@@ -4,8 +4,10 @@ namespace App\Listeners;
 
 use App\Enums\ActivityAction;
 use App\Enums\ActivityModule;
+use App\Models\ActivityLog;
 use App\Models\User;
 use App\Services\ActivityRecorder;
+use App\Services\Notifier;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -24,7 +26,10 @@ use Laravel\Passkeys\Events\PasskeyRegistered;
  */
 class RecordAuthenticationActivity
 {
-    public function __construct(private readonly ActivityRecorder $activity) {}
+    public function __construct(
+        private readonly ActivityRecorder $activity,
+        private readonly Notifier $notifier,
+    ) {}
 
     public function handleLogin(Login $event): void
     {
@@ -51,9 +56,14 @@ class RecordAuthenticationActivity
         $this->failed($event->user->email, $event->user, 'two_factor');
     }
 
+    /** A registration waiting for approval also tells the people who approve it. */
     public function handleRegistered(Registered $event): void
     {
-        $this->forUser($event->user, ActivityAction::Registered, ActivityModule::Authentication);
+        $entry = $this->forUser($event->user, ActivityAction::Registered, ActivityModule::Authentication);
+
+        if ($event->user instanceof User) {
+            $this->notifier->accountRegistered($event->user, $entry);
+        }
     }
 
     public function handlePasswordReset(PasswordReset $event): void
@@ -99,10 +109,10 @@ class RecordAuthenticationActivity
     }
 
     /** @param array<string, mixed> $properties */
-    private function forUser(mixed $user, ActivityAction $action, ActivityModule $module, array $properties = []): void
+    private function forUser(mixed $user, ActivityAction $action, ActivityModule $module, array $properties = []): ?ActivityLog
     {
-        if ($user instanceof User) {
-            $this->activity->record($action, $module, properties: $properties, actor: $user);
-        }
+        return $user instanceof User
+            ? $this->activity->record($action, $module, properties: $properties, actor: $user)
+            : null;
     }
 }

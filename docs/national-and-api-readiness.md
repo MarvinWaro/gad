@@ -45,6 +45,7 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
     - Done: monitoring reports use it (`BelongsToRegion::scopeWithinReachOf`, `User::reachesRegion`).
     - Done: user management places and manages accounts only within the manager's office.
     - Done: activity logs (2026-10-01). Each entry is placed by its record, or by the person who acted, and is read through `ActivityLogFilterRequest` and `ActivityLogResource` (`docs/activity-logs.md`).
+    - Done: notifications (2026-10-01). Staff are told about reports, GAD surveys, registrations and survey answers only for the regions their office covers (`User::scopeReaching`); a survey answer that names no region reaches everyone who may read responses. The JSON the bell reads (`NotificationResource`, cursor-paginated) is ready to move under `/api/v1` (`docs/notifications.md`).
     - Still to limit to the staff member's region:
         - account approval
         - directories

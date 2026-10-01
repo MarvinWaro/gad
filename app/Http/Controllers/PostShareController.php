@@ -7,6 +7,7 @@ use App\Enums\ActivityModule;
 use App\Models\Post;
 use App\Models\User;
 use App\Services\ActivityRecorder;
+use App\Services\Notifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,7 +18,7 @@ use Inertia\Inertia;
  */
 class PostShareController extends Controller
 {
-    public function __invoke(Request $request, Post $post, ActivityRecorder $activity): RedirectResponse
+    public function __invoke(Request $request, Post $post, ActivityRecorder $activity, Notifier $notifier): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -36,7 +37,7 @@ class PostShareController extends Controller
             'body' => $validated['body'] ?? null,
             'shared_post_id' => $original->id,
         ]);
-        $activity->record(ActivityAction::Shared, ActivityModule::Community, $original);
+        $notifier->postShared($original, $activity->record(ActivityAction::Shared, ActivityModule::Community, $original));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Shared to the community feed.')]);
 

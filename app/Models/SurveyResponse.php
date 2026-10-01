@@ -18,6 +18,9 @@ use Illuminate\Support\Carbon;
  * @property string $respondent_group
  * @property string|null $respondent_group_other
  * @property string|null $gender_identity
+ * @property int|null $survey_region_id Null when the questionnaire made the place optional.
+ * @property int|null $survey_cluster_id
+ * @property int|null $survey_hei_id
  * @property array<string, mixed> $answers
  * @property Carbon $consent_at
  * @property Carbon|null $guardian_confirmed_at

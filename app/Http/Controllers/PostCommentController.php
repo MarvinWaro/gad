@@ -8,6 +8,7 @@ use App\Models\Post;
 use App\Models\PostComment;
 use App\Models\User;
 use App\Services\ActivityRecorder;
+use App\Services\Notifier;
 use App\Support\CommunityFeed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ use Illuminate\Validation\Rule;
 /** Comments answer with JSON, like likes, so a thread updates in place. */
 class PostCommentController extends Controller
 {
-    public function store(Request $request, Post $post, ActivityRecorder $activity): JsonResponse
+    public function store(Request $request, Post $post, ActivityRecorder $activity, Notifier $notifier): JsonResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -45,9 +46,10 @@ class PostCommentController extends Controller
                 ? $answered->user_id
                 : null,
         ]);
-        $activity->record(ActivityAction::Commented, ActivityModule::Community, $post, properties: [
+        $entry = $activity->record(ActivityAction::Commented, ActivityModule::Community, $post, properties: [
             'reply' => $answered !== null,
         ]);
+        $notifier->postCommented($post, $comment, $entry);
         $comment->setRelation('author', $user);
         $comment->load('replyTo:id,name');
 
@@ -57,15 +59,17 @@ class PostCommentController extends Controller
         ], 201);
     }
 
-    public function destroy(PostComment $comment, ActivityRecorder $activity): JsonResponse
+    public function destroy(PostComment $comment, ActivityRecorder $activity, Notifier $notifier): JsonResponse
     {
         Gate::authorize('delete', $comment);
 
         $post = $comment->post;
         $comment->delete();
-        $activity->record(ActivityAction::Deleted, ActivityModule::Community, $comment, properties: $comment->user_id === auth()->id()
+        $entry = $activity->record(ActivityAction::Deleted, ActivityModule::Community, $comment, properties: $comment->user_id === auth()->id()
             ? []
             : ['moderated' => true]);
+        // Only a moderator's removal tells the author.
+        $notifier->commentRemoved($comment, $entry);
 
         return response()->json([
             'comments_count' => $post->comments()->count(),

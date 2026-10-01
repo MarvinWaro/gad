@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SaveGadEventRequest;
 use App\Models\GadEvent;
 use App\Services\ActivityRecorder;
+use App\Services\Notifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -44,13 +45,13 @@ class GadEventController extends Controller
         ]);
     }
 
-    public function store(SaveGadEventRequest $request, ActivityRecorder $activity): RedirectResponse
+    public function store(SaveGadEventRequest $request, ActivityRecorder $activity, Notifier $notifier): RedirectResponse
     {
         $event = GadEvent::query()->create([
             ...$request->eventAttributes(),
             'created_by' => $request->user()->id,
         ]);
-        $activity->recordSave(ActivityModule::Events, $event);
+        $notifier->eventCreated($activity->recordSave(ActivityModule::Events, $event));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Event created.')]);
 

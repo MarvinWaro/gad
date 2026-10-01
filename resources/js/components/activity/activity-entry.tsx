@@ -14,33 +14,9 @@ import type { ReactNode } from 'react';
 import { PersonAvatar } from '@/components/person-avatar';
 import { localDate, localDateTime } from '@/lib/manila-time';
 import { placeLine } from '@/lib/places';
+import { tones } from '@/lib/tones';
 import { cn } from '@/lib/utils';
-import type { ActivityEntry, ActivityTone } from '@/types/activity';
-
-/**
- * Each tone's badge and card edge: emerald when something began or went
- * through, brand for a change, amber when something paused or was sent
- * back, red when removed or refused, muted for data read out.
- */
-const tones: Record<ActivityTone, { badge: string; edge: string }> = {
-    positive: {
-        badge: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
-        edge: 'border-l-emerald-600 dark:border-l-emerald-500',
-    },
-    info: { badge: 'bg-brand-soft text-brand', edge: 'border-l-brand' },
-    warning: {
-        badge: 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200',
-        edge: 'border-l-amber-500',
-    },
-    danger: {
-        badge: 'bg-destructive/10 text-destructive',
-        edge: 'border-l-destructive',
-    },
-    neutral: {
-        badge: 'bg-muted text-muted-foreground',
-        edge: 'border-l-muted-foreground/50',
-    },
-};
+import type { ActivityEntry } from '@/types/activity';
 
 /** Times inside changes come as ISO 8601 in UTC. */
 const isoTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;

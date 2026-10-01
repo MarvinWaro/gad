@@ -75,6 +75,9 @@ indexed by time, region, person, module and action for national volume.
   point at: the stored type code (`user`, `monitoring-report`, …, registered
   as Eloquent's morph map), how each is named, where it belongs and which page
   the entry's "View" link opens.
+- Notifications point at these entries rather than copying them: a person
+  told about a comment, a review or an approval reads the entry that
+  recorded it (`docs/notifications.md`).
 - `ActivityLogResource` is the one shape for the page and a future API: codes
   for the action, tone and module, the sentence around the record's name,
   place names, changes, details, the device ("Chrome on Windows 10/11", from

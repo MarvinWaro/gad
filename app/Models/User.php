@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\RoutesNotifications;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\Contracts\PasskeyUser;
@@ -47,10 +47,13 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 #[Appends(['avatar'])]
 // Email verification is temporarily optional. Restore MustVerifyEmail here to
 // require verification again; keep the verification routes and stored status.
+// Laravel's notifications only send mail here (password resets, email
+// checks); the in-app ones are App\Models\Notification, so Notifiable's
+// database relation is left out.
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasFactory, PasskeyAuthenticatable, RoutesNotifications, TwoFactorAuthenticatable;
 
     /**
      * Mirror the column default so unsaved models agree with the database.
@@ -146,6 +149,50 @@ class User extends Authenticatable implements PasskeyUser
             ->when($regionId, fn (Builder $query) => $query->where(fn (Builder $query) => $query
                 ->where('survey_region_id', $regionId)
                 ->orWhereHas('hei.cluster', fn (Builder $query) => $query->where('survey_region_id', $regionId))));
+    }
+
+    /**
+     * Accounts that may sign in now.
+     *
+     * @param  Builder<User>  $query
+     */
+    public function scopeActive(Builder $query): void
+    {
+        $query->where('status', UserStatus::Active);
+    }
+
+    /**
+     * Accounts holding a permission through any of their roles.
+     *
+     * @param  Builder<User>  $query
+     */
+    public function scopeWithPermission(Builder $query, string $permission): void
+    {
+        $query->whereHas('roles.permissions', fn (Builder $query) => $query->where('slug', $permission));
+    }
+
+    /**
+     * Staff whose office covers a region: the Central Office always, and that
+     * region's own office. With no region, the Central Office only.
+     *
+     * @param  Builder<User>  $query
+     */
+    public function scopeReaching(Builder $query, ?int $regionId): void
+    {
+        $query->where(fn (Builder $query) => $query
+            ->where('national_access', true)
+            ->when($regionId !== null, fn (Builder $query) => $query->orWhere('survey_region_id', $regionId)));
+    }
+
+    /**
+     * What the account has been told about, in the bell and on the
+     * Notifications page.
+     *
+     * @return HasMany<Notification, $this>
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
     }
 
     /** @return HasMany<Post, $this> */

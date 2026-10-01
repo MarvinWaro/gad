@@ -31,6 +31,7 @@ import {
     reactionsLabel,
     usedReactions,
 } from '@/lib/post-reactions';
+import { underlineTabs } from '@/lib/underline-tabs';
 import { cn } from '@/lib/utils';
 import type { PostReactionType, ReactionSummary, Reactor } from '@/types';
 
@@ -429,8 +430,7 @@ export function ReactionsSummary({
 
 type ReactionFilter = PostReactionType | 'all';
 
-const tabClass =
-    '-mb-px h-11 flex-none rounded-none border-0 border-b-2 border-transparent px-3 text-muted-foreground shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:border-foreground dark:data-[state=active]:bg-transparent';
+const tabClass = underlineTabs.tab;
 
 /** Everyone who reacted, with a tab for each reaction given. */
 function ReactionsDialog({
@@ -465,7 +465,7 @@ function ReactionsDialog({
             <Tabs defaultValue="all" className="min-h-0 flex-1 gap-0">
                 <TabsList
                     aria-label="Show reactions"
-                    className="h-auto w-full shrink-0 justify-start gap-1 rounded-none border-b bg-transparent p-0 px-2"
+                    className={cn(underlineTabs.list, 'px-2')}
                 >
                     <TabsTrigger value="all" className={tabClass}>
                         All
