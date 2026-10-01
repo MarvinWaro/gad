@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Monitoring\ManageMonitoringReport;
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Http\Requests\Monitoring\CreateMonitoringRequest;
 use App\Http\Requests\Monitoring\MonitoringFilterRequest;
 use App\Http\Requests\Monitoring\MonitoringVersionRequest;
@@ -13,6 +15,7 @@ use App\Http\Resources\RegionOfficeResource;
 use App\Models\MonitoringReport;
 use App\Models\MonitoringRevision;
 use App\Models\User;
+use App\Services\ActivityRecorder;
 use App\Support\AcademicPeriod;
 use App\Support\MonitoringTemplate;
 use Illuminate\Http\JsonResponse;
@@ -32,11 +35,16 @@ class MonitoringController extends Controller
         Gate::authorize('create', MonitoringReport::class);
         /** @var User $user */
         $user = $request->user();
+        $years = AcademicPeriod::options();
+        $period = AcademicPeriod::current();
+        if (! in_array($period['academic_year'], $years, true)) {
+            $period['academic_year'] = $years[0] ?? '';
+        }
 
         return Inertia::render('monitoring/create', [
             'institution' => $user->hei?->name,
-            'period' => AcademicPeriod::current(),
-            'academicYears' => AcademicPeriod::options(),
+            'period' => $period,
+            'academicYears' => $years,
             'openReports' => MonitoringReportResource::collection(
                 MonitoringReport::query()
                     ->where('survey_hei_id', $user->survey_hei_id)
@@ -83,7 +91,7 @@ class MonitoringController extends Controller
                 $reports->latest('updated_at')->orderBy('id')->paginate(15)->withQueryString(),
             ),
             'filters' => $filters,
-            'academicYears' => AcademicPeriod::options(),
+            'academicYears' => AcademicPeriod::recordOptions(),
             'canCreate' => $user->can('create', MonitoringReport::class),
         ]);
     }
@@ -156,7 +164,7 @@ class MonitoringController extends Controller
     }
 
     /** A submitted revision's signed copy: shown in the browser, or downloaded. */
-    public function attachment(Request $request, MonitoringReport $report, MonitoringRevision $revision): StreamedResponse
+    public function attachment(Request $request, MonitoringReport $report, MonitoringRevision $revision, ActivityRecorder $activity): StreamedResponse
     {
         Gate::authorize('view', $report);
         abort_unless($revision->monitoring_report_id === $report->id, 404);
@@ -167,6 +175,13 @@ class MonitoringController extends Controller
             'Cache-Control' => 'private, no-store',
             'X-Content-Type-Options' => 'nosniff',
         ];
+
+        if (! $request->boolean('inline')) {
+            $activity->record(ActivityAction::Downloaded, ActivityModule::Monitoring, $report, properties: [
+                'revision' => $revision->number,
+                'file' => 'signed copy',
+            ]);
+        }
 
         return $request->boolean('inline')
             ? Storage::disk('monitoring')->response($attachment->path, $name, $headers + ['X-Frame-Options' => 'SAMEORIGIN'])

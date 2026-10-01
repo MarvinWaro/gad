@@ -2,8 +2,11 @@
 
 namespace App\Actions\Community;
 
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Models\Post;
 use App\Models\User;
+use App\Services\ActivityRecorder;
 use App\Support\PhotoDimensions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +20,8 @@ use Throwable;
  */
 class CreatePost
 {
+    public function __construct(private readonly ActivityRecorder $activity) {}
+
     /**
      * @param  array<string, mixed>  $data  Input validated by StorePostRequest: body, feeling, tags, sdgs and achieve_items.
      * @param  array<int, UploadedFile>  $images
@@ -30,7 +35,7 @@ class CreatePost
         $paths = array_column($photos, 'path');
 
         try {
-            return DB::transaction(function () use ($author, $data, $photos): Post {
+            $post = DB::transaction(function () use ($author, $data, $photos): Post {
                 $post = Post::query()->create([
                     'user_id' => $author->id,
                     'survey_hei_id' => $author->survey_hei_id,
@@ -60,5 +65,11 @@ class CreatePost
 
             throw $exception;
         }
+
+        $this->activity->record(ActivityAction::Created, ActivityModule::Community, $post, actor: $author, properties: array_filter([
+            'photos' => count($photos),
+        ]));
+
+        return $post;
     }
 }

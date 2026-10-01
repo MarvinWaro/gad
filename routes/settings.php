@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\Settings\AcademicYearController;
+use App\Http\Controllers\Settings\ActivityLogController;
 use App\Http\Controllers\Settings\ProfileAvatarController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\RegionOfficeController;
+use App\Http\Controllers\Settings\RegionRegistrationController;
 use App\Http\Controllers\Settings\RoleManagementController;
 use App\Http\Controllers\Settings\SecurityController;
 use App\Http\Controllers\Settings\SiteRatingManagementController;
@@ -23,6 +26,15 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('settings/academic-years', [AcademicYearController::class, 'index'])
+        ->middleware('can:academic-years.view')->name('settings.academic-years.index');
+    Route::post('settings/academic-years', [AcademicYearController::class, 'store'])
+        ->middleware('can:academic-years.create')->name('settings.academic-years.store');
+    Route::put('settings/academic-years/{academicYear}', [AcademicYearController::class, 'update'])
+        ->middleware('can:academic-years.update')->name('settings.academic-years.update');
+    Route::delete('settings/academic-years/{academicYear}', [AcademicYearController::class, 'destroy'])
+        ->middleware('can:academic-years.delete')->name('settings.academic-years.destroy');
+
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('settings/security', [SecurityController::class, 'edit'])
@@ -47,6 +59,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('settings/users/{user}/status', [UserManagementController::class, 'updateStatus'])
         ->middleware('can:users.update')
         ->name('settings.users.status');
+    // On-the-spot registration: a region's new accounts skip approval.
+    Route::put('settings/regions/{region}/registration', [RegionRegistrationController::class, 'update'])
+        ->middleware('can:users.update')
+        ->name('settings.regions.registration');
     Route::delete('settings/users/{user}', [UserManagementController::class, 'destroy'])
         ->middleware('can:users.delete')
         ->name('settings.users.destroy');
@@ -84,6 +100,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:survey-directories.update')->name('settings.survey-directories.update');
     Route::delete('settings/survey-directories/{type}/{id}', [SurveyDirectoryController::class, 'destroy'])
         ->middleware('can:survey-directories.delete')->name('settings.survey-directories.destroy');
+
+    Route::get('settings/activity-logs', [ActivityLogController::class, 'index'])
+        ->middleware('can:activity-logs.view')->name('settings.activity-logs.index');
 
     Route::get('settings/ratings', [SiteRatingManagementController::class, 'index'])
         ->middleware('can:site-ratings.view')->name('settings.ratings.index');

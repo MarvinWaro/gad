@@ -65,13 +65,16 @@ test('HEI fills in, signs and submits a report; CHED returns it, then reviews th
         errors.push(`${page.url()}: ${error.message}`),
     );
     await login(page, 'browser-monitoring@example.test');
-    // An HEI Focal: the HEI header, with Monitoring beside Home and Events.
+    // An HEI Focal: the HEI header, with a Monitoring menu beside Home and
+    // Events that opens Records and the two GAD surveys.
+    await page
+        .getByRole('navigation', { name: 'Main' })
+        .getByRole('button', { name: 'Monitoring' })
+        .click();
     await expect(
-        page
-            .getByRole('navigation')
-            .getByRole('link', { name: 'Monitoring', exact: true })
-            .first(),
+        page.getByRole('menuitem', { name: 'Records' }),
     ).toHaveAttribute('href', /\/records$/);
+    await page.keyboard.press('Escape');
     await page
         .getByRole('link', { name: 'Monitoring Report', exact: true })
         .first()
@@ -205,7 +208,7 @@ test('HEI fills in, signs and submits a report; CHED returns it, then reviews th
     const adminContext = await browser.newContext();
     const admin = await adminContext.newPage();
     await login(admin, 'browser-admin@example.test');
-    await admin.getByRole('link', { name: 'Monitoring', exact: true }).click();
+    await admin.getByRole('link', { name: 'Reports', exact: true }).click();
     await admin.getByRole('link', { name: /^Review/ }).click();
     await expect(
         admin.getByRole('img', {

@@ -4,7 +4,7 @@ The GAD monitoring report replaces the old portal's "Upload Monitoring". The HEI
 
 ## The HEI's three steps
 
-1. **Fill out.** Home → **Monitoring Report** opens the start page (`/monitoring`). The HEI Focal's top navigation also has **Monitoring**, which opens Records.
+1. **Fill out.** Home → **Monitoring Report** opens the start page (`/monitoring`). The HEI Focal's top navigation also has a **Monitoring** menu: Records, Training Survey and Compliance Survey.
     - The HEI picks an academic year and semester. The defaults are today's period in Philippine time: August–December is the first semester of that year; January–July is the second semester of the year before.
     - Colleagues at an HEI share one report per period. Opening a period that a colleague started continues their report.
     - Answers save as they are typed (`PATCH /monitoring/{report}/draft`), after a short pause, when a field loses focus, when the tab is hidden, and before leaving the page.
@@ -81,7 +81,7 @@ Scoping lives in `App\Models\Concerns\BelongsToRegion` (`withinReachOf`) and `Us
 
 ## GAD Training Survey and GAD Compliance Survey
 
-The old portal's two other HEI checklists sit beside the report, as the **Training Survey** and **Compliance Survey** tabs of Records (`/records/training`, `/records/compliance`) and of CHED's Monitoring (`/admin/monitoring/training`, `/admin/monitoring/compliance`). The HEI's quick links open them.
+The old portal's two other HEI checklists sit beside the report in the navigation's **Monitoring** group: Records (`/records`), Training Survey (`/records/training`) and Compliance Survey (`/records/compliance`) for HEI Focals; Reports (`/admin/monitoring`), Training Survey and Compliance Survey (`/admin/monitoring/training`, `/admin/monitoring/compliance`) for CHED. The HEI's quick links open them too.
 
 - **Wording.** `App\Enums\ChecklistType` holds each checklist's title, instruction and items, word for word from the old PHLGADIS modals, in their order. The old page needs a login, so the source is the user's screenshots of it, taken 2026-09-30. Item keys are stable codes; never reuse one for different wording.
 - **Who.** The same rules as the report (`ChecklistResponsePolicy` defers to `MonitoringReportPolicy`):
@@ -92,7 +92,7 @@ The old portal's two other HEI checklists sit beside the report, as the **Traini
     - `checklist_responses` holds `type`, the HEI, and the cluster and region fixed at the first answer. Its unique key is `survey_hei_id`, `type`, `academic_year`.
     - `checklist_answers` holds one row per checked item key.
     - The code is the `SubmitChecklist` action, `SubmitChecklistRequest` / `ChecklistFilterRequest`, and `ChecklistResponseResource`.
-    - The staff lists share their year and place filters with the monitoring list (`App\Support\PlaceFilters`, `components/monitoring/record-filters.tsx`).
+    - The staff lists share their year and place filters with the monitoring list (`App\Support\PlaceFilters`, `components/record-filters.tsx`, which Settings → Users shares too).
 
 ## Setup
 
@@ -104,7 +104,7 @@ Before launch, migrations are edited in place: run `php artisan migrate:fresh --
 php artisan test --compact tests/Feature/Monitoring tests/Feature/Settings/UserOfficeTest.php tests/Feature/Settings/RegionOfficeTest.php tests/Unit/AcademicPeriodTest.php
 node --test tests/frontend/monitoring-pdf.test.ts tests/frontend/monitoring-draft.test.ts
 npm run build
-npx playwright test tests/browser/monitoring.spec.ts tests/browser/checklists.spec.ts
+npx playwright test tests/browser/monitoring.spec.ts tests/browser/checklists.spec.ts tests/browser/app-header.spec.ts
 ```
 
 The browser test fills in, finalizes, downloads, signs (by uploading the downloaded PDF), returns, corrects and reviews a report. It saves screenshots and both PDFs under `test-results`.

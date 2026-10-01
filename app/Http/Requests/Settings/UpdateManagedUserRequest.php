@@ -4,11 +4,16 @@ namespace App\Http\Requests\Settings;
 
 use App\Concerns\RegistrationDetailsRules;
 use App\Concerns\StaffOfficeRules;
+use App\Models\Role;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
+/**
+ * Changes to an account from user management. Where it belongs follows its
+ * roles, as when it was created; contact details stay the account holder's.
+ */
 class UpdateManagedUserRequest extends FormRequest
 {
     use RegistrationDetailsRules, StaffOfficeRules;
@@ -16,11 +21,6 @@ class UpdateManagedUserRequest extends FormRequest
     public function authorize(): bool
     {
         return $this->user()?->can('users.update') === true;
-    }
-
-    protected function prepareForValidation(): void
-    {
-        $this->merge(['mobile_number' => $this->normalizeMobileNumber($this->input('mobile_number'))]);
     }
 
     /** @return array<string, ValidationRule|array<mixed>|string> */
@@ -35,9 +35,10 @@ class UpdateManagedUserRequest extends FormRequest
                 Rule::unique('users', 'email')->ignore($this->route('user')),
             ],
             'password' => ['nullable', 'confirmed', Password::defaults()],
-            'survey_hei_id' => $this->heiRules(required: false, activeOnly: false),
-            'mobile_number' => $this->mobileNumberRules(required: false),
-            'sex' => $this->sexRules(required: false),
+            'survey_hei_id' => $this->heiRules(
+                fn (): bool => Role::includesHei(Role::slugsOf($this->input('role_ids'))),
+                activeOnly: false,
+            ),
             'role_ids' => ['required', 'array', 'min:1'],
             'role_ids.*' => ['integer', Rule::exists('roles', 'id')],
             ...$this->officeRules(),
@@ -47,6 +48,9 @@ class UpdateManagedUserRequest extends FormRequest
     /** @return array<string, string> */
     public function messages(): array
     {
-        return $this->registrationDetailsMessages();
+        return [
+            ...$this->registrationDetailsMessages(),
+            'survey_hei_id.required' => __('Choose the institution this HEI account belongs to.'),
+        ];
     }
 }

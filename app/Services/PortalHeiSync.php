@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -39,7 +42,10 @@ class PortalHeiSync
 
     private const UNASSIGNED_CLUSTER = SurveyCluster::UNASSIGNED;
 
-    public function __construct(private readonly PortalService $portal) {}
+    public function __construct(
+        private readonly PortalService $portal,
+        private readonly ActivityRecorder $activity,
+    ) {}
 
     /**
      * @return array{
@@ -141,6 +147,13 @@ class PortalHeiSync
                 ->where('is_active', true)
                 ->update(['is_active' => false]);
         });
+
+        $this->activity->record(
+            ActivityAction::Synced,
+            ActivityModule::Heis,
+            properties: Arr::except($result, 'clusters_created') + ['clusters_created' => count($result['clusters_created'])],
+            label: __('HEIs from the CHED portal'),
+        );
 
         return $result + [
             'last_fetched_at' => $snapshot['last_fetched_at'],

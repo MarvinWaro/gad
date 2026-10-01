@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -15,8 +18,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $office_email
  * @property string|null $office_website
  * @property string|null $office_phone
+ * @property bool $instant_registration
+ * @property CarbonImmutable|null $instant_registration_until
  */
-#[Fillable(['name', 'is_active', 'office_city', 'office_address', 'office_email', 'office_website', 'office_phone'])]
+#[Fillable(['name', 'is_active', 'office_city', 'office_address', 'office_email', 'office_website', 'office_phone', 'instant_registration', 'instant_registration_until'])]
 class SurveyRegion extends Model
 {
     /** Letterhead details a regional office keeps up to date. */
@@ -24,12 +29,37 @@ class SurveyRegion extends Model
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return [
+            'is_active' => 'boolean',
+            'instant_registration' => 'boolean',
+            'instant_registration_until' => 'immutable_datetime',
+        ];
     }
 
     /** @return HasMany<SurveyCluster, $this> */
     public function clusters(): HasMany
     {
         return $this->hasMany(SurveyCluster::class);
+    }
+
+    /**
+     * Regions letting new HEI accounts in without approval: switched on, and
+     * either open-ended or not yet past the closing time.
+     *
+     * @param  Builder<SurveyRegion>  $query
+     */
+    public function scopeOpenForInstantRegistration(Builder $query, ?CarbonInterface $at = null): void
+    {
+        $query->where('instant_registration', true)
+            ->where(fn (Builder $query) => $query
+                ->whereNull('instant_registration_until')
+                ->orWhere('instant_registration_until', '>', $at ?? now()));
+    }
+
+    /** The same rule as the scope, for a region already loaded. */
+    public function isOpenForInstantRegistration(?CarbonInterface $at = null): bool
+    {
+        return $this->instant_registration
+            && ($this->instant_registration_until === null || $this->instant_registration_until->isAfter($at ?? now()));
     }
 }

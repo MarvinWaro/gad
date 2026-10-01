@@ -30,6 +30,29 @@ class Role extends Model
         return $slugs !== [] && array_diff($slugs, self::HEI_SLUGS) === [];
     }
 
+    /**
+     * Whether a set of role slugs includes an HEI role, which places the
+     * account at an institution.
+     *
+     * @param  list<string>  $slugs
+     */
+    public static function includesHei(array $slugs): bool
+    {
+        return array_intersect($slugs, self::HEI_SLUGS) !== [];
+    }
+
+    /**
+     * The slugs of the roles with these ids; anything else is skipped.
+     *
+     * @return list<string>
+     */
+    public static function slugsOf(mixed $ids): array
+    {
+        $ids = array_filter((array) $ids, fn (mixed $id): bool => is_numeric($id));
+
+        return $ids === [] ? [] : static::query()->whereKey($ids)->pluck('slug')->all();
+    }
+
     /** @return BelongsToMany<Permission, $this> */
     public function permissions(): BelongsToMany
     {

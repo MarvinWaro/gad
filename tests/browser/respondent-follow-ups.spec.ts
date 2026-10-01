@@ -58,7 +58,6 @@ test('an administrator gives a new group its own follow-up question, and a respo
     await chooseSelect(page, 'group-answer-occupation', 'others');
     await page.getByLabel('Please specify').fill('Tricycle driver');
     await chooseSelectIndex(page, 'region_id', 1);
-    await chooseSelectIndex(page, 'cluster_id', 1);
     await chooseSelectIndex(page, 'hei_id', 1);
     await page.getByRole('button', { name: 'Continue' }).click();
     await page

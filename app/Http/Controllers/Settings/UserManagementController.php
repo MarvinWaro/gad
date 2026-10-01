@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\StoreManagedUserRequest;
 use App\Http\Requests\Settings\UpdateManagedUserRequest;
+use App\Http\Requests\Settings\UserFilterRequest;
+use App\Http\Resources\RegionRegistrationResource;
 use App\Models\Role;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\User;
+use App\Services\ActivityRecorder;
 use App\Support\CountPhrase;
+use App\Support\PlaceFilters;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,17 +27,18 @@ use Inertia\Response;
 
 class UserManagementController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(UserFilterRequest $request): Response
     {
-        $search = trim((string) $request->query('search', ''));
-        $status = UserStatus::tryFrom((string) $request->query('status', ''));
+        $validated = $request->validated();
+        $search = trim((string) ($validated['search'] ?? ''));
+        $status = UserStatus::tryFrom((string) ($validated['status'] ?? ''));
+        $role = (string) ($validated['role'] ?? '');
         $actorPermissions = $request->user()->permissionSlugs();
         $canEdit = $request->user()->can('users.create') || $request->user()->can('users.update');
 
         $actor = $request->user();
-        $users = User::query()
-            ->with(['roles:id,name,slug', 'hei:id,name', 'officeRegion:id,name'])
-            ->when($status !== null, fn ($query) => $query->where('status', $status))
+        // Every filter but the status, so the status tabs count what they would show.
+        $filtered = fn () => User::query()
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($query) use ($search): void {
                     $query
@@ -41,6 +48,15 @@ class UserManagementController extends Controller
                         ->orWhereHas('hei', fn ($query) => $query->where('name', 'like', "%{$search}%"));
                 });
             })
+            ->when($role !== '', fn ($query) => $query->whereHas('roles', fn ($query) => $query->where('slug', $role)))
+            ->placedIn(
+                isset($validated['region']) ? (int) $validated['region'] : null,
+                isset($validated['cluster']) ? (int) $validated['cluster'] : null,
+                isset($validated['hei']) ? (int) $validated['hei'] : null,
+            );
+        $users = $filtered()
+            ->with(['roles:id,name,slug', 'hei:id,name', 'officeRegion:id,name'])
+            ->when($status !== null, fn ($query) => $query->where('status', $status))
             // Registrations awaiting approval are the admin's to-do list.
             ->orderByRaw('case when status = ? then 0 else 1 end', [UserStatus::Pending->value])
             ->orderBy('name')
@@ -52,7 +68,6 @@ class UserManagementController extends Controller
                 'email' => $user->email,
                 'hei' => $user->hei?->only(['id', 'name']),
                 'mobile_number' => $user->mobile_number,
-                'sex' => $user->sex,
                 'status' => $user->status->value,
                 'roles' => $user->roles->map->only(['id', 'name', 'slug'])->values(),
                 'office' => [
@@ -77,24 +92,39 @@ class UserManagementController extends Controller
             ->map(fn (Role $role): array => [...$role->only(['id', 'name', 'slug']), 'hei' => $role->isHei()])
             ->values();
 
-        $counts = User::query()
+        $counts = $filtered()
             ->toBase()
             ->selectRaw('status, count(*) as aggregate')
             ->groupBy('status')
             ->pluck('aggregate', 'status');
 
+        // Active institutions, plus any inactive one still linked to an
+        // account so editing that account keeps its current selection. The
+        // form picks the region first, so each carries its region.
+        $heis = $canEdit
+            ? SurveyHei::query()
+                ->join('survey_clusters', 'survey_clusters.id', '=', 'survey_heis.survey_cluster_id')
+                ->join('survey_regions', 'survey_regions.id', '=', 'survey_clusters.survey_region_id')
+                ->where(fn ($query) => $query
+                    ->where('survey_heis.is_active', true)
+                    ->orWhereIn('survey_heis.id', User::query()->whereNotNull('survey_hei_id')->select('survey_hei_id')))
+                ->orderBy('survey_heis.name')
+                ->get(['survey_heis.id', 'survey_heis.name', 'survey_regions.id as region_id', 'survey_regions.name as region_name'])
+            : collect();
+
         return Inertia::render('settings/users', [
             'users' => $users,
             'roles' => $roles,
-            // Active institutions, plus any inactive one still linked to an
-            // account so editing that account keeps its current selection.
-            'heis' => $canEdit
-                ? SurveyHei::query()
-                    ->where('is_active', true)
-                    ->orWhereIn('id', User::query()->whereNotNull('survey_hei_id')->select('survey_hei_id'))
-                    ->orderBy('name')
-                    ->get(['id', 'name'])
-                : [],
+            'heis' => $heis->map(fn (SurveyHei $hei): array => [
+                'id' => $hei->id,
+                'name' => $hei->name,
+                'region_id' => (int) $hei->getAttribute('region_id'),
+            ])->values(),
+            // The regions those institutions are in.
+            'heiRegions' => $heis->map(fn (SurveyHei $hei): array => [
+                'id' => (int) $hei->getAttribute('region_id'),
+                'name' => (string) $hei->getAttribute('region_name'),
+            ])->unique('id')->sortBy('name')->values(),
             // Offices this manager may place accounts in: every region from
             // the Central Office, otherwise only their own.
             'offices' => [
@@ -106,32 +136,53 @@ class UserManagementController extends Controller
                         ->get(['id', 'name'])
                     : [],
             ],
+            // On-the-spot registration for the regions this manager covers.
+            'registration' => $request->user()->can('users.update')
+                ? RegionRegistrationResource::collection(
+                    SurveyRegion::query()
+                        ->where('is_active', true)
+                        ->when(! $actor->national_access, fn ($query) => $query->whereKey($actor->survey_region_id))
+                        ->orderBy('name')
+                        ->get(['id', 'name', 'instant_registration', 'instant_registration_until']),
+                )->resolve($request)
+                : [],
             'statusCounts' => collect(UserStatus::cases())
                 ->mapWithKeys(fn (UserStatus $case): array => [$case->value => (int) ($counts[$case->value] ?? 0)]),
-            'filters' => ['search' => $search, 'status' => $status->value ?? ''],
+            'filters' => [
+                'search' => $search,
+                'status' => $status->value ?? '',
+                'role' => $role,
+                'region' => (string) ($validated['region'] ?? ''),
+                'cluster' => (string) ($validated['cluster'] ?? ''),
+                'hei' => (string) ($validated['hei'] ?? ''),
+            ],
+            // Every role, to filter by, including any this manager cannot assign.
+            'roleOptions' => Role::query()->orderBy('name')->get(['name', 'slug']),
+            // Where accounts are placed, as the monitoring lists filter them.
+            'places' => PlaceFilters::options($actor, $validated),
             'permissions' => [
                 'create' => $request->user()->can('users.create'),
                 'update' => $request->user()->can('users.update'),
                 'delete' => $request->user()->can('users.delete'),
+                'activity' => $request->user()->can('activity-logs.view'),
             ],
         ]);
     }
 
-    public function store(StoreManagedUserRequest $request): RedirectResponse
+    public function store(StoreManagedUserRequest $request, ActivityRecorder $activity): RedirectResponse
     {
         $validated = $request->validated();
         $this->ensureRolesAreAssignable($request->user(), $validated['role_ids']);
-        $office = $this->officeFrom($validated);
+        $slugs = Role::slugsOf($validated['role_ids']);
+        $office = $this->officeFrom($slugs, $validated);
         $this->ensureOfficeIsAssignable($request->user(), $office);
 
-        DB::transaction(function () use ($validated, $office): void {
+        $user = DB::transaction(function () use ($validated, $slugs, $office): User {
             $user = User::query()->create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => $validated['password'],
-                'survey_hei_id' => $validated['survey_hei_id'] ?? null,
-                'mobile_number' => $validated['mobile_number'] ?? null,
-                'sex' => $validated['sex'] ?? null,
+                'survey_hei_id' => $this->heiFrom($slugs, $validated),
                 'status' => UserStatus::Active,
                 'email_verified_at' => now(),
             ]);
@@ -142,7 +193,13 @@ class UserManagementController extends Controller
             }
 
             $user->roles()->sync($validated['role_ids']);
+
+            return $user;
         });
+
+        $activity->record(ActivityAction::Created, ActivityModule::Users, $user, properties: [
+            'roles' => Role::query()->whereKey($validated['role_ids'])->orderBy('name')->pluck('name')->all(),
+        ]);
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -152,22 +209,23 @@ class UserManagementController extends Controller
         return to_route('settings.users.index');
     }
 
-    public function update(UpdateManagedUserRequest $request, User $user): RedirectResponse
+    public function update(UpdateManagedUserRequest $request, User $user, ActivityRecorder $activity): RedirectResponse
     {
         $validated = $request->validated();
         $this->ensureUserIsManageable($request->user(), $user);
         $this->ensureRolesAreAssignable($request->user(), $validated['role_ids']);
         $this->ensureAdministratorRemains($user, $validated['role_ids']);
-        $office = $this->officeFrom($validated);
+        $slugs = Role::slugsOf($validated['role_ids']);
+        $office = $this->officeFrom($slugs, $validated);
         $this->ensureOfficeIsAssignable($request->user(), $office);
+        $rolesBefore = $user->roles()->pluck('name')->all();
 
-        DB::transaction(function () use ($user, $validated, $office): void {
+        DB::transaction(function () use ($user, $validated, $slugs, $office): void {
+            // Contact details are left as the account holder set them.
             $attributes = [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'survey_hei_id' => $validated['survey_hei_id'] ?? null,
-                'mobile_number' => $validated['mobile_number'] ?? null,
-                'sex' => $validated['sex'] ?? null,
+                'survey_hei_id' => $this->heiFrom($slugs, $validated),
             ];
 
             if (! empty($validated['password'])) {
@@ -184,6 +242,16 @@ class UserManagementController extends Controller
             $user->roles()->sync($validated['role_ids']);
         });
 
+        $changes = $activity->changesOf($user);
+        $roles = $activity->listChange($rolesBefore, Role::query()->whereKey($validated['role_ids'])->pluck('name')->all());
+        if ($roles !== null) {
+            $changes['roles'] = $roles;
+        }
+        if (! empty($validated['password'])) {
+            $changes['password'] = [null, 'Changed'];
+        }
+        $activity->record(ActivityAction::Updated, ActivityModule::Users, $user, $changes);
+
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => __('User updated.'),
@@ -192,7 +260,7 @@ class UserManagementController extends Controller
         return to_route('settings.users.index');
     }
 
-    public function updateStatus(Request $request, User $user): RedirectResponse
+    public function updateStatus(Request $request, User $user, ActivityRecorder $activity): RedirectResponse
     {
         $validated = $request->validate([
             'status' => ['required', Rule::enum(UserStatus::class)],
@@ -220,7 +288,15 @@ class UserManagementController extends Controller
             default => __(':name marked as pending.', ['name' => $user->name]),
         };
 
+        $action = match (true) {
+            $status === UserStatus::Active && $user->status === UserStatus::Pending => ActivityAction::Approved,
+            $status === UserStatus::Active => ActivityAction::Activated,
+            $status === UserStatus::Inactive => ActivityAction::Deactivated,
+            default => ActivityAction::MarkedPending,
+        };
+
         $user->update(['status' => $status]);
+        $activity->record($action, ActivityModule::Users, $user, $activity->changesOf($user));
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -230,7 +306,7 @@ class UserManagementController extends Controller
         return back();
     }
 
-    public function destroy(Request $request, User $user): RedirectResponse
+    public function destroy(Request $request, User $user, ActivityRecorder $activity): RedirectResponse
     {
         if ($user->is($request->user())) {
             return $this->refuse(__('You cannot delete your own account from user management.'));
@@ -245,16 +321,17 @@ class UserManagementController extends Controller
 
         // Posts and comments are the school's GAD record; deleting the author
         // would erase them. Deactivation keeps them and blocks the login.
-        $activity = $this->activityCounts($user);
+        $records = $this->activityCounts($user);
 
-        if (array_sum($activity) > 0) {
+        if (array_sum($records) > 0) {
             return $this->refuse(__(':name has :activity. Deactivate the account instead to keep them.', [
                 'name' => $user->name,
-                'activity' => CountPhrase::of($activity),
+                'activity' => CountPhrase::of($records),
             ]));
         }
 
         $user->delete();
+        $activity->record(ActivityAction::Deleted, ActivityModule::Users, $user);
 
         Inertia::flash('toast', [
             'type' => 'deleted',
@@ -371,16 +448,30 @@ class UserManagementController extends Controller
     }
 
     /**
+     * The institution a create or update sets. It places HEI accounts (the
+     * request requires it for an HEI role); CHED staff have none, since
+     * their office places them.
+     *
+     * @param  list<string>  $slugs
+     * @param  array<string, mixed>  $validated
+     */
+    private function heiFrom(array $slugs, array $validated): ?int
+    {
+        return Role::includesHei($slugs) && isset($validated['survey_hei_id'])
+            ? (int) $validated['survey_hei_id']
+            : null;
+    }
+
+    /**
      * The office a create or update sets, or null to keep the current one.
      * HEI-only accounts never hold one: their region comes through the HEI.
      *
+     * @param  list<string>  $slugs
      * @param  array<string, mixed>  $validated
      * @return array{national_access: bool, survey_region_id: int|null}|null
      */
-    private function officeFrom(array $validated): ?array
+    private function officeFrom(array $slugs, array $validated): ?array
     {
-        $slugs = Role::query()->whereKey($validated['role_ids'])->pluck('slug')->all();
-
         if (Role::onlyHei($slugs)) {
             return ['national_access' => false, 'survey_region_id' => null];
         }

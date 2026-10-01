@@ -7,7 +7,7 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 **Contacts and office names in UI copy.** These should come from the viewer's region, or the HEI's region, instead:
 
 - [ ] `resources/js/data/contact.ts`: the RO XII hotline and email. The footer and the FAQ contact panel read it.
-- [ ] `resources/js/components/survey/respondent-step.tsx` and `resources/js/pages/settings/profile.tsx`: hard-coded `mailto:chedro12@ched.gov.ph`. These don't use `contact.ts`.
+- [ ] `resources/js/components/survey/respondent-step.tsx`: hard-coded `mailto:chedro12@ched.gov.ph`. It doesn't use `contact.ts`. (Settings → Profile now names the account's own regional office from `survey_regions.office_email`.)
 - [ ] Footer "Powered by CHEDRO XII" (`components/public/site-layout.tsx`).
 - [ ] Statistics heading "CHEDRO XII Higher Education GAD Statistical Data" (`components/home/statistics.tsx`).
 - [ ] "CHEDRO XII" or "CHED Regional Office XII" in:
@@ -44,6 +44,7 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 - [ ] **Staff scope in every module.** Since 2026-09-29 each staff account has an office (Settings → Users → Office): one region (`users.survey_region_id`) or the Central Office (`users.national_access`). HEI users still reach a region through HEI → cluster → region.
     - Done: monitoring reports use it (`BelongsToRegion::scopeWithinReachOf`, `User::reachesRegion`).
     - Done: user management places and manages accounts only within the manager's office.
+    - Done: activity logs (2026-10-01). Each entry is placed by its record, or by the person who acted, and is read through `ActivityLogFilterRequest` and `ActivityLogResource` (`docs/activity-logs.md`).
     - Still to limit to the staff member's region:
         - account approval
         - directories

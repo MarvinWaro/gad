@@ -1,12 +1,8 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import type { ImgHTMLAttributes, KeyboardEvent, ReactNode } from 'react';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { PhotoLightboxContent } from '@/components/photo-lightbox';
+import { Dialog } from '@/components/ui/dialog';
 import { singlePhotoHeight } from '@/lib/photo-frame';
 import { cn } from '@/lib/utils';
 import type { PostImage } from '@/types';
@@ -257,17 +253,11 @@ export function PostImages({
                 open={open !== null}
                 onOpenChange={(value) => !value && setOpen(null)}
             >
-                <DialogContent
+                <PhotoLightboxContent
                     onKeyDown={handleKeyDown}
-                    className="max-w-[min(96vw,72rem)] gap-0 border-none bg-transparent p-0 shadow-none sm:max-w-[min(96vw,72rem)] [&>button:last-child]:top-2 [&>button:last-child]:right-2 [&>button:last-child]:rounded-full [&>button:last-child]:bg-background [&>button:last-child]:p-1.5 [&>button:last-child]:opacity-100"
+                    title={`Photos shared by ${sharedBy}`}
+                    description="Use the left and right arrow keys to move between photos."
                 >
-                    <DialogTitle className="sr-only">
-                        Photos shared by {sharedBy}
-                    </DialogTitle>
-                    <DialogDescription className="sr-only">
-                        Use the left and right arrow keys to move between
-                        photos.
-                    </DialogDescription>
                     {open !== null && images[open] && (
                         <figure className="flex flex-col items-center">
                             <img
@@ -308,7 +298,7 @@ export function PostImages({
                             )}
                         </figure>
                     )}
-                </DialogContent>
+                </PhotoLightboxContent>
             </Dialog>
         </>
     );

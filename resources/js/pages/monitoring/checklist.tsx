@@ -4,7 +4,6 @@ import { useId } from 'react';
 import type { FormEvent } from 'react';
 import ChecklistController from '@/actions/App/Http/Controllers/ChecklistController';
 import { ChecklistChoices } from '@/components/monitoring/checklist-items';
-import { RecordsTabs } from '@/components/monitoring/records-tabs';
 import { Field, localDate, selectClass } from '@/components/monitoring/shared';
 import { Button } from '@/components/ui/button';
 import { FormSelect } from '@/components/ui/form-select';
@@ -42,7 +41,7 @@ export default function Checklist({
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <header>
                     <p className="mb-2 text-sm text-muted-foreground">
-                        Records
+                        Monitoring
                     </p>
                     <h1 className="text-3xl font-medium tracking-tight">
                         {checklist.name}
@@ -52,8 +51,6 @@ export default function Checklist({
                         your earlier answers.
                     </p>
                 </header>
-
-                <RecordsTabs current={checklist.type} staff={false} />
 
                 <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
                     {/* A new year starts a fresh form with that year's answers. */}

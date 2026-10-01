@@ -107,8 +107,6 @@ function registrationPayload(SurveyHei $hei, array $overrides = []): array
         'name' => 'Test User',
         'email' => 'test@example.com',
         'survey_hei_id' => $hei->id,
-        'mobile_number' => '0917 123 4567',
-        'sex' => 'female',
         'password' => 'password',
         'password_confirmation' => 'password',
         ...$overrides,

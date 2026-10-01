@@ -9,23 +9,26 @@ import { FormSelect } from '@/components/ui/form-select';
 import { cn } from '@/lib/utils';
 import type { DirectoryOption, ReportFilters } from '@/types/monitoring';
 
-type PlaceKey = 'region' | 'cluster' | 'hei';
+export type PlaceKey = 'region' | 'cluster' | 'hei';
 
 /** How long typing pauses before the search runs. */
 const SEARCH_DELAY = 350;
 
 /**
- * The filters of the Monitoring section's lists. They apply as soon as they
- * change, starting again from page 1; the search waits for a pause in typing.
+ * A list's filters, such as the Monitoring section's or the HEI directory's.
+ * They apply as soon as they change, starting again from page 1; the search
+ * waits for a pause in typing.
  */
-export function useRecordFilters(path: string, filters: ReportFilters) {
-    const [values, setValues] = useState<ReportFilters>(filters);
+export function useRecordFilters<
+    T extends Partial<Record<string, string>> = ReportFilters,
+>(path: string, filters: T) {
+    const [values, setValues] = useState<T>(filters);
     const [loading, setLoading] = useState(false);
     const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
     useEffect(() => () => clearTimeout(searchTimer.current), []);
 
-    function apply(next: ReportFilters) {
+    function apply(next: T) {
         clearTimeout(searchTimer.current);
         router.get(
             path,
@@ -44,7 +47,7 @@ export function useRecordFilters(path: string, filters: ReportFilters) {
         );
     }
 
-    function change(next: ReportFilters) {
+    function change(next: T) {
         setValues(next);
         apply(next);
     }
@@ -204,14 +207,22 @@ type PlaceOptions = {
     heis: DirectoryOption[];
 };
 
-/** How many place filters show: a regional office has its one region. */
-export function placeFilterCount(regions: DirectoryOption[]): number {
-    return regions.length > 1 ? 3 : 2;
+/**
+ * How many place filters show: a regional office has its one region, and a
+ * cluster shows only when the server offers two or more to choose between.
+ */
+export function placeFilterCount(
+    regions: DirectoryOption[],
+    clusters: DirectoryOption[],
+): number {
+    return (regions.length > 1 ? 1 : 0) + (clusters.length > 0 ? 1 : 0) + 1;
 }
 
 /**
  * Region (Central Office only), cluster and HEI. Each list fills once the
- * place above it is chosen.
+ * place above it is chosen. The server offers clusters only when a region's
+ * institutions sit in two or more (`PlaceFilters::clusterChoices`); until
+ * then the cluster is skipped and the region's HEIs list straight away.
  */
 export function PlaceFilters({
     values,
@@ -220,10 +231,12 @@ export function PlaceFilters({
     clusters,
     heis,
 }: PlaceOptions & {
-    values: ReportFilters;
+    /** Only the place keys are read, so any list's filters will do. */
+    values: Pick<ReportFilters, PlaceKey>;
     onPick: (key: PlaceKey, value: string) => void;
 }) {
     const pickRegion = regions.length > 1;
+    const pickCluster = clusters.length > 0;
     const places: {
         key: PlaceKey;
         label: string;
@@ -242,19 +255,23 @@ export function PlaceFilters({
                   },
               ]
             : []),
-        {
-            key: 'cluster',
-            label: 'Cluster',
-            all: 'All clusters',
-            options: clusters,
-            parent: pickRegion ? 'region' : undefined,
-        },
+        ...(pickCluster
+            ? [
+                  {
+                      key: 'cluster' as const,
+                      label: 'Cluster',
+                      all: 'All clusters',
+                      options: clusters,
+                      parent: pickRegion ? ('region' as const) : undefined,
+                  },
+              ]
+            : []),
         {
             key: 'hei',
             label: 'HEI',
             all: 'All HEIs',
             options: heis,
-            parent: 'cluster',
+            parent: pickCluster ? 'cluster' : pickRegion ? 'region' : undefined,
         },
     ];
 

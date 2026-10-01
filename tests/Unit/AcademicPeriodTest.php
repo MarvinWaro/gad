@@ -16,7 +16,7 @@ test('the current period follows the Philippine semester calendar', function (st
 ]);
 
 test('options run from next academic year back to the first one kept', function () {
-    $options = AcademicPeriod::options(CarbonImmutable::parse('2026-09-29 02:00:00', 'UTC'));
+    $options = AcademicPeriod::calendarOptions(CarbonImmutable::parse('2026-09-29 02:00:00', 'UTC'));
 
     expect($options[0])->toBe('2027-2028')
         ->and($options[1])->toBe('2026-2027')

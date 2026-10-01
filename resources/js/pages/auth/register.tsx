@@ -15,17 +15,29 @@ import { store } from '@/routes/register';
 
 type Props = {
     passwordRules: string;
-    heis: HeiOption[];
+    /**
+     * Every active region; one may have no institutions yet. `instant`: new
+     * accounts there need no approval right now. `email`: the regional office.
+     */
+    regions: {
+        id: number;
+        name: string;
+        instant: boolean;
+        email: string | null;
+    }[];
+    heis: (HeiOption & { region_id: number })[];
 };
 
-const sexOptions = [
-    { value: 'female', label: 'Female' },
-    { value: 'male', label: 'Male' },
-];
-
-export default function Register({ passwordRules, heis }: Props) {
+export default function Register({ passwordRules, regions, heis }: Props) {
+    // With a single region to choose from, it is chosen already.
+    const [regionId, setRegionId] = useState(
+        regions.length === 1 ? String(regions[0].id) : '',
+    );
     const [heiId, setHeiId] = useState('');
-    const [sex, setSex] = useState('');
+    const region = regions.find((option) => String(option.id) === regionId);
+    const regionHeis = heis.filter((hei) => String(hei.region_id) === regionId);
+    // The CHED directory has not sent this region's institutions yet.
+    const noHeis = region !== undefined && regionHeis.length === 0;
 
     return (
         <>
@@ -72,6 +84,62 @@ export default function Register({ passwordRules, heis }: Props) {
                             </div>
 
                             <div className="grid gap-2">
+                                <Label htmlFor="region">Region</Label>
+                                {/* Only narrows the institutions; the HEI is
+                                    what the account records. */}
+                                <FormSelect
+                                    id="region"
+                                    value={regionId}
+                                    onChange={(value) => {
+                                        setRegionId(value);
+                                        setHeiId('');
+                                    }}
+                                    placeholder="Choose your region"
+                                    options={regions.map((option) => ({
+                                        value: String(option.id),
+                                        label: option.name,
+                                    }))}
+                                    tabIndex={3}
+                                    className="rounded-[6px] data-[size=default]:h-11"
+                                    aria-required
+                                />
+                                {/* What happens after submitting depends on
+                                    whether the region registers people on
+                                    the spot. */}
+                                <p
+                                    role="status"
+                                    className="text-sm text-muted-foreground empty:hidden"
+                                >
+                                    {region === undefined ? (
+                                        ''
+                                    ) : noHeis ? (
+                                        <>
+                                            No institutions are listed for this
+                                            region yet.{' '}
+                                            {region.email ? (
+                                                <>
+                                                    Email{' '}
+                                                    <a
+                                                        href={`mailto:${region.email}`}
+                                                        className="text-foreground underline underline-offset-4"
+                                                    >
+                                                        {region.email}
+                                                    </a>{' '}
+                                                    so yours can be added.
+                                                </>
+                                            ) : (
+                                                'Contact your CHED regional office so yours can be added.'
+                                            )}
+                                        </>
+                                    ) : region.instant ? (
+                                        `${region.name} is registering on the spot: you’ll go straight to PHLGADIS after you submit.`
+                                    ) : (
+                                        'The administrator will review your account before you can log in.'
+                                    )}
+                                </p>
+                            </div>
+
+                            <div className="grid gap-2">
                                 <Label htmlFor="survey_hei_id">
                                     Higher education institution
                                 </Label>
@@ -80,53 +148,19 @@ export default function Register({ passwordRules, heis }: Props) {
                                     name="survey_hei_id"
                                     value={heiId}
                                     onChange={setHeiId}
-                                    options={heis}
-                                    tabIndex={3}
+                                    options={regionHeis}
+                                    disabled={region === undefined || noHeis}
+                                    placeholder={
+                                        region === undefined
+                                            ? 'Choose a region first'
+                                            : noHeis
+                                              ? 'No institutions available'
+                                              : undefined
+                                    }
+                                    tabIndex={4}
                                     aria-invalid={Boolean(errors.survey_hei_id)}
                                 />
                                 <InputError message={errors.survey_hei_id} />
-                            </div>
-
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="mobile_number">
-                                        Mobile number
-                                    </Label>
-                                    <Input
-                                        id="mobile_number"
-                                        type="tel"
-                                        inputMode="numeric"
-                                        required
-                                        tabIndex={4}
-                                        autoComplete="tel-national"
-                                        name="mobile_number"
-                                        placeholder="09XX XXX XXXX"
-                                        maxLength={16}
-                                        aria-invalid={Boolean(
-                                            errors.mobile_number,
-                                        )}
-                                    />
-                                    <InputError
-                                        message={errors.mobile_number}
-                                    />
-                                </div>
-
-                                <div className="grid gap-2">
-                                    <Label htmlFor="sex">Sex</Label>
-                                    <FormSelect
-                                        id="sex"
-                                        name="sex"
-                                        value={sex}
-                                        onChange={setSex}
-                                        placeholder="Select sex"
-                                        options={sexOptions}
-                                        tabIndex={5}
-                                        className="rounded-[6px] data-[size=default]:h-11"
-                                        aria-required
-                                        aria-invalid={Boolean(errors.sex)}
-                                    />
-                                    <InputError message={errors.sex} />
-                                </div>
                             </div>
 
                             <div className="grid gap-2">
@@ -134,7 +168,7 @@ export default function Register({ passwordRules, heis }: Props) {
                                 <PasswordInput
                                     id="password"
                                     required
-                                    tabIndex={6}
+                                    tabIndex={5}
                                     autoComplete="new-password"
                                     name="password"
                                     placeholder="Password"
@@ -150,7 +184,7 @@ export default function Register({ passwordRules, heis }: Props) {
                                 <PasswordInput
                                     id="password_confirmation"
                                     required
-                                    tabIndex={7}
+                                    tabIndex={6}
                                     autoComplete="new-password"
                                     name="password_confirmation"
                                     placeholder="Confirm password"
@@ -164,7 +198,7 @@ export default function Register({ passwordRules, heis }: Props) {
                             <Button
                                 type="submit"
                                 className="mt-2 w-full"
-                                tabIndex={8}
+                                tabIndex={7}
                                 data-test="register-user-button"
                             >
                                 {processing && <Spinner />}
@@ -174,7 +208,7 @@ export default function Register({ passwordRules, heis }: Props) {
 
                         <div className="text-center text-sm text-muted-foreground">
                             Already have an account?{' '}
-                            <TextLink href={login()} tabIndex={9}>
+                            <TextLink href={login()} tabIndex={8}>
                                 Log in
                             </TextLink>
                         </div>
@@ -187,6 +221,5 @@ export default function Register({ passwordRules, heis }: Props) {
 
 Register.layout = {
     title: 'Create an account',
-    description:
-        'Register with your HEI. The administrator will review your account before you can log in.',
+    description: 'Register with your HEI.',
 };

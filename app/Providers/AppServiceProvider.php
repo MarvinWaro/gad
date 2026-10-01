@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Support\ActivitySubjects;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -26,6 +28,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        // Activity logs store what they point at by these codes, not class names.
+        Relation::morphMap(ActivitySubjects::TYPES);
 
         Gate::before(
             fn (User $user, string $ability): ?bool => $user->hasPermissionTo($ability)

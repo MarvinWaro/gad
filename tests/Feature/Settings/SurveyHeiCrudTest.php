@@ -229,3 +229,45 @@ test('a hand-entered HEI reaches the published public survey', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('directories.heis.0.name', 'Notre Dame of Marbel University'));
 });
+
+test('the directory filters by name or UII, region, status and ownership', function () {
+    $unassigned = SurveyCluster::query()->create(['survey_region_id' => $this->cluster->survey_region_id, 'name' => SurveyCluster::UNASSIGNED, 'is_active' => true]);
+    SurveyHei::query()->create(['survey_cluster_id' => $unassigned->id, 'uii' => '12001', 'name' => 'Marbel College', 'ownership' => 'private', 'is_active' => true]);
+    SurveyHei::query()->create(['survey_cluster_id' => $unassigned->id, 'uii' => '12002', 'name' => 'Koronadal State College', 'ownership' => 'public', 'is_active' => false]);
+    SurveyHei::query()->create(['survey_cluster_id' => $unassigned->id, 'uii' => '12003', 'name' => 'Unlisted Owner College', 'is_active' => true]);
+    $xi = SurveyRegion::query()->create(['name' => 'Regional Office XI']);
+    $davao = SurveyCluster::query()->create(['survey_region_id' => $xi->id, 'name' => 'Davao', 'is_active' => true]);
+    SurveyHei::query()->create(['survey_cluster_id' => $davao->id, 'uii' => '11001', 'name' => 'Davao College', 'is_active' => true]);
+    $names = fn (array $query): array => collect($this->actingAs($this->admin)
+        ->get(route('settings.heis.index', $query))
+        ->assertOk()
+        ->viewData('page')['props']['heis']['data'])->pluck('name')->all();
+
+    expect($names(['search' => 'marbel']))->toBe(['Marbel College'])
+        ->and($names(['search' => '12002']))->toBe(['Koronadal State College'])
+        ->and($names(['region' => $xi->id]))->toBe(['Davao College'])
+        ->and($names(['status' => 'inactive']))->toBe(['Koronadal State College'])
+        ->and($names(['ownership' => 'public']))->toBe(['Koronadal State College'])
+        ->and($names(['ownership' => 'none', 'region' => $this->cluster->survey_region_id]))->toBe(['Unlisted Owner College']);
+
+    $this->get(route('settings.heis.index', ['status' => 'closed']))->assertSessionHasErrors('status');
+});
+
+test('the cluster filter appears only when a region\'s institutions sit in two or more clusters', function () {
+    $regionId = $this->cluster->survey_region_id;
+    $unassigned = SurveyCluster::query()->create(['survey_region_id' => $regionId, 'name' => SurveyCluster::UNASSIGNED, 'is_active' => true]);
+    SurveyHei::query()->create(['survey_cluster_id' => $unassigned->id, 'name' => 'Waiting College', 'is_active' => true]);
+
+    // Every institution in one cluster: region goes straight to institution.
+    $this->actingAs($this->admin)->get(route('settings.heis.index', ['region' => $regionId]))
+        ->assertInertia(fn (Assert $page) => $page->where('clusterOptions', []));
+
+    SurveyHei::query()->create(['survey_cluster_id' => $this->cluster->id, 'name' => 'Placed College', 'is_active' => true]);
+    $this->get(route('settings.heis.index', ['region' => $regionId]))
+        ->assertInertia(fn (Assert $page) => $page->where('clusterOptions', [
+            ['id' => $this->cluster->id, 'name' => 'South Cotabato'],
+            ['id' => $unassigned->id, 'name' => SurveyCluster::UNASSIGNED],
+        ]));
+    $this->get(route('settings.heis.index', ['region' => $regionId, 'cluster' => $this->cluster->id]))
+        ->assertInertia(fn (Assert $page) => $page->has('heis.data', 1)->where('heis.data.0.name', 'Placed College'));
+});

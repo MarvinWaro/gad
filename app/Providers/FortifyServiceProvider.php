@@ -5,7 +5,9 @@ namespace App\Providers;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Http\Responses\RegisterResponse;
+use App\Listeners\RecordAuthenticationActivity;
 use App\Models\SurveyHei;
+use App\Models\SurveyRegion;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -62,6 +64,8 @@ class FortifyServiceProvider extends ServiceProvider
             }
 
             if (! $user->isActive()) {
+                app(RecordAuthenticationActivity::class)->failed($user->email, $user, $user->status->value);
+
                 throw ValidationException::withMessages([
                     Fortify::username() => $user->status->loginMessage(),
                 ]);
@@ -99,10 +103,38 @@ class FortifyServiceProvider extends ServiceProvider
             ])
             : to_route('dashboard'));
 
-        Fortify::registerView(fn () => Inertia::render('auth/register', [
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
-            'heis' => SurveyHei::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
-        ]));
+        Fortify::registerView(function () {
+            $heis = SurveyHei::query()
+                ->join('survey_clusters', 'survey_clusters.id', '=', 'survey_heis.survey_cluster_id')
+                ->where('survey_heis.is_active', true)
+                ->orderBy('survey_heis.name')
+                ->get(['survey_heis.id', 'survey_heis.name', 'survey_clusters.survey_region_id'])
+                ->map(fn (SurveyHei $hei): array => [
+                    'id' => $hei->id,
+                    'name' => $hei->name,
+                    'region_id' => (int) $hei->getAttribute('survey_region_id'),
+                ]);
+            $openRegions = SurveyRegion::query()->openForInstantRegistration()->pluck('id');
+
+            return Inertia::render('auth/register', [
+                'passwordRules' => Password::defaults()->toPasswordRulesString(),
+                // Every active region, as the surveys list them; a region can
+                // be listed before its institutions arrive from the CHED
+                // directory. `instant`: new accounts need no approval there;
+                // `email`: its office, for having an institution added.
+                'regions' => SurveyRegion::query()
+                    ->where('is_active', true)
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'office_email'])
+                    ->map(fn (SurveyRegion $region): array => [
+                        'id' => $region->id,
+                        'name' => $region->name,
+                        'instant' => $openRegions->contains($region->id),
+                        'email' => $region->office_email,
+                    ]),
+                'heis' => $heis,
+            ]);
+        });
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
 

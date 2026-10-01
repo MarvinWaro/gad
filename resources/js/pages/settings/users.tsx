@@ -1,6 +1,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     Check,
+    History,
     Pencil,
     Plus,
     Search,
@@ -14,7 +15,17 @@ import type { FormEvent } from 'react';
 import { HeiCombobox } from '@/components/hei-combobox';
 import type { HeiOption } from '@/components/hei-combobox';
 import Heading from '@/components/heading';
+import { selectClass } from '@/components/monitoring/shared';
 import InputError from '@/components/input-error';
+import {
+    Filter,
+    FilterBar,
+    PlaceFilters,
+    placeFilterCount,
+} from '@/components/record-filters';
+import type { PlaceKey } from '@/components/record-filters';
+import { RegistrationPanel } from '@/components/registration-panel';
+import type { RegionRegistration } from '@/components/registration-panel';
 import { Badge } from '@/components/ui/badge';
 import { ConfirmPopover } from '@/components/confirm-popover';
 import type { ConfirmVisit } from '@/components/confirm-popover';
@@ -41,13 +52,14 @@ type UserStatus = 'pending' | 'active' | 'inactive';
 type Region = { id: number; name: string };
 /** The offices this manager may place accounts in. */
 type Offices = { national: boolean; regions: Region[] };
+/** An institution, with the region the form picks first. */
+type HeiChoice = HeiOption & { region_id: number };
 type ManagedUser = {
     id: number;
     name: string;
     email: string;
     hei: HeiOption | null;
     mobile_number: string | null;
-    sex: string | null;
     status: UserStatus;
     roles: Role[];
     office: { national: boolean; region: Region | null };
@@ -64,14 +76,30 @@ type PaginatedUsers = {
     last_page: number;
     links: PaginationLink[];
 };
-type PagePermissions = { create: boolean; update: boolean; delete: boolean };
-type Filters = { search: string; status: UserStatus | '' };
+type PagePermissions = {
+    create: boolean;
+    update: boolean;
+    delete: boolean;
+    /** Opening a person's activity log. */
+    activity: boolean;
+};
+type Filters = {
+    search: string;
+    status: UserStatus | '';
+    /** A role's slug. */
+    role: string;
+    region: string;
+    cluster: string;
+    hei: string;
+};
+/** The places to filter by, as the monitoring lists offer them. */
+type Places = { regions: Region[]; clusters: Region[]; heis: HeiOption[] };
 type UserForm = {
     name: string;
     email: string;
+    /** Only narrows the institutions; never sent. */
+    region: string;
     survey_hei_id: string;
-    mobile_number: string;
-    sex: string;
     password: string;
     password_confirmation: string;
     role_ids: number[];
@@ -117,38 +145,41 @@ const statusBadges: Record<UserStatus, { label: string; className: string }> = {
     },
 };
 
-const sexOptions = [
-    { value: 'female', label: 'Female' },
-    { value: 'male', label: 'Male' },
-];
-
 export default function Users({
     users,
     roles,
     heis,
+    heiRegions,
     offices,
+    registration,
     statusCounts,
     filters,
+    roleOptions,
+    places,
     permissions,
 }: {
     users: PaginatedUsers;
     roles: AssignableRole[];
-    heis: HeiOption[];
+    heis: HeiChoice[];
+    heiRegions: Region[];
     offices: Offices;
+    registration: RegionRegistration[];
     statusCounts: Record<UserStatus, number>;
     filters: Filters;
+    roleOptions: Pick<Role, 'name' | 'slug'>[];
+    places: Places;
     permissions: PagePermissions;
 }) {
     const [search, setSearch] = useState(filters.search);
     const totalUsers =
         statusCounts.pending + statusCounts.active + statusCounts.inactive;
+    // Role and place narrow the list; the status tabs count within them.
+    const narrowed = Boolean(
+        filters.role || filters.region || filters.cluster || filters.hei,
+    );
 
     function visit(next: Partial<Filters>) {
-        const query = {
-            search: filters.search,
-            status: filters.status,
-            ...next,
-        };
+        const query = { ...filters, ...next };
         router.get(
             '/settings/users',
             Object.fromEntries(
@@ -163,17 +194,34 @@ export default function Users({
         visit({ search: search.trim() });
     }
 
-    const showActions = permissions.update || permissions.delete;
-    const emptyTitle = filters.search
-        ? 'No matching users'
-        : filters.status === 'pending'
-          ? 'No pending registrations'
-          : 'No users found';
-    const emptyDescription = filters.search
-        ? 'Try another name, email, role, or institution.'
-        : filters.status === 'pending'
-          ? 'New registrations will appear here for approval.'
-          : 'Create the first managed account.';
+    /** Picking a place clears the places below it. */
+    function pick(key: PlaceKey, value: string) {
+        visit({
+            [key]: value,
+            ...(key === 'region'
+                ? { cluster: '', hei: '' }
+                : key === 'cluster'
+                  ? { hei: '' }
+                  : {}),
+        });
+    }
+
+    const showActions =
+        permissions.update || permissions.delete || permissions.activity;
+    const emptyTitle = narrowed
+        ? 'No users match these filters'
+        : filters.search
+          ? 'No matching users'
+          : filters.status === 'pending'
+            ? 'No pending registrations'
+            : 'No users found';
+    const emptyDescription = narrowed
+        ? 'Try another role or place, or clear the filters to see every account.'
+        : filters.search
+          ? 'Try another name, email, role, or institution.'
+          : filters.status === 'pending'
+            ? 'New registrations will appear here for approval.'
+            : 'Create the first managed account.';
 
     return (
         <>
@@ -190,10 +238,13 @@ export default function Users({
                             mode="create"
                             roles={roles}
                             heis={heis}
+                            heiRegions={heiRegions}
                             offices={offices}
                         />
                     )}
                 </div>
+
+                <RegistrationPanel regions={registration} />
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <nav
@@ -257,7 +308,37 @@ export default function Users({
                     </form>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border bg-card">
+                <div className="@container overflow-hidden rounded-xl border bg-card">
+                    {/* Applied as soon as they change, like the monitoring lists. */}
+                    <FilterBar
+                        label="Filter users"
+                        filters={
+                            1 +
+                            placeFilterCount(places.regions, places.clusters)
+                        }
+                    >
+                        <Filter label="Role" id="role">
+                            <FormSelect
+                                id="role"
+                                className={selectClass}
+                                value={filters.role}
+                                onChange={(value) => visit({ role: value })}
+                                placeholder="All roles"
+                                allowEmpty
+                                options={roleOptions.map((option) => ({
+                                    value: option.slug,
+                                    label: option.name,
+                                }))}
+                            />
+                        </Filter>
+                        <PlaceFilters
+                            values={filters}
+                            onPick={pick}
+                            regions={places.regions}
+                            clusters={places.clusters}
+                            heis={places.heis}
+                        />
+                    </FilterBar>
                     {users.data.length === 0 ? (
                         <div className="flex min-h-64 flex-col items-center justify-center p-8 text-center">
                             <span className="flex size-12 items-center justify-center rounded-full bg-muted">
@@ -267,6 +348,23 @@ export default function Users({
                             <p className="mt-1 text-sm text-muted-foreground">
                                 {emptyDescription}
                             </p>
+                            {narrowed && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="mt-5"
+                                    onClick={() =>
+                                        visit({
+                                            role: '',
+                                            region: '',
+                                            cluster: '',
+                                            hei: '',
+                                        })
+                                    }
+                                >
+                                    Clear filters
+                                </Button>
+                            )}
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
@@ -370,6 +468,28 @@ export default function Users({
                                             {showActions && (
                                                 <td className="sticky right-0 bg-card px-4 py-4 shadow-[-12px_0_12px_-12px_rgb(0_0_0/0.18)]">
                                                     <div className="flex items-center justify-end gap-1">
+                                                        {permissions.activity && (
+                                                            <Button
+                                                                asChild
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                title="View activity"
+                                                            >
+                                                                <Link
+                                                                    href={`/settings/activity-logs?user=${user.id}`}
+                                                                >
+                                                                    <History />
+                                                                    <span className="sr-only">
+                                                                        View
+                                                                        activity
+                                                                        of{' '}
+                                                                        {
+                                                                            user.name
+                                                                        }
+                                                                    </span>
+                                                                </Link>
+                                                            </Button>
+                                                        )}
                                                         {permissions.update &&
                                                             user.can_manage &&
                                                             !user.is_current_user && (
@@ -386,6 +506,9 @@ export default function Users({
                                                                         roles
                                                                     }
                                                                     heis={heis}
+                                                                    heiRegions={
+                                                                        heiRegions
+                                                                    }
                                                                     offices={
                                                                         offices
                                                                     }
@@ -511,31 +634,44 @@ function UserDialog({
     mode,
     roles,
     heis,
+    heiRegions,
     offices,
     user,
 }: {
     mode: 'create' | 'edit';
     roles: AssignableRole[];
-    heis: HeiOption[];
+    heis: HeiChoice[];
+    heiRegions: Region[];
     offices: Offices;
     user?: ManagedUser;
 }) {
     const [open, setOpen] = useState(false);
     const fieldId = `${mode}-${user?.id ?? 'new'}`;
+    const currentHei = heis.find((hei) => hei.id === user?.hei?.id);
     const form = useForm<UserForm>({
         name: user?.name ?? '',
         email: user?.email ?? '',
+        // An account's region is its institution's; with one region, it is
+        // chosen already.
+        region: currentHei
+            ? String(currentHei.region_id)
+            : heiRegions.length === 1
+              ? String(heiRegions[0].id)
+              : '',
         survey_hei_id: user?.hei ? String(user.hei.id) : '',
-        mobile_number: user?.mobile_number ?? '',
-        sex: user?.sex ?? '',
         password: '',
         password_confirmation: '',
         role_ids: user?.roles.map((role) => role.id) ?? [],
         office: officeValue(user?.office),
     });
-    // Offices belong to CHED staff; an HEI user's region comes from the HEI.
-    const staff = roles.some(
-        (role) => !role.hei && form.data.role_ids.includes(role.id),
+    const chosen = (role: AssignableRole) =>
+        form.data.role_ids.includes(role.id);
+    // Where an account belongs follows its roles: HEI roles are placed by
+    // their institution, CHED staff by their office.
+    const heiAccount = roles.some((role) => role.hei && chosen(role));
+    const staff = roles.some((role) => !role.hei && chosen(role));
+    const regionHeis = heis.filter(
+        (hei) => String(hei.region_id) === form.data.region,
     );
     // The server validates the two fields the office select is sent as.
     const errors: Partial<Record<string, string>> = form.errors;
@@ -574,8 +710,11 @@ function UserDialog({
             },
         };
 
-        form.transform(({ office, ...data }) => ({
+        // The region only narrowed the list; the institution is what is kept.
+        form.transform(({ office, region: _region, ...data }) => ({
             ...data,
+            // Staff accounts have no institution; their office places them.
+            survey_hei_id: heiAccount ? data.survey_hei_id : '',
             national_access: staff && office === NATIONAL_OFFICE,
             survey_region_id:
                 staff && office !== '' && office !== NATIONAL_OFFICE
@@ -611,8 +750,8 @@ function UserDialog({
                         {mode === 'create' ? 'Create user' : 'Edit user'}
                     </DialogTitle>
                     <DialogDescription>
-                        Assign at least one role. Permissions are inherited from
-                        every selected role.
+                        Assign at least one role. HEI roles belong to an
+                        institution; CHED roles to an office.
                     </DialogDescription>
                 </DialogHeader>
                 <form className="grid gap-5" onSubmit={submit}>
@@ -647,61 +786,103 @@ function UserDialog({
                             <InputError message={form.errors.email} />
                         </div>
                     </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor={`${fieldId}-hei`}>
-                            Institution (optional)
-                        </Label>
-                        <HeiCombobox
-                            id={`${fieldId}-hei`}
-                            value={form.data.survey_hei_id}
-                            onChange={(value) =>
-                                form.setData('survey_hei_id', value)
-                            }
-                            options={heis}
-                            placeholder="Search or select an HEI"
-                            allowClear
-                            aria-invalid={Boolean(form.errors.survey_hei_id)}
-                        />
-                        <InputError message={form.errors.survey_hei_id} />
-                    </div>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                        <div className="grid gap-2">
-                            <Label htmlFor={`${fieldId}-mobile`}>
-                                Mobile number (optional)
-                            </Label>
-                            <Input
-                                id={`${fieldId}-mobile`}
-                                type="tel"
-                                inputMode="numeric"
-                                value={form.data.mobile_number}
-                                onChange={(event) =>
-                                    form.setData(
-                                        'mobile_number',
-                                        event.target.value,
-                                    )
-                                }
-                                placeholder="09XX XXX XXXX"
-                                maxLength={16}
-                                autoComplete="off"
-                            />
-                            <InputError message={form.errors.mobile_number} />
+                    <fieldset className="grid gap-3 rounded-lg border p-4">
+                        <legend className="px-1 text-sm font-medium">
+                            Roles
+                        </legend>
+                        {roles.map((role) => (
+                            <label
+                                key={role.id}
+                                className="flex cursor-pointer items-center gap-3 text-sm"
+                            >
+                                <Checkbox
+                                    checked={chosen(role)}
+                                    onCheckedChange={(checked) =>
+                                        toggleRole(role.id, checked === true)
+                                    }
+                                />
+                                <span>{role.name}</span>
+                            </label>
+                        ))}
+                        <InputError message={form.errors.role_ids} />
+                    </fieldset>
+                    {heiAccount && (
+                        <div className="grid gap-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:gap-2">
+                            <div className="grid content-start gap-2">
+                                <Label htmlFor={`${fieldId}-region`}>
+                                    Region
+                                </Label>
+                                <FormSelect
+                                    id={`${fieldId}-region`}
+                                    value={form.data.region}
+                                    onChange={(value) =>
+                                        form.setData((data) => ({
+                                            ...data,
+                                            region: value,
+                                            survey_hei_id: '',
+                                        }))
+                                    }
+                                    placeholder="Choose a region"
+                                    options={heiRegions.map((region) => ({
+                                        value: String(region.id),
+                                        label: region.name,
+                                    }))}
+                                    className="rounded-[6px] data-[size=default]:h-11"
+                                />
+                            </div>
+                            <div className="grid content-start gap-2">
+                                <Label htmlFor={`${fieldId}-hei`}>
+                                    Institution
+                                </Label>
+                                <HeiCombobox
+                                    id={`${fieldId}-hei`}
+                                    value={form.data.survey_hei_id}
+                                    onChange={(value) =>
+                                        form.setData('survey_hei_id', value)
+                                    }
+                                    options={regionHeis}
+                                    disabled={form.data.region === ''}
+                                    placeholder={
+                                        form.data.region === ''
+                                            ? 'Choose a region first'
+                                            : 'Search or select an HEI'
+                                    }
+                                    aria-invalid={Boolean(
+                                        form.errors.survey_hei_id,
+                                    )}
+                                />
+                                <InputError
+                                    message={form.errors.survey_hei_id}
+                                />
+                            </div>
                         </div>
+                    )}
+                    {staff && (
                         <div className="grid gap-2">
-                            <Label htmlFor={`${fieldId}-sex`}>
-                                Sex (optional)
-                            </Label>
+                            <Label htmlFor={`${fieldId}-office`}>Office</Label>
                             <FormSelect
-                                id={`${fieldId}-sex`}
-                                value={form.data.sex}
-                                onChange={(value) => form.setData('sex', value)}
-                                placeholder="Not specified"
-                                options={sexOptions}
+                                id={`${fieldId}-office`}
+                                value={form.data.office}
+                                onChange={(value) =>
+                                    form.setData('office', value)
+                                }
+                                placeholder="No office"
+                                options={officeOptions}
                                 allowEmpty
+                                aria-describedby={`${fieldId}-office-help`}
+                                aria-invalid={Boolean(officeError)}
                                 className="rounded-[6px] data-[size=default]:h-11"
                             />
-                            <InputError message={form.errors.sex} />
+                            <p
+                                id={`${fieldId}-office-help`}
+                                className="text-xs text-muted-foreground"
+                            >
+                                Staff see monitoring reports from their office's
+                                region. The Central Office sees every region.
+                            </p>
+                            <InputError message={officeError} />
                         </div>
-                    </div>
+                    )}
                     <div className="grid gap-2 sm:grid-cols-2">
                         <div className="grid gap-2">
                             <Label htmlFor={`${fieldId}-password`}>
@@ -743,54 +924,6 @@ function UserDialog({
                             />
                         </div>
                     </div>
-                    <fieldset className="grid gap-3 rounded-lg border p-4">
-                        <legend className="px-1 text-sm font-medium">
-                            Roles
-                        </legend>
-                        {roles.map((role) => (
-                            <label
-                                key={role.id}
-                                className="flex cursor-pointer items-center gap-3 text-sm"
-                            >
-                                <Checkbox
-                                    checked={form.data.role_ids.includes(
-                                        role.id,
-                                    )}
-                                    onCheckedChange={(checked) =>
-                                        toggleRole(role.id, checked === true)
-                                    }
-                                />
-                                <span>{role.name}</span>
-                            </label>
-                        ))}
-                        <InputError message={form.errors.role_ids} />
-                    </fieldset>
-                    {staff && (
-                        <div className="grid gap-2">
-                            <Label htmlFor={`${fieldId}-office`}>Office</Label>
-                            <FormSelect
-                                id={`${fieldId}-office`}
-                                value={form.data.office}
-                                onChange={(value) =>
-                                    form.setData('office', value)
-                                }
-                                placeholder="No office"
-                                options={officeOptions}
-                                allowEmpty
-                                aria-describedby={`${fieldId}-office-help`}
-                                aria-invalid={Boolean(officeError)}
-                                className="rounded-[6px] data-[size=default]:h-11"
-                            />
-                            <p
-                                id={`${fieldId}-office-help`}
-                                className="text-xs text-muted-foreground"
-                            >
-                                Staff see monitoring reports from their office's
-                                region. The Central Office sees every region.
-                            </p>
-                            <InputError message={officeError} />
-                        </div>
-                    )}
                     <DialogFooter>
                         <Button
                             type="button"

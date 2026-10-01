@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SaveGadEventRequest;
 use App\Models\GadEvent;
+use App\Services\ActivityRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -41,30 +44,33 @@ class GadEventController extends Controller
         ]);
     }
 
-    public function store(SaveGadEventRequest $request): RedirectResponse
+    public function store(SaveGadEventRequest $request, ActivityRecorder $activity): RedirectResponse
     {
-        GadEvent::query()->create([
+        $event = GadEvent::query()->create([
             ...$request->eventAttributes(),
             'created_by' => $request->user()->id,
         ]);
+        $activity->recordSave(ActivityModule::Events, $event);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Event created.')]);
 
         return to_route('admin.events.index');
     }
 
-    public function update(SaveGadEventRequest $request, GadEvent $event): RedirectResponse
+    public function update(SaveGadEventRequest $request, GadEvent $event, ActivityRecorder $activity): RedirectResponse
     {
         $event->update($request->eventAttributes());
+        $activity->recordSave(ActivityModule::Events, $event);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Event updated.')]);
 
         return back();
     }
 
-    public function destroy(GadEvent $event): RedirectResponse
+    public function destroy(GadEvent $event, ActivityRecorder $activity): RedirectResponse
     {
         $event->delete();
+        $activity->record(ActivityAction::Deleted, ActivityModule::Events, $event);
 
         Inertia::flash('toast', ['type' => 'deleted', 'message' => __('Event deleted.')]);
 

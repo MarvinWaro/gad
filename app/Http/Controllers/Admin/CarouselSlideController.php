@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCarouselSlideRequest;
 use App\Http\Requests\Admin\UpdateCarouselSlideRequest;
 use App\Models\CarouselSlide;
+use App\Services\ActivityRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -54,7 +57,7 @@ class CarouselSlideController extends Controller
         ]);
     }
 
-    public function store(StoreCarouselSlideRequest $request): RedirectResponse
+    public function store(StoreCarouselSlideRequest $request, ActivityRecorder $activity): RedirectResponse
     {
         $validated = $request->validated();
         $validated['image_path'] = $request->file('image')->store('carousel', 'public');
@@ -62,7 +65,8 @@ class CarouselSlideController extends Controller
         $validated['created_by'] = $request->user()->id;
         unset($validated['image']);
 
-        CarouselSlide::query()->create($validated);
+        $slide = CarouselSlide::query()->create($validated);
+        $activity->recordSave(ActivityModule::Carousel, $slide);
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -75,6 +79,7 @@ class CarouselSlideController extends Controller
     public function update(
         UpdateCarouselSlideRequest $request,
         CarouselSlide $carouselSlide,
+        ActivityRecorder $activity,
     ): RedirectResponse {
         $validated = $request->validated();
         $validated['alt_text'] = $validated['title'];
@@ -86,6 +91,12 @@ class CarouselSlideController extends Controller
         unset($validated['image']);
 
         $carouselSlide->update($validated);
+        $activity->recordSave(
+            ActivityModule::Carousel,
+            $carouselSlide,
+            except: ['image_path', 'alt_text'],
+            extra: isset($validated['image_path']) ? ['image' => [null, 'New image']] : [],
+        );
 
         if (isset($validated['image_path'])) {
             Storage::disk('public')->delete($oldImagePath);
@@ -99,10 +110,11 @@ class CarouselSlideController extends Controller
         return to_route('admin.carousels.index');
     }
 
-    public function destroy(CarouselSlide $carouselSlide): RedirectResponse
+    public function destroy(CarouselSlide $carouselSlide, ActivityRecorder $activity): RedirectResponse
     {
         $imagePath = $carouselSlide->image_path;
         $carouselSlide->delete();
+        $activity->record(ActivityAction::Deleted, ActivityModule::Carousel, $carouselSlide);
         Storage::disk('public')->delete($imagePath);
 
         Inertia::flash('toast', [

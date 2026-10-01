@@ -2,7 +2,10 @@
 
 namespace App\Support;
 
+use App\Models\AcademicYear;
+use App\Models\ChecklistResponse;
 use App\Models\GadEvent;
+use App\Models\MonitoringReport;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 
@@ -34,11 +37,27 @@ class AcademicPeriod
      *
      * @return list<string>
      */
-    public static function options(?CarbonInterface $at = null): array
+    public static function calendarOptions(?CarbonInterface $at = null): array
     {
         $current = (int) substr(self::current($at)['academic_year'], 0, 4);
 
         return array_map(self::label(...), range($current + 1, self::FIRST_YEAR));
+    }
+
+    /** @return list<string> */
+    public static function options(): array
+    {
+        return AcademicYear::query()->where('is_active', true)
+            ->orderByDesc('start_year')->pluck('label')->all();
+    }
+
+    /** Include years already used by records even if they are now inactive. */
+    public static function recordOptions(): array
+    {
+        return collect(self::options())
+            ->merge(MonitoringReport::query()->distinct()->pluck('academic_year'))
+            ->merge(ChecklistResponse::query()->distinct()->pluck('academic_year'))
+            ->unique()->sortDesc()->values()->all();
     }
 
     /** 2026 → "2026-2027" */

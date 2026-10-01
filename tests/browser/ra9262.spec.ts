@@ -37,7 +37,6 @@ async function details(page: Page, minor = false) {
     await chooseSelect(page, 'group-answer-student-year', '2nd-year');
     await page.locator('#group-answer-scholar').check();
     await chooseSelectIndex(page, 'region_id', 1);
-    await chooseSelectIndex(page, 'cluster_id', 1);
     await chooseSelectIndex(page, 'hei_id', 1);
     if (minor)
         await page.getByLabel(/this minor is under my legal care/).check();

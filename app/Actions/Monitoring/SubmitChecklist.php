@@ -2,9 +2,12 @@
 
 namespace App\Actions\Monitoring;
 
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Enums\ChecklistType;
 use App\Models\ChecklistResponse;
 use App\Models\User;
+use App\Services\ActivityRecorder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -15,6 +18,8 @@ use Illuminate\Support\Facades\Gate;
  */
 class SubmitChecklist
 {
+    public function __construct(private readonly ActivityRecorder $activity) {}
+
     /** @param  list<string>  $items  keys from the checklist's items */
     public function handle(User $user, ChecklistType $type, string $academicYear, array $items): ChecklistResponse
     {
@@ -36,10 +41,18 @@ class SubmitChecklist
 
             $response->fill(['submitted_by' => $user->id, 'submitted_at' => now()])->save();
             $response->answers()->delete();
+            $checked = array_values(array_intersect(array_keys($type->items()), $items));
             $response->answers()->createMany(array_map(
                 fn (string $key): array => ['item_key' => $key],
-                array_values(array_intersect(array_keys($type->items()), $items)),
+                $checked,
             ));
+            $this->activity->record(
+                $response->wasRecentlyCreated ? ActivityAction::Submitted : ActivityAction::Updated,
+                ActivityModule::GadSurveys,
+                $response,
+                actor: $user,
+                properties: ['items_checked' => count($checked), 'items_total' => count($type->items())],
+            );
 
             return $response;
         });

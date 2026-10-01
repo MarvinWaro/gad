@@ -139,7 +139,10 @@ test('staff see the answers from the regions their office covers', function () {
             ->where('responses.meta.total', 1)
             ->where('hasOffice', true)
             ->has('regions', 1)
-            ->has('clusters', 1));
+            // The region's institutions sit in one cluster: no cluster to
+            // choose, so they list straight away.
+            ->has('clusters', 0)
+            ->where('heis.0.name', 'Fictional Checklist HEI'));
 
     $this->actingAs(checklistStaff($elsewhere))->get('/admin/monitoring/compliance')
         ->assertInertia(fn (Assert $page) => $page->has('responses.data', 0));

@@ -1,5 +1,6 @@
 import { InfiniteScroll } from '@inertiajs/react';
 import { ArrowUp, CircleCheck, MessagesSquare } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { PostCard } from '@/components/hei/post-card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -52,7 +53,15 @@ function newPostsLabel(count: number): string {
 
 type FeedProps = {
     posts: ScrollPage<Post>;
+    emptyTitle?: string;
     emptyMessage?: string;
+    /** Shown under the empty message, such as a link to where to post. */
+    emptyAction?: ReactNode;
+    /**
+     * Check for newer posts when the reader comes back. Off for one
+     * person's posts, which the check (counting the whole feed) can't tell.
+     */
+    watchForNew?: boolean;
 };
 
 /**
@@ -61,7 +70,7 @@ type FeedProps = {
  */
 export function Feed({
     posts,
-    emptyMessage,
+    ...props
 }: Omit<FeedProps, 'posts'> & { posts?: ScrollPage<Post> }) {
     if (!posts) {
         return (
@@ -75,7 +84,7 @@ export function Feed({
         );
     }
 
-    return <LoadedFeed posts={posts} emptyMessage={emptyMessage} />;
+    return <LoadedFeed posts={posts} {...props} />;
 }
 
 /**
@@ -85,9 +94,15 @@ export function Feed({
  */
 function LoadedFeed({
     posts,
+    emptyTitle = 'The feed is quiet',
     emptyMessage = 'No posts yet. Share your first GAD activity above: a seminar, a campaign, or a new policy on campus.',
+    emptyAction,
+    watchForNew = true,
 }: FeedProps) {
-    const { waiting, refreshing, refresh } = useNewPosts(posts.data[0] ?? null);
+    const { waiting, refreshing, refresh } = useNewPosts(
+        posts.data[0] ?? null,
+        watchForNew,
+    );
 
     return (
         <div aria-busy={refreshing}>
@@ -118,10 +133,11 @@ function LoadedFeed({
                     <span className="flex size-12 items-center justify-center rounded-full bg-accent text-accent-foreground">
                         <MessagesSquare aria-hidden className="size-5" />
                     </span>
-                    <p className="mt-4 font-medium">The feed is quiet</p>
+                    <p className="mt-4 font-medium">{emptyTitle}</p>
                     <p className="mt-1 max-w-sm text-sm text-muted-foreground">
                         {emptyMessage}
                     </p>
+                    {emptyAction && <div className="mt-5">{emptyAction}</div>}
                 </div>
             ) : (
                 <InfiniteScroll

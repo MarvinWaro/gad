@@ -12,9 +12,10 @@ export function AppShell({ children, variant = 'sidebar' }: Props) {
     const isOpen = usePage().props.sidebarOpen;
 
     if (variant === 'header') {
-        // AppHeader's sticky bar: h-16 plus its 1px border.
+        // Where AppHeader's sticky bar ends: the brand bar on phones (h-14
+        // plus its border), the navigation row from lg (h-12 plus its border).
         return (
-            <div className="dot-backdrop flex min-h-screen w-full flex-col [--app-header:4.0625rem]">
+            <div className="dot-backdrop flex min-h-screen w-full flex-col [--app-header:3.5625rem] lg:[--app-header:3.0625rem]">
                 {children}
             </div>
         );

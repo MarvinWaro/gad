@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\UpdateRegionOfficeRequest;
 use App\Models\SurveyRegion;
+use App\Services\ActivityRecorder;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 
@@ -14,9 +17,13 @@ use Inertia\Inertia;
  */
 class RegionOfficeController extends Controller
 {
-    public function update(UpdateRegionOfficeRequest $request, SurveyRegion $region): RedirectResponse
+    public function update(UpdateRegionOfficeRequest $request, SurveyRegion $region, ActivityRecorder $activity): RedirectResponse
     {
         $region->update($request->validated());
+        $changes = $activity->changesOf($region);
+        if ($changes !== []) {
+            $activity->record(ActivityAction::Updated, ActivityModule::Regions, $region, $changes);
+        }
 
         Inertia::flash('toast', [
             'type' => 'success',

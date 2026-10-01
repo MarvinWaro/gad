@@ -1,6 +1,7 @@
 import { Form, Head, usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
 import { Lock } from 'lucide-react';
+import { useState } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
@@ -8,13 +9,14 @@ import InputError from '@/components/input-error';
 import ProfilePhotoField from '@/components/profile-photo-field';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { FormSelect } from '@/components/ui/form-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { edit } from '@/routes/profile';
 import type { Auth } from '@/types';
+import type { RegionOffice } from '@/types/monitoring';
 import { send } from '@/routes/verification';
-import { isMyProfileView } from '@/lib/my-profile';
-import MyProfilePreview from './my-profile-preview';
+import { sexOptions } from '@/lib/sex-options';
 
 type PageProps = {
     auth: Auth;
@@ -24,18 +26,21 @@ export default function Profile({
     mustVerifyEmail,
     status,
     institution,
+    office,
+    details,
 }: {
     mustVerifyEmail: boolean;
     status?: string;
     /** The account's HEI (read-only here); null for CHED staff. */
     institution: string | null;
+    /** The HEI's regional office, to contact about the institution. */
+    office: RegionOffice | null;
+    /** Contact details left out of registration. */
+    details: { mobile_number: string | null; sex: string | null };
 }) {
     const page = usePage<PageProps>();
     const { auth } = page.props;
-
-    if (isMyProfileView(page.url)) {
-        return <MyProfilePreview auth={auth} institution={institution} />;
-    }
+    const [sex, setSex] = useState(details.sex ?? '');
 
     return (
         <>
@@ -47,7 +52,7 @@ export default function Profile({
                 <Heading
                     variant="small"
                     title="Profile"
-                    description="Update your photo, name, and email address"
+                    description="Update your photo, name, email address, and contact details"
                 />
 
                 <ProfilePhotoField />
@@ -88,15 +93,22 @@ export default function Profile({
                                         </AlertTitle>
                                         <AlertDescription>
                                             <p>
-                                                If this is wrong, contact CHEDRO
-                                                XII at{' '}
-                                                <a
-                                                    href="mailto:chedro12@ched.gov.ph"
-                                                    className="text-foreground underline underline-offset-4"
-                                                >
-                                                    chedro12@ched.gov.ph
-                                                </a>
-                                                .
+                                                {office?.email ? (
+                                                    <>
+                                                        If this is wrong,
+                                                        contact CHED{' '}
+                                                        {office.name} at{' '}
+                                                        <a
+                                                            href={`mailto:${office.email}`}
+                                                            className="text-foreground underline underline-offset-4"
+                                                        >
+                                                            {office.email}
+                                                        </a>
+                                                        .
+                                                    </>
+                                                ) : (
+                                                    'If this is wrong, contact your CHED regional office.'
+                                                )}
                                             </p>
                                         </AlertDescription>
                                     </Alert>
@@ -166,6 +178,58 @@ export default function Profile({
                                         )}
                                     </div>
                                 )}
+
+                            {/* Left out of registration; each is optional. */}
+                            <div className="grid gap-6 sm:grid-cols-2 sm:gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="mobile_number">
+                                        Mobile number{' '}
+                                        <span className="font-normal text-muted-foreground">
+                                            (optional)
+                                        </span>
+                                    </Label>
+                                    <Input
+                                        id="mobile_number"
+                                        type="tel"
+                                        inputMode="numeric"
+                                        autoComplete="tel-national"
+                                        name="mobile_number"
+                                        placeholder="09XX XXX XXXX"
+                                        maxLength={16}
+                                        defaultValue={
+                                            details.mobile_number ?? ''
+                                        }
+                                        aria-invalid={Boolean(
+                                            errors.mobile_number,
+                                        )}
+                                    />
+                                    <InputError
+                                        message={errors.mobile_number}
+                                    />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="sex">
+                                        Sex{' '}
+                                        <span className="font-normal text-muted-foreground">
+                                            (optional)
+                                        </span>
+                                    </Label>
+                                    <FormSelect
+                                        id="sex"
+                                        name="sex"
+                                        value={sex}
+                                        onChange={setSex}
+                                        placeholder="Select sex"
+                                        allowEmpty
+                                        emptyLabel="Not set"
+                                        options={sexOptions}
+                                        className="rounded-[6px] data-[size=default]:h-11"
+                                        aria-invalid={Boolean(errors.sex)}
+                                    />
+                                    <InputError message={errors.sex} />
+                                </div>
+                            </div>
 
                             <div className="flex items-center gap-4">
                                 <Button

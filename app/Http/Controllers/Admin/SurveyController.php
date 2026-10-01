@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Http\Controllers\Controller;
 use App\Models\Survey;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\SurveyVersion;
+use App\Services\ActivityRecorder;
 use App\Support\SurveyDefinitions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,7 +57,7 @@ class SurveyController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, ActivityRecorder $activity): RedirectResponse
     {
         $validated = $request->validate([
             'code' => ['required', 'string', 'max:40', 'unique:surveys,code'],
@@ -77,6 +80,7 @@ class SurveyController extends Controller
 
             return $survey;
         });
+        $activity->record(ActivityAction::Created, ActivityModule::Surveys, $survey);
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -130,7 +134,7 @@ class SurveyController extends Controller
         ]);
     }
 
-    public function update(Request $request, Survey $survey): RedirectResponse
+    public function update(Request $request, Survey $survey, ActivityRecorder $activity): RedirectResponse
     {
         $draft = $survey->draftVersion();
         abort_if($draft === null, 409);
@@ -182,6 +186,14 @@ class SurveyController extends Controller
             'definition' => $definition,
         ]);
 
+        $changes = [...$activity->changesOf($survey), ...$activity->changesOf($draft, ['definition'])];
+        if ($draft->wasChanged('definition')) {
+            $changes['questionnaire'] = [null, 'Changed'];
+        }
+        if ($changes !== []) {
+            $activity->record(ActivityAction::Updated, ActivityModule::Surveys, $survey, $changes, ['version' => $draft->version]);
+        }
+
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => __('Draft v:version saved. It stays private until you publish it.', ['version' => $draft->version]),
@@ -190,7 +202,7 @@ class SurveyController extends Controller
         return back();
     }
 
-    public function publish(Request $request, Survey $survey): RedirectResponse
+    public function publish(Request $request, Survey $survey, ActivityRecorder $activity): RedirectResponse
     {
         $draft = $survey->draftVersion();
         abort_if($draft === null, 409);
@@ -220,6 +232,7 @@ class SurveyController extends Controller
                 'definition' => $draft->definition,
             ]);
         });
+        $activity->record(ActivityAction::Published, ActivityModule::Surveys, $survey, properties: ['version' => $publishedVersion]);
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -232,10 +245,11 @@ class SurveyController extends Controller
         return back();
     }
 
-    public function archive(Survey $survey): RedirectResponse
+    public function archive(Survey $survey, ActivityRecorder $activity): RedirectResponse
     {
         $archiving = $survey->status !== 'archived';
         $survey->update(['status' => $archiving ? 'archived' : 'active']);
+        $activity->record($archiving ? ActivityAction::Archived : ActivityAction::Activated, ActivityModule::Surveys, $survey);
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -247,13 +261,14 @@ class SurveyController extends Controller
         return back();
     }
 
-    public function destroy(Survey $survey): RedirectResponse
+    public function destroy(Survey $survey, ActivityRecorder $activity): RedirectResponse
     {
         if ($survey->versions()->whereIn('status', ['published', 'superseded'])->exists() || $survey->versions()->whereHas('responses')->exists()) {
             return back()->withErrors(['survey' => 'Published surveys must be archived and cannot be deleted.']);
         }
         $code = $survey->code;
         $survey->delete();
+        $activity->record(ActivityAction::Deleted, ActivityModule::Surveys, $survey);
 
         Inertia::flash('toast', [
             'type' => 'deleted',

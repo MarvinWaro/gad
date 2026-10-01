@@ -17,4 +17,7 @@ export type NavItem = {
 export type NavGroup = {
     label: string;
     items: NavItem[];
+    /** The top navigation shows the group as one menu, named by its label. */
+    menu?: boolean;
+    icon?: LucideIcon | null;
 };

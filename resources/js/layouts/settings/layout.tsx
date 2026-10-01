@@ -1,8 +1,10 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    CalendarRange,
     Building2,
     ContactRound,
     GraduationCap,
+    History,
     Map,
     Palette,
     ShieldCheck,
@@ -15,7 +17,6 @@ import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
-import { isMyProfileView } from '@/lib/my-profile';
 import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
@@ -44,9 +45,6 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
     const page = usePage<{ auth: Auth }>();
     const { auth } = page.props;
-    if (isMyProfileView(page.url)) {
-        return <>{children}</>;
-    }
     const managementNavItems: NavItem[] = [
         ...(auth.permissions.includes('users.view')
             ? [
@@ -74,34 +72,54 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
         isCurrentOrParentUrl('/settings/clusters') ||
         isCurrentOrParentUrl('/settings/heis') ||
         isCurrentOrParentUrl('/settings/respondent-groups') ||
+        isCurrentOrParentUrl('/settings/academic-years') ||
+        isCurrentOrParentUrl('/settings/activity-logs') ||
         isCurrentOrParentUrl('/settings/ratings');
     const isAppearancePage = isCurrentOrParentUrl('/settings/appearance');
-    const configurationNavItems: NavItem[] = auth.permissions.includes(
-        'survey-directories.view',
-    )
-        ? [
-              {
-                  title: 'Regions',
-                  href: '/settings/regions',
-                  icon: Map,
-              },
-              {
-                  title: 'Clusters',
-                  href: '/settings/clusters',
-                  icon: Building2,
-              },
-              {
-                  title: 'HEIs',
-                  href: '/settings/heis',
-                  icon: GraduationCap,
-              },
-              {
-                  title: 'Respondent groups',
-                  href: '/settings/respondent-groups',
-                  icon: ContactRound,
-              },
-          ]
-        : [];
+    const configurationNavItems: NavItem[] = [
+        ...(auth.permissions.includes('academic-years.view')
+            ? [
+                  {
+                      title: 'Academic years',
+                      href: '/settings/academic-years',
+                      icon: CalendarRange,
+                  },
+              ]
+            : []),
+        ...(auth.permissions.includes('survey-directories.view')
+            ? [
+                  {
+                      title: 'Regions',
+                      href: '/settings/regions',
+                      icon: Map,
+                  },
+                  {
+                      title: 'Clusters',
+                      href: '/settings/clusters',
+                      icon: Building2,
+                  },
+                  {
+                      title: 'HEIs',
+                      href: '/settings/heis',
+                      icon: GraduationCap,
+                  },
+                  {
+                      title: 'Respondent groups',
+                      href: '/settings/respondent-groups',
+                      icon: ContactRound,
+                  },
+              ]
+            : []),
+        ...(auth.permissions.includes('activity-logs.view')
+            ? [
+                  {
+                      title: 'Activity logs',
+                      href: '/settings/activity-logs',
+                      icon: History,
+                  },
+              ]
+            : []),
+    ];
     // What the public site collects: the homepage's Rate PHLGADIS answers.
     const publicSiteNavItems: NavItem[] = auth.permissions.includes(
         'site-ratings.view',
