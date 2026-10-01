@@ -50,7 +50,9 @@ class Role extends Model
     {
         $ids = array_filter((array) $ids, fn (mixed $id): bool => is_numeric($id));
 
-        return $ids === [] ? [] : static::query()->whereKey($ids)->pluck('slug')->all();
+        return $ids === [] ? [] : array_values(static::query()->whereKey($ids)->get(['slug'])
+            ->map(fn (Role $role): string => $role->slug)
+            ->all());
     }
 
     /** @return BelongsToMany<Permission, $this> */

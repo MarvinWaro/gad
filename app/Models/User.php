@@ -195,7 +195,7 @@ class User extends Authenticatable implements PasskeyUser
     {
         $this->loadMissing('roles');
 
-        return Role::onlyHei($this->roles->pluck('slug')->all());
+        return Role::onlyHei(array_values($this->roles->map(fn (Role $role): string => $role->slug)->all()));
     }
 
     public function hasPermissionTo(string $permission): bool

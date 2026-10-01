@@ -47,17 +47,25 @@ class AcademicPeriod
     /** @return list<string> */
     public static function options(): array
     {
-        return AcademicYear::query()->where('is_active', true)
-            ->orderByDesc('start_year')->pluck('label')->all();
+        return array_values(AcademicYear::query()->where('is_active', true)
+            ->orderByDesc('start_year')->get(['label'])
+            ->map(fn (AcademicYear $year): string => $year->label)
+            ->all());
     }
 
-    /** Include years already used by records even if they are now inactive. */
+    /**
+     * Include years already used by records even if they are now inactive.
+     *
+     * @return list<string>
+     */
     public static function recordOptions(): array
     {
-        return collect(self::options())
-            ->merge(MonitoringReport::query()->distinct()->pluck('academic_year'))
-            ->merge(ChecklistResponse::query()->distinct()->pluck('academic_year'))
-            ->unique()->sortDesc()->values()->all();
+        return array_values(collect(self::options())
+            ->merge(MonitoringReport::query()->distinct()->get(['academic_year'])
+                ->map(fn (MonitoringReport $report): string => $report->academic_year))
+            ->merge(ChecklistResponse::query()->distinct()->get(['academic_year'])
+                ->map(fn (ChecklistResponse $response): string => $response->academic_year))
+            ->unique()->sortDesc()->all());
     }
 
     /** 2026 → "2026-2027" */
