@@ -74,6 +74,7 @@ export default function Heis({
     heis,
     filters,
     clusterOptions,
+    clusterRegions,
     permissions,
 }: {
     regions: Region[];
@@ -82,6 +83,8 @@ export default function Heis({
     filters: HeiFilters;
     /** The chosen region's clusters, when there are two or more to pick. */
     clusterOptions: Region[];
+    /** Regions whose institutions sit in two or more clusters. */
+    clusterRegions: number[];
     permissions: Permissions;
 }) {
     const { values, loading, filtered, apply, change, search } =
@@ -101,7 +104,11 @@ export default function Heis({
                         description="The higher education institutions respondents choose from, grouped by the cluster they sit in."
                     />
                     {permissions.create && (
-                        <HeiDialog regions={regions} clusters={clusters} />
+                        <HeiDialog
+                            regions={regions}
+                            clusters={clusters}
+                            clusterRegions={clusterRegions}
+                        />
                     )}
                 </div>
                 <div className="@container overflow-hidden rounded-xl border bg-card">
@@ -216,6 +223,7 @@ export default function Heis({
                                 heis={heis.data}
                                 regions={regions}
                                 clusters={clusters}
+                                clusterRegions={clusterRegions}
                                 permissions={permissions}
                             />
                             <Pagination page={heis} label="institutions" />
@@ -233,11 +241,13 @@ function HeiTable({
     heis,
     regions,
     clusters,
+    clusterRegions,
     permissions,
 }: {
     heis: Hei[];
     regions: Region[];
     clusters: Cluster[];
+    clusterRegions: number[];
     permissions: Permissions;
 }) {
     return (
@@ -303,6 +313,7 @@ function HeiTable({
                                                 hei={hei}
                                                 regions={regions}
                                                 clusters={clusters}
+                                                clusterRegions={clusterRegions}
                                             />
                                             {hei.is_active ? (
                                                 <ConfirmPopover
@@ -384,10 +395,12 @@ function HeiDialog({
     hei,
     regions,
     clusters,
+    clusterRegions,
 }: {
     hei?: Hei;
     regions: Region[];
     clusters: Cluster[];
+    clusterRegions: number[];
 }) {
     const [open, setOpen] = useState(false);
     const editing = hei !== undefined;
@@ -399,10 +412,17 @@ function HeiDialog({
         ownership: hei?.ownership ?? '',
         is_active: hei?.is_active ?? true,
     });
-    // The public survey filters HEIs by cluster, so the cluster has to belong
-    // to the chosen region or the institution would never be selectable.
+    // Clusters only when used: the form asks for one only where the region's
+    // institutions already sit in two or more. Elsewhere the server files the
+    // institution in the region's holding cluster. A chosen cluster must
+    // belong to the region, or respondents could never select the HEI.
+    const pickCluster = clusterRegions.includes(
+        Number(form.data.survey_region_id),
+    );
     const available = clusters.filter(
-        (cluster) => String(cluster.region.id) === form.data.survey_region_id,
+        (cluster) =>
+            String(cluster.region.id) === form.data.survey_region_id &&
+            cluster.name !== UNASSIGNED_CLUSTER,
     );
 
     function submit(event: FormEvent) {
@@ -473,7 +493,12 @@ function HeiDialog({
                         />
                         <InputError message={form.errors.name} />
                     </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div
+                        className={cn(
+                            'grid gap-4',
+                            pickCluster && 'sm:grid-cols-2',
+                        )}
+                    >
                         <div>
                             <Label htmlFor="hei-region">Region</Label>
                             <FormSelect
@@ -492,43 +517,46 @@ function HeiDialog({
                                     value: String(region.id),
                                     label: region.name,
                                 }))}
-                                allowEmpty
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor="hei-cluster">Cluster</Label>
-                            <FormSelect
-                                id="hei-cluster"
-                                className="mt-1.5"
-                                value={form.data.survey_cluster_id}
-                                disabled={
-                                    !form.data.survey_region_id ||
-                                    available.length === 0
-                                }
-                                onChange={(value) =>
-                                    form.setData('survey_cluster_id', value)
-                                }
-                                placeholder={
-                                    form.data.survey_region_id &&
-                                    available.length === 0
-                                        ? 'No clusters in this region'
-                                        : 'Select cluster'
-                                }
-                                options={available.map((cluster) => ({
-                                    value: String(cluster.id),
-                                    label: cluster.name,
-                                }))}
-                                allowEmpty
+                                aria-required
+                                aria-invalid={Boolean(
+                                    form.errors.survey_region_id,
+                                )}
                             />
                             <InputError
-                                message={form.errors.survey_cluster_id}
+                                message={form.errors.survey_region_id}
                             />
                         </div>
+                        {pickCluster && (
+                            <div>
+                                <Label htmlFor="hei-cluster">
+                                    Cluster (optional)
+                                </Label>
+                                <FormSelect
+                                    id="hei-cluster"
+                                    className="mt-1.5"
+                                    value={form.data.survey_cluster_id}
+                                    onChange={(value) =>
+                                        form.setData('survey_cluster_id', value)
+                                    }
+                                    placeholder="Not grouped yet"
+                                    emptyLabel="Not grouped yet"
+                                    options={available.map((cluster) => ({
+                                        value: String(cluster.id),
+                                        label: cluster.name,
+                                    }))}
+                                    allowEmpty
+                                />
+                                <InputError
+                                    message={form.errors.survey_cluster_id}
+                                />
+                            </div>
+                        )}
                     </div>
                     <p className="-mt-1 text-xs text-muted-foreground">
                         Respondents pick the region, then the HEI. Once a
                         region&rsquo;s institutions sit in two or more clusters,
-                        they pick the cluster in between.
+                        a cluster can be chosen here and respondents pick it in
+                        between.
                     </p>
                     <div>
                         <Label htmlFor="hei-ownership">Ownership</Label>

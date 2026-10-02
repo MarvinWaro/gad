@@ -3,6 +3,7 @@ import { Download, Star, Trash2 } from 'lucide-react';
 import { ConfirmPopover } from '@/components/confirm-popover';
 import Heading from '@/components/heading';
 import { Pagination, type Paginated } from '@/components/pagination';
+import { StatTile } from '@/components/stat-tile';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
@@ -277,24 +278,6 @@ function ButtonSwitch({
     );
 }
 
-function StatTile({
-    label,
-    value,
-    note,
-}: {
-    label: string;
-    value: string;
-    note: string;
-}) {
-    return (
-        <div className="rounded-xl border bg-card px-5 py-4">
-            <dt className="text-sm text-muted-foreground">{label}</dt>
-            <dd className="mt-1 text-3xl font-semibold">{value}</dd>
-            <dd className="text-xs text-muted-foreground">{note}</dd>
-        </div>
-    );
-}
-
 // How many ratings gave each number of stars, 5 down to 1. Each row filters
 // the list below to that rating, and says its count and share in text.
 function Breakdown({
@@ -350,7 +333,7 @@ function Breakdown({
                                     aria-hidden="true"
                                 >
                                     <span
-                                        className="block h-full rounded-r-[4px] bg-chart-rating"
+                                        className="block h-full rounded-r-[4px] bg-chart-bar"
                                         style={{ width: `${share * 100}%` }}
                                     />
                                 </span>
@@ -377,7 +360,7 @@ function Stars({ value }: { value: number }) {
                     className={cn(
                         'size-4',
                         star <= value
-                            ? 'fill-chart-rating text-chart-rating'
+                            ? 'fill-chart-bar text-chart-bar'
                             : 'text-muted-foreground/40',
                     )}
                 />

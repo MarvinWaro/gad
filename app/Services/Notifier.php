@@ -12,6 +12,7 @@ use App\Models\MonitoringReport;
 use App\Models\Notification;
 use App\Models\Post;
 use App\Models\PostComment;
+use App\Models\SiteFeedback;
 use App\Models\SurveyResponse;
 use App\Models\User;
 use Closure;
@@ -194,6 +195,43 @@ class Notifier
                     'kind' => NotificationKind::SurveyResponses->value,
                     'subject_type' => $survey->getMorphClass(),
                     'subject_id' => (string) $survey->getKey(),
+                    'count' => 1,
+                    'notified_at' => $now,
+                    'created_at' => $now,
+                ])->values()->all());
+            }
+        });
+    }
+
+    /**
+     * Website feedback: staff who read feedback, for the region it names (all
+     * of them when it names none). Like survey answers, it counts up an
+     * unread notice or starts one, and says nothing about the sender.
+     */
+    public function siteFeedbackReceived(SiteFeedback $feedback): void
+    {
+        $this->guarded(function () use ($feedback): void {
+            $recipients = User::query()
+                ->active()
+                ->withPermission('feedback.view')
+                ->when($feedback->survey_region_id !== null, fn (Builder $query) => $query->reaching($feedback->survey_region_id))
+                ->pluck('id');
+            $open = Notification::query()
+                ->where('kind', NotificationKind::SiteFeedback)
+                ->whereNull('read_at')
+                ->whereIn('user_id', $recipients)
+                ->pluck('id', 'user_id');
+            $now = now();
+
+            if ($open->isNotEmpty()) {
+                Notification::query()->whereKey($open->values())->incrementEach(['count' => 1], ['notified_at' => $now]);
+            }
+
+            foreach ($recipients->diff($open->keys())->chunk(self::CHUNK) as $chunk) {
+                Notification::query()->insert($chunk->map(fn (int $userId): array => [
+                    'id' => self::newId(),
+                    'user_id' => $userId,
+                    'kind' => NotificationKind::SiteFeedback->value,
                     'count' => 1,
                     'notified_at' => $now,
                     'created_at' => $now,

@@ -13,11 +13,29 @@ async function logIn(page: Page, email = member) {
     await expect(page).toHaveURL(/dashboard/);
 }
 
+/**
+ * Wait for fades and colour transitions to finish, so an accessibility scan
+ * checks the colours things settle on, not ones caught halfway.
+ */
+async function settled(page: Page) {
+    await page.waitForFunction(() =>
+        document
+            .getAnimations()
+            // Endless ones, such as a loading pulse, never settle.
+            .filter(
+                (animation) =>
+                    animation.effect?.getTiming().iterations !== Infinity,
+            )
+            .every((animation) => animation.playState !== 'running'),
+    );
+}
+
 /** The bell's panel and its list. */
 async function openPanel(page: Page) {
     await page.getByRole('button', { name: /^Notifications/ }).click();
     const panel = page.getByRole('dialog', { name: 'Notifications' });
     await expect(panel).toBeVisible();
+    await settled(page);
 
     return {
         panel,
@@ -143,11 +161,11 @@ test('the Notifications page lists everything with tabs, filters and Mark all as
     await expect(list.getByRole('listitem')).toHaveCount(9);
 
     await page.getByRole('tab', { name: 'All' }).click();
-    await page.getByLabel('Search').fill('seed post 11');
+    await page.getByLabel('Search', { exact: true }).fill('seed post 11');
     await expect(page).toHaveURL(/search=seed(\+|%20)post(\+|%20)11/);
     await expect(list.getByRole('listitem')).toHaveCount(1);
 
-    await page.getByLabel('Search').fill('nothing like this');
+    await page.getByLabel('Search', { exact: true }).fill('nothing like this');
     await expect(page.getByText('No notifications match')).toBeVisible();
     await page.getByRole('button', { name: 'Clear filters' }).click();
     await expect(list.getByRole('listitem')).toHaveCount(11);
@@ -249,6 +267,8 @@ test('the bell and the page fit every screen, in light and dark, and pass axe', 
 
     await page.getByRole('button', { name: 'Toggle dark mode' }).click();
     await expect(page.locator('html')).toHaveClass(/dark/);
+    // Unread rows ease their colours into the dark theme.
+    await settled(page);
     const dark = await new AxeBuilder({ page }).include('main').analyze();
     expect(dark.violations).toEqual([]);
     await openPanel(page);

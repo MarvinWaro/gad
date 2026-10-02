@@ -66,16 +66,18 @@ for (const width of [375, 768, 1280, 1536]) {
             fullPage: true,
         });
 
-        const feedback = page.getByRole('button', {
-            name: 'Share feedback',
-            exact: true,
-        });
-        await feedback.click();
-        await expect(page.getByRole('dialog')).toContainText(
-            'No responses are saved or sent',
-        );
-        await page.keyboard.press('Escape');
-        await expect(feedback).toBeFocused();
+        // "Share feedback" leads to the website feedback form, as does the
+        // footer.
+        await expect(
+            page
+                .locator('#feedback')
+                .getByRole('link', { name: 'Share feedback', exact: true }),
+        ).toHaveAttribute('href', '/feedback');
+        await expect(
+            page
+                .locator('.site-footer')
+                .getByRole('link', { name: 'Share feedback', exact: true }),
+        ).toHaveAttribute('href', '/feedback');
 
         if (width < 901) {
             const trigger = page.getByRole('button', {
@@ -285,9 +287,7 @@ test('public theme follows a dark preference and respects reduced motion', async
     ).toBe('dark');
 });
 
-test('all public anchors have destinations and sample content is explicit', async ({
-    page,
-}) => {
+test('all public anchors have destinations', async ({ page }) => {
     await page.goto('/');
     const missingAnchors = await page
         .locator('a[href^="#"]')
@@ -297,14 +297,94 @@ test('all public anchors have destinations and sample content is explicit', asyn
                 .filter((href) => !document.getElementById(href.slice(1))),
         );
     expect(missingAnchors).toEqual([]);
-    await page
-        .getByRole('button', { name: 'Read preview', exact: true })
-        .first()
-        .click();
-    await expect(page.getByRole('dialog')).toContainText(
-        'not a published institutional report',
+});
+
+/**
+ * tests/browser/server.php gives two seed posts from 32 days ago a photo.
+ * Stories count this academic year only (August to July), so for a month
+ * after August 1 those posts belong to the year before.
+ */
+function seedPhotosThisAcademicYear(): boolean {
+    const manila = (time: number) => new Date(time + 8 * 3_600_000);
+    const today = manila(Date.now());
+    const year =
+        today.getUTCMonth() + 1 >= 8
+            ? today.getUTCFullYear()
+            : today.getUTCFullYear() - 1;
+    return (
+        manila(Date.now() - 32 * 86_400_000) >= new Date(Date.UTC(year, 7, 1))
     );
+}
+
+test('the stories are the year’s most reacted photo posts, credited to their HEI', async ({
+    page,
+}, testInfo) => {
+    test.skip(
+        !seedPhotosThisAcademicYear(),
+        'The seed photo posts fall in the previous academic year this month.',
+    );
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    const stories = page.locator('#stories');
+    await expect(stories.getByRole('article').first()).toBeVisible();
+    await expect(stories).not.toContainText('Sample stories');
+    await expect(stories).toContainText('Browser Test HEI');
+    // The person who posted is never named on the public homepage.
+    await expect(stories).not.toContainText('Browser Test Member');
+
+    for (const theme of ['light', 'dark'] as const) {
+        await page.emulateMedia({
+            colorScheme: theme,
+            reducedMotion: 'reduce',
+        });
+        for (const width of [375, 1440]) {
+            await page.setViewportSize({ width, height: 900 });
+            await stories.scrollIntoViewIfNeeded();
+            await stories.screenshot({
+                path: testInfo.outputPath(`stories-${theme}-${width}.png`),
+            });
+        }
+        const scan = await new AxeBuilder({ page })
+            .include('#stories')
+            .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+            .analyze();
+        expect(scan.violations).toEqual([]);
+    }
+
+    await stories
+        .getByRole('article')
+        .filter({ hasText: 'Browser Test HEI' })
+        .first()
+        .getByRole('button', { name: 'Read story', exact: true })
+        .click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText('Shared by Browser Test HEI');
+    // The feed's mosaic: a lone photo shows whole, and opens the viewer.
+    const photo = dialog.getByRole('img', {
+        name: 'Photo 1 of 1 shared by Browser Test HEI',
+    });
+    await expect
+        .poll(() =>
+            photo.evaluate(
+                (image: HTMLImageElement) =>
+                    image.complete && image.naturalWidth > 0,
+            ),
+        )
+        .toBe(true);
+    await expect(photo).toHaveCSS('object-fit', 'contain');
+    await dialog.screenshot({ path: testInfo.outputPath('story-dialog.png') });
+    await photo.click();
+    const viewer = page.getByRole('dialog', {
+        name: 'Photos shared by Browser Test HEI',
+    });
+    await expect(viewer).toBeVisible();
     await page.keyboard.press('Escape');
+    await expect(viewer).toHaveCount(0);
+    await expect(
+        dialog.getByRole('link', { name: 'Log in to react and comment' }),
+    ).toHaveAttribute('href', /\/posts\/[0-9a-z]{26}$/);
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
 });
 
 test('footer uses supplied institutional marks and verified contact details', async ({
@@ -420,26 +500,6 @@ test('homepage and preview dialog meet automated WCAG AA checks', async ({
             })),
         })),
     ).toEqual([]);
-    await page
-        .getByRole('button', { name: 'Share feedback', exact: true })
-        .click();
-    await page.getByRole('dialog').evaluate(async (element) => {
-        await Promise.all(
-            element.getAnimations().map((animation) => animation.finished),
-        );
-    });
-    const dialog = await scan();
-    expect(
-        dialog.violations.map(({ id, nodes }) => ({
-            id,
-            nodes: nodes.map((node) => ({
-                target: node.target,
-                summary: node.failureSummary,
-            })),
-        })),
-    ).toEqual([]);
-    await page.keyboard.press('Escape');
-
     await page.getByRole('button', { name: 'Read more', exact: true }).click();
     await page.getByRole('dialog').evaluate(async (element) => {
         await Promise.all(

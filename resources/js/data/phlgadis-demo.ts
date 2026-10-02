@@ -36,13 +36,6 @@ export type LawRecord = {
     // An information brochure about the law, where one was supplied.
     brochure?: { href: string; bytes: number };
 };
-export type ContentRecord = {
-    id: string;
-    category: string;
-    title: string;
-    description: string;
-    media: MediaReference;
-};
 export type ResourceRecord = {
     id: 'terms' | 'acts' | 'videos' | 'issuances' | 'manuals';
     title: string;
@@ -177,38 +170,6 @@ export const laws: LawRecord[] = [
         listName: 'Safe Spaces Act',
         shortTitle: 'Safe Spaces Act',
         approved: '2019-04-17',
-    },
-];
-export const stories: ContentRecord[] = [
-    {
-        id: 'campus',
-        category: 'Campus initiatives',
-        title: 'Making room for a more inclusive campus.',
-        description:
-            'A preview of the stories this platform will share: campus-led efforts to make gender responsiveness part of everyday learning.',
-        media: { alt: 'Campus illustration placeholder', variant: 'campus' },
-    },
-    {
-        id: 'community',
-        category: 'Community',
-        title: 'Progress starts with a conversation.',
-        description:
-            'A sample story about bringing students, educators, and communities together to talk about inclusion.',
-        media: {
-            alt: 'Community illustration placeholder',
-            variant: 'community',
-        },
-    },
-    {
-        id: 'learning',
-        category: 'GAD in practice',
-        title: 'Shared knowledge. Lasting change.',
-        description:
-            'A sample story about creating space for gender and development learning across higher education.',
-        media: {
-            alt: 'Learning illustration placeholder',
-            variant: 'learning',
-        },
     },
 ];
 export const resources: ResourceRecord[] = [

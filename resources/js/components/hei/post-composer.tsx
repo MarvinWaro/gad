@@ -676,6 +676,15 @@ export function PostComposer({
                                         </p>
                                     )}
 
+                                    {form.data.images.length > 0 && (
+                                        <p className="-mt-1 text-xs text-muted-foreground">
+                                            Photo posts the network reacts to
+                                            most may be featured on the public
+                                            PHLGADIS homepage, credited to your
+                                            institution or office.
+                                        </p>
+                                    )}
+
                                     <Button
                                         type="submit"
                                         disabled={

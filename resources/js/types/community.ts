@@ -100,9 +100,34 @@ export type Post = PostContent & {
     has_more_comments: boolean;
     can_edit: boolean;
     can_delete: boolean;
+    /** A moderator kept it off the public homepage's stories. */
+    homepage_hidden: boolean;
+    /** Moderators, on originals with photos: the ones that could appear. */
+    can_hide_from_homepage: boolean;
 };
 
 export type ScrollPage<T> = { data: T[] };
+
+/**
+ * A post on the public homepage (App\Http\Resources\HomepageStoryResource):
+ * the HEI or CHED office that shared it, never the person.
+ */
+export type HomepageStory = {
+    id: string;
+    /** The post's page; guests log in first. */
+    url: string;
+    title: string;
+    excerpt: string;
+    body: string;
+    source: string;
+    posted_at: string | null;
+    /** All of its photos, as the feed has them. */
+    images: PostImage[];
+    reactions: number;
+    comments: number;
+    sdgs: number[];
+    achieve: string[];
+};
 
 export type EventCategory =
     | 'training'

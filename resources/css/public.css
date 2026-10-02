@@ -902,7 +902,9 @@
 /* Outranks `.survey-label span`, which colours the required asterisk: an
    optional marker must not borrow the colour that means "required". */
 .survey-label .survey-label-optional {
-    margin-left: 6px;
+    /* It follows a space, so screen readers say "Region Optional", not
+       one run-on word. */
+    margin-left: 2px;
     color: var(--muted-foreground);
     font-size: 12px;
     font-weight: 400;
@@ -1230,6 +1232,234 @@
 }
 .survey-confirmation .survey-confirmation-note {
     font-size: 12px;
+}
+/* Website feedback (/feedback): the surveys' steps and cards in a reading
+   column, with large tiles for the type and rows of buttons for the rated
+   questions. Both are real radio buttons stretched over their tile. */
+.feedback-page {
+    padding-bottom: 96px;
+}
+.feedback-page .feedback-form,
+.feedback-page .survey-confirmation {
+    max-width: 860px;
+}
+.feedback-page .survey-confirmation {
+    margin: 0;
+}
+.feedback-form {
+    scroll-margin-top: 104px;
+}
+.feedback-form .survey-steps > div {
+    position: relative;
+}
+/* A step already opened is a button back to it, over the whole cell. */
+.feedback-step-link {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+}
+.feedback-step-link:hover {
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+.public-theme .feedback-step-link:focus-visible {
+    outline: 2px solid var(--focus-color);
+    outline-offset: -3px;
+}
+.feedback-step h2:focus {
+    outline: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .feedback-step {
+        animation: feedback-step-in 200ms ease-out;
+    }
+}
+@keyframes feedback-step-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+}
+.feedback-optional {
+    margin-left: 10px;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0;
+    vertical-align: 2px;
+}
+.feedback-types {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+.feedback-type,
+.feedback-option {
+    position: relative;
+    border: 1px solid var(--input);
+    background: var(--card);
+    color: var(--foreground);
+    cursor: pointer;
+    user-select: none;
+    transition:
+        background-color 120ms ease-out,
+        border-color 120ms ease-out,
+        color 120ms ease-out;
+}
+.feedback-type {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 64px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.3;
+    overflow-wrap: break-word;
+}
+.feedback-type svg {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    color: var(--muted-foreground);
+}
+.feedback-type input,
+.feedback-option input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+.feedback-type:hover,
+.feedback-option:hover {
+    border-color: var(--foreground);
+}
+.feedback-type:has(input:checked),
+.feedback-option:has(input:checked) {
+    border-color: var(--foreground);
+    background: var(--foreground);
+    color: var(--background);
+}
+.feedback-type:has(input:checked) svg {
+    color: inherit;
+}
+.feedback-type:has(input[aria-invalid='true']),
+.feedback-option:has(input[aria-invalid='true']) {
+    border-color: var(--error);
+}
+.feedback-type:has(input:focus-visible),
+.feedback-option:has(input:focus-visible) {
+    border-color: var(--focus-color);
+    box-shadow: 0 0 0 3px
+        color-mix(in srgb, var(--focus-color) 22%, transparent);
+}
+.feedback-textarea {
+    min-height: 96px;
+    line-height: 1.55;
+    resize: vertical;
+}
+.feedback-questions {
+    display: grid;
+    gap: 28px;
+}
+.feedback-question-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+.feedback-question-head .survey-label {
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+.feedback-clear {
+    flex-shrink: 0;
+    min-height: 24px;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+.feedback-clear:hover {
+    color: var(--foreground);
+}
+.feedback-scale {
+    display: grid;
+    grid-template-columns: repeat(var(--options), minmax(0, 1fr));
+    gap: 6px;
+}
+.feedback-option {
+    display: grid;
+    place-items: center;
+    min-height: 44px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.25;
+    text-align: center;
+}
+.feedback-scale[data-numbered] .feedback-option {
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+.feedback-scale-ends {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 7px;
+    color: var(--muted-foreground);
+    font-size: 12px;
+}
+.feedback-privacy {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 22px;
+    color: var(--muted-foreground);
+    font-size: 13px;
+    line-height: 1.5;
+}
+.feedback-privacy svg {
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+    margin-top: 2px;
+}
+.feedback-page .survey-confirmation h2 {
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+}
+.feedback-page .survey-confirmation h2:focus {
+    outline: none;
+}
+.feedback-thanks-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 26px;
+}
+@media (max-width: 600px) {
+    .feedback-page {
+        padding-bottom: 64px;
+    }
+    /* The type's icon over its words, so the longest still fits. */
+    .feedback-type {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 14px;
+        font-size: 13px;
+    }
+    .feedback-scale:not([data-numbered]) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 .statistics-section {
     background: var(--muted);
@@ -2223,7 +2453,7 @@
     color: var(--muted-foreground);
     max-width: 500px;
 }
-.feedback-inner > button {
+.feedback-inner > [data-slot='button'] {
     flex-shrink: 0;
     font-size: 14px;
 }
@@ -2328,15 +2558,40 @@
     width: 20px;
     flex-shrink: 0;
 }
-.story-preview .media-panel {
-    height: 200px;
-    border-radius: 8px;
-    margin-bottom: 18px;
-}
 .story-preview p {
     font-size: 14px;
     color: var(--muted-foreground);
     margin-top: 12px;
+}
+/* The homepage's real stories (App\Support\HomepageStories). */
+.stories-empty {
+    font-size: 14px;
+    color: var(--muted-foreground);
+    max-width: 560px;
+}
+.story-reactions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--muted-foreground);
+    margin-bottom: 14px;
+    font-variant-numeric: tabular-nums;
+}
+.story-reactions svg {
+    width: 14px;
+    height: 14px;
+}
+.story-preview-photos {
+    margin-bottom: 18px;
+}
+.story-preview .story-preview-body {
+    color: var(--foreground);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+.story-preview .story-preview-action {
+    margin-top: 20px;
 }
 
 .story-featured
@@ -2344,6 +2599,7 @@
         .story-category,
         .story-category > span,
         .story-description,
+        .story-reactions,
         .text-action
     ) {
     color: var(--on-signature);

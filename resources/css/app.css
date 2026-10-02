@@ -51,7 +51,18 @@
     --color-chart-3: var(--chart-3);
     --color-chart-4: var(--chart-4);
     --color-chart-5: var(--chart-5);
-    --color-chart-rating: var(--chart-rating);
+    --color-chart-bar: var(--chart-bar);
+    --color-heat-1: var(--heat-1);
+    --color-heat-2: var(--heat-2);
+    --color-heat-3: var(--heat-3);
+    --color-heat-4: var(--heat-4);
+    --color-heat-ink: var(--heat-ink);
+    --color-heat-ink-strong: var(--heat-ink-strong);
+    --color-series-1: var(--series-1);
+    --color-series-2: var(--series-2);
+    --color-series-3: var(--series-3);
+    --color-series-4: var(--series-4);
+    --color-series-other: var(--series-other);
 
     --color-sidebar: var(--sidebar);
     --color-sidebar-foreground: var(--sidebar-foreground);
@@ -107,9 +118,29 @@
     --chart-3: #0038a8;
     --chart-4: #d9a441;
     --chart-5: #a8d8c4;
-    /* Bars of the Site ratings breakdown. The dark step is deeper than the
-       dark brand so the bars sit in the dark lightness band (dataviz check). */
-    --chart-rating: #7030a8;
+    /* Single-series bars: the Site ratings breakdown and the dashboard's bar
+       lists. The dark step is deeper than the dark brand so the bars sit in
+       the dark lightness band (dataviz check). */
+    --chart-bar: #7030a8;
+    /* The dashboard heatmap: one violet ramp, more is darker, each step at
+       least 2:1 against the card (dataviz ordinal check). Steps 1–2 take
+       ink figures (8.3:1, 5.1:1), steps 3–4 white (5.5:1, 9.8:1). */
+    --heat-1: #c8aae6;
+    --heat-2: #a47ad2;
+    --heat-3: #8350bb;
+    --heat-4: #5e2196;
+    --heat-ink: #181d26;
+    --heat-ink-strong: #ffffff;
+    /* Categorical slices (dashboard donuts), in this fixed order: brand
+       violet, orange, aqua, yellow, with a warm grey for "Other" and "Not
+       given". Every neighbour, the last beside the first included, clears
+       the dataviz CVD and normal-vision checks. Aqua and yellow sit under
+       3:1 on white, so every donut carries a legend table with figures. */
+    --series-1: #7030a8;
+    --series-2: #eb6834;
+    --series-3: #1baf7a;
+    --series-4: #eda100;
+    --series-other: #857f78;
     --radius: 0.75rem;
     --sidebar: #faf8f5;
     --sidebar-foreground: #181d26;
@@ -188,7 +219,22 @@
     --chart-3: #6d9eeb;
     --chart-4: #d9a441;
     --chart-5: #a8d8c4;
-    --chart-rating: #a57cd4;
+    --chart-bar: #a57cd4;
+    /* Dark heatmap: more is lighter, each step at least 2:1 against the dark
+       card. Steps 1–2 take light figures (7.6:1, 5.1:1), steps 3–4 dark
+       (5.2:1, 8.9:1). */
+    --heat-1: #56427a;
+    --heat-2: #7558a3;
+    --heat-3: #9877c8;
+    --heat-4: #c6a6ea;
+    --heat-ink: #f4f1ec;
+    --heat-ink-strong: #141217;
+    /* The same four hues stepped for the dark card, all at least 3:1. */
+    --series-1: #9085e9;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-other: #7a7482;
     --sidebar: #0f0d12;
     --sidebar-foreground: #f4f1ec;
     --sidebar-primary: #f4f1ec;
@@ -320,5 +366,22 @@
 
     [data-surface='hei'] textarea {
         caret-color: var(--brand);
+    }
+}
+
+/* Moving to another page cross-fades (`lib/page-transitions.ts`): briefly,
+   so the next page is quickly clickable, and not at all when the visitor
+   asks for reduced motion. */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 180ms;
+    animation-timing-function: ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none;
     }
 }

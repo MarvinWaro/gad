@@ -35,6 +35,28 @@ class SurveyHei extends Model
     }
 
     /**
+     * The active institutions a person can pick from, with the region each
+     * sits in, so a form can narrow the list once a region is chosen
+     * (registration, website feedback).
+     *
+     * @return list<array{id: int, name: string, region_id: int}>
+     */
+    public static function pickerOptions(): array
+    {
+        return array_values(self::query()
+            ->join('survey_clusters', 'survey_clusters.id', '=', 'survey_heis.survey_cluster_id')
+            ->where('survey_heis.is_active', true)
+            ->orderBy('survey_heis.name')
+            ->get(['survey_heis.id', 'survey_heis.name', 'survey_clusters.survey_region_id'])
+            ->map(fn (self $hei): array => [
+                'id' => $hei->id,
+                'name' => $hei->name,
+                'region_id' => (int) $hei->getAttribute('survey_region_id'),
+            ])
+            ->all());
+    }
+
+    /**
      * Normalise the many spellings the portal and operators use for ownership
      * down to the two values the directory stores.
      */

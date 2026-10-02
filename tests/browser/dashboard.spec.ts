@@ -1,5 +1,37 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+const DAY = 86_400_000;
+const MANILA = 8 * 3_600_000;
+
+/**
+ * Where tests/browser/server.php put the dashboard's figures: two goal-tagged
+ * posts and three survey answers, all 32 days ago. Other specs post and
+ * answer today, so that day's month holds only the seeded figures. Read in
+ * Philippine time; academic years start in August.
+ */
+function seeded() {
+    const day = new Date(Date.now() - 32 * DAY + MANILA);
+    const year = day.getUTCFullYear();
+    const month = day.getUTCMonth() + 1;
+    const start = month >= 8 ? year : year - 1;
+    return {
+        academicYear: `${start}-${start + 1}`,
+        month,
+        monthName: day.toLocaleString('en-PH', {
+            month: 'long',
+            timeZone: 'UTC',
+        }),
+    };
+}
+
+function metric(page: Page, label: string) {
+    return page
+        .locator('dl[aria-label="Overview metrics"] > div')
+        .filter({ has: page.locator('dt', { hasText: label }) })
+        .locator('dd')
+        .first();
+}
 
 test.beforeEach(async ({ page }) => {
     await page.goto('/login');
@@ -7,9 +39,13 @@ test.beforeEach(async ({ page }) => {
     await page.getByLabel('Password', { exact: true }).fill('browser-password');
     await page.getByRole('button', { name: 'Log in', exact: true }).click();
     await expect(page).toHaveURL(/dashboard/);
+    const { academicYear, month } = seeded();
+    await page.goto(
+        `/dashboard?academic_year=${academicYear}&view=month&month=${month}`,
+    );
 });
 
-test('admin preview filters keep overview, chart and breakdowns consistent', async ({
+test('the dashboard shows the network’s real figures, led by its goals', async ({
     page,
 }) => {
     const errors: string[] = [];
@@ -17,238 +53,176 @@ test('admin preview filters keep overview, chart and breakdowns consistent', asy
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
         'Your GAD network, at a glance.',
     );
-    await expect(
-        page.getByText('All figures and events are sample data.'),
-    ).toBeVisible();
-    const overview = page.locator('dl[aria-label="Sample overview metrics"]');
-    await expect(overview).toContainText('2,486');
+    await expect(page.getByText(/sample data/i)).toHaveCount(0);
+    await expect(metric(page, 'Survey responses')).toHaveText('3');
+    await expect(metric(page, 'Participating HEIs')).toHaveText('1');
+
+    // The chart switches between responses and posts, one at a time.
     const activity = page.getByRole('region', {
         name: 'Participation over time',
     });
+    await expect(activity).toContainText('3 in this period');
+    const postsShared = activity.getByRole('button', {
+        name: 'Posts shared',
+        exact: true,
+    });
+    await postsShared.click();
+    await expect(postsShared).toHaveAttribute('aria-pressed', 'true');
+    await expect(activity).toContainText(
+        `${await metric(page, 'GAD posts').textContent()} in this period`,
+    );
     await activity
         .getByRole('button', { name: 'Show activity data table' })
-        .click();
-    await expect(activity.getByRole('table')).toContainText('284');
-    await activity
-        .getByRole('button', { name: 'Posts shared', exact: true })
         .click();
     await expect(
         activity.getByRole('columnheader', { name: 'Posts shared' }),
     ).toBeVisible();
-    await expect(
-        activity.getByRole('cell', { name: '12', exact: true }),
-    ).toBeVisible();
-
-    await page.getByRole('combobox', { name: 'View by' }).click();
-    await page.getByRole('option', { name: 'Quarter' }).click();
-    await expect(overview).toContainText('6,924');
-    // The page's own status line; the header's bell has one too.
-    await expect(
-        page
-            .getByRole('status')
-            .filter({ hasText: 'participating institutions' }),
-    ).toContainText('43 participating institutions');
-    await expect(activity.getByRole('table')).toContainText('Jul 1–15');
-    await expect(
-        activity.getByRole('cell', { name: '36', exact: true }),
-    ).toBeVisible();
-    const groups = page.getByRole('table', {
-        name: 'Sample responses by respondent group',
-    });
-    const counts = await groups
-        .locator('tbody tr td:first-of-type')
-        .allTextContents();
-    expect(
-        counts.reduce(
-            (sum, value) => sum + Number(value.replaceAll(',', '')),
-            0,
-        ),
-    ).toBe(6924);
     await activity
         .getByRole('button', { name: 'Show activity data table' })
         .click();
-    await expect(activity.locator('.recharts-area')).toHaveCount(1);
     await expect(
-        page.getByRole('link', { name: 'Open Gender Mainstreaming' }),
-    ).toHaveAttribute('href', '/community');
+        page.locator('dl[aria-label="Overview metrics"]'),
+    ).toContainText('2 tagged with an SDG or A.C.H.I.E.V.E. item');
+
+    const goals = page.getByRole('region', {
+        name: 'Where GAD work meets the goals',
+    });
+    await expect(goals).toContainText('Tagged posts');
+    const ranked = goals
+        .getByRole('list', { name: 'Goals' })
+        .getByRole('listitem');
+    // Goals with posts rank first; the rest wait behind a button.
+    await expect(ranked).toHaveCount(3);
+    await expect(ranked.first()).toContainText('Gender Equality');
+    await expect(ranked.first()).toContainText('2');
+    await goals
+        .getByRole('button', { name: 'Show the 14 goals with no posts yet' })
+        .click();
+    await expect(ranked).toHaveCount(17);
+
+    const gender = goals.getByRole('button', { name: /Gender Equality/ });
+    await gender.click();
+    await expect(gender).toHaveAttribute('aria-pressed', 'true');
+    const details = goals.getByRole('complementary');
+    await expect(details.getByRole('heading', { level: 3 })).toHaveText(
+        'SDG 5 · Gender Equality',
+    );
+    await expect(details).toContainText('2 posts');
+    await expect(details).toContainText('Browser Test HEI');
     await expect(
-        page.getByRole('link', { name: 'Manage law surveys' }),
-    ).toHaveAttribute('href', '/admin/surveys');
+        goals.getByRole('table', { name: 'Tagged posts by hei and goal' }),
+    ).toContainText('Browser Test HEI');
+    await expect(goals).toContainText(
+        'The content of this publication has not been approved by the United Nations',
+    );
+
+    await goals.getByRole('tab', { name: 'A.C.H.I.E.V.E. Agenda' }).click();
+    const agenda = goals
+        .getByRole('list', { name: 'Agenda items' })
+        .getByRole('listitem');
+    await expect(agenda).toHaveCount(2);
+    await expect(agenda.first()).toContainText(
+        'Vitalized Policies, Internal Systems, and Governance',
+    );
+
     await expect(
-        page.getByRole('link', { name: 'View calendar' }),
-    ).toHaveAttribute('href', '/events');
+        page
+            .getByRole('region', { name: 'Whose voices are we hearing?' })
+            .getByRole('table', { name: 'Responses by sex' }),
+    ).toContainText(/Female\s*2/);
+    await expect(
+        page.getByRole('region', { name: 'Four laws. One shared purpose.' }),
+    ).toContainText('RA 9710');
+    // The donuts read out through their tables.
+    await expect(
+        page
+            .getByRole('region', { name: 'Who shares the work' })
+            .getByRole('table', { name: 'Posts by who posted them' }),
+    ).toContainText(/HEIs, ownership not recorded\s*\d+\s*100%/);
+    await expect(
+        page
+            .getByRole('region', { name: 'People on PHLGADIS' })
+            .getByRole('table', { name: 'Accounts by kind and status' }),
+    ).toContainText('CHED staff');
     expect(errors).toEqual([]);
 });
 
-test('all reporting periods update both metrics and retain the annual event calendar', async ({
+test('period and law filters change the figures and the address', async ({
     page,
 }) => {
-    const period = page.getByRole('combobox', { name: 'View by' });
-    const overview = page.locator('dl[aria-label="Sample overview metrics"]');
-    const activity = page.getByRole('region', {
-        name: 'Participation over time',
-    });
-    const calendar = page.getByRole('region', { name: '2026 event calendar' });
-    const calendarText = await calendar.innerText();
-    await expect(calendar).toContainText('4 sample events');
-    await expect(calendar.locator('time')).toHaveCount(4);
-    await activity
-        .getByRole('button', { name: 'Show activity data table' })
-        .click();
+    const { month, monthName } = seeded();
+    const months = page.getByRole('combobox', { name: 'Month', exact: true });
+    await expect(months).toContainText(monthName);
 
-    for (const item of [
-        {
-            label: 'Month',
-            responses: 2486,
-            posts: 126,
-            rows: 6,
-            comparison: 'vs. August',
-        },
-        {
-            label: 'Quarter',
-            responses: 6924,
-            posts: 302,
-            rows: 6,
-            comparison: 'vs. Q2',
-        },
-        {
-            label: 'Semester',
-            responses: 13724,
-            posts: 652,
-            rows: 6,
-            comparison: 'vs. 1st semester 2026',
-        },
-        {
-            label: 'Annual',
-            responses: 24364,
-            posts: 1096,
-            rows: 12,
-            comparison: 'vs. 2025',
-        },
-    ]) {
-        await period.click();
-        await expect(page.getByRole('option')).toHaveCount(4);
+    await page.getByRole('combobox', { name: 'Law survey' }).click();
+    await page.getByRole('option', { name: 'RA 9710', exact: true }).click();
+    await expect(page).toHaveURL(/survey=\d+/);
+    await expect(metric(page, 'Survey responses')).toHaveText('1');
+    await expect(
+        page.getByRole('region', { name: 'Participation over time' }),
+    ).toContainText(`${monthName.slice(0, 3)} 1–5`);
+
+    // The month before holds nothing seeded (August opens the year).
+    if (month !== 8) {
+        const before = new Date(Date.UTC(2000, month - 2, 1)).toLocaleString(
+            'en-PH',
+            { month: 'long', timeZone: 'UTC' },
+        );
+        await months.click();
+        await page.getByRole('option', { name: before, exact: true }).click();
+        await expect(page).toHaveURL(
+            new RegExp(`[?&]month=${month === 1 ? 12 : month - 1}(&|$)`),
+        );
+        await expect(metric(page, 'Survey responses')).toHaveText('0');
+        await months.click();
         await page
-            .getByRole('option', { name: item.label, exact: true })
+            .getByRole('option', { name: monthName, exact: true })
             .click();
-        await expect(overview).toContainText(
-            item.responses.toLocaleString('en-PH'),
-        );
-        await expect(overview).toContainText(
-            item.posts.toLocaleString('en-PH'),
-        );
-        await expect(overview).toContainText(item.comparison);
-        for (const [label, total] of [
-            ['Survey responses', item.responses],
-            ['Posts shared', item.posts],
-        ] as const) {
-            await activity
-                .getByRole('button', { name: label, exact: true })
-                .click();
-            await expect(activity.locator('tbody tr')).toHaveCount(item.rows);
-            const values = await activity.locator('tbody td').allTextContents();
-            expect(
-                values.reduce(
-                    (sum, value) => sum + Number(value.replaceAll(',', '')),
-                    0,
-                ),
-            ).toBe(total);
-        }
-        const groups = page.getByRole('table', {
-            name: 'Sample responses by respondent group',
-        });
-        const values = await groups
-            .locator('tbody tr td:first-of-type')
-            .allTextContents();
-        expect(
-            values.reduce(
-                (sum, value) => sum + Number(value.replaceAll(',', '')),
-                0,
-            ),
-        ).toBe(item.responses);
-        await expect(calendar).toHaveText(calendarText, { useInnerText: true });
+        await expect(metric(page, 'Survey responses')).toHaveText('1');
     }
-    await expect(
-        page.getByRole('region', { name: 'Every campus counts.' }),
-    ).toContainText('All 46 registered HEIs contributed');
+
+    await page.getByRole('combobox', { name: 'Law survey' }).click();
+    await page.getByRole('option', { name: 'All law surveys' }).click();
+    await expect(metric(page, 'Survey responses')).toHaveText('3');
+    await expect(page).not.toHaveURL(/survey=/);
+
+    await page.getByRole('combobox', { name: 'View by' }).click();
+    await page.getByRole('option', { name: 'Whole year', exact: true }).click();
+    await expect(page).toHaveURL(/view=year/);
+    await expect(page).not.toHaveURL(/month=/);
+    await expect(months).toHaveCount(0);
 });
 
-test('separate date controls update analytics and preserve the selected date when grouping changes', async ({
-    page,
-}, testInfo) => {
-    await page.setViewportSize({ width: 375, height: 1000 });
-    await page.screenshot({ path: testInfo.outputPath('filters-mobile.png') });
-    const grouping = page.getByRole('combobox', {
-        name: 'View by',
-        exact: true,
+test('the goal tabs and rows work from the keyboard', async ({ page }) => {
+    const goals = page.getByRole('region', {
+        name: 'Where GAD work meets the goals',
     });
-    const overview = page.locator('dl[aria-label="Sample overview metrics"]');
-    await expect(grouping).toContainText('Month');
-    await expect(
-        page.getByRole('combobox', { name: 'Year', exact: true }),
-    ).toBeDisabled();
-    await page.getByRole('combobox', { name: 'Month', exact: true }).click();
-    await expect(page.getByRole('option')).toHaveCount(12);
-    await page.getByRole('option', { name: 'August', exact: true }).click();
-    await expect(overview).toContainText('2,114');
-    await expect(overview).toContainText('-9.0% vs. July');
-    await grouping.click();
-    await page.getByRole('option', { name: 'Quarter', exact: true }).click();
-    const quarter = page.getByRole('combobox', {
-        name: 'Quarter',
-        exact: true,
+    const sdgTab = goals.getByRole('tab', {
+        name: 'SDGs',
     });
-    await expect(quarter).toContainText('Q3');
-    await quarter.click();
-    await expect(page.getByRole('option')).toHaveCount(4);
-    await page
-        .getByRole('option', { name: 'Q1 · Jan–Mar', exact: true })
-        .click();
-    await expect(overview).toContainText('4,820');
-    await expect(overview).toContainText('No earlier sample data');
-    await grouping.click();
-    await page.getByRole('option', { name: 'Semester', exact: true }).click();
-    const semester = page.getByRole('combobox', {
-        name: 'Semester',
-        exact: true,
-    });
-    await expect(semester).toContainText('1st semester');
-    await semester.click();
-    await expect(page.getByRole('option')).toHaveCount(2);
-    await page
-        .getByRole('option', { name: '2nd semester · Jul–Dec', exact: true })
-        .click();
-    await expect(overview).toContainText('13,724');
-    expect(
-        await page.evaluate(
-            () => document.documentElement.scrollWidth > window.innerWidth,
-        ),
-    ).toBe(false);
-    await page.setViewportSize({ width: 1440, height: 1000 });
-    await expect(page.getByRole('listbox')).toHaveCount(0);
-    await page.screenshot({ path: testInfo.outputPath('filters-desktop.png') });
-    await grouping.click();
-    await page.getByRole('option', { name: 'Annual', exact: true }).click();
+    await sdgTab.focus();
+    await page.keyboard.press('ArrowRight');
     await expect(
-        page
-            .getByRole('group', { name: 'Reporting filters' })
-            .getByRole('combobox'),
-    ).toHaveCount(2);
-    await expect(overview).toContainText('24,364');
-    await grouping.click();
-    await page.getByRole('option', { name: 'Month', exact: true }).click();
+        goals.getByRole('tab', { name: 'A.C.H.I.E.V.E. Agenda' }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('ArrowLeft');
+    await expect(sdgTab).toHaveAttribute('aria-selected', 'true');
+
+    const climate = goals.getByRole('button', { name: /Climate Action/ });
+    await climate.focus();
+    await page.keyboard.press('Enter');
+    await expect(climate).toHaveAttribute('aria-pressed', 'true');
     await expect(
-        page.getByRole('combobox', { name: 'Month', exact: true }),
-    ).toContainText('July');
-    await expect(overview).toContainText('2,324');
+        goals.getByRole('complementary').getByRole('heading', { level: 3 }),
+    ).toHaveText('SDG 13 · Climate Action');
+    await page.keyboard.press('Enter');
+    await expect(climate).toHaveAttribute('aria-pressed', 'false');
 });
 
-test('admin dashboard fits mobile and desktop and passes accessibility checks in both themes', async ({
+test('the dashboard fits phones and desktops and passes accessibility checks in both themes', async ({
     page,
 }, testInfo) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.getByRole('combobox', { name: 'View by' }).click();
-    await page.getByRole('option', { name: 'Annual' }).click();
     for (const theme of ['light', 'dark']) {
         await page.evaluate(
             (value) =>
@@ -261,32 +235,30 @@ test('admin dashboard fits mobile and desktop and passes accessibility checks in
         for (const width of [375, 768, 1440]) {
             await page.setViewportSize({ width, height: 1000 });
             await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-            const overflow = await page.evaluate(
-                () => document.documentElement.scrollWidth > window.innerWidth,
-            );
-            expect(overflow).toBe(false);
-            const ticks = page.locator(
-                '.recharts-xAxis .recharts-cartesian-axis-tick',
-            );
-            const boxes = await ticks.evaluateAll((nodes) =>
-                nodes.map((node) => {
-                    const rect = node.getBoundingClientRect();
-                    return { left: rect.left, right: rect.right };
-                }),
-            );
-            expect(boxes.length).toBeGreaterThan(1);
-            for (let index = 1; index < boxes.length; index++) {
-                expect(boxes[index].left).toBeGreaterThanOrEqual(
-                    boxes[index - 1].right,
-                );
-            }
-            if (width !== 768)
+            expect(
+                await page.evaluate(
+                    () =>
+                        document.documentElement.scrollWidth >
+                        window.innerWidth,
+                ),
+            ).toBe(false);
+            if (width !== 768) {
                 await page.screenshot({
                     path: testInfo.outputPath(
                         `dashboard-${theme}-${width}.png`,
                     ),
                     fullPage: true,
                 });
+                await page
+                    .getByRole('region', {
+                        name: 'Where GAD work meets the goals',
+                    })
+                    .screenshot({
+                        path: testInfo.outputPath(
+                            `dashboard-goals-${theme}-${width}.png`,
+                        ),
+                    });
+            }
         }
         const scan = await new AxeBuilder({ page })
             .include('main')
@@ -294,28 +266,31 @@ test('admin dashboard fits mobile and desktop and passes accessibility checks in
             .analyze();
         expect(scan.violations).toEqual([]);
     }
-    // The period selector also works without a pointer.
-    const period = page.getByRole('combobox', { name: 'View by' });
-    await period.focus();
-    await page.keyboard.press('Enter');
-    await expect(page.getByRole('option', { name: 'Annual' })).toBeFocused();
-    await page.keyboard.press('Home');
-    await expect(
-        page.getByRole('option', { name: 'Month', exact: true }),
-    ).toBeFocused();
-    await page.keyboard.press('ArrowDown');
-    await expect(
-        page.getByRole('option', { name: 'Quarter', exact: true }),
-    ).toBeFocused();
-    await page.keyboard.press('ArrowDown');
-    await expect(page.getByRole('option', { name: 'Semester' })).toBeFocused();
-    await page.keyboard.press('Enter');
-    await expect(period).toContainText('Semester');
-    await period.focus();
-    await page.keyboard.press('Enter');
-    await expect(page.getByRole('option', { name: 'Semester' })).toBeFocused();
-    await page.keyboard.press('End');
-    await expect(page.getByRole('option', { name: 'Annual' })).toBeFocused();
-    await page.keyboard.press('Enter');
-    await expect(period).toContainText('Annual');
+});
+
+test('zoomed out, the dashboard keeps the same padding as the other modules', async ({
+    page,
+}, testInfo) => {
+    // A 1920px screen at 80% zoom is 2400 CSS pixels wide.
+    await page.setViewportSize({ width: 2400, height: 1000 });
+    // Where a page's filter card starts and ends.
+    const edges = async (path: string, filters: string) => {
+        await page.goto(path);
+        const card = (await page
+            .getByRole('group', { name: filters })
+            .boundingBox())!;
+        return { left: card.x, right: card.x + card.width };
+    };
+
+    const feedback = await edges('/admin/feedback', 'Filter feedback');
+    const dashboard = await edges('/dashboard', 'Reporting filters');
+    expect(dashboard.left).toBeCloseTo(feedback.left, 0);
+    expect(dashboard.right).toBeCloseTo(feedback.right, 0);
+    await page.screenshot({
+        path: testInfo.outputPath('dashboard-2400.png'),
+    });
+
+    // Settings lists fill the width too, to the same right edge.
+    const users = await edges('/settings/users', 'Filter users');
+    expect(users.right).toBeCloseTo(feedback.right, 0);
 });

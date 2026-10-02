@@ -81,12 +81,80 @@ test('a UII with unexpected characters is rejected', function () {
         ->assertSessionHasErrors('uii');
 });
 
-test('an HEI must belong to an existing cluster', function () {
+test('a chosen cluster must exist', function () {
     $this->actingAs($this->admin)
         ->post(route('settings.survey-directories.store', ['type' => 'heis']), heiPayload([
             'survey_cluster_id' => 9999,
         ]))
         ->assertSessionHasErrors('survey_cluster_id');
+});
+
+test('an HEI needs only its region, and waits in the region\'s holding cluster', function () {
+    $region = $this->cluster->region;
+    foreach (['Notre Dame of Marbel University' => '12001', 'Koronadal College' => '12002'] as $name => $uii) {
+        $this->actingAs($this->admin)
+            ->post(route('settings.survey-directories.store', ['type' => 'heis']), heiPayload([
+                'uii' => $uii,
+                'name' => $name,
+                'survey_region_id' => $region->id,
+                'survey_cluster_id' => null,
+            ]))
+            ->assertSessionHasNoErrors();
+    }
+
+    $clusters = SurveyHei::query()->with('cluster')->get()->pluck('cluster');
+
+    expect($clusters->pluck('name')->unique()->all())->toBe([SurveyCluster::UNASSIGNED])
+        ->and($clusters->pluck('id')->unique())->toHaveCount(1)
+        ->and($clusters->first()->survey_region_id)->toBe($region->id);
+});
+
+test('an HEI without a cluster joins the region\'s others when they share one', function () {
+    SurveyHei::query()->create(['survey_cluster_id' => $this->cluster->id, 'name' => 'Placed College', 'is_active' => true]);
+
+    $this->actingAs($this->admin)
+        ->post(route('settings.survey-directories.store', ['type' => 'heis']), heiPayload([
+            'survey_region_id' => $this->cluster->survey_region_id,
+            'survey_cluster_id' => null,
+        ]))
+        ->assertSessionHasNoErrors();
+
+    // No second cluster appears, so pickers still go region → HEI.
+    expect(SurveyHei::query()->where('uii', '12001')->sole()->survey_cluster_id)->toBe($this->cluster->id)
+        ->and(SurveyCluster::query()->where('name', SurveyCluster::UNASSIGNED)->exists())->toBeFalse();
+});
+
+test('an HEI needs a region when no cluster is chosen', function () {
+    $this->actingAs($this->admin)
+        ->post(route('settings.survey-directories.store', ['type' => 'heis']), heiPayload([
+            'survey_cluster_id' => null,
+        ]))
+        ->assertSessionHasErrors('survey_region_id');
+
+    expect(SurveyHei::query()->count())->toBe(0);
+});
+
+test('a chosen cluster must lie in the chosen region', function () {
+    $elsewhere = SurveyRegion::query()->create(['name' => 'Regional Office XI', 'is_active' => true]);
+
+    $this->actingAs($this->admin)
+        ->post(route('settings.survey-directories.store', ['type' => 'heis']), heiPayload([
+            'survey_region_id' => $elsewhere->id,
+        ]))
+        ->assertSessionHasErrors('survey_cluster_id');
+});
+
+test('the HEI form asks for a cluster only where a region already uses two', function () {
+    $regionId = $this->cluster->survey_region_id;
+    SurveyHei::query()->create(['survey_cluster_id' => SurveyCluster::holdingFor($regionId)->id, 'name' => 'Waiting College', 'is_active' => true]);
+
+    $this->actingAs($this->admin)->get(route('settings.heis.index'))
+        ->assertInertia(fn (Assert $page) => $page->where('clusterRegions', []));
+
+    SurveyHei::query()->create(['survey_cluster_id' => $this->cluster->id, 'name' => 'Placed College', 'is_active' => true]);
+
+    $this->actingAs($this->admin)->get(route('settings.heis.index'))
+        ->assertInertia(fn (Assert $page) => $page->where('clusterRegions', [$regionId]));
 });
 
 test('an HEI can be edited, including moving it to another cluster', function () {

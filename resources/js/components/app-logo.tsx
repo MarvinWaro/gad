@@ -1,10 +1,9 @@
 import { usePage } from '@inertiajs/react';
 
 import AppLogoIcon from '@/components/app-logo-icon';
-import { systemFullName } from '@/lib/brand';
 
-/** The official icon and the app's name; `subtitle` adds what it stands for. */
-export default function AppLogo({ subtitle = false }: { subtitle?: boolean }) {
+/** The official icon and the app's name, for the sidebar and the phone menu. */
+export default function AppLogo() {
     const { name } = usePage().props;
 
     return (
@@ -16,11 +15,6 @@ export default function AppLogo({ subtitle = false }: { subtitle?: boolean }) {
                 <span className="mb-0.5 truncate leading-tight font-semibold">
                     {name}
                 </span>
-                {subtitle && (
-                    <span className="hidden truncate text-xs leading-tight text-muted-foreground md:block">
-                        {systemFullName}
-                    </span>
-                )}
             </div>
         </>
     );

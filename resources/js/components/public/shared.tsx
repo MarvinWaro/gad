@@ -50,18 +50,21 @@ export function PreviewDialog({
     description,
     children,
     content,
+    label = 'PHLGADIS preview',
 }: {
     title: string;
     description: string;
     children: ReactNode;
     content?: ReactNode;
+    /** The small line above the title. */
+    label?: string;
 }) {
     return (
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className="public-theme preview-dialog">
                 <DialogHeader>
-                    <span className="preview-label">PHLGADIS preview</span>
+                    <span className="preview-label">{label}</span>
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>

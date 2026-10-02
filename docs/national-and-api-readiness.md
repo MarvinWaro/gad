@@ -31,7 +31,7 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 - [ ] `PortalHeiSync` files every synced HEI under a region named "Regional Office XII". A national sync must file each HEI under its own region.
 - [ ] `PortalService` is written as a client for the CHEDRO XII portal only.
 - [ ] `SurveySeeder`, `SurveyHeiSeeder` and `SurveyDirectorySeeder` look regions up by the name "Regional Office XII". This is fine for seeding Region XII, but no runtime code may look a region up by name.
-- [ ] The demo figures in `components/dashboard/dashboard-data.ts` use Region XII cluster names. Replace them with real, region-filtered statistics.
+- [x] The dashboard's demo figures (`components/dashboard/dashboard-data.ts`, with Region XII cluster names) are gone (2026-10-02). It now shows real figures for the viewer's office, filterable by region, cluster, HEI, ownership and law (`docs/dashboard.md`).
 
 **Keep as is.** Word-for-word copies of old-system text that mention Region XII:
 
@@ -45,6 +45,8 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
     - Done: monitoring reports use it (`BelongsToRegion::scopeWithinReachOf`, `User::reachesRegion`).
     - Done: user management places and manages accounts only within the manager's office.
     - Done: activity logs (2026-10-01). Each entry is placed by its record, or by the person who acted, and is read through `ActivityLogFilterRequest` and `ActivityLogResource` (`docs/activity-logs.md`).
+    - Done: the staff dashboard (2026-10-02). It covers the office's region, or every region for the Central Office, through `App\Support\DashboardScope`. A CHED post counts under its author's office region, and a Central Office post only nationally.
+    - Done: website feedback (2026-10-02). It names a region when the sender gives one; that region's office and the Central Office read it, and feedback naming none goes to every office (`SiteFeedback::scopeVisibleTo`). It has its Resource (`SiteFeedbackResource`) and Form Requests (`docs/feedback.md`).
     - Done: notifications (2026-10-01). Staff are told about reports, GAD surveys, registrations and survey answers only for the regions their office covers (`User::scopeReaching`); a survey answer that names no region reaches everyone who may read responses. The JSON the bell reads (`NotificationResource`, cursor-paginated) is ready to move under `/api/v1` (`docs/notifications.md`).
     - Still to limit to the staff member's region:
         - account approval
@@ -52,7 +54,6 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
         - survey responses and exports
         - events
         - community moderation
-        - statistics
         - site ratings
 - [ ] **Office details per region:** the letterhead is in data since 2026-09-29 (`survey_regions.office_city`, `office_address`, `office_email`, `office_website`, `office_phone`; Settings → Regions → Office details) and prints on monitoring reports. `resources/js/data/contact.ts` (the footer and FAQ hotline) still hard-codes Region XII and should read the viewer's office instead.
 - [ ] **Filters and exports:** every statistic and export takes a region, cluster and HEI filter.

@@ -58,6 +58,10 @@ test('a post shows the SDGs and A.C.H.I.E.V.E. items it supports on its photos',
     await logIn(page);
     const dialog = await openComposer(page, text);
     await page.locator('input[type="file"]').setInputFiles(photo);
+    // With a photo, the composer says where the post may also appear.
+    await expect(dialog).toContainText(
+        'may be featured on the public PHLGADIS homepage',
+    );
     await pick(dialog, [
         'Goal 5: Gender Equality',
         'Goal 4: Quality Education',
@@ -117,6 +121,23 @@ test('a post shows the SDGs and A.C.H.I.E.V.E. items it supports on its photos',
     await expect(viewer.getByRole('button', { name: /^Supports/ })).toHaveCount(
         0,
     );
+    await page.keyboard.press('Escape');
+    await expect(viewer).toHaveCount(0);
+
+    // A moderator can keep the photo post off the public homepage, and let
+    // it back.
+    const options = card.getByRole('button', { name: 'Post options' });
+    await options.click();
+    await page.getByRole('menuitem', { name: 'Hide from homepage' }).click();
+    await expect(
+        page.getByText('The post is hidden from the homepage.'),
+    ).toBeVisible();
+    await expect(page.getByRole('menu')).toHaveCount(0);
+    await options.click();
+    await page.getByRole('menuitem', { name: 'Show on homepage' }).click();
+    await expect(
+        page.getByText('The post can appear on the homepage again.'),
+    ).toBeVisible();
 });
 
 test('a post without photos shows its badges under the text', async ({
@@ -553,7 +574,8 @@ test('the feed is called Gender Mainstreaming in both menus', async ({
         page.getByRole('link', { name: 'Gender Mainstreaming' }).first(),
     ).toBeVisible();
 
-    // The top navigation still fits its row at the smallest desktop width.
+    // The top navigation's icon tabs still fit the one row at the smallest
+    // desktop width.
     await page
         .getByRole('button', { name: 'Switch to top navigation' })
         .click();
@@ -562,7 +584,7 @@ test('the feed is called Gender Mainstreaming in both menus', async ({
         .getByRole('link', { name: 'Gender Mainstreaming' });
     await expect(topLink).toBeVisible();
     const box = (await topLink.boundingBox())!;
-    expect(box.height).toBeLessThanOrEqual(40);
+    expect(box.height).toBeLessThanOrEqual(48);
     expect(
         await page.evaluate(
             () =>

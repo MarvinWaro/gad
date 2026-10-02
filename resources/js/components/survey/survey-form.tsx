@@ -19,6 +19,7 @@ import type {
 } from '@/components/survey/types';
 import {
     detailErrors,
+    errorTarget,
     experienceErrors,
     stepOf,
 } from '@/components/survey/validation';
@@ -171,8 +172,12 @@ export function SurveyForm({
                 ref={errorSummary}
                 issues={summaryIssues}
                 message={stepError}
-                questionnaire={questionnaire}
-                onShowStep={setStep}
+                targetOf={(key) => errorTarget(key, questionnaire)}
+                onShow={(key) => {
+                    if (key !== 'version_id') {
+                        setStep(stepOf(key));
+                    }
+                }}
             />
 
             {step === 1 && <ConsentStep survey={survey} form={form} />}

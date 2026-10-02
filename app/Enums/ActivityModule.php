@@ -25,6 +25,7 @@ enum ActivityModule: string
     case Monitoring = 'monitoring';
     case GadSurveys = 'gad-surveys';
     case SiteRatings = 'site-ratings';
+    case SiteFeedback = 'site-feedback';
 
     public function label(): string
     {
@@ -46,6 +47,7 @@ enum ActivityModule: string
             self::Monitoring => 'Monitoring reports',
             self::GadSurveys => 'GAD Training & Compliance Surveys',
             self::SiteRatings => 'Site ratings',
+            self::SiteFeedback => 'Website feedback',
         };
     }
 }

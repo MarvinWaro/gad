@@ -10,6 +10,7 @@ import {
     Forward,
     MailOpen,
     MessageCircle,
+    MessageSquareText,
     MoreHorizontal,
     Reply,
     Tag,
@@ -56,6 +57,7 @@ const kindIcons: Record<string, LucideIcon> = {
     account_approved: UserCheck,
     event_created: CalendarPlus,
     survey_responses: ClipboardList,
+    site_feedback: MessageSquareText,
 };
 
 export type NotificationChanges = {

@@ -11,23 +11,21 @@ import {
 import { RateWidget } from '@/components/home/rate-widget';
 import { Statistics } from '@/components/home/statistics';
 import { SiteFooter, SiteHeader } from '@/components/public/site-layout';
-import {
-    datasets,
-    heroSlides,
-    laws,
-    resources,
-    stories,
-} from '@/data/phlgadis-demo';
+import { datasets, heroSlides, laws, resources } from '@/data/phlgadis-demo';
 import type { HeroSlideRecord } from '@/data/phlgadis-demo';
+import type { HomepageStory } from '@/types';
 import '../../css/public.css';
 
 export default function Welcome({
     carouselSlides = [],
     openSurveys = [],
     ratingButton = false,
+    stories = [],
 }: {
     carouselSlides?: HeroSlideRecord[];
     openSurveys?: string[];
+    /** The year's most reacted photo posts (App\Support\HomepageStories). */
+    stories?: HomepageStory[];
     /** Whether Settings → Site ratings has the rating button switched on. */
     ratingButton?: boolean;
 }) {
@@ -126,7 +124,7 @@ export default function Welcome({
                 <QuickAccess />
                 <Rights laws={laws} openSurveys={openSurveys} />
                 <Statistics datasets={datasets} />
-                <Stories stories={stories} />
+                <Stories stories={stories} signedIn={Boolean(auth.user)} />
                 <Resources resources={resources} />
                 <About />
                 <Feedback />

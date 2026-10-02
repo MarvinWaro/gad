@@ -28,7 +28,7 @@ async function expectAccessible(page: Page) {
     ).toEqual([]);
 }
 
-test('staff top navigation: a brand bar, a navigation row that sticks, and the Monitoring menu', async ({
+test('staff top navigation: one row like Facebook, icon tabs, the Monitoring menu and a search', async ({
     page,
 }, testInfo) => {
     const errors: string[] = [];
@@ -63,6 +63,25 @@ test('staff top navigation: a brand bar, a navigation row that sticks, and the M
     await expect(
         page.getByRole('button', { name: /^Account menu, / }),
     ).toBeVisible();
+    // Only the icon, named for where it leads.
+    await expect(
+        page.getByRole('link', { name: 'PHLGADIS home' }),
+    ).toBeVisible();
+    // Each icon tab says its name on hover.
+    await nav.getByRole('link', { name: 'Gender Mainstreaming' }).hover();
+    await expect(page.getByRole('tooltip')).toHaveText('Gender Mainstreaming');
+
+    // The search finds nothing yet, and says so.
+    const comingSoon = page
+        .getByText('Search is coming soon.')
+        .filter({ visible: true });
+    const search = page.getByRole('searchbox', { name: 'Search PHLGADIS' });
+    await search.fill('Notre Dame');
+    await expect(comingSoon).toBeVisible();
+    await search.press('Enter');
+    await expect(page).toHaveURL(/\/admin\/monitoring\/training$/);
+    await search.press('Escape');
+    await expect(comingSoon).toHaveCount(0);
 
     await menu.click();
     await expect(page.getByRole('menuitem')).toHaveText([
@@ -83,7 +102,7 @@ test('staff top navigation: a brand bar, a navigation row that sticks, and the M
     await page.getByRole('menuitem', { name: 'Compliance Survey' }).click();
     await expect(page).toHaveURL(/\/admin\/monitoring\/compliance$/);
 
-    // Every entry fits one row at the narrowest desktop width.
+    // Every tab fits the one row at the narrowest desktop width.
     await page.setViewportSize({ width: 1024, height: 700 });
     await page.goto('/dashboard');
     await expect(nav.getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
@@ -91,7 +110,7 @@ test('staff top navigation: a brand bar, a navigation row that sticks, and the M
         'page',
     );
     const rowHeight = (await nav.boundingBox())!.height;
-    expect(rowHeight).toBe(48);
+    expect(rowHeight).toBe(56);
     expect(
         await page.evaluate(
             () =>
@@ -101,7 +120,7 @@ test('staff top navigation: a brand bar, a navigation row that sticks, and the M
     ).toBe(true);
     await page.screenshot({ path: testInfo.outputPath('header-1024.png') });
 
-    // Scrolled, the brand bar has gone and the navigation row holds at the top.
+    // Scrolled, the bar holds at the top.
     await page.mouse.wheel(0, 400);
     await expect
         .poll(async () => Math.round((await nav.boundingBox())!.y))
@@ -116,8 +135,15 @@ test('staff top navigation: a brand bar, a navigation row that sticks, and the M
     }
     await setTheme(page, 'light');
 
-    // Phones: the brand bar stays, and the menu lists the same labelled groups.
+    // Phones: the bar keeps the menu button and a search button, and the
+    // menu lists the same labelled groups.
     await page.setViewportSize({ width: 375, height: 800 });
+    await page.getByRole('button', { name: 'Search PHLGADIS' }).click();
+    await expect(
+        page.getByRole('searchbox', { name: 'Search PHLGADIS' }),
+    ).toBeFocused();
+    await expect(comingSoon).toBeVisible();
+    await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Open navigation menu' }).click();
     const sheet = page.getByRole('dialog', { name: 'Navigation menu' });
     for (const label of [

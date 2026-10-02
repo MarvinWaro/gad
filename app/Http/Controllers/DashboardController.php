@@ -3,28 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ChecklistType;
+use App\Http\Requests\DashboardFilterRequest;
 use App\Models\MonitoringReport;
 use App\Models\Survey;
 use App\Models\SurveyCluster;
 use App\Models\SurveyResponse;
 use App\Models\User;
+use App\Services\DashboardStatistics;
 use App\Support\CommunityFeed;
 use App\Support\EventCalendar;
 use App\Support\InstitutionName;
 use App\Support\SurveyDefinitions;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(DashboardFilterRequest $request, DashboardStatistics $statistics): Response
     {
         /** @var User $user */
         $user = $request->user();
 
         if (! $user->isHeiOnly()) {
-            return Inertia::render('dashboard');
+            return Inertia::render('dashboard', $statistics->for($user, $request->validated()));
         }
 
         $user->loadMissing('hei.cluster:id,name');

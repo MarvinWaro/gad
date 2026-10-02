@@ -22,6 +22,7 @@ use App\Support\RespondentFollowUps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -88,6 +89,9 @@ class SurveyDirectoryController extends Controller
             // clusters; until then (all "Unassigned", say) a region goes
             // straight to its institutions.
             'clusterOptions' => $regionId === null ? [] : PlaceFilters::clusterChoices($regionId),
+            // Only there does the HEI form ask for a cluster; elsewhere a new
+            // institution waits in its region's holding cluster.
+            'clusterRegions' => PlaceFilters::regionsWithClusterChoices(),
             'permissions' => $this->permissions($request),
         ]);
     }
@@ -172,13 +176,15 @@ class SurveyDirectoryController extends Controller
         if ($type === 'respondent-groups') {
             return $this->storeRespondentGroup($request, $activity);
         }
-        $parent = $type === 'clusters' ? 'survey_region_id' : ($type === 'heis' ? 'survey_cluster_id' : null);
+        if ($type === 'heis') {
+            return $this->saveHei($request, null, $activity);
+        }
+        $parent = $type === 'clusters' ? 'survey_region_id' : null;
         $table = $model->getTable();
         $rules = ['name' => ['required', 'string', 'max:180', Rule::unique($table)->where(fn ($query) => $parent ? $query->where($parent, $request->input($parent)) : $query)]];
         if ($parent !== null) {
-            $rules[$parent] = ['required', 'integer', Rule::exists($parent === 'survey_region_id' ? 'survey_regions' : 'survey_clusters', 'id')];
+            $rules[$parent] = ['required', 'integer', Rule::exists('survey_regions', 'id')];
         }
-        $rules += $this->heiRules($type);
         $validated = $request->validate($rules, [], self::ATTRIBUTE_NAMES);
         $record = $model->newQuery()->create([...$validated, 'is_active' => true]);
         $activity->recordSave($this->moduleFor($type), $record);
@@ -273,18 +279,13 @@ class SurveyDirectoryController extends Controller
 
             return back();
         }
-        $rules = [
+        if ($record instanceof SurveyHei) {
+            return $this->saveHei($request, $record, $activity);
+        }
+        $record->update($request->validate([
             'name' => ['required', 'string', 'max:180'],
             'is_active' => ['required', 'boolean'],
-        ];
-        if ($type === 'heis') {
-            $rules['survey_cluster_id'] = ['required', 'integer', Rule::exists('survey_clusters', 'id')];
-            $rules['name'][] = Rule::unique('survey_heis')
-                ->where(fn ($query) => $query->where('survey_cluster_id', $request->input('survey_cluster_id')))
-                ->ignore($record->getKey());
-        }
-        $rules += $this->heiRules($type, $record->getKey());
-        $record->update($request->validate($rules, [], self::ATTRIBUTE_NAMES));
+        ], [], self::ATTRIBUTE_NAMES));
         $activity->recordSave($this->moduleFor($type), $record);
 
         Inertia::flash('toast', [
@@ -296,24 +297,66 @@ class SurveyDirectoryController extends Controller
     }
 
     /**
-     * Fields that only exist on HEIs. The UII is CHED's institution key, so it
-     * is unique across the whole directory rather than per cluster.
-     *
-     * @return array<string, array<int, mixed>>
+     * Add or edit an institution. It is placed by its region; the cluster is
+     * optional. Until a region's institutions are grouped (clusters only when
+     * used), they wait in the region's holding cluster, which is never shown
+     * as a place. A cluster given on its own still places the institution in
+     * that cluster's region. The UII is CHED's institution key, so it is
+     * unique across the whole directory rather than per cluster.
      */
-    private function heiRules(string $type, ?int $ignoreId = null): array
+    private function saveHei(Request $request, ?SurveyHei $hei, ActivityRecorder $activity): RedirectResponse
     {
-        if ($type !== 'heis') {
-            return [];
+        $cluster = Rule::exists('survey_clusters', 'id');
+        if ($request->filled('survey_region_id')) {
+            $cluster = $cluster->where('survey_region_id', $request->integer('survey_region_id'));
         }
-
-        return [
+        $validated = $request->validate([
+            'name' => [
+                'required', 'string', 'max:180',
+                Rule::unique('survey_heis')
+                    ->where(fn ($query) => $query->where('survey_cluster_id', $this->heiClusterId($request)))
+                    ->ignore($hei?->getKey()),
+            ],
+            'survey_region_id' => ['required_without:survey_cluster_id', 'nullable', 'integer', Rule::exists('survey_regions', 'id')],
+            'survey_cluster_id' => ['nullable', 'integer', $cluster],
             'uii' => [
                 'nullable', 'string', 'max:40', 'regex:/^[A-Za-z0-9-]+$/',
-                Rule::unique('survey_heis', 'uii')->ignore($ignoreId),
+                Rule::unique('survey_heis', 'uii')->ignore($hei?->getKey()),
             ],
             'ownership' => ['nullable', Rule::in(SurveyHei::OWNERSHIPS)],
+            'is_active' => [$hei === null ? 'exclude' : 'required', 'boolean'],
+        ], [], self::ATTRIBUTE_NAMES);
+        $attributes = [
+            ...Arr::except($validated, ['survey_region_id']),
+            'survey_cluster_id' => $validated['survey_cluster_id']
+                ?? SurveyCluster::defaultIdFor((int) $validated['survey_region_id'])
+                ?? SurveyCluster::holdingFor((int) $validated['survey_region_id'])->id,
         ];
+
+        if ($hei === null) {
+            $hei = SurveyHei::query()->create([...$attributes, 'is_active' => true]);
+        } else {
+            $hei->update($attributes);
+        }
+        $activity->recordSave(ActivityModule::Heis, $hei);
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => __($hei->wasRecentlyCreated ? ':name added.' : ':name updated.', ['name' => $hei->name]),
+        ]);
+
+        return back();
+    }
+
+    /**
+     * The cluster a submitted institution would sit in, for the per-cluster
+     * name check: the chosen one, or where one without a cluster goes.
+     */
+    private function heiClusterId(Request $request): ?int
+    {
+        return $request->filled('survey_cluster_id')
+            ? $request->integer('survey_cluster_id')
+            : SurveyCluster::defaultIdFor($request->integer('survey_region_id'));
     }
 
     public function destroy(string $type, int $id, ActivityRecorder $activity): RedirectResponse
