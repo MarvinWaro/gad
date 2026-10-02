@@ -11,9 +11,17 @@ const count = new Intl.NumberFormat('en-PH');
  * The four law surveys on one soft callout surface (DESIGN.md), divided by hairlines
  * rather than split into a grid of identical cards. Each shows what this HEI
  * has contributed and the two things a focal person does: open or share.
+ * `rail` stacks them in one column, for the home page's left rail.
  */
-export function SurveyPanel({ surveys }: { surveys: HeiSurvey[] }) {
+export function SurveyPanel({
+    surveys,
+    variant = 'panel',
+}: {
+    surveys: HeiSurvey[];
+    variant?: 'panel' | 'rail';
+}) {
     const titleId = useId();
+    const rail = variant === 'rail';
 
     if (surveys.length === 0) {
         return null;
@@ -24,7 +32,7 @@ export function SurveyPanel({ surveys }: { surveys: HeiSurvey[] }) {
             aria-labelledby={titleId}
             className="overflow-hidden rounded-[10px] bg-callout bg-callout-gradient text-callout-foreground"
         >
-            <header className="px-5 pt-5 sm:px-6">
+            <header className={rail ? 'px-5 pt-5' : 'px-5 pt-5 sm:px-6'}>
                 <h2 id={titleId} className="text-lg font-medium">
                     Law surveys
                 </h2>
@@ -34,16 +42,35 @@ export function SurveyPanel({ surveys }: { surveys: HeiSurvey[] }) {
                     institution when they answered.
                 </p>
             </header>
-            <ul className="mt-4 flex snap-x snap-mandatory divide-x divide-callout-foreground/15 overflow-x-auto sm:grid sm:grid-cols-2 sm:divide-x-0 sm:overflow-visible xl:grid-cols-4">
+            <ul
+                className={
+                    rail
+                        ? 'mt-3 divide-y divide-callout-foreground/15'
+                        : 'mt-4 flex snap-x snap-mandatory divide-x divide-callout-foreground/15 overflow-x-auto sm:grid sm:grid-cols-2 sm:divide-x-0 sm:overflow-visible xl:grid-cols-4'
+                }
+            >
                 {surveys.map((survey, index) => (
-                    <SurveyItem key={survey.id} survey={survey} index={index} />
+                    <SurveyItem
+                        key={survey.id}
+                        survey={survey}
+                        index={index}
+                        rail={rail}
+                    />
                 ))}
             </ul>
         </section>
     );
 }
 
-function SurveyItem({ survey, index }: { survey: HeiSurvey; index: number }) {
+function SurveyItem({
+    survey,
+    index,
+    rail,
+}: {
+    survey: HeiSurvey;
+    index: number;
+    rail: boolean;
+}) {
     const [, copy] = useClipboard();
     const [copied, setCopied] = useState(false);
 
@@ -63,22 +90,44 @@ function SurveyItem({ survey, index }: { survey: HeiSurvey; index: number }) {
         <li
             className={cn(
                 // Relative, so screen-reader text stays inside the scroller.
-                'relative flex w-[78%] shrink-0 snap-start flex-col px-5 pt-4 pb-5 sm:w-auto sm:px-6',
-                // Hairlines between columns and rows, never around the edge.
-                'sm:border-callout-foreground/15',
-                index % 2 === 1 && 'sm:border-l',
-                index >= 2 && 'sm:border-t xl:border-t-0',
-                index >= 1 && 'xl:border-l',
+                'relative flex flex-col',
+                rail
+                    ? 'px-5 pt-3.5 pb-4'
+                    : [
+                          'w-[78%] shrink-0 snap-start px-5 pt-4 pb-5 sm:w-auto sm:px-6',
+                          // Hairlines between columns and rows, never around the edge.
+                          'sm:border-callout-foreground/15',
+                          index % 2 === 1 && 'sm:border-l',
+                          index >= 2 && 'sm:border-t xl:border-t-0',
+                          index >= 1 && 'xl:border-l',
+                      ],
             )}
         >
-            <p className="text-xl leading-tight tabular-nums">{survey.code}</p>
-            <p className="mt-1 line-clamp-3 min-h-[3.75em] text-sm leading-snug opacity-80">
+            <p
+                className={cn(
+                    'leading-tight tabular-nums',
+                    rail ? 'text-lg' : 'text-xl',
+                )}
+            >
+                {survey.code}
+            </p>
+            <p
+                className={cn(
+                    'mt-1 text-sm leading-snug opacity-80',
+                    rail ? 'line-clamp-2' : 'line-clamp-3 min-h-[3.75em]',
+                )}
+            >
                 {survey.law_title}
             </p>
 
             {survey.is_open ? (
                 <>
-                    <p className="mt-3 text-sm tabular-nums">
+                    <p
+                        className={cn(
+                            'text-sm tabular-nums',
+                            rail ? 'mt-2' : 'mt-3',
+                        )}
+                    >
                         <span className="text-base">
                             {count.format(survey.responses_from_hei)}
                         </span>{' '}
@@ -87,7 +136,12 @@ function SurveyItem({ survey, index }: { survey: HeiSurvey; index: number }) {
                             : 'responses'}{' '}
                         from your HEI
                     </p>
-                    <div className="mt-auto flex flex-wrap gap-x-4 gap-y-2 pt-4 text-sm">
+                    <div
+                        className={cn(
+                            'mt-auto flex flex-wrap gap-x-4 gap-y-2 text-sm',
+                            rail ? 'pt-2.5' : 'pt-4',
+                        )}
+                    >
                         <a
                             href={survey.url}
                             target="_blank"

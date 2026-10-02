@@ -3,29 +3,32 @@ import {
     ArrowRight,
     ArrowUpRight,
     Building2,
+    CalendarDays,
     ClipboardList,
     Heart,
     MessageCircle,
     MessagesSquare,
     Share2,
-    Sparkles,
+    UserRound,
     Users,
 } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import {
+    AccountsChart,
     ActivityChart,
+    PostSourcesChart,
     RespondentsChart,
 } from '@/components/dashboard/dashboard-charts';
-import {
-    dashboardSnapshot,
-    formatCount,
-    reportingPeriod,
-    previewEvents,
-    type DashboardPeriod,
-} from '@/components/dashboard/dashboard-data';
+import { DashboardFilterBar } from '@/components/dashboard/dashboard-filters';
+import { GoalInsights } from '@/components/dashboard/goal-insights';
+import { EventCategoryLabel } from '@/components/hei/event-category';
+import { EventDateBlock } from '@/components/hei/upcoming-events';
+import { NoOfficeNotice } from '@/components/record-filters';
 import { Button } from '@/components/ui/button';
-import { DashboardFilters } from '@/components/dashboard/dashboard-filters';
+import { changeLabel, formatCount, percentOf } from '@/lib/dashboard';
+import { formatEventTime } from '@/lib/event-dates';
 import { dashboard } from '@/routes';
+import type { DashboardProps } from '@/types/dashboard';
 
 function ModuleLink({ href, children }: { href: string; children: ReactNode }) {
     return (
@@ -39,20 +42,31 @@ function ModuleLink({ href, children }: { href: string; children: ReactNode }) {
     );
 }
 
-export default function Dashboard() {
+export default function Dashboard(props: DashboardProps) {
+    const {
+        period,
+        scope,
+        kpis,
+        trend,
+        laws,
+        respondents,
+        community,
+        goals,
+        events,
+        hasOffice,
+    } = props;
     const { auth } = usePage().props;
-    const [period, setPeriod] = useState<DashboardPeriod>('month');
-    const [monthIndex, setMonthIndex] = useState(8);
-    const data = dashboardSnapshot(period, monthIndex);
     const can = (permission: string) => auth.permissions.includes(permission);
     const firstName = auth.user.name.trim().split(/\s+/)[0];
-    const selectedPeriod = reportingPeriod(period, monthIndex);
-    const comparison = selectedPeriod.comparison;
+    const { responses, participation, posts, accounts } = kpis;
+    const surveyCount = laws.length;
 
     return (
         <>
             <Head title="Dashboard" />
-            <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
+            {/* The staff pages' frame: the full width, the same padding at
+                every zoom. */}
+            <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <header className="flex flex-wrap items-end justify-between gap-5">
                     <div>
                         <p className="mb-2 text-sm text-muted-foreground">
@@ -77,79 +91,67 @@ export default function Dashboard() {
                     )}
                 </header>
 
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted px-4 py-3">
-                    <p className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                        <Sparkles
-                            aria-hidden="true"
-                            className="mt-0.5 size-4 shrink-0 text-brand"
-                        />
-                        <span>
-                            <span className="font-medium text-foreground">
-                                Dashboard preview.
-                            </span>{' '}
-                            All figures and events are sample data.
-                        </span>
-                    </p>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                        Region XII
-                    </span>
-                </div>
+                {!hasOffice && <NoOfficeNotice noun="figures" />}
 
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                    <p className="flex flex-wrap items-center gap-x-2 text-sm">
                         <span
                             className="size-2 rounded-full bg-brand"
                             aria-hidden="true"
                         />
-                        <span className="font-medium">Regional overview</span>
+                        <span className="font-medium">{scope.label}</span>
                         <span className="text-muted-foreground">
-                            / All clusters
+                            / {period.label}
                         </span>
-                    </div>
-                    <DashboardFilters
-                        period={period}
-                        monthIndex={monthIndex}
-                        onPeriodChange={setPeriod}
-                        onMonthChange={setMonthIndex}
-                    />
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        {period.range} · Philippine time · updated within a
+                        minute
+                    </p>
                 </div>
+                <DashboardFilterBar
+                    filters={props.filters}
+                    options={props.options}
+                />
 
                 <dl
-                    aria-label="Sample overview metrics"
+                    aria-label="Overview metrics"
                     className="grid grid-cols-2 overflow-hidden rounded-xl border bg-card xl:grid-cols-4"
                 >
                     {[
                         {
                             label: 'Survey responses',
-                            value: formatCount(data.responses),
+                            value: formatCount(responses.value),
                             icon: ClipboardList,
-                            note: data.responseGrowth
-                                ? `${data.responseGrowth} ${comparison}`
-                                : comparison,
-                            detail: 'Across 4 law surveys',
+                            note: changeLabel(responses, period.comparison),
+                            detail:
+                                surveyCount === 1
+                                    ? `${laws[0].code} only`
+                                    : `Across ${surveyCount} law surveys`,
                         },
                         {
                             label: 'Participating HEIs',
-                            value: `${data.participating}`,
+                            value: formatCount(participation.participating),
                             icon: Building2,
-                            note: `${data.reach}% of the network`,
-                            detail: `Of ${data.institutions} registered institutions`,
+                            note: `${percentOf(participation.participating, participation.total)}% of the network`,
+                            detail: `Of ${formatCount(participation.total)} active HEIs`,
                         },
                         {
-                            label: 'Posts shared',
-                            value: formatCount(data.posts),
+                            label: 'GAD posts',
+                            value: formatCount(posts.value),
                             icon: MessagesSquare,
-                            note: data.postGrowth
-                                ? `${data.postGrowth} ${comparison}`
-                                : comparison,
-                            detail: 'Updates shared by the network',
+                            note: changeLabel(posts, period.comparison),
+                            detail: `${formatCount(posts.tagged)} tagged with an SDG or A.C.H.I.E.V.E. item`,
                         },
                         {
-                            label: 'Post interactions',
-                            value: formatCount(data.interactions),
-                            icon: Heart,
-                            note: `${data.contributors} contributing HEIs`,
-                            detail: 'Likes, comments, and shares',
+                            label: 'Accounts',
+                            value: formatCount(accounts.active),
+                            icon: Users,
+                            note:
+                                accounts.joined > 0
+                                    ? `${formatCount(accounts.joined)} new this period`
+                                    : 'No new accounts this period',
+                            detail: `${formatCount(accounts.hei)} HEI · ${formatCount(accounts.ched)} CHED${accounts.pending > 0 ? ` · ${formatCount(accounts.pending)} awaiting approval` : ''}`,
                         },
                     ].map(({ label, value, icon: Icon, note, detail }) => (
                         <div
@@ -173,76 +175,51 @@ export default function Dashboard() {
                     ))}
                 </dl>
                 <p className="sr-only" role="status">
-                    Showing sample data for {selectedPeriod.label}:{' '}
-                    {formatCount(data.responses)} survey responses and{' '}
-                    {data.participating} participating institutions.
+                    Showing {scope.label}, {period.label}:{' '}
+                    {formatCount(responses.value)} survey responses,{' '}
+                    {formatCount(posts.value)} GAD posts and{' '}
+                    {participation.participating} participating institutions.
                 </p>
 
                 <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
                     <div className="min-w-0 md:col-span-2 xl:col-span-8">
                         <ActivityChart
-                            data={data}
-                            periodLabel={selectedPeriod.range}
+                            trend={trend}
+                            totals={{
+                                responses: responses.value,
+                                posts: posts.value,
+                            }}
+                            range={period.range}
                         />
                     </div>
 
-                    <section
-                        aria-labelledby="reach-title"
-                        className="flex min-w-0 flex-col rounded-xl bg-signature-violet p-5 text-on-signature sm:p-6 md:col-span-2 xl:col-span-4"
-                    >
-                        <div className="flex items-center justify-between gap-3">
-                            <h2
-                                id="reach-title"
-                                className="text-lg font-medium"
-                            >
-                                Every campus counts.
-                            </h2>
-                            <Building2
-                                aria-hidden="true"
-                                className="size-5 text-on-signature/75"
-                            />
-                        </div>
-                        <p className="mt-1 text-sm text-on-signature/80">
-                            Institutions contributing survey responses
-                        </p>
-                        <div className="mt-5 flex items-end gap-3">
-                            <span className="text-5xl leading-none font-medium tracking-tight tabular-nums">
-                                {data.reach}%
-                            </span>
-                            <span className="pb-1 text-sm text-on-signature/80">
-                                {data.participating} of {data.institutions} HEIs
-                            </span>
-                        </div>
-                        <div className="mt-6 space-y-3.5">
-                            {data.clusters.map((cluster) => (
-                                <div key={cluster.name}>
-                                    <div className="mb-1.5 flex justify-between gap-3 text-xs">
-                                        <span>{cluster.name}</span>
-                                        <span className="text-on-signature/80 tabular-nums">
-                                            {cluster.participating} /{' '}
-                                            {cluster.total}
-                                        </span>
-                                    </div>
-                                    <div
-                                        className="h-1.5 overflow-hidden rounded-full bg-on-signature/15"
-                                        aria-hidden="true"
-                                    >
-                                        <div
-                                            className="h-full rounded-full bg-on-signature/85"
-                                            style={{
-                                                width: `${(cluster.participating / cluster.total) * 100}%`,
-                                            }}
-                                        />
-                                    </div>
+                    <ReachCard
+                        reach={props.reach}
+                        participation={participation}
+                    />
+
+                    <GoalInsights
+                        goals={goals}
+                        period={period.label}
+                        postsHref={can('posts.view') ? '/community' : undefined}
+                    />
+
+                    <PostSourcesChart
+                        sources={community.sources}
+                        contributors={community.contributors}
+                    />
+                    <AccountsChart
+                        accounts={accounts}
+                        footer={
+                            can('users.view') && (
+                                <div className="mt-auto border-t pt-3">
+                                    <ModuleLink href="/settings/users">
+                                        Manage users
+                                    </ModuleLink>
                                 </div>
-                            ))}
-                        </div>
-                        <p className="mt-5 border-t border-on-signature/20 pt-4 text-xs leading-relaxed text-on-signature/80">
-                            {data.participating === data.institutions
-                                ? `All ${data.institutions} registered HEIs contributed survey responses in this period.`
-                                : `${data.institutions - data.participating} HEIs have yet to contribute in this period. A check-in with their GAD focal persons could help.`}
-                        </p>
-                    </section>
+                            )
+                        }
+                    />
 
                     <section
                         aria-labelledby="surveys-title"
@@ -255,32 +232,38 @@ export default function Dashboard() {
                             Response distribution by law survey
                         </p>
                         <div className="my-5 space-y-5">
-                            {data.surveys.map((survey) => (
-                                <div key={survey.code}>
+                            {laws.map((survey) => (
+                                <div key={survey.id}>
                                     <div className="flex items-center justify-between gap-3 text-sm">
                                         <h3 className="font-medium">
                                             {survey.code}
                                         </h3>
                                         <span className="font-medium tabular-nums">
-                                            {formatCount(survey.count)}
+                                            {formatCount(survey.responses)}
                                         </span>
                                     </div>
                                     <p className="mt-0.5 text-xs text-muted-foreground">
                                         {survey.title}
                                     </p>
                                     <div
-                                        className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
+                                        className="mt-2 h-2 overflow-hidden rounded-r-[4px] bg-muted"
                                         aria-hidden="true"
                                     >
                                         <div
-                                            className="h-full rounded-full bg-brand"
+                                            className="h-full rounded-r-[4px] bg-chart-bar"
                                             style={{
-                                                width: `${(survey.count / data.responses) * 100}%`,
+                                                width: `${percentOf(survey.responses, responses.value)}%`,
                                             }}
                                         />
                                     </div>
                                 </div>
                             ))}
+                            {responses.value === 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                    No responses in this period yet. Answers
+                                    from the public law surveys count here.
+                                </p>
+                            )}
                         </div>
                         {can('surveys.view') && (
                             <div className="mt-auto border-t pt-3">
@@ -291,7 +274,10 @@ export default function Dashboard() {
                         )}
                     </section>
 
-                    <RespondentsChart data={data} />
+                    <RespondentsChart
+                        respondents={respondents}
+                        total={responses.value}
+                    />
 
                     <section
                         aria-labelledby="community-title"
@@ -314,11 +300,16 @@ export default function Dashboard() {
                         </p>
                         <div className="mt-6 flex items-center gap-4 rounded-lg bg-muted p-4">
                             <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent">
-                                <Users aria-hidden="true" className="size-5" />
+                                <UserRound
+                                    aria-hidden="true"
+                                    className="size-5"
+                                />
                             </div>
                             <p className="text-sm">
                                 <span className="font-medium">
-                                    {data.contributors} HEIs shared an update
+                                    {community.contributors === 1
+                                        ? '1 HEI shared an update'
+                                        : `${formatCount(community.contributors)} HEIs shared an update`}
                                 </span>
                                 <span className="mt-1 block text-xs text-muted-foreground">
                                     Campus stories, initiatives, and ideas.
@@ -328,18 +319,18 @@ export default function Dashboard() {
                         <dl className="mt-4 divide-y">
                             {[
                                 {
-                                    label: 'Likes',
-                                    count: data.likes,
+                                    label: 'Reactions',
+                                    count: community.reactions,
                                     icon: Heart,
                                 },
                                 {
                                     label: 'Comments',
-                                    count: data.comments,
+                                    count: community.comments,
                                     icon: MessageCircle,
                                 },
                                 {
                                     label: 'Shares',
-                                    count: data.shares,
+                                    count: community.shares,
                                     icon: Share2,
                                 },
                             ].map(({ label, count, icon: Icon }) => (
@@ -383,57 +374,167 @@ export default function Dashboard() {
                                     id="events-title"
                                     className="text-lg font-medium"
                                 >
-                                    2026 event calendar
+                                    Upcoming GAD events
                                 </h2>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    {previewEvents.length} sample events · Full
-                                    year, independent of the reporting period
+                                    The next events on the calendar, whatever
+                                    the period above
                                 </p>
                             </div>
-                            <ModuleLink href="/events">
-                                View calendar
-                            </ModuleLink>
+                            {/* Staff manage events on the admin page;
+                                /events is the HEI home's calendar. */}
+                            {can('events.view') && (
+                                <ModuleLink href="/admin/events">
+                                    Manage events
+                                </ModuleLink>
+                            )}
                         </div>
-                        <div className="mt-5 grid gap-5 sm:grid-cols-2 2xl:grid-cols-4">
-                            {previewEvents.map((event) => (
-                                <article
-                                    key={event.date}
-                                    className="flex items-center gap-4"
-                                >
-                                    <time
-                                        dateTime={event.date}
-                                        className="flex w-14 shrink-0 flex-col items-center rounded-lg border bg-muted py-2"
+                        {events.length === 0 ? (
+                            <p className="mt-5 flex items-center gap-3 rounded-lg bg-muted p-4 text-sm text-muted-foreground">
+                                <CalendarDays
+                                    aria-hidden="true"
+                                    className="size-5 shrink-0"
+                                />
+                                No upcoming events yet. Trainings, campaigns and
+                                deadlines added to the calendar show here.
+                            </p>
+                        ) : (
+                            <div className="mt-5 grid gap-5 sm:grid-cols-2 2xl:grid-cols-4">
+                                {events.map((event) => (
+                                    <article
+                                        key={event.id}
+                                        className="flex items-center gap-4"
                                     >
-                                        <span className="text-xs text-muted-foreground">
-                                            {event.month}
-                                        </span>
-                                        <span className="text-2xl leading-tight font-medium tabular-nums">
-                                            {event.day}
-                                        </span>
-                                    </time>
-                                    <div className="min-w-0">
-                                        <h3 className="text-sm font-medium">
-                                            {event.title}
-                                        </h3>
-                                        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                                            <span
-                                                aria-hidden="true"
-                                                className={`size-1.5 shrink-0 rounded-full ${event.color}`}
+                                        <EventDateBlock
+                                            value={event.starts_at}
+                                            className="bg-muted"
+                                        />
+                                        <div className="min-w-0">
+                                            <h3 className="truncate text-sm font-medium">
+                                                {event.title}
+                                            </h3>
+                                            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                                {formatEventTime(event)}
+                                                {event.location &&
+                                                    ` · ${event.location}`}
+                                            </p>
+                                            <EventCategoryLabel
+                                                category={event.category}
+                                                className="mt-1"
                                             />
-                                            {event.detail}
-                                        </p>
-                                    </div>
-                                </article>
-                            ))}
-                        </div>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        )}
                     </section>
                 </div>
                 <p className="pb-2 text-xs text-muted-foreground">
                     Built around participation, not individual identities.
-                    Survey figures shown here are aggregate sample counts.
+                    Survey figures are aggregate counts that remain after
+                    individual responses reach the end of their retention
+                    period.
                 </p>
             </div>
         </>
+    );
+}
+
+/** "Every campus counts": participation by region, or who is still to join in. */
+function ReachCard({
+    reach,
+    participation,
+}: Pick<DashboardProps, 'reach'> & {
+    participation: DashboardProps['kpis']['participation'];
+}) {
+    const { participating, total } = participation;
+    const { regions, waiting } = reach;
+
+    return (
+        <section
+            aria-labelledby="reach-title"
+            className="flex min-w-0 flex-col rounded-xl bg-signature-violet p-5 text-on-signature sm:p-6 md:col-span-2 xl:col-span-4"
+        >
+            <div className="flex items-center justify-between gap-3">
+                <h2 id="reach-title" className="text-lg font-medium">
+                    Every campus counts.
+                </h2>
+                <Building2
+                    aria-hidden="true"
+                    className="size-5 text-on-signature/75"
+                />
+            </div>
+            <p className="mt-1 text-sm text-on-signature/80">
+                Institutions contributing survey responses
+            </p>
+            <div className="mt-5 flex items-end gap-3">
+                <span className="text-5xl leading-none font-medium tracking-tight tabular-nums">
+                    {percentOf(participating, total)}%
+                </span>
+                <span className="pb-1 text-sm text-on-signature/80">
+                    {formatCount(participating)} of {formatCount(total)} HEIs
+                </span>
+            </div>
+            <div className="flex-1">
+                {regions.length > 0 && (
+                    <ul className="mt-6 space-y-3.5">
+                        {regions.map((region) => (
+                            <li key={region.id}>
+                                <div className="mb-1.5 flex justify-between gap-3 text-xs">
+                                    <span className="truncate">
+                                        {region.name}
+                                    </span>
+                                    <span className="text-on-signature/80 tabular-nums">
+                                        {region.participating} / {region.total}
+                                    </span>
+                                </div>
+                                <div
+                                    className="h-1.5 overflow-hidden rounded-full bg-on-signature/15"
+                                    aria-hidden="true"
+                                >
+                                    <div
+                                        className="h-full rounded-full bg-on-signature/85"
+                                        style={{
+                                            width: `${percentOf(region.participating, region.total)}%`,
+                                        }}
+                                    />
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+                {regions.length === 0 && waiting.count > 0 && (
+                    <div className="mt-6">
+                        <h3 className="text-xs font-medium text-on-signature/80">
+                            Yet to contribute
+                        </h3>
+                        <ul className="mt-2 space-y-1.5 text-sm">
+                            {waiting.heis.map((hei) => (
+                                <li key={hei.id} className="truncate">
+                                    {hei.name}
+                                </li>
+                            ))}
+                        </ul>
+                        {waiting.count > waiting.heis.length && (
+                            <p className="mt-2 text-xs text-on-signature/80">
+                                and{' '}
+                                {formatCount(
+                                    waiting.count - waiting.heis.length,
+                                )}{' '}
+                                more
+                            </p>
+                        )}
+                    </div>
+                )}
+            </div>
+            <p className="mt-5 border-t border-on-signature/20 pt-4 text-xs leading-relaxed text-on-signature/80">
+                {total === 0
+                    ? 'No active HEIs in view yet.'
+                    : participating === total
+                      ? `All ${formatCount(total)} HEIs contributed survey responses in this period.`
+                      : `${formatCount(total - participating)} HEIs have yet to contribute in this period. A check-in with their GAD focal persons could help.`}
+            </p>
+        </section>
     );
 }
 

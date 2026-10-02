@@ -9,6 +9,7 @@ import {
     Images,
     LayoutGrid,
     ListChecks,
+    MessageSquareText,
     MessagesSquare,
 } from 'lucide-react';
 import { dashboard } from '@/routes';
@@ -116,6 +117,16 @@ export function appNavigationGroups(
                                     title: 'Carousel',
                                     href: '/admin/carousels',
                                     icon: Images,
+                                },
+                            ]
+                          : []),
+                      // What visitors send through the website feedback form.
+                      ...(can('feedback.view')
+                          ? [
+                                {
+                                    title: 'Feedback',
+                                    href: '/admin/feedback',
+                                    icon: MessageSquareText,
                                 },
                             ]
                           : []),

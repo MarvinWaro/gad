@@ -33,6 +33,8 @@ export function HeiCombobox({
     disabled = false,
     tabIndex,
     className,
+    contentClassName,
+    'aria-describedby': describedBy,
     'aria-invalid': invalid,
 }: {
     value: string;
@@ -46,6 +48,9 @@ export function HeiCombobox({
     disabled?: boolean;
     tabIndex?: number;
     className?: string;
+    /** Classes for the list, such as the public site's theme. */
+    contentClassName?: string;
+    'aria-describedby'?: string;
     'aria-invalid'?: boolean;
 }) {
     const [open, setOpen] = useState(false);
@@ -68,6 +73,7 @@ export function HeiCombobox({
                     id={id}
                     role="combobox"
                     aria-expanded={open}
+                    aria-describedby={describedBy}
                     aria-invalid={invalid}
                     disabled={disabled}
                     tabIndex={tabIndex}
@@ -91,7 +97,10 @@ export function HeiCombobox({
             </PopoverTrigger>
             <PopoverContent
                 align="start"
-                className="w-(--radix-popover-trigger-width) min-w-72 p-0"
+                className={cn(
+                    'w-(--radix-popover-trigger-width) min-w-72 p-0',
+                    contentClassName,
+                )}
             >
                 <Command>
                     <CommandInput placeholder="Type to search institutions…" />

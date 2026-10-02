@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PostFeeling;
+use App\Support\HomepageStories;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $body
  * @property PostFeeling|null $feeling
  * @property string|null $shared_post_id
+ * @property Carbon|null $homepage_hidden_at Set when a moderator keeps it off the public homepage.
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -44,11 +46,22 @@ class Post extends Model
     /** A.C.H.I.E.V.E. Agenda items one post can support. */
     public const MAX_ACHIEVE_ITEMS = 3;
 
+    /**
+     * The public homepage's stories are cached, so an edit, a deletion or a
+     * moderator hiding a post shows there straight away.
+     */
+    protected static function booted(): void
+    {
+        static::updated(fn () => HomepageStories::forget());
+        static::deleted(fn () => HomepageStories::forget());
+    }
+
     /** @return array<string, string> */
     protected function casts(): array
     {
         return [
             'feeling' => PostFeeling::class,
+            'homepage_hidden_at' => 'datetime',
         ];
     }
 

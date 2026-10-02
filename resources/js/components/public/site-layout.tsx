@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/sheet';
 import { chedContact } from '@/data/contact';
 import { dashboard, login, register } from '@/routes';
+import { create as feedback } from '@/routes/feedback';
 import { faq } from '@/routes/help';
 
 // In the order the sections appear on the homepage.
@@ -28,6 +29,8 @@ const navigation = [
 // After the sections comes the FAQ, a page of its own. The old site put it
 // in a one-item help menu; a plain link does the same job.
 const faqHref = faq.url();
+// The old site's footer asked "We value your feedback" too.
+const feedbackHref = feedback.url();
 
 function resolvePublicHref(anchor: string, homeUrl?: string) {
     return homeUrl ? `${homeUrl}${anchor}` : anchor;
@@ -211,6 +214,8 @@ export function SiteFooter({ homeUrl }: { homeUrl?: string }) {
                         <a href={`mailto:${chedContact.email}`}>
                             {chedContact.email}
                         </a>
+                        <p>We value your feedback:</p>
+                        <Link href={feedbackHref}>Share feedback</Link>
                     </div>
                 </div>
                 <div className="footer-bottom">

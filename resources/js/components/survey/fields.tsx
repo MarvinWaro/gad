@@ -55,7 +55,10 @@ export function Field({
                 {required ? (
                     <span aria-hidden="true"> *</span>
                 ) : (
-                    <span className="survey-label-optional">Optional</span>
+                    <>
+                        {' '}
+                        <span className="survey-label-optional">Optional</span>
+                    </>
                 )}
             </label>
             {control}
@@ -110,7 +113,10 @@ export function RadioField({
                 {required ? (
                     <span aria-hidden="true"> *</span>
                 ) : (
-                    <span className="survey-label-optional">Optional</span>
+                    <>
+                        {' '}
+                        <span className="survey-label-optional">Optional</span>
+                    </>
                 )}
             </legend>
             {hint && (

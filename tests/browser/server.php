@@ -12,6 +12,7 @@ use App\Models\Survey;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
+use App\Models\SurveyResponse;
 use App\Models\User;
 use App\Services\ActivityRecorder;
 use App\Services\Notifier;
@@ -20,6 +21,7 @@ use Database\Seeders\SurveyDirectorySeeder;
 use Database\Seeders\SurveySeeder;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
 
 require __DIR__.'/../../vendor/autoload.php';
@@ -95,6 +97,49 @@ foreach (range(1, 11) as $daysAgo) {
         'body' => "Browser seed post {$daysAgo}: an earlier GAD activity.",
         'created_at' => $postedAt,
         'updated_at' => $postedAt,
+    ]);
+}
+
+// The dashboard's figures: the two newest seed posts carry goals, and three
+// law-survey answers arrive the same day, 32 days ago. That day's month never
+// holds anything another spec posts or answers (they all happen today), so
+// tests/browser/dashboard.spec.ts reads its figures in that month alone.
+$goalPosts = Post::query()->whereBelongsTo($member, 'author')->latest('created_at')->take(2)->get();
+// The newer one moves to a minute after the other, still newer than the
+// rest of the seed posts.
+$goalPosts[0]->forceFill(['created_at' => $goalPosts[1]->created_at->copy()->addMinute()])->save();
+// Each also carries a photo, so the homepage's stories have something to
+// show (App\Support\HomepageStories counts photo posts only).
+(new Filesystem)->ensureDirectoryExists($uploads.'/posts');
+foreach ($goalPosts as $index => $post) {
+    $photo = "posts/browser-seed-{$index}.jpg";
+    copy(__DIR__.'/../../public/assets/img/ched12_building.jpg', $uploads.'/'.$photo);
+    [$width, $height] = getimagesize($uploads.'/'.$photo) ?: [null, null];
+    $post->images()->create(['path' => $photo, 'width' => $width, 'height' => $height, 'sort_order' => 0]);
+}
+foreach ([[[5, 4], ['governance']], [[5, 13], ['governance', 'lifelong-learning']]] as $index => [$goals, $items]) {
+    foreach ($goals as $goal) {
+        $goalPosts[$index]->sdgs()->create(['sdg' => $goal]);
+    }
+    foreach ($items as $item) {
+        $goalPosts[$index]->achieveItems()->create(['item' => $item]);
+    }
+}
+foreach ([['ra-7877', 'female'], ['ra-7877', 'male'], ['ra-9710', 'female']] as [$slug, $sex]) {
+    SurveyResponse::query()->forceCreate([
+        'survey_version_id' => Survey::query()->where('slug', $slug)->firstOrFail()->publishedVersion()?->id,
+        'public_reference' => Str::random(20),
+        'age' => 21,
+        'sex' => $sex,
+        'respondent_group' => 'student',
+        'survey_region_id' => $region->id,
+        'survey_cluster_id' => $cluster->id,
+        'survey_hei_id' => $hei->id,
+        'answers' => [],
+        'consent_at' => $goalPosts[1]->created_at,
+        'expires_at' => now()->addYear(),
+        'created_at' => $goalPosts[1]->created_at,
+        'updated_at' => $goalPosts[1]->created_at,
     ]);
 }
 

@@ -206,6 +206,9 @@ class CommunityFeed
             'has_more_comments' => (int) ($post->threads_count ?? 0) > $post->comments->count(),
             'can_edit' => $viewer->can('update', $post),
             'can_delete' => $viewer->can('delete', $post),
+            // The public homepage's stories (App\Support\HomepageStories).
+            'homepage_hidden' => $post->homepage_hidden_at !== null,
+            'can_hide_from_homepage' => $viewer->can('hideFromHomepage', $post),
         ];
     }
 

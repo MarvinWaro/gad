@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CarouselSlideController;
 use App\Http\Controllers\Admin\GadEventController;
+use App\Http\Controllers\Admin\SiteFeedbackController as AdminSiteFeedbackController;
 use App\Http\Controllers\Admin\SurveyController;
 use App\Http\Controllers\Admin\SurveyResponseController;
 use App\Http\Controllers\CommunityController;
@@ -12,14 +13,17 @@ use App\Http\Controllers\NewerPostsController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostCommentController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\PostHomepageController;
 use App\Http\Controllers\PostReactionController;
 use App\Http\Controllers\PostShareController;
 use App\Http\Controllers\PostTagSuggestionController;
 use App\Http\Controllers\PublicSurveyController;
+use App\Http\Controllers\SiteFeedbackController;
 use App\Http\Controllers\SiteRatingController;
 use App\Models\CarouselSlide;
 use App\Models\SiteSetting;
 use App\Models\Survey;
+use App\Support\HomepageStories;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -53,6 +57,8 @@ Route::get('/', function () {
         'carouselSlides' => $carouselSlides,
         'openSurveys' => $openSurveys,
         'ratingButton' => SiteSetting::ratingButtonEnabled(),
+        // "Gender mainstreaming in action": the year's most reacted photo posts.
+        'stories' => HomepageStories::top(),
     ]);
 })->name('home');
 
@@ -60,6 +66,12 @@ Route::get('/', function () {
 Route::post('/ratings', [SiteRatingController::class, 'store'])
     ->middleware('throttle:5,60')
     ->name('ratings.store');
+
+// The website feedback form, which replaced the old system's Google Form.
+Route::get('/feedback', [SiteFeedbackController::class, 'create'])->name('feedback.create');
+Route::post('/feedback', [SiteFeedbackController::class, 'store'])
+    ->middleware('throttle:feedback')
+    ->name('feedback.store');
 
 Route::inertia('/resources/definition-of-terms', 'resources/definition-of-terms')->name('resources.terms');
 Route::inertia('/resources/gad-enabling-republic-acts', 'resources/gad-enabling-republic-acts')->name('resources.acts');
@@ -111,6 +123,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('posts/{post}', [PostController::class, 'update'])->whereUlid('post')->name('posts.update');
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->whereUlid('post')->name('posts.destroy');
     Route::post('posts/{post}/share', PostShareController::class)->whereUlid('post')->middleware('throttle:20,1')->name('posts.share');
+    Route::put('posts/{post}/homepage', PostHomepageController::class)->whereUlid('post')->name('posts.homepage.update');
     Route::get('posts/{post}/reactions', [PostReactionController::class, 'index'])
         ->whereUlid('post')
         ->middleware('throttle:60,1')
@@ -148,6 +161,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('carousels/{carouselSlide}', [CarouselSlideController::class, 'destroy'])
             ->middleware('can:carousel.delete')
             ->name('carousels.destroy');
+
+        Route::get('feedback', [AdminSiteFeedbackController::class, 'index'])
+            ->middleware('can:feedback.view')
+            ->name('feedback.index');
+        Route::get('feedback/export', [AdminSiteFeedbackController::class, 'export'])
+            ->middleware('can:feedback.export')
+            ->name('feedback.export');
+        Route::delete('feedback/{siteFeedback}', [AdminSiteFeedbackController::class, 'destroy'])
+            ->whereUlid('siteFeedback')
+            ->middleware('can:delete,siteFeedback')
+            ->name('feedback.destroy');
 
         Route::get('surveys', [SurveyController::class, 'index'])->middleware('can:surveys.view')->name('surveys.index');
         Route::post('surveys', [SurveyController::class, 'store'])->middleware('can:surveys.create')->name('surveys.store');

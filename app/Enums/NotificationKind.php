@@ -24,6 +24,7 @@ enum NotificationKind: string
     case AccountApproved = 'account_approved';
     case EventCreated = 'event_created';
     case SurveyResponses = 'survey_responses';
+    case SiteFeedback = 'site_feedback';
 
     /** Its name in the Type filter. */
     public function label(): string
@@ -44,6 +45,7 @@ enum NotificationKind: string
             self::AccountApproved => 'Account approved',
             self::EventCreated => 'New GAD events',
             self::SurveyResponses => 'New survey responses',
+            self::SiteFeedback => 'New website feedback',
         };
     }
 
@@ -57,6 +59,7 @@ enum NotificationKind: string
             self::AccountPending, self::AccountApproved => ActivityModule::Users,
             self::EventCreated => ActivityModule::Events,
             self::SurveyResponses => ActivityModule::SurveyResponses,
+            self::SiteFeedback => ActivityModule::SiteFeedback,
         };
     }
 
@@ -95,6 +98,7 @@ enum NotificationKind: string
             self::AccountApproved => 'approved your account',
             self::EventCreated => 'added a GAD event: :subject',
             self::SurveyResponses => $count === 1 ? '1 new response to :subject' : ':count new responses to :subject',
+            self::SiteFeedback => $count === 1 ? '1 new website feedback response' : ':count new website feedback responses',
         };
     }
 
@@ -104,7 +108,7 @@ enum NotificationKind: string
      */
     public function groups(): bool
     {
-        return $this === self::SurveyResponses;
+        return in_array($this, [self::SurveyResponses, self::SiteFeedback], true);
     }
 
     /** @return list<self> */

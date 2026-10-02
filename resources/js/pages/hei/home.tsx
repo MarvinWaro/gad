@@ -28,6 +28,15 @@ type Props = {
     quickLinks: QuickLink[];
 };
 
+/** Where the rails stick: under AppHeader's 57px bar, by 24px. */
+const railOffset = { top: 57 + 24, bottom: 24 };
+
+/**
+ * The HEI home, laid out like Facebook from 1280px: the institution and its
+ * law surveys on the left, the posts in the middle, events and links on the
+ * right, both rails staying in view beside the feed. Narrower, the rails
+ * fold into one column (and, from 1024px, the right rail beside it).
+ */
 export default function HeiHome({
     hei,
     surveys,
@@ -38,22 +47,39 @@ export default function HeiHome({
 }: Props) {
     const { auth } = usePage().props;
     const [nextEvent, ...laterEvents] = upcoming;
-    // Clears AppHeader's sticky navigation row (h-12 plus its 1px border),
-    // the part that stays on screen beside the rail, by 24px.
-    const railRef = useStickyRail<HTMLElement>({ top: 49 + 24, bottom: 24 });
+    const leftRail = useStickyRail<HTMLElement>(railOffset);
+    const rightRail = useStickyRail<HTMLElement>(railOffset);
 
     return (
         <>
             <Head title="Home" />
             <div
                 data-surface="hei"
-                className="w-full px-4 pb-20 sm:px-6 lg:px-8"
+                data-layout="wide"
+                className="w-full px-4 pb-20 sm:px-6 lg:px-8 xl:px-4"
             >
-                <WelcomeBand hei={hei} userName={auth.user.name} />
+                <div className="xl:hidden">
+                    <WelcomeBand hei={hei} userName={auth.user.name} />
+                </div>
 
-                <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
+                <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[17rem_minmax(0,42rem)_20rem] xl:justify-between xl:pt-6 2xl:grid-cols-[22rem_42rem_22rem]">
+                    <aside
+                        ref={leftRail}
+                        aria-label="Your institution and law surveys"
+                        className="hidden min-w-0 space-y-6 xl:sticky xl:block xl:self-start"
+                    >
+                        <WelcomeBand
+                            hei={hei}
+                            userName={auth.user.name}
+                            compact
+                        />
+                        <SurveyPanel surveys={surveys} variant="rail" />
+                    </aside>
+
                     <div className="min-w-0 space-y-10">
-                        <SurveyPanel surveys={surveys} />
+                        <div className="xl:hidden">
+                            <SurveyPanel surveys={surveys} />
+                        </div>
 
                         {/* On small screens the time-bound items come before the feed. */}
                         <div className="space-y-4 lg:hidden">
@@ -96,7 +122,7 @@ export default function HeiHome({
                     </div>
 
                     <aside
-                        ref={railRef}
+                        ref={rightRail}
                         aria-label="Events and links"
                         className="hidden min-w-0 space-y-4 lg:sticky lg:block lg:self-start"
                     >

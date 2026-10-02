@@ -28,6 +28,7 @@ each one marks it read or unread, or deletes it after asking.
 |                                   | Your account was approved                     | The person approved                                                                                                                                          |
 | GAD events                        | CHED added a GAD event                        | Every active account except its creator                                                                                                                      |
 | Survey responses                  | New answers to a law survey                   | Accounts with `survey-responses.view` whose office covers the region the respondent chose (all of them when no region was chosen), and the Central Office    |
+| Website feedback                  | A visitor sent website feedback               | Accounts with `feedback.view` (administrators) whose office covers the region the sender named (all of them when none was named), and the Central Office     |
 
 Nobody is told about their own actions. Pending and deactivated accounts are
 told nothing.
@@ -36,6 +37,9 @@ told nothing.
 so there is one notification per survey that counts up while it is unread:
 "12 new responses to …". Once it is read, the next answer starts a new one.
 It names no respondent and keeps nothing about them, only how many answered.
+Website feedback is grouped the same way, in one notice that opens the list
+(`/admin/feedback`): "3 new website feedback responses". It never names the
+sender (`docs/feedback.md`).
 
 Notifications are kept for good, like the activity log. Deleting one removes
 it from that person's list only.

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SiteRating;
 use App\Models\SiteSetting;
 use App\Services\ActivityRecorder;
+use App\Support\CsvCell;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -83,7 +84,8 @@ class SiteRatingManagementController extends Controller
                 fputcsv($handle, [
                     $siteRating->created_at?->toISOString(),
                     $siteRating->rating,
-                    $this->safeCell($siteRating->suggestion ?? ''),
+                    // Suggestions are typed by the public.
+                    CsvCell::safe($siteRating->suggestion),
                 ]);
             });
             fclose($handle);
@@ -135,14 +137,5 @@ class SiteRatingManagementController extends Controller
     private function query(?int $rating): Builder
     {
         return SiteRating::query()->when($rating !== null, fn (Builder $query) => $query->where('rating', $rating));
-    }
-
-    /**
-     * Suggestions are typed by the public, so a cell that a spreadsheet would
-     * run as a formula (=, +, -, @) is prefixed with an apostrophe.
-     */
-    private function safeCell(string $value): string
-    {
-        return preg_match('/^[=+\-@\t\r]/', $value) === 1 ? "'".$value : $value;
     }
 }

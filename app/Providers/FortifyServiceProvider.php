@@ -104,16 +104,6 @@ class FortifyServiceProvider extends ServiceProvider
             : to_route('dashboard'));
 
         Fortify::registerView(function () {
-            $heis = SurveyHei::query()
-                ->join('survey_clusters', 'survey_clusters.id', '=', 'survey_heis.survey_cluster_id')
-                ->where('survey_heis.is_active', true)
-                ->orderBy('survey_heis.name')
-                ->get(['survey_heis.id', 'survey_heis.name', 'survey_clusters.survey_region_id'])
-                ->map(fn (SurveyHei $hei): array => [
-                    'id' => $hei->id,
-                    'name' => $hei->name,
-                    'region_id' => (int) $hei->getAttribute('survey_region_id'),
-                ]);
             $openRegions = SurveyRegion::query()->openForInstantRegistration()->pluck('id');
 
             return Inertia::render('auth/register', [
@@ -132,7 +122,7 @@ class FortifyServiceProvider extends ServiceProvider
                         'instant' => $openRegions->contains($region->id),
                         'email' => $region->office_email,
                     ]),
-                'heis' => $heis,
+                'heis' => SurveyHei::pickerOptions(),
             ]);
         });
 

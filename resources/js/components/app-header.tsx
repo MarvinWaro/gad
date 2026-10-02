@@ -1,8 +1,10 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown, Menu } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
+import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { HeaderActions } from '@/components/header-actions';
+import { HeaderSearch } from '@/components/header-search';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +21,11 @@ import {
     SheetTitle,
     SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
@@ -31,15 +38,20 @@ type Props = {
     breadcrumbs?: BreadcrumbItem[];
 };
 
-/** A top navigation entry: 40px tall, muted until hovered or current. */
-const entryClass =
-    'inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50';
+/**
+ * A navigation tab: an icon in a 48px box across the 56px bar, named on hover
+ * and focus by a tooltip and always by its accessible name. Muted until
+ * hovered or current.
+ */
+const tabClass =
+    'flex h-12 w-16 items-center justify-center gap-1 rounded-lg transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 xl:w-24';
 
 /**
- * The top header: a brand bar (the name, the icon row and the account), then
- * a row of navigation. On desktop the brand bar scrolls away and the
- * navigation row sticks; on phones the brand bar sticks and holds the menu
- * button. AppShell sets --app-header to match.
+ * The top header, one row as on Facebook: the icon and the search, the
+ * navigation as icon tabs in the middle, then the notifications, the theme
+ * and the account. It stays at the top while the page scrolls; AppShell sets
+ * --app-header to its height. Below 1024px the tabs give way to the menu
+ * button.
  */
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const { auth } = usePage().props;
@@ -49,49 +61,51 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
 
     return (
         <>
-            <div className="sticky top-0 z-30 border-b bg-background lg:static lg:border-b-0">
-                <div className="mx-auto flex h-14 items-center gap-2 px-4 sm:px-6 md:max-w-7xl lg:px-8">
-                    <MobileNavigation groups={groups} active={active} />
-                    <Link
-                        href={dashboard()}
-                        prefetch
-                        className="flex min-w-0 items-center gap-1 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                    >
-                        <AppLogo subtitle />
-                    </Link>
-                    <div className="ml-auto flex shrink-0 items-center gap-1">
+            <div className="sticky top-0 z-30 border-b bg-background">
+                <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center gap-2 px-2 sm:px-4">
+                    <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+                        <MobileNavigation groups={groups} active={active} />
+                        <Link
+                            href={dashboard()}
+                            prefetch
+                            aria-label="PHLGADIS home"
+                            className="shrink-0 rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                        >
+                            {/* The official icon, as supplied, on its plate. */}
+                            <span className="flex size-10 items-center justify-center rounded-full border bg-white">
+                                <AppLogoIcon className="size-7 object-contain" />
+                            </span>
+                        </Link>
+                        <HeaderSearch />
+                    </div>
+
+                    <nav aria-label="Main" className="hidden h-14 lg:block">
+                        <ul className="flex h-full items-stretch gap-1">
+                            {groups.flatMap((group) =>
+                                group.menu && group.items.length > 1 ? (
+                                    <TabMenu
+                                        key={group.label}
+                                        group={group}
+                                        active={active}
+                                    />
+                                ) : (
+                                    group.items.map((item) => (
+                                        <Tab
+                                            key={item.title}
+                                            item={item}
+                                            current={item === active}
+                                        />
+                                    ))
+                                ),
+                            )}
+                        </ul>
+                    </nav>
+
+                    <div className="col-start-3 flex shrink-0 items-center justify-end gap-1">
                         <HeaderActions navigation="header" />
                         <AccountMenu />
                     </div>
                 </div>
-            </div>
-
-            <div className="sticky top-0 z-30 hidden border-b bg-background lg:block">
-                <nav
-                    aria-label="Main"
-                    className="mx-auto h-12 px-4 sm:px-6 md:max-w-7xl lg:px-8"
-                >
-                    {/* Pulled left so the first label lines up with the name. */}
-                    <ul className="-ml-3 flex h-full items-stretch gap-1">
-                        {groups.flatMap((group) =>
-                            group.menu && group.items.length > 1 ? (
-                                <TopMenu
-                                    key={group.label}
-                                    group={group}
-                                    active={active}
-                                />
-                            ) : (
-                                group.items.map((item) => (
-                                    <TopLink
-                                        key={item.title}
-                                        item={item}
-                                        current={item === active}
-                                    />
-                                ))
-                            ),
-                        )}
-                    </ul>
-                </nav>
             </div>
 
             {breadcrumbs.length > 1 && (
@@ -105,38 +119,45 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     );
 }
 
-/** The 2px ink line under the current entry, on the row's hairline. */
+/** The 2px ink line under the current tab, on the bar's hairline. */
 function CurrentLine() {
     return (
         <span
             aria-hidden
-            className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-foreground"
+            className="absolute inset-x-1 -bottom-px h-0.5 rounded-full bg-foreground"
         />
     );
 }
 
-function TopLink({ item, current }: { item: NavItem; current: boolean }) {
+function Tab({ item, current }: { item: NavItem; current: boolean }) {
     return (
         <li className="relative flex items-center">
-            <Link
-                href={item.href}
-                prefetch
-                aria-current={current ? 'page' : undefined}
-                className={cn(
-                    entryClass,
-                    current ? 'text-foreground' : 'text-muted-foreground',
-                )}
-            >
-                {item.icon && <item.icon className="size-4" />}
-                {item.title}
-            </Link>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Link
+                        href={item.href}
+                        prefetch
+                        aria-label={item.title}
+                        aria-current={current ? 'page' : undefined}
+                        className={cn(
+                            tabClass,
+                            current
+                                ? 'text-foreground'
+                                : 'text-muted-foreground',
+                        )}
+                    >
+                        {item.icon && <item.icon className="size-5" />}
+                    </Link>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{item.title}</TooltipContent>
+            </Tooltip>
             {current && <CurrentLine />}
         </li>
     );
 }
 
-/** A group shown as one entry that opens its items, like "Monitoring". */
-function TopMenu({
+/** A group shown as one tab that opens its items, like "Monitoring". */
+function TabMenu({
     group,
     active,
 }: {
@@ -148,21 +169,28 @@ function TopMenu({
     return (
         <li className="relative flex items-center">
             <DropdownMenu modal={false}>
-                <DropdownMenuTrigger
-                    className={cn(
-                        entryClass,
-                        'group/menu data-[state=open]:bg-muted data-[state=open]:text-foreground',
-                        current ? 'text-foreground' : 'text-muted-foreground',
-                    )}
-                >
-                    {group.icon && <group.icon className="size-4" />}
-                    {group.label}
-                    <ChevronDown
-                        aria-hidden
-                        className="size-3.5 transition-transform group-data-[state=open]/menu:rotate-180"
-                    />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56">
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <DropdownMenuTrigger
+                            aria-label={group.label}
+                            className={cn(
+                                tabClass,
+                                'group/menu data-[state=open]:bg-muted data-[state=open]:text-foreground',
+                                current
+                                    ? 'text-foreground'
+                                    : 'text-muted-foreground',
+                            )}
+                        >
+                            {group.icon && <group.icon className="size-5" />}
+                            <ChevronDown
+                                aria-hidden
+                                className="size-3.5 transition-transform group-data-[state=open]/menu:rotate-180"
+                            />
+                        </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">{group.label}</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="center" className="w-56">
                     {group.items.map((item) => (
                         <DropdownMenuItem
                             key={item.title}
@@ -264,7 +292,7 @@ function MobileNavigation({
     );
 }
 
-/** The avatar, with the account's name beside it on wide screens. */
+/** The avatar; its name is for screen readers, as on Facebook. */
 function AccountMenu() {
     const { auth } = usePage().props;
     const getInitials = useInitials();
@@ -272,10 +300,7 @@ function AccountMenu() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button
-                    variant="ghost"
-                    className="h-10 gap-2 rounded-full p-1 lg:pr-3"
-                >
+                <Button variant="ghost" className="size-10 rounded-full p-1">
                     <Avatar
                         aria-hidden
                         className="size-8 overflow-hidden rounded-full"
@@ -289,9 +314,8 @@ function AccountMenu() {
                             {getInitials(auth.user?.name ?? '')}
                         </AvatarFallback>
                     </Avatar>
-                    <span className="sr-only">Account menu, </span>
-                    <span className="max-w-40 truncate text-sm font-medium max-lg:sr-only">
-                        {auth.user?.name}
+                    <span className="sr-only">
+                        Account menu, {auth.user?.name}
                     </span>
                 </Button>
             </DropdownMenuTrigger>

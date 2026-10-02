@@ -128,7 +128,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
         : [];
 
     return (
-        <div className="px-4 py-6">
+        <div className="p-4 md:p-6">
             <Heading
                 title="Settings"
                 description="Manage your profile and account settings"
@@ -180,14 +180,13 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 : 'md:max-w-2xl'),
                     )}
                 >
+                    {/* Lists fill the width like the other staff pages;
+                        short forms stay narrow, where they read best. */}
                     <section
                         className={cn(
                             'space-y-12',
-                            isManagementPage
-                                ? 'max-w-6xl'
-                                : isAppearancePage
-                                  ? 'max-w-3xl'
-                                  : 'max-w-xl',
+                            !isManagementPage &&
+                                (isAppearancePage ? 'max-w-3xl' : 'max-w-xl'),
                         )}
                     >
                         {children}

@@ -10,6 +10,7 @@ use App\Models\MonitoringReport;
 use App\Models\Post;
 use App\Models\PostComment;
 use App\Models\Role;
+use App\Models\SiteFeedback;
 use App\Models\SiteRating;
 use App\Models\Survey;
 use App\Models\SurveyCluster;
@@ -50,6 +51,7 @@ class ActivitySubjects
         'monitoring-report' => MonitoringReport::class,
         'gad-survey-answer' => ChecklistResponse::class,
         'site-rating' => SiteRating::class,
+        'site-feedback' => SiteFeedback::class,
     ];
 
     /** The kind of record, as the entry's sentence names it. */
@@ -66,6 +68,7 @@ class ActivitySubjects
             'monitoring-report' => 'the monitoring report of',
             'gad-survey-answer' => 'the',
             'site-rating' => 'a',
+            'site-feedback' => 'website feedback',
             null => '',
             default => $type,
         };
@@ -92,6 +95,7 @@ class ActivitySubjects
             ),
             $subject instanceof ChecklistResponse => sprintf('%s, AY %s', $subject->type->label(), $subject->academic_year),
             $subject instanceof SiteRating => sprintf('%d-star rating', (int) $subject->getAttribute('rating')),
+            $subject instanceof SiteFeedback => self::excerpt($subject->feedback),
             default => (string) $subject->getKey(),
         };
     }
@@ -109,7 +113,7 @@ class ActivitySubjects
             $subject instanceof Post => ActivityPlace::ofHei($subject->getAttribute('survey_hei_id')),
             $subject instanceof PostComment => $subject->post !== null ? self::place($subject->post) : null,
             $subject instanceof MonitoringReport, $subject instanceof ChecklistResponse,
-            $subject instanceof SurveyResponse => new ActivityPlace(
+            $subject instanceof SurveyResponse, $subject instanceof SiteFeedback => new ActivityPlace(
                 $subject->getAttribute('survey_region_id'),
                 $subject->getAttribute('survey_cluster_id'),
                 $subject->getAttribute('survey_hei_id'),
@@ -148,11 +152,12 @@ class ActivitySubjects
                 default => null,
             },
             $subject instanceof SiteRating => $viewer->can('site-ratings.view') ? route('settings.ratings.index') : null,
+            $subject instanceof SiteFeedback => $viewer->can('feedback.view') ? route('admin.feedback.index') : null,
             default => null,
         };
     }
 
-    /** A post or comment by its opening words, quoted. */
+    /** A post, comment or feedback by its opening words, quoted. */
     private static function excerpt(?string $body): string
     {
         $text = Str::squish((string) $body);

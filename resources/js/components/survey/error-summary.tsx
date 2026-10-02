@@ -1,25 +1,29 @@
 import type { Ref } from 'react';
-import type { Questionnaire } from '@/components/survey/questionnaire';
-import { errorTarget, stepOf } from '@/components/survey/validation';
 
 /**
- * Everything to fix before the respondent can go on, each linking to its
+ * Everything to fix before the person can go on, each linking to its
  * control: the link opens the step that asks it, then moves focus there.
+ * Shared by the law surveys and the website feedback form.
  */
 export function ErrorSummary({
     ref,
     issues,
     message,
-    questionnaire,
-    onShowStep,
+    targetOf,
+    onShow,
+    unsentMessage = 'Your response has not been submitted.',
 }: {
     ref: Ref<HTMLDivElement>;
     /** [answer key, message] pairs. */
     issues: [string, string][];
     /** Shown when there is nothing to list. */
     message: string;
-    questionnaire: Questionnaire;
-    onShowStep: (step: number) => void;
+    /** The id of the control an answer key's link moves focus to. */
+    targetOf: (key: string) => string;
+    /** Opens the step that asks the answer. */
+    onShow: (key: string) => void;
+    /** The fallback when there is neither a list nor a message. */
+    unsentMessage?: string;
 }) {
     if (!message && issues.length === 0) {
         return null;
@@ -42,15 +46,13 @@ export function ErrorSummary({
                     {issues.map(([id, text]) => (
                         <li key={id}>
                             <a
-                                href={`#${errorTarget(id, questionnaire)}`}
+                                href={`#${targetOf(id)}`}
                                 onClick={(event) => {
                                     event.preventDefault();
-                                    if (id !== 'version_id') {
-                                        onShowStep(stepOf(id));
-                                    }
+                                    onShow(id);
                                     requestAnimationFrame(() => {
                                         const field = document.getElementById(
-                                            errorTarget(id, questionnaire),
+                                            targetOf(id),
                                         );
                                         field?.scrollIntoView({
                                             block: 'center',
@@ -66,7 +68,7 @@ export function ErrorSummary({
                     ))}
                 </ul>
             ) : (
-                <p>{message || 'Your response has not been submitted.'}</p>
+                <p>{message || unsentMessage}</p>
             )}
         </div>
     );

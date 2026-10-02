@@ -99,4 +99,21 @@ class PlaceFilters
 
         return $clusters->count() > 1 ? $clusters : new Collection;
     }
+
+    /**
+     * The regions where a cluster is a choice, by the same rule as
+     * clusterChoices(): their institutions sit in two or more clusters.
+     *
+     * @return list<int>
+     */
+    public static function regionsWithClusterChoices(): array
+    {
+        return array_values(SurveyCluster::query()
+            ->whereHas('heis')
+            ->groupBy('survey_region_id')
+            ->havingRaw('count(*) > 1')
+            ->pluck('survey_region_id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->all());
+    }
 }

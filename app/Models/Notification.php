@@ -87,6 +87,11 @@ class Notification extends Model
             return route('dashboard');
         }
 
+        // Website feedback has no one record to point at: it opens the list.
+        if ($this->kind === NotificationKind::SiteFeedback) {
+            return $viewer->can('feedback.view') ? route('admin.feedback.index') : null;
+        }
+
         $subject = $this->about();
 
         return match (true) {

@@ -1,136 +1,148 @@
-import { CalendarDays } from 'lucide-react';
+import { selectClass } from '@/components/monitoring/shared';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import {
-    monthNames,
-    periodLabels,
-    type DashboardPeriod,
-} from './dashboard-data';
+    Filter,
+    FilterBar,
+    PlaceFilters,
+    placeFilterCount,
+    useRecordFilters,
+} from '@/components/record-filters';
+import { FormSelect } from '@/components/ui/form-select';
+import { academicMonths } from '@/lib/dashboard';
+import { dashboard } from '@/routes';
+import type { DashboardFilters, DashboardProps } from '@/types/dashboard';
 
-export function DashboardFilters({
-    period,
-    monthIndex,
-    onPeriodChange,
-    onMonthChange,
-}: {
-    period: DashboardPeriod;
-    monthIndex: number;
-    onPeriodChange: (period: DashboardPeriod) => void;
-    onMonthChange: (month: number) => void;
-}) {
-    const size = period === 'month' ? 1 : period === 'quarter' ? 3 : 6;
-    const options =
-        period === 'month'
-            ? monthNames
-            : period === 'quarter'
-              ? ['Q1 · Jan–Mar', 'Q2 · Apr–Jun', 'Q3 · Jul–Sep', 'Q4 · Oct–Dec']
-              : ['1st semester · Jan–Jun', '2nd semester · Jul–Dec'];
-    const triggerClass =
-        'w-full min-w-0 rounded-lg bg-card text-base data-[size=default]:h-11 sm:text-sm';
+const views = [
+    { value: 'year', label: 'Whole year' },
+    { value: 'semester', label: 'Semester' },
+    { value: 'month', label: 'Month' },
+];
+
+const semesters = [
+    { value: '1', label: '1st semester · Aug–Dec' },
+    { value: '2', label: '2nd semester · Jan–Jul' },
+];
+
+/**
+ * The dashboard's filters: the period first (academic year, then a semester
+ * or month), then the places the account may pick, ownership and law. They
+ * apply as soon as they change, like the record lists' filters.
+ */
+export function DashboardFilterBar({
+    filters,
+    options,
+}: Pick<DashboardProps, 'filters' | 'options'>) {
+    const { values, change, pick } = useRecordFilters<DashboardFilters>(
+        dashboard.url(),
+        filters,
+    );
+    const set = (key: keyof DashboardFilters, value: string) =>
+        change({ ...values, [key]: value });
+    const count =
+        (values.view === 'year' ? 2 : 3) +
+        placeFilterCount(options.regions, options.clusters) +
+        2;
+
     return (
-        <div
-            role="group"
-            aria-label="Reporting filters"
-            className="grid w-full grid-cols-2 items-end gap-3 sm:flex sm:w-auto sm:flex-wrap"
-        >
-            <div className="min-w-0 sm:w-32">
-                <label
-                    htmlFor="dashboard-grouping"
-                    className="mb-1.5 block text-xs text-muted-foreground"
-                >
-                    View by
-                </label>
-                <Select
-                    value={period}
-                    onValueChange={(value) => {
-                        if (
-                            value === 'month' ||
-                            value === 'quarter' ||
-                            value === 'semester' ||
-                            value === 'annual'
-                        )
-                            onPeriodChange(value);
-                    }}
-                >
-                    <SelectTrigger
-                        id="dashboard-grouping"
-                        className={triggerClass}
-                    >
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {Object.entries(periodLabels).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                                {label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-            {period !== 'annual' && (
-                <div className="col-span-2 row-start-2 min-w-0 sm:w-56">
-                    <label
-                        htmlFor="dashboard-period"
-                        className="mb-1.5 block text-xs text-muted-foreground"
-                    >
-                        {periodLabels[period]}
-                    </label>
-                    <Select
-                        value={String(Math.floor(monthIndex / size))}
-                        onValueChange={(value) =>
-                            onMonthChange(Number(value) * size)
-                        }
-                    >
-                        <SelectTrigger
-                            id="dashboard-period"
-                            className={triggerClass}
-                        >
-                            <span className="flex min-w-0 items-center gap-2">
-                                <CalendarDays aria-hidden="true" />
-                                <SelectValue />
-                            </span>
-                        </SelectTrigger>
-                        <SelectContent>
-                            {options.map((label, index) => (
-                                <SelectItem key={label} value={String(index)}>
-                                    {label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            )}
-            <div className="col-start-2 row-start-1 min-w-0 sm:w-24">
-                <label
-                    htmlFor="dashboard-year"
-                    className="mb-1.5 block text-xs text-muted-foreground"
-                >
-                    Year
-                </label>
-                <Select value="2026" disabled>
-                    <SelectTrigger
-                        id="dashboard-year"
-                        aria-describedby="dashboard-year-help"
-                        className={triggerClass}
-                    >
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="2026">2026</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-            <span
-                id="dashboard-year-help"
-                className="col-span-2 text-xs text-muted-foreground sm:sr-only"
+        <div className="@container overflow-hidden rounded-xl border bg-card">
+            <FilterBar
+                label="Reporting filters"
+                filters={count}
+                className="border-b-0"
             >
-                Sample data available for 2026.
-            </span>
+                <Filter label="Academic year" id="academic-year">
+                    <FormSelect
+                        id="academic-year"
+                        className={selectClass}
+                        value={values.academic_year}
+                        onChange={(value) => set('academic_year', value)}
+                        placeholder="Academic year"
+                        options={options.academicYears.map((year) => ({
+                            value: year,
+                            label: year,
+                        }))}
+                    />
+                </Filter>
+                <Filter label="View by" id="view">
+                    <FormSelect
+                        id="view"
+                        className={selectClass}
+                        value={values.view}
+                        onChange={(value) =>
+                            change({
+                                ...values,
+                                view: value as DashboardFilters['view'],
+                                semester: '',
+                                month: '',
+                            })
+                        }
+                        placeholder="Whole year"
+                        options={views}
+                    />
+                </Filter>
+                {values.view === 'semester' && (
+                    <Filter label="Semester" id="semester">
+                        <FormSelect
+                            id="semester"
+                            className={selectClass}
+                            // Left empty, the server picks one; show what it picked.
+                            value={values.semester || filters.semester}
+                            onChange={(value) => set('semester', value)}
+                            placeholder="Semester"
+                            options={semesters}
+                        />
+                    </Filter>
+                )}
+                {values.view === 'month' && (
+                    <Filter label="Month" id="month">
+                        <FormSelect
+                            id="month"
+                            className={selectClass}
+                            value={values.month || filters.month}
+                            onChange={(value) => set('month', value)}
+                            placeholder="Month"
+                            options={academicMonths}
+                        />
+                    </Filter>
+                )}
+                <PlaceFilters
+                    values={values}
+                    onPick={pick}
+                    regions={options.regions}
+                    clusters={options.clusters}
+                    heis={options.heis}
+                />
+                <Filter label="Ownership" id="ownership">
+                    <FormSelect
+                        id="ownership"
+                        className={selectClass}
+                        value={values.ownership}
+                        onChange={(value) => set('ownership', value)}
+                        placeholder="Public and private"
+                        allowEmpty
+                        emptyLabel="Public and private"
+                        options={options.ownerships.map((ownership) => ({
+                            value: ownership,
+                            label:
+                                ownership === 'public' ? 'Public' : 'Private',
+                        }))}
+                    />
+                </Filter>
+                <Filter label="Law survey" id="survey">
+                    <FormSelect
+                        id="survey"
+                        className={selectClass}
+                        value={values.survey}
+                        onChange={(value) => set('survey', value)}
+                        placeholder="All law surveys"
+                        allowEmpty
+                        emptyLabel="All law surveys"
+                        options={options.surveys.map((survey) => ({
+                            value: String(survey.id),
+                            label: survey.code,
+                        }))}
+                    />
+                </Filter>
+            </FilterBar>
         </div>
     );
 }

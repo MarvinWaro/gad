@@ -1,5 +1,5 @@
 import { router, useForm, useHttp, usePage } from '@inertiajs/react';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { toast } from '@/lib/toast';
@@ -134,6 +134,16 @@ export function PostCard({
         });
     }
 
+    // Moderators keep a photo post off the public homepage's stories, or
+    // let it back; it stays in the feed either way.
+    function toggleHomepage() {
+        router.put(
+            `/posts/${post.id}/homepage`,
+            { hidden: !post.homepage_hidden },
+            { preserveScroll: true, reset: ['posts'] },
+        );
+    }
+
     function deletePost(visit: ConfirmVisit) {
         router.delete(`/posts/${post.id}`, {
             preserveScroll: true,
@@ -207,7 +217,9 @@ export function PostCard({
                     action={post.shared_post ? 'shared a post' : undefined}
                     titleId={`post-${post.id}-source`}
                 >
-                    {(post.can_edit || post.can_delete) && (
+                    {(post.can_edit ||
+                        post.can_delete ||
+                        post.can_hide_from_homepage) && (
                         <DropdownMenu>
                             {/* "Delete post" in the menu opens this, pointing
                                 at the options button. */}
@@ -235,7 +247,7 @@ export function PostCard({
                             </ConfirmPopover>
                             <DropdownMenuContent
                                 align="end"
-                                className="w-40"
+                                className="w-48"
                                 onCloseAutoFocus={(event) => {
                                     // The menu has closed: open the delete
                                     // confirmation now, and let it take focus
@@ -260,6 +272,18 @@ export function PostCard({
                                     >
                                         <Pencil />
                                         Edit post
+                                    </DropdownMenuItem>
+                                )}
+                                {post.can_hide_from_homepage && (
+                                    <DropdownMenuItem onSelect={toggleHomepage}>
+                                        {post.homepage_hidden ? (
+                                            <Eye />
+                                        ) : (
+                                            <EyeOff />
+                                        )}
+                                        {post.homepage_hidden
+                                            ? 'Show on homepage'
+                                            : 'Hide from homepage'}
                                     </DropdownMenuItem>
                                 )}
                                 {post.can_delete && (

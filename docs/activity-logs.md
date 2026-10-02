@@ -46,9 +46,11 @@ icon on each row of Settings → Users.
 | Monitoring reports                | Started, draft autosaved (which fields, never their text), finalized, reopened, signed copy submitted, reviewed, returned for correction, signed copy downloaded                      |
 | GAD Training & Compliance Surveys | Submitted, updated (how many items were checked)                                                                                                                                      |
 | Site ratings                      | Rating deleted, ratings exported, the Rate PHLGADIS button turned on or off                                                                                                           |
+| Website feedback                  | Feedback deleted, feedback exported (CSV, with the filters used)                                                                                                                      |
 
-**Never logged:** public survey answers and homepage ratings. Both are
-anonymous, and an entry with an IP address and a time would undo that.
+**Never logged:** public survey answers, homepage ratings and website
+feedback as it arrives. An entry with an IP address and a time would undo
+what they promise.
 
 **Never stored:** passwords (typed or new), tokens, two-factor secrets, file
 paths, and the text of monitoring answers. Long values in a change are cut at

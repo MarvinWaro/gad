@@ -13,6 +13,14 @@ export function localDate(value: string): string {
     }).format(new Date(value));
 }
 
+/** An ISO time → "Oct 1, 2026": the day in Philippine time. */
+export function localDay(value: string): string {
+    return new Intl.DateTimeFormat('en-PH', {
+        dateStyle: 'medium',
+        timeZone,
+    }).format(new Date(value));
+}
+
 /** An ISO time → "Oct 1, 2026, 5:00:12 PM", to the second, as logs need. */
 export function localDateTime(value: string): string {
     return new Intl.DateTimeFormat('en-PH', {
