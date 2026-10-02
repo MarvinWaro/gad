@@ -58,6 +58,15 @@ php artisan test
 
 Use `npm.cmd` on Windows if PowerShell blocks `npm.ps1`. Frontend calculation tests use Node's TypeScript support (Node 22.18+ or 24). Browser checks use Playwright Chromium; install it with `npx playwright install chromium`. Run Vite or build the frontend before browser tests. The browser configuration starts an isolated Laravel preview at port 8016 (`tests/browser/server.php`) with its own temporary SQLite database and uploads folder. Photos posted during a run are served from that folder as `/storage/...` and never land in `storage/app/public`; both are removed when the run ends.
 
+Sessions, the cache and the queue can run on the database (the default in `.env.example`) or on Redis.
+
+- **Switching to Redis:** set `SESSION_DRIVER`, `CACHE_STORE` and `QUEUE_CONNECTION` to `redis`. PHP tests and the browser preview keep their own in-memory drivers, so they never need Redis.
+- **PHP client:** the `predis/predis` package works where PHP has no `phpredis` extension (`REDIS_CLIENT=predis`), for example on Windows.
+- **Sharing one Redis server:** apps that share it each need their own `REDIS_DB` and `REDIS_CACHE_DB`, because `php artisan cache:clear` empties a whole database.
+- **On a server,** Redis holds logins and queued jobs, not just cache:
+    - Run it with `maxmemory-policy noeviction` and append-only persistence, so it never drops a session or a job to free memory, and a restart keeps them.
+    - Bind it to localhost with a password.
+
 If a pre-existing cached Laravel configuration prevents PHP tests from reading their environment, run in PowerShell:
 
 ```powershell
