@@ -62,6 +62,10 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+Route::get('/hei', function () {
+    return Inertia::render('Index');
+})->name('hei.index');
+
 // The homepage's anonymous "Rate PHLGADIS" answers, throttled like the surveys.
 Route::post('/ratings', [SiteRatingController::class, 'store'])
     ->middleware('throttle:5,60')

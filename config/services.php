@@ -40,4 +40,13 @@ return [
         ],
     ],
 
+    'heida' => [
+        'url' => env(
+            'HEIDA_API_URL',
+            'https://v2.heida.ched.gov.ph'
+        ),
+
+        'token' => env('HEIDA_API_TOKEN'),
+    ],
+
 ];
