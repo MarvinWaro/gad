@@ -5,12 +5,12 @@ import {
     FileText,
     Folder,
     GraduationCap,
-    House,
     Images,
     LayoutGrid,
     ListChecks,
     MessageSquareText,
     MessagesSquare,
+    Users,
 } from 'lucide-react';
 import { dashboard } from '@/routes';
 import { toUrl } from '@/lib/utils';
@@ -58,7 +58,12 @@ export function appNavigationGroups(
               {
                   label: 'Menu',
                   items: [
-                      { title: 'Home', href: dashboard(), icon: House },
+                      // The HEI home is the community feed.
+                      {
+                          title: 'Community',
+                          href: dashboard(),
+                          icon: Users,
+                      },
                       { title: 'Events', href: '/events', icon: CalendarDays },
                   ],
               },

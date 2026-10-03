@@ -23,7 +23,7 @@ async function fitsWidth(page: Page) {
 
 const leftRail = (page: Page) =>
     page.getByRole('complementary', {
-        name: 'Your institution and law surveys',
+        name: 'Your institution, law surveys and resources',
     });
 const rightRail = (page: Page) =>
     page.getByRole('complementary', { name: 'Events and links' });
@@ -37,15 +37,41 @@ for (const width of [1440, 1280]) {
         await page.setViewportSize({ width, height: 900 });
         await logIn(page);
 
-        // Left: the institution, then the four law surveys, stacked.
+        // Left, as on Facebook: you (with the institution as the page's
+        // heading), then the places to go, Community first and current.
         const left = leftRail(page);
         await expect(
             left.getByRole('heading', { level: 1, name: 'Browser Test HEI' }),
         ).toBeVisible();
         await expect(
-            left.getByRole('heading', { name: 'Law surveys' }),
+            left.getByRole('link', { name: /Browser Test HEI/ }),
+        ).toHaveAttribute('href', /\/profile$/);
+        const menu = left.getByRole('navigation', { name: 'Your PHLGADIS' });
+        await expect(
+            menu.getByRole('link', { name: 'Community' }),
+        ).toHaveAttribute('aria-current', 'page');
+        // Only what the top bar and Quick links do not already offer.
+        await expect(menu.getByRole('listitem')).toHaveCount(2);
+        await expect(menu.getByText('GAD Quest')).toBeVisible();
+        // The four law surveys, open, with nothing painted behind them.
+        const surveys = left.getByRole('button', { name: 'Law surveys' });
+        await expect(surveys).toHaveAttribute('aria-expanded', 'true');
+        await expect(
+            left.getByRole('button', { name: 'Copy link for RA 7877' }),
         ).toBeVisible();
-        await expect(left.getByRole('listitem')).toHaveCount(4);
+        await expect(left.getByText('RA 11313', { exact: true })).toBeVisible();
+        // The GAD Quest card and the footer close the column.
+        await expect(
+            left.getByRole('region', { name: 'GAD Quest' }),
+        ).toContainText('Coming soon');
+        const footer = left.getByRole('navigation', { name: 'About PHLGADIS' });
+        await expect(footer.getByRole('link', { name: 'FAQ' })).toHaveAttribute(
+            'href',
+            '/help/faq',
+        );
+        await expect(
+            footer.getByRole('link', { name: 'Feedback' }),
+        ).toHaveAttribute('href', '/feedback');
         // Middle: only the posts. Right: events and links.
         await expect(
             feed(page).getByRole('button', { name: /Share a GAD activity/ }),
@@ -86,6 +112,71 @@ for (const width of [1440, 1280]) {
     });
 }
 
+test('the left menu folds its groups and remembers them', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await logIn(page);
+    const left = leftRail(page);
+    const resources = left.getByRole('button', { name: 'Resources' });
+    await expect(resources).toHaveAttribute('aria-expanded', 'false');
+    await resources.click();
+    await expect(
+        left.getByRole('link', { name: /Definition of Terms/ }),
+    ).toHaveAttribute('href', '/resources/definition-of-terms');
+    await expect(left.getByRole('link', { name: /Manuals/ })).toBeVisible();
+    // GAD Videos has no page yet, so it is not a link.
+    await expect(left.getByText('GAD Videos')).toBeVisible();
+    await expect(left.getByRole('link', { name: /GAD Videos/ })).toHaveCount(0);
+
+    // Folding Law surveys and reloading keeps both as they were left.
+    await left.getByRole('button', { name: 'Law surveys' }).click();
+    await page.reload();
+    await expect(
+        leftRail(page).getByRole('button', { name: 'Resources' }),
+    ).toHaveAttribute('aria-expanded', 'true');
+    await expect(
+        leftRail(page).getByRole('button', { name: 'Law surveys' }),
+    ).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('the footer rests at the bottom of the screen until the groups outgrow it', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await logIn(page);
+    const left = leftRail(page);
+    // The whole footer: its links and the copyright line under them.
+    const footer = left.locator('footer');
+    const quest = left.getByRole('region', { name: 'GAD Quest' });
+
+    // Both groups folded: the footer sits 24px above the screen's bottom,
+    // the GAD Quest card well above it.
+    await left.getByRole('button', { name: 'Law surveys' }).click();
+    await expect
+        .poll(async () => {
+            const box = (await footer.boundingBox())!;
+            return Math.round(900 - (box.y + box.height));
+        })
+        .toBeLessThanOrEqual(32);
+    // The links wrap inside the column rather than running past it.
+    const column = (await left.boundingBox())!;
+    const links = (await footer.boundingBox())!;
+    expect(links.x + links.width).toBeLessThanOrEqual(column.x + column.width);
+    const card = (await quest.boundingBox())!;
+    expect(
+        (await footer.boundingBox())!.y - (card.y + card.height),
+    ).toBeGreaterThan(48);
+
+    // Both open: the footer follows the Resources list, never under it.
+    await left.getByRole('button', { name: 'Law surveys' }).click();
+    await left.getByRole('button', { name: 'Resources' }).click();
+    const manuals = (await left
+        .getByRole('link', { name: /Manuals/ })
+        .boundingBox())!;
+    expect((await footer.boundingBox())!.y).toBeGreaterThan(
+        manuals.y + manuals.height,
+    );
+});
+
 test('narrower, the home keeps the right rail beside the feed, then one column', async ({
     page,
 }, testInfo) => {
@@ -95,9 +186,14 @@ test('narrower, the home keeps the right rail beside the feed, then one column',
     await expect(
         page.getByRole('heading', { level: 1, name: 'Browser Test HEI' }),
     ).toBeVisible();
-    await expect(
-        page.getByRole('heading', { name: 'Law surveys' }),
-    ).toBeVisible();
+    // The law surveys are a plain card, without the old pink gradient.
+    const lawSurveys = page.getByRole('region', { name: 'Law surveys' });
+    await expect(lawSurveys).toBeVisible();
+    expect(
+        await lawSurveys.evaluate(
+            (element) => getComputedStyle(element).backgroundImage,
+        ),
+    ).toBe('none');
     await expect(rightRail(page)).toBeVisible();
     await fitsWidth(page);
     await page.screenshot({ path: testInfo.outputPath('hei-home-1024.png') });

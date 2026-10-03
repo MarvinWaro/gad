@@ -1,6 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
 import { EventCalendar } from '@/components/hei/event-calendar';
 import { Feed } from '@/components/hei/feed';
+import { HomeRail } from '@/components/hei/home-rail';
 import { NextEventCard } from '@/components/hei/next-event-card';
 import { PostComposer } from '@/components/hei/post-composer';
 import { QuickLinks } from '@/components/hei/quick-links';
@@ -32,10 +33,11 @@ type Props = {
 const railOffset = { top: 57 + 24, bottom: 24 };
 
 /**
- * The HEI home, laid out like Facebook from 1280px: the institution and its
- * law surveys on the left, the posts in the middle, events and links on the
- * right, both rails staying in view beside the feed. Narrower, the rails
- * fold into one column (and, from 1024px, the right rail beside it).
+ * The HEI home, the community feed, laid out like Facebook from 1280px: you,
+ * the places to go, the law surveys and resources on the left, the posts in
+ * the middle, events and links on the right, both rails staying in view
+ * beside the feed. Narrower, the rails fold into one column (and, from
+ * 1024px, the right rail beside it).
  */
 export default function HeiHome({
     hei,
@@ -65,15 +67,10 @@ export default function HeiHome({
                 <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[17rem_minmax(0,42rem)_20rem] xl:justify-between xl:pt-6 2xl:grid-cols-[22rem_42rem_22rem]">
                     <aside
                         ref={leftRail}
-                        aria-label="Your institution and law surveys"
-                        className="hidden min-w-0 space-y-6 xl:sticky xl:block xl:self-start"
+                        aria-label="Your institution, law surveys and resources"
+                        className="hidden min-w-0 xl:sticky xl:block xl:self-start"
                     >
-                        <WelcomeBand
-                            hei={hei}
-                            userName={auth.user.name}
-                            compact
-                        />
-                        <SurveyPanel surveys={surveys} variant="rail" />
+                        <HomeRail hei={hei} surveys={surveys} />
                     </aside>
 
                     <div className="min-w-0 space-y-10">

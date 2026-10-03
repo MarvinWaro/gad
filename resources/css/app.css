@@ -80,8 +80,6 @@
     --color-brand-soft: var(--brand-soft);
     --color-signature-violet: var(--signature-violet);
     --color-signature-red: var(--signature-red);
-    --color-callout: var(--callout);
-    --color-callout-foreground: var(--callout-foreground);
     --color-signature-mustard: var(--signature-mustard);
     --color-on-signature: var(--on-signature);
     --color-thrust: var(--thrust);
@@ -155,16 +153,9 @@
     --brand-soft: #f1eaf8;
     --signature-violet: #3b1a5c;
     --signature-red: #ce1126;
-    /* Soft brand surface for the HEI law-surveys panel: a pastel pink that
-       drifts to lilac, toward the violet card beside it. --callout is the
-       solid fallback and the HEI text-selection colour. */
+    /* The pastel pink of the PHLGADIS logo, for text selected on the HEI
+       pages. */
     --callout: #fce6ee;
-    --callout-gradient: linear-gradient(
-        120deg,
-        #fde2eb 0%,
-        #fbe9f0 45%,
-        #efe3f8 100%
-    );
     --callout-foreground: #181d26;
     --signature-mustard: #d9a441;
     --on-signature: #ffffff;
@@ -249,12 +240,6 @@
     --signature-violet: #2a1740;
     --signature-red: #ef5a66;
     --callout: oklch(0.29 0.045 350);
-    --callout-gradient: linear-gradient(
-        120deg,
-        oklch(0.3 0.05 355) 0%,
-        oklch(0.285 0.045 340) 45%,
-        oklch(0.28 0.05 305) 100%
-    );
     --callout-foreground: oklch(0.95 0.012 350);
     --signature-mustard: #d9a441;
     --on-signature: #ffffff;
@@ -327,11 +312,6 @@
 
 @utility scroll-mt-below-header {
     scroll-margin-top: calc(var(--app-header, 0px) + 1.5rem);
-}
-
-/* Paints --callout-gradient over bg-callout's solid colour. */
-@utility bg-callout-gradient {
-    background-image: var(--callout-gradient);
 }
 
 /* A soft fade from the bottom-right corner of a post's photos, behind its

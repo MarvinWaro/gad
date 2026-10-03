@@ -169,13 +169,13 @@ test('staff top navigation: one row like Facebook, icon tabs, the Monitoring men
     expect(errors).toEqual([]);
 });
 
-test('HEI focal persons get the same header, with Home, Events and Monitoring', async ({
+test('HEI focal persons get the same header, with Community, Events and Monitoring', async ({
     page,
 }, testInfo) => {
     await login(page, 'browser-monitoring@example.test');
     await page.setViewportSize({ width: 1440, height: 900 });
     const nav = page.getByRole('navigation', { name: 'Main' });
-    await expect(nav.getByRole('link', { name: 'Home' })).toHaveAttribute(
+    await expect(nav.getByRole('link', { name: 'Community' })).toHaveAttribute(
         'aria-current',
         'page',
     );
