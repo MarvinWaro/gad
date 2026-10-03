@@ -164,3 +164,18 @@ export type HeiSurvey = {
 };
 
 export type HeiSummary = HeiRef & { cluster: string | null };
+
+/** A colleague on the HEI home (App\Http\Resources\InstitutionPersonResource). */
+export type InstitutionPerson = {
+    id: number;
+    name: string;
+    avatar: string | null;
+    /** The institution's GAD Focal Person. */
+    focal: boolean;
+};
+
+/** The colleagues listed, and how many accounts the institution has in all. */
+export type InstitutionPeopleSummary = {
+    people: InstitutionPerson[];
+    total: number;
+};

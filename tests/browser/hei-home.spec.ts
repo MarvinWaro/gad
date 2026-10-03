@@ -77,10 +77,9 @@ for (const width of [1440, 1280]) {
                 name: 'HEI Gender Mainstreaming Efforts',
             }),
         ).toBeVisible();
-        await expect(feed(page).locator('header img')).toHaveAttribute(
-            'alt',
-            '',
-        );
+        await expect(
+            feed(page).locator('img[src*="hei-banner"]'),
+        ).toHaveAttribute('alt', '');
         // Right: events and links.
         await expect(
             feed(page).getByRole('button', { name: /Share a GAD activity/ }),
@@ -190,7 +189,7 @@ test('the footer rests at the bottom of the screen until the groups outgrow it',
     );
 });
 
-test('plain HEI users get people to ask and help in place of Quick links', async ({
+test('plain HEI users get people to ask and help, without Quick links', async ({
     page,
 }, testInfo) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
@@ -200,13 +199,19 @@ test('plain HEI users get people to ask and help in place of Quick links', async
         right.getByRole('region', { name: 'Quick links' }),
     ).toHaveCount(0);
 
-    // A static preview for now, and it says so.
     const people = right.getByRole('region', {
         name: 'People at your institution',
     });
-    await expect(people).toContainText('Preview');
-    await expect(people).toContainText('GAD Focal Person');
-    await expect(people.getByRole('listitem')).toHaveCount(4);
+    // The real accounts: the institution's GAD Focal Person first, the
+    // viewer left out of the list.
+    await expect(people.getByRole('listitem').first()).toContainText(
+        'Fictional Monitoring Member',
+    );
+    await expect(people.getByRole('listitem').first()).toContainText(
+        'GAD Focal Person',
+    );
+    await expect(people).not.toContainText('Browser Test Member');
+    await expect(people).not.toContainText('Preview');
 
     const help = right.getByRole('region', { name: 'Need help?' });
     await expect(help.getByRole('link', { name: 'FAQ' })).toHaveAttribute(
@@ -227,18 +232,18 @@ test('plain HEI users get people to ask and help in place of Quick links', async
     ).toBeVisible();
 });
 
-test('HEI Focals keep their Quick links, without the extra cards', async ({
+test('HEI Focals get the same cards under their Quick links', async ({
     page,
 }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await logIn(page);
     const right = rightRail(page);
-    await expect(
-        right.getByRole('region', { name: 'Quick links' }),
-    ).toBeVisible();
-    await expect(
-        right.getByRole('region', { name: 'People at your institution' }),
-    ).toHaveCount(0);
+    const cards = right.getByRole('region');
+    await expect(cards.getByRole('heading', { level: 2 })).toContainText([
+        'Quick links',
+        'People at your institution',
+        'Need help?',
+    ]);
 });
 
 test('narrower, the home keeps the right rail beside the feed, then one column', async ({

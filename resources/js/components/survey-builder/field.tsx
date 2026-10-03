@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 /** The builder's multi-line inputs; add a min-h-* for their height. */
 export const textareaClass =
-    'w-full rounded-md border bg-transparent p-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
+    'w-full rounded-md border bg-transparent p-3 text-base outline-none md:text-sm focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
 type ControlProps = {
     id?: string;

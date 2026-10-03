@@ -109,7 +109,7 @@ export function QuestionEditor({
                     hint="Stored with every response. Letters, numbers, dashes."
                 >
                     <Input
-                        className="font-mono text-xs"
+                        className="font-mono text-base md:text-xs"
                         value={question.id}
                         onChange={(event) =>
                             onChange((target) => {

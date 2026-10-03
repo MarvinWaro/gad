@@ -32,7 +32,10 @@ export function Breadcrumbs({
                                             </BreadcrumbPage>
                                         ) : (
                                             <BreadcrumbLink asChild>
-                                                <Link href={item.href}>
+                                                <Link
+                                                    href={item.href}
+                                                    className="tap-target"
+                                                >
                                                     {item.title}
                                                 </Link>
                                             </BreadcrumbLink>
