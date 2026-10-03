@@ -187,7 +187,7 @@ test('landing page anchors scroll smoothly to their sections', async ({
     await expect(page.locator('#statistics')).toHaveClass(/is-revealed/);
 });
 
-test('statistics reconcile through dataset, sex, chart and table controls', async ({
+test('statistics reconcile through dataset, sex, view and region controls', async ({
     page,
 }) => {
     await page.goto('/');
@@ -195,10 +195,45 @@ test('statistics reconcile through dataset, sex, chart and table controls', asyn
     await expect(statistics.locator('.stat-total strong')).toHaveText(
         '227,823',
     );
+    await expect(statistics).toContainText(
+        'Higher Education GAD Statistical Data, all regions',
+    );
+
+    // Line, the old system's chart, opens first: male, female and total,
+    // with every group's full name under its point.
     await expect(
         statistics.getByRole('button', { name: 'Line', exact: true }),
     ).toHaveAttribute('aria-pressed', 'true');
     await expect(statistics.locator('.recharts-line')).toHaveCount(3);
+    const chartText = statistics.locator('svg');
+    await expect(
+        chartText.getByText('Agricultural,', { exact: true }),
+    ).toBeVisible();
+    await expect(
+        chartText.getByText('Forestry, and Fisheries', { exact: true }),
+    ).toBeVisible();
+
+    // Counts: a row per discipline group, largest first, names in full.
+    await statistics
+        .getByRole('button', { name: 'Counts', exact: true })
+        .click();
+    const rows = statistics.locator('.stat-rows > li');
+    await expect(rows).toHaveCount(8);
+    await expect(rows.first()).toContainText(
+        'Education Science and Teacher Training',
+    );
+    await expect(rows.first()).toContainText('55,000');
+
+    // Balance: by women's share, highest first; a share needs both sexes.
+    await statistics
+        .getByRole('button', { name: 'Balance', exact: true })
+        .click();
+    await expect(rows.first()).toContainText('Medical and Allied');
+    await expect(rows.first()).toContainText('83% female');
+    await expect(
+        statistics.getByRole('group', { name: 'Filter by sex' }),
+    ).toHaveCount(0);
+
     await statistics
         .getByRole('button', { name: 'Table', exact: true })
         .click();
@@ -223,12 +258,23 @@ test('statistics reconcile through dataset, sex, chart and table controls', asyn
         .getByRole('button', { name: 'All', exact: true })
         .click();
     await expect(statistics.locator('tfoot')).toContainText('31,990');
-    await statistics.getByRole('button', { name: 'Bar', exact: true }).click();
-    await expect(statistics.locator('[data-slot="chart"]')).toBeVisible();
-    await expect(statistics.locator('.recharts-bar')).toHaveCount(2);
     await page.getByRole('combobox', { name: 'Academic year' }).click();
     await expect(page.getByRole('option')).toHaveCount(1);
-    await page.getByRole('option', { name: '2025–2026' }).click();
+    await page.getByRole('option', { name: '2025-2026' }).click();
+
+    // Only regions with figures are offered. Choosing one reloads just the
+    // statistics and keeps the view.
+    await page.getByRole('combobox', { name: 'Region', exact: true }).click();
+    await expect(page.getByRole('option')).toHaveText([
+        'All regions',
+        'Regional Office XII',
+    ]);
+    await page.getByRole('option', { name: 'Regional Office XII' }).click();
+    await expect(page).toHaveURL(/\?region=\d+/);
+    await expect(statistics).toContainText(
+        'Regional Office XII Higher Education GAD Statistical Data',
+    );
+    await expect(statistics.locator('tfoot')).toContainText('31,990');
 });
 
 test('public theme follows a dark preference and respects reduced motion', async ({

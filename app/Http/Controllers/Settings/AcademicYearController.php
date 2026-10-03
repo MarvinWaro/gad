@@ -22,6 +22,7 @@ class AcademicYearController extends Controller
         $search = trim($filters['search'] ?? '');
         $usedLabels = MonitoringReport::query()->distinct()->pluck('academic_year')
             ->merge(ChecklistResponse::query()->distinct()->pluck('academic_year'))
+            ->merge(AcademicYear::query()->whereHas('studentCounts')->pluck('label'))
             ->unique();
 
         return Inertia::render('settings/academic-years', [

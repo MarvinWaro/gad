@@ -1,6 +1,10 @@
 <?php
 
+use App\Enums\StudentCountKind;
+use App\Models\AcademicYear;
+use App\Models\DisciplineGroup;
 use App\Models\Post;
+use App\Models\StudentCount;
 use App\Models\Survey;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
@@ -366,4 +370,59 @@ test('HEI accounts keep their home, whose calendar month is not a dashboard filt
         ->get(route('dashboard', ['month' => '2026-11']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->component('hei/home'));
+});
+
+/** @param  array<string, array{0: int, 1: int}>  $groups  name => [male, female] */
+function statsCounts(SurveyRegion $region, StudentCountKind $kind, string $year, array $groups): void
+{
+    foreach ($groups as $name => [$male, $female]) {
+        StudentCount::query()->create([
+            'kind' => $kind,
+            'survey_region_id' => $region->id,
+            'academic_year_id' => AcademicYear::query()->where('label', $year)->value('id'),
+            'discipline_group_id' => DisciplineGroup::query()->where('name', $name)->value('id'),
+            'male' => $male,
+            'female' => $female,
+        ]);
+    }
+}
+
+test('enrollment and graduates show the newest year up to the one in view', function () {
+    $xii = statsRegion('Regional Office XII');
+    statsCounts($xii, StudentCountKind::Enrollment, '2025-2026', ['Engineering' => [8134, 4698], 'Maritime' => [2558, 104]]);
+    statsCounts($xii, StudentCountKind::Enrollment, '2024-2025', ['Engineering' => [8000, 4000]]);
+    statsCounts($xii, StudentCountKind::Graduates, '2024-2025', ['Maritime' => [367, 7]]);
+
+    // AY 2026-2027 is in view, which has no figures yet.
+    $students = statsFor(statsStaff($xii))['students'];
+
+    expect($students['heisOnly'])->toBeFalse()
+        ->and($students['enrollment'])->toMatchArray([
+            'academic_year' => '2025-2026',
+            'latest' => true,
+            'male' => 10692,
+            'female' => 4802,
+            'previous' => ['academic_year' => '2024-2025', 'male' => 8000, 'female' => 4000],
+            'regions' => ['Regional Office XII'],
+        ])
+        ->and(array_column($students['enrollment']['groups'], 'name'))->toBe(['Engineering', 'Maritime'])
+        ->and($students['graduates'])->toMatchArray(['academic_year' => '2024-2025', 'male' => 367, 'previous' => null]);
+
+    $earlier = statsFor(statsStaff($xii), ['academic_year' => '2024-2025'])['students'];
+    expect($earlier['enrollment'])->toMatchArray(['academic_year' => '2024-2025', 'latest' => false, 'male' => 8000])
+        ->and(statsFor(statsStaff($xii), ['academic_year' => '2023-2024'])['students']['enrollment'])->toBeNull();
+});
+
+test('enrollment and graduates follow the office, and set aside HEI filters', function () {
+    $xii = statsRegion('Regional Office XII');
+    $xi = statsRegion('Regional Office XI');
+    $hei = statsHei($xii, 'Notre Dame of Marbel University');
+    statsCounts($xii, StudentCountKind::Enrollment, '2025-2026', ['Engineering' => [100, 50]]);
+    statsCounts($xi, StudentCountKind::Enrollment, '2025-2026', ['Engineering' => [10, 5], 'Maritime' => [1, 1]]);
+
+    expect(statsFor(statsStaff($xi))['students']['enrollment'])->toMatchArray(['male' => 11, 'regions' => ['Regional Office XI']])
+        ->and(statsFor(statsStaff())['students']['enrollment'])->toMatchArray(['male' => 111, 'female' => 56, 'regions' => ['Regional Office XII', 'Regional Office XI']])
+        ->and(statsFor(statsStaff(), ['region' => $xii->id])['students']['enrollment']['male'])->toBe(100)
+        ->and(statsFor(statsStaff($xii), ['hei' => $hei->id])['students'])->toBe(['heisOnly' => true, 'enrollment' => null, 'graduates' => null])
+        ->and(statsFor(statsStaff($xii), ['ownership' => 'public'])['students']['heisOnly'])->toBeTrue();
 });

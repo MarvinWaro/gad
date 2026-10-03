@@ -31,6 +31,7 @@ enum ActivityAction: string
     case Exported = 'exported';
     case Downloaded = 'downloaded';
     case Synced = 'synced';
+    case Imported = 'imported';
     case Shared = 'shared';
     case Commented = 'commented';
     case Reacted = 'reacted';
@@ -68,6 +69,7 @@ enum ActivityAction: string
             self::Exported => 'Exported',
             self::Downloaded => 'Downloaded',
             self::Synced => 'Synced',
+            self::Imported => 'Imported',
             self::Shared => 'Shared',
             self::Commented => 'Commented',
             self::Reacted => 'Reacted',
@@ -110,6 +112,7 @@ enum ActivityAction: string
             self::Exported => 'Exported :subject',
             self::Downloaded => 'Downloaded :noun :subject',
             self::Synced => 'Synced :subject',
+            self::Imported => 'Imported :subject',
             self::Shared => 'Shared :noun :subject',
             self::Commented => 'Commented on :noun :subject',
             self::Reacted => 'Reacted to :noun :subject',

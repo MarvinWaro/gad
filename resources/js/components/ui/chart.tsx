@@ -6,9 +6,10 @@ export type ChartConfig = Record<string, { label: string; color: string }>;
 
 // shadcn-style composable chart surface: series colors are CSS variables, while
 // the actual chart remains regular Recharts for straightforward customization.
-export function ChartContainer({ config, children, className, ...props }: ComponentProps<'div'> & { config: ChartConfig; children: ComponentProps<typeof ResponsiveContainer>['children'] }) {
+export function ChartContainer({ config, children, className, style, ...props }: ComponentProps<'div'> & { config: ChartConfig; children: ComponentProps<typeof ResponsiveContainer>['children'] }) {
     const variables = Object.fromEntries(Object.entries(config).map(([key, value]) => [`--color-${key}`, value.color])) as CSSProperties;
-    return <div data-slot="chart" className={cn('chart-container', className)} style={variables} {...props}><ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer></div>;
+    // A style passed in (such as a minimum width) joins the series colours rather than replacing them.
+    return <div data-slot="chart" className={cn('chart-container', className)} style={{ ...variables, ...style }} {...props}><ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer></div>;
 }
 export const ChartTooltip = Tooltip;
 

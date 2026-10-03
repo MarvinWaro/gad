@@ -16,6 +16,7 @@ use App\Support\DashboardScope;
 use App\Support\EventCalendar;
 use App\Support\PlaceFilters;
 use App\Support\ReportingPeriod;
+use App\Support\StudentStatistics;
 use App\Support\SurveyDefinitions;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder as QueryBuilder;
@@ -89,6 +90,8 @@ class DashboardStatistics
             'laws' => $this->laws($scope, $period),
             'respondents' => $this->respondents($scope, $period),
             'community' => $this->community($scope, $period),
+            // Enrollment and graduates by sex: regional totals from Settings → Statistics.
+            'students' => StudentStatistics::forDashboard($scope, $period),
             'goals' => [
                 'sdg' => $goals->of('post_sdgs', 'sdg', array_map(
                     fn (SustainableDevelopmentGoal $goal): string => (string) $goal->value,

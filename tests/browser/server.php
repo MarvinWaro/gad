@@ -4,10 +4,14 @@
 // or load cached application configuration for browser tests.
 use App\Enums\ActivityAction;
 use App\Enums\ActivityModule;
+use App\Enums\StudentCountKind;
+use App\Models\AcademicYear;
+use App\Models\DisciplineGroup;
 use App\Models\Notification;
 use App\Models\Permission;
 use App\Models\Post;
 use App\Models\Role;
+use App\Models\StudentCount;
 use App\Models\Survey;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
@@ -141,6 +145,45 @@ foreach ([['ra-7877', 'female'], ['ra-7877', 'male'], ['ra-9710', 'female']] as 
         'created_at' => $goalPosts[1]->created_at,
         'updated_at' => $goalPosts[1]->created_at,
     ]);
+}
+
+// Region XII's enrollment and graduates for AY 2025-2026, as if imported in
+// Settings → Enrollment & graduates. They add up to the totals the homepage
+// and dashboard specs read: 95,737 men and 132,086 women enrolled; 11,800
+// men and 20,190 women graduated.
+$academicYear = AcademicYear::query()->where('label', '2025-2026')->firstOrFail();
+foreach ([
+    StudentCountKind::Enrollment->value => [
+        'Education Science and Teacher Training' => [17000, 38000],
+        'Business Administration and Related' => [18500, 34000],
+        'Criminal Justice Education' => [21500, 9000],
+        'IT-Related' => [12500, 8000],
+        'Medical and Allied' => [3000, 15000],
+        'Engineering' => [8500, 4000],
+        'Agricultural, Forestry, and Fisheries' => [4800, 5200],
+        'Other Disciplines' => [9937, 18886],
+    ],
+    StudentCountKind::Graduates->value => [
+        'Education Science and Teacher Training' => [2500, 6100],
+        'Business Administration and Related' => [2000, 4900],
+        'Criminal Justice Education' => [2400, 800],
+        'IT-Related' => [1400, 700],
+        'Medical and Allied' => [500, 2500],
+        'Engineering' => [900, 400],
+        'Agricultural, Forestry, and Fisheries' => [600, 700],
+        'Other Disciplines' => [1500, 4090],
+    ],
+] as $kind => $groups) {
+    foreach ($groups as $name => [$male, $female]) {
+        StudentCount::query()->create([
+            'kind' => $kind,
+            'survey_region_id' => $region->id,
+            'academic_year_id' => $academicYear->id,
+            'discipline_group_id' => DisciplineGroup::query()->where('name', $name)->value('id'),
+            'male' => $male,
+            'female' => $female,
+        ]);
+    }
 }
 
 // Six more regions with an HEI each, so a Central Office account's dashboard

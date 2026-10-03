@@ -1,5 +1,6 @@
 import type { CalendarEvent } from '@/types';
 import type { DirectoryOption } from '@/types/monitoring';
+import type { DashboardStudents } from '@/types/statistics';
 
 /** The staff dashboard's filters, as the URL carries them. */
 export type DashboardFilters = {
@@ -96,6 +97,8 @@ export type DashboardProps = {
         }[];
     };
     goals: { sdg: GoalFigures; achieve: GoalFigures };
+    /** Enrollment and graduates by sex, from Settings → Statistics. */
+    students: DashboardStudents;
     events: CalendarEvent[];
     filters: DashboardFilters;
     options: {

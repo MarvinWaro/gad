@@ -1504,23 +1504,6 @@
     color: var(--foreground);
     box-shadow: 0 1px 3px #0000000a;
 }
-.demo-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    color: var(--muted-foreground);
-    padding: 4px 8px;
-    font-size: 12px;
-    flex-shrink: 0;
-}
-.demo-badge > span {
-    width: 4px;
-    height: 4px;
-    background: var(--foreground);
-    border-radius: 50%;
-}
 .stat-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -1649,25 +1632,41 @@
 .chart-legend .total-dot {
     background: var(--data-total);
 }
+/* The line chart scrolls sideways inside its card when the screen is too
+   narrow to space every group's name. */
 .chart-scroll {
     max-width: 100%;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
     scrollbar-gutter: stable;
 }
+.chart-scroll:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
 .chart-container {
-    height: 350px;
+    height: 440px;
     width: 100%;
     min-width: 0;
-}
-.line-chart-container {
-    min-width: 760px;
 }
 .chart-container .recharts-surface:focus-visible {
     outline: 2px solid var(--ring);
 }
+/* Only where the line chart is wider than the card. */
+.chart-scroll-hint {
+    display: none;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--muted-foreground);
+}
+@media (max-width: 900px) {
+    .chart-scroll-hint {
+        display: block;
+    }
+}
 .chart-tooltip {
     min-width: 155px;
+    max-width: 260px;
     padding: 12px;
     border: 1px solid var(--border);
     background: var(--popover);
@@ -1695,6 +1694,108 @@
     margin-left: auto;
     font-weight: 500;
     font-variant-numeric: tabular-nums;
+}
+/* The statistics as rows, one per discipline group: names in full, every
+   figure printed, so no axis or grid is needed. */
+.stat-rows {
+    display: grid;
+    gap: 20px;
+}
+.stat-rows-compact {
+    gap: 16px;
+}
+.stat-row-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+.stat-row-head strong {
+    flex-shrink: 0;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+.stat-row-bars {
+    display: grid;
+    gap: 3px;
+    margin-top: 8px;
+}
+.stat-row-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 4.75em;
+    align-items: center;
+    gap: 10px;
+}
+.stat-row-track {
+    display: block;
+    height: 8px;
+}
+.stat-row-track > span {
+    display: block;
+    height: 100%;
+    min-width: 2px;
+    border-radius: 0 4px 4px 0;
+}
+.stat-row-value,
+.stat-row-split {
+    font-size: 12px;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+}
+.stat-row-split {
+    display: grid;
+    grid-template-columns: 6.5em minmax(0, 1fr) 5.5em;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+.stat-row-split > :first-child {
+    text-align: right;
+}
+.stat-row-split-track {
+    position: relative;
+    display: flex;
+    gap: 2px;
+    height: 10px;
+}
+.stat-row-split-track > span {
+    height: 100%;
+    border-radius: 4px 0 0 4px;
+}
+.stat-row-split-track > .male-bar {
+    flex: 1;
+    border-radius: 0 4px 4px 0;
+}
+.stat-row-split-track > span:only-of-type {
+    border-radius: 4px;
+}
+/* The even split. */
+.stat-row-split-track > i {
+    position: absolute;
+    inset-block: -3px;
+    left: 50%;
+    width: 1px;
+    background: var(--foreground);
+    opacity: 0.6;
+}
+.stat-rows-more {
+    margin-top: 14px;
+}
+.stat-rows-note {
+    margin-top: 18px;
+    font-size: 12px;
+    color: var(--muted-foreground);
+}
+.statistics-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.statistics-loading {
+    opacity: 0.6;
+    transition: opacity 150ms ease;
 }
 .chart-footnote {
     display: flex;
@@ -3081,9 +3182,6 @@
         padding: 7px 14px;
         font-size: 12px;
     }
-    .demo-badge {
-        font-size: 12px;
-    }
     .stat-grid {
         grid-template-columns: 1fr 1fr;
         gap: 10px;
@@ -3110,17 +3208,46 @@
         flex-direction: column;
         gap: 14px;
     }
+    /* The four views share the card's width; their icons give way to the
+       words. */
+    .chart-view-toggle {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        width: 100%;
+    }
+    .chart-view-toggle [data-slot='button'] {
+        padding-inline: 4px;
+    }
+    .chart-view-toggle [data-slot='button'] svg {
+        display: none;
+    }
     .chart-heading h3 {
         font-size: 16px;
     }
     .chart-controls {
         padding-block: 18px;
     }
-    .chart-container {
-        height: 370px;
+    .statistics-filters {
+        flex-direction: column;
+        width: 100%;
     }
-    .chart-container .recharts-yAxis .recharts-cartesian-axis-tick-value {
-        font-size: 9px;
+    /* The shares go under the bar, so it keeps the full width. */
+    .stat-row-split {
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            'bar bar'
+            'female male';
+        gap: 6px 8px;
+    }
+    .stat-row-split > :first-child {
+        grid-area: female;
+        text-align: left;
+    }
+    .stat-row-split-track {
+        grid-area: bar;
+    }
+    .stat-row-split > :last-child {
+        grid-area: male;
     }
     .chart-legend {
         gap: 9px;

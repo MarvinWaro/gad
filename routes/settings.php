@@ -9,6 +9,7 @@ use App\Http\Controllers\Settings\RegionRegistrationController;
 use App\Http\Controllers\Settings\RoleManagementController;
 use App\Http\Controllers\Settings\SecurityController;
 use App\Http\Controllers\Settings\SiteRatingManagementController;
+use App\Http\Controllers\Settings\StudentCountController;
 use App\Http\Controllers\Settings\SurveyDirectoryController;
 use App\Http\Controllers\Settings\UserManagementController;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -111,6 +112,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('settings/ratings/{siteRating}', [SiteRatingManagementController::class, 'destroy'])
         ->whereUlid('siteRating')
         ->middleware('can:site-ratings.delete')->name('settings.ratings.destroy');
+
+    // Enrollment and graduates by sex, imported until CHED's enrollment API exists.
+    Route::get('settings/student-counts', [StudentCountController::class, 'index'])
+        ->middleware('can:student-counts.view')->name('settings.student-counts.index');
+    Route::get('settings/student-counts/template', [StudentCountController::class, 'template'])
+        ->middleware('can:student-counts.view')->name('settings.student-counts.template');
+    Route::post('settings/student-counts/import', [StudentCountController::class, 'import'])
+        ->middleware(['can:student-counts.import', 'throttle:20,1'])->name('settings.student-counts.import');
+    Route::delete('settings/student-counts', [StudentCountController::class, 'destroy'])
+        ->middleware('can:student-counts.delete')->name('settings.student-counts.destroy');
 });
 
 Route::get('.well-known/passkey-endpoints', function () {

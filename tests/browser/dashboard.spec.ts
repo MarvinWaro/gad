@@ -193,6 +193,46 @@ test('period and law filters change the figures and the address', async ({
     await expect(months).toHaveCount(0);
 });
 
+test('enrollment and graduates show the latest imported year by sex', async ({
+    page,
+}) => {
+    const section = page.getByRole('region', {
+        name: 'Who studies, who graduates.',
+    });
+    // tests/browser/server.php imports AY 2025-2026, before the year in view.
+    await expect(section).toContainText('227,823');
+    await expect(section).toContainText('31,990');
+    await expect(section).toContainText('The latest year imported');
+    await expect(section.getByRole('listitem')).toHaveCount(8);
+    // Largest first.
+    await expect(section.getByRole('listitem').first()).toContainText(
+        'Education Science and Teacher Training',
+    );
+    await expect(section.getByRole('listitem').first()).toContainText(
+        '69% female, 31% male',
+    );
+
+    await section
+        .getByRole('group', { name: 'Figures' })
+        .getByRole('button', { name: 'Graduates', exact: true })
+        .click();
+    await expect(
+        section.getByRole('heading', {
+            name: 'Graduates by discipline group, AY 2025-2026',
+        }),
+    ).toBeVisible();
+    await section
+        .getByRole('button', { name: 'Show graduates data table' })
+        .click();
+    await expect(section.locator('tfoot')).toContainText('31,990');
+    await expect(
+        section.getByRole('link', { name: 'Manage enrollment and graduates' }),
+    ).toHaveAttribute('href', '/settings/student-counts');
+    await expect(section).toContainText(
+        'Regional totals from Regional Office XII.',
+    );
+});
+
 test('the goal tabs and rows work from the keyboard', async ({ page }) => {
     const goals = page.getByRole('region', {
         name: 'Where GAD work meets the goals',

@@ -24,41 +24,44 @@ use App\Models\CarouselSlide;
 use App\Models\SiteSetting;
 use App\Models\Survey;
 use App\Support\HomepageStories;
+use App\Support\StudentStatistics;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    $carouselSlides = CarouselSlide::query()
-        ->where('is_active', true)
-        ->orderBy('sort_order')
-        ->oldest('id')
-        ->get()
-        ->map(fn (CarouselSlide $slide): array => [
-            'id' => "carousel-{$slide->id}",
-            'title' => $slide->title,
-            'description' => $slide->description,
-            'href' => $slide->link,
-            'media' => [
-                'src' => Storage::disk('public')->url($slide->image_path),
-                'alt' => $slide->title,
-                'variant' => 'campus',
-            ],
-        ]);
-
-    // Slugs of surveys a visitor can actually answer right now, so the
-    // "Know Your Rights" cards advertise participation only where it is open.
-    $openSurveys = Survey::query()
-        ->where('status', 'active')
-        ->whereHas('versions', fn ($query) => $query->where('status', 'published'))
-        ->pluck('slug');
-
+Route::get('/', function (Request $request) {
+    // Each prop is a closure, so a partial reload (the statistics' Region
+    // filter) runs only what it asks for.
     return Inertia::render('welcome', [
-        'carouselSlides' => $carouselSlides,
-        'openSurveys' => $openSurveys,
-        'ratingButton' => SiteSetting::ratingButtonEnabled(),
+        'carouselSlides' => fn () => CarouselSlide::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->oldest('id')
+            ->get()
+            ->map(fn (CarouselSlide $slide): array => [
+                'id' => "carousel-{$slide->id}",
+                'title' => $slide->title,
+                'description' => $slide->description,
+                'href' => $slide->link,
+                'media' => [
+                    'src' => Storage::disk('public')->url($slide->image_path),
+                    'alt' => $slide->title,
+                    'variant' => 'campus',
+                ],
+            ]),
+        // Slugs of surveys a visitor can actually answer right now, so the
+        // "Know Your Rights" cards advertise participation only where it is open.
+        'openSurveys' => fn () => Survey::query()
+            ->where('status', 'active')
+            ->whereHas('versions', fn ($query) => $query->where('status', 'published'))
+            ->pluck('slug'),
+        'ratingButton' => fn () => SiteSetting::ratingButtonEnabled(),
         // "Gender mainstreaming in action": the year's most reacted photo posts.
-        'stories' => HomepageStories::top(),
+        'stories' => fn () => HomepageStories::top(),
+        // The statistics section: imported enrollment and graduates by sex,
+        // for the region in ?region= or every region.
+        'statistics' => fn () => StudentStatistics::forHomepage($request->integer('region') ?: null),
     ]);
 })->name('home');
 

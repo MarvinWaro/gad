@@ -72,6 +72,13 @@ Times are cut in Philippine time, and timestamps are stored in UTC (`ReportingPe
 
 **People on PHLGADIS.** The Accounts figures as a donut: HEI accounts, CHED staff and accounts awaiting approval.
 
+**Who studies, who graduates.** Enrollment and graduates by sex and discipline group, from the figures regional offices import in Settings → Enrollment & graduates (`docs/enrollment-and-graduates.md`, `App\Support\StudentStatistics::forDashboard`).
+
+- **Which year:** for each kind, the newest academic year with figures up to the one in view, since statistics arrive after a year ends. When that is an earlier year, the card says it is the latest imported. The view (year, semester or month) does not change them.
+- **Compared with** the academic year before it, when that year has figures.
+- **Place:** the office's region, or every region added up for the Central Office, naming the regions that sent figures.
+- **HEI or ownership filters** set the section aside with a note, because the figures are regional totals.
+
 **Events.** The next four events, whatever the filters.
 
 ## Survey tallies

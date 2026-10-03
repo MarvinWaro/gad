@@ -6,6 +6,22 @@ export type AcademicDataset = {
     enrollment: ProgramRecord[];
     graduates: ProgramRecord[];
 };
+/** Where the homepage's statistics come from (App\Support\StudentStatistics). */
+export type StatisticsSource = {
+    regions: string[];
+    updated_at: string | null;
+};
+/** The homepage's statistics for one region, or every region. */
+export type HomepageStatistics = {
+    datasets: AcademicDataset[];
+    source: StatisticsSource;
+    /** The regions with figures, to choose from. */
+    regions: { id: number; name: string }[];
+    /** The chosen region's id, or '' for every region. */
+    region: string;
+    /** The chosen region's name, for the subtitle. */
+    place: string | null;
+};
 export type MediaReference = {
     src?: string;
     alt: string;
@@ -79,33 +95,6 @@ export const heroSlides: HeroSlideRecord[] = [
     },
 ];
 
-// Illustrative distributions, not official program-level data. Totals match the
-// supplied design brief. Replace these fixtures with verified Inertia props.
-export const datasets: AcademicDataset[] = [
-    {
-        year: '2025–2026',
-        enrollment: [
-            { program: 'Education', male: 17000, female: 38000 },
-            { program: 'Business Administration', male: 18500, female: 34000 },
-            { program: 'Criminal Justice', male: 21500, female: 9000 },
-            { program: 'IT-Related', male: 12500, female: 8000 },
-            { program: 'Medical and Allied', male: 3000, female: 15000 },
-            { program: 'Engineering', male: 8500, female: 4000 },
-            { program: 'Agricultural', male: 4800, female: 5200 },
-            { program: 'Other programs', male: 9937, female: 18886 },
-        ],
-        graduates: [
-            { program: 'Education', male: 2500, female: 6100 },
-            { program: 'Business Administration', male: 2000, female: 4900 },
-            { program: 'Criminal Justice', male: 2400, female: 800 },
-            { program: 'IT-Related', male: 1400, female: 700 },
-            { program: 'Medical and Allied', male: 500, female: 2500 },
-            { program: 'Engineering', male: 900, female: 400 },
-            { program: 'Agricultural', male: 600, female: 700 },
-            { program: 'Other programs', male: 1500, female: 4090 },
-        ],
-    },
-];
 export const laws: LawRecord[] = [
     {
         slug: 'ra-7877',

@@ -7,6 +7,7 @@ use App\Enums\ActivityModule;
 use App\Models\AcademicYear;
 use App\Models\ChecklistResponse;
 use App\Models\MonitoringReport;
+use App\Models\StudentCount;
 use App\Services\ActivityRecorder;
 use App\Support\AcademicPeriod;
 use Illuminate\Validation\ValidationException;
@@ -52,6 +53,7 @@ class ManageAcademicYear
     private function isUsed(AcademicYear $year): bool
     {
         return MonitoringReport::query()->where('academic_year', $year->label)->exists()
-            || ChecklistResponse::query()->where('academic_year', $year->label)->exists();
+            || ChecklistResponse::query()->where('academic_year', $year->label)->exists()
+            || StudentCount::query()->whereBelongsTo($year)->exists();
     }
 }
