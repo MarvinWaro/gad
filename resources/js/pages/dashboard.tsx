@@ -22,6 +22,7 @@ import {
 import { DashboardFilterBar } from '@/components/dashboard/dashboard-filters';
 import { GoalInsights } from '@/components/dashboard/goal-insights';
 import { ReachTable } from '@/components/dashboard/reach-table';
+import { StudentFigures } from '@/components/dashboard/student-figures';
 import { EventCategoryLabel } from '@/components/hei/event-category';
 import { EventDateBlock } from '@/components/hei/upcoming-events';
 import { NoOfficeNotice } from '@/components/record-filters';
@@ -204,6 +205,17 @@ export default function Dashboard(props: DashboardProps) {
                         goals={goals}
                         period={period.label}
                         postsHref={can('posts.view') ? '/community' : undefined}
+                    />
+
+                    <StudentFigures
+                        students={props.students}
+                        footer={
+                            can('student-counts.view') && (
+                                <ModuleLink href="/settings/student-counts">
+                                    Manage enrollment and graduates
+                                </ModuleLink>
+                            )
+                        }
                     />
 
                     <PostSourcesChart

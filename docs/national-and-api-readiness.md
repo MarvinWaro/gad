@@ -9,7 +9,7 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 - [ ] `resources/js/data/contact.ts`: the RO XII hotline and email. The footer and the FAQ contact panel read it.
 - [ ] `resources/js/components/survey/respondent-step.tsx`: hard-coded `mailto:chedro12@ched.gov.ph`. It doesn't use `contact.ts`. (Settings → Profile now names the account's own regional office from `survey_regions.office_email`.)
 - [ ] Footer "Powered by CHEDRO XII" (`components/public/site-layout.tsx`).
-- [ ] Statistics heading "CHEDRO XII Higher Education GAD Statistical Data" (`components/home/statistics.tsx`).
+- [x] Statistics heading "CHEDRO XII Higher Education GAD Statistical Data" (`components/home/statistics.tsx`): since 2026-10-03 the section has a Region select, and the line follows it ("{Region} Higher Education GAD Statistical Data", or "…, all regions").
 - [ ] "CHEDRO XII" or "CHED Regional Office XII" in:
     - the survey confirmation (`pages/surveys/show.tsx`)
     - the rating thank-you (`components/home/rate-widget.tsx`)
@@ -32,6 +32,7 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 - [ ] **Public surveys send every active HEI with each survey page** (`PublicSurveyController::directories()`): about 2,600 since the HEIDA sync. They should load a region's HEIs once it is picked, as registration and website feedback do. Keep the survey's rule that withholds dead-end regions and clusters.
 - [ ] **Settings → Users sends the Central Office every active HEI** for its account form (`UserManagementController`), about 2,600 rows; a regional office gets only its own region's since 2026-10-03. It should load the chosen region's HEIs instead. The server does not yet refuse an HEI outside the manager's region when saving.
 - [ ] `SurveySeeder`, `SurveyHeiSeeder` and `SurveyDirectorySeeder` look regions up by the name "Regional Office XII". This is fine for seeding Region XII, but no runtime code may look a region up by name.
+- [ ] **Enrollment and graduates are imported by file** (Settings → Enrollment & graduates, since 2026-10-03) until CHED's enrollment and graduate APIs exist. They are regional totals by discipline group, so they cannot narrow to an HEI; per-HEI figures need the API (`docs/enrollment-and-graduates.md`).
 - [x] The dashboard's demo figures (`components/dashboard/dashboard-data.ts`, with Region XII cluster names) are gone (2026-10-02). It now shows real figures for the viewer's office, filterable by region, cluster, HEI, ownership and law (`docs/dashboard.md`).
 
 **Keep as is.** Word-for-word copies of old-system text that mention Region XII:

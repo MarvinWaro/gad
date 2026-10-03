@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\HeiFilterRequest;
 use App\Jobs\SyncHeidaDirectory;
 use App\Models\Post;
+use App\Models\StudentCount;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
@@ -347,6 +348,10 @@ class SurveyDirectoryController extends Controller
         // sight; with no institutions left, its empty clusters go with it.
         if ($record instanceof SurveyRegion && $record->heis()->exists()) {
             return $this->refuse(__('Regions with institutions cannot be deleted. Deactivate it instead.'));
+        }
+
+        if ($record instanceof SurveyRegion && StudentCount::query()->where('survey_region_id', $record->id)->exists()) {
+            return $this->refuse(__('Regions with enrollment or graduate figures cannot be deleted. Deactivate it instead.'));
         }
 
         $name = $record instanceof SurveyRespondentGroup ? $record->label : $record->getAttribute('name');

@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     CalendarRange,
+    ChartColumnBig,
     ContactRound,
     GraduationCap,
     History,
@@ -72,7 +73,8 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
         isCurrentOrParentUrl('/settings/respondent-groups') ||
         isCurrentOrParentUrl('/settings/academic-years') ||
         isCurrentOrParentUrl('/settings/activity-logs') ||
-        isCurrentOrParentUrl('/settings/ratings');
+        isCurrentOrParentUrl('/settings/ratings') ||
+        isCurrentOrParentUrl('/settings/student-counts');
     const isAppearancePage = isCurrentOrParentUrl('/settings/appearance');
     const configurationNavItems: NavItem[] = [
         ...(auth.permissions.includes('academic-years.view')
@@ -113,6 +115,18 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
               ]
             : []),
     ];
+    // Figures CHED keeps about higher education, until its APIs supply them.
+    const statisticsNavItems: NavItem[] = auth.permissions.includes(
+        'student-counts.view',
+    )
+        ? [
+              {
+                  title: 'Enrollment & graduates',
+                  href: '/settings/student-counts',
+                  icon: ChartColumnBig,
+              },
+          ]
+        : [];
     // What the public site collects: the homepage's Rate PHLGADIS answers.
     const publicSiteNavItems: NavItem[] = auth.permissions.includes(
         'site-ratings.view',
@@ -149,6 +163,13 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                             <SettingsNavGroup
                                 label="System configuration"
                                 items={configurationNavItems}
+                                isCurrentOrParentUrl={isCurrentOrParentUrl}
+                            />
+                        )}
+                        {statisticsNavItems.length > 0 && (
+                            <SettingsNavGroup
+                                label="Statistics"
+                                items={statisticsNavItems}
                                 isCurrentOrParentUrl={isCurrentOrParentUrl}
                             />
                         )}

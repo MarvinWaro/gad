@@ -11,8 +11,8 @@ import {
 import { RateWidget } from '@/components/home/rate-widget';
 import { Statistics } from '@/components/home/statistics';
 import { SiteFooter, SiteHeader } from '@/components/public/site-layout';
-import { datasets, heroSlides, laws, resources } from '@/data/phlgadis-demo';
-import type { HeroSlideRecord } from '@/data/phlgadis-demo';
+import { heroSlides, laws, resources } from '@/data/phlgadis-demo';
+import type { HeroSlideRecord, HomepageStatistics } from '@/data/phlgadis-demo';
 import type { HomepageStory } from '@/types';
 import '../../css/public.css';
 
@@ -21,6 +21,13 @@ export default function Welcome({
     openSurveys = [],
     ratingButton = false,
     stories = [],
+    statistics = {
+        datasets: [],
+        source: { regions: [], updated_at: null },
+        regions: [],
+        region: '',
+        place: null,
+    },
 }: {
     carouselSlides?: HeroSlideRecord[];
     openSurveys?: string[];
@@ -28,6 +35,8 @@ export default function Welcome({
     stories?: HomepageStory[];
     /** Whether Settings → Site ratings has the rating button switched on. */
     ratingButton?: boolean;
+    /** Imported enrollment and graduates by sex (App\Support\StudentStatistics). */
+    statistics?: HomepageStatistics;
 }) {
     const { auth } = usePage().props;
     const mainRef = useRef<HTMLElement>(null);
@@ -123,7 +132,7 @@ export default function Welcome({
                 <Hero slides={slides} />
                 <QuickAccess />
                 <Rights laws={laws} openSurveys={openSurveys} />
-                <Statistics datasets={datasets} />
+                <Statistics {...statistics} />
                 <Stories stories={stories} signedIn={Boolean(auth.user)} />
                 <Resources resources={resources} />
                 <About />

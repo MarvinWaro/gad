@@ -57,6 +57,9 @@ class RbacSeeder extends Seeder
             ['name' => 'View monitoring reports and GAD surveys', 'slug' => 'monitoring.view', 'group' => 'Monitoring'],
             ['name' => 'Review monitoring reports', 'slug' => 'monitoring.review', 'group' => 'Monitoring'],
             ['name' => 'View activity logs', 'slug' => 'activity-logs.view', 'group' => 'Activity logs'],
+            ['name' => 'View enrollment and graduates', 'slug' => 'student-counts.view', 'group' => 'Enrollment and graduates'],
+            ['name' => 'Import enrollment and graduates', 'slug' => 'student-counts.import', 'group' => 'Enrollment and graduates'],
+            ['name' => 'Delete enrollment and graduates', 'slug' => 'student-counts.delete', 'group' => 'Enrollment and graduates'],
         ])->mapWithKeys(function (array $attributes): array {
             $permission = Permission::query()->updateOrCreate(
                 ['slug' => $attributes['slug']],

@@ -12,6 +12,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import { SegmentedSwitch } from '@/components/dashboard/segmented-switch';
 import { Button } from '@/components/ui/button';
 import { formatCount, percentOf } from '@/lib/dashboard';
 import { cn } from '@/lib/utils';
@@ -105,28 +106,15 @@ export function ActivityChart({
                 </Button>
             </div>
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-                <div
-                    role="group"
-                    aria-label="Activity metric"
-                    className="inline-flex rounded-lg bg-muted p-1"
-                >
-                    {(['responses', 'posts'] as const).map((value) => (
-                        <button
-                            key={value}
-                            type="button"
-                            aria-pressed={metric === value}
-                            onClick={() => setMetric(value)}
-                            className={cn(
-                                'min-h-9 rounded-md px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                                metric === value
-                                    ? 'bg-card font-medium text-foreground shadow-xs'
-                                    : 'text-muted-foreground hover:text-foreground',
-                            )}
-                        >
-                            {metrics[value].label}
-                        </button>
-                    ))}
-                </div>
+                <SegmentedSwitch
+                    label="Activity metric"
+                    value={metric}
+                    onChange={setMetric}
+                    options={(['responses', 'posts'] as const).map((value) => ({
+                        value,
+                        label: metrics[value].label,
+                    }))}
+                />
                 <span className="text-xs text-muted-foreground">{range}</span>
             </div>
             <div

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * A year HEIs report on, such as 2026-2027.
@@ -23,5 +24,11 @@ class AcademicYear extends Model
     protected function casts(): array
     {
         return ['start_year' => 'integer', 'is_active' => 'boolean'];
+    }
+
+    /** @return HasMany<StudentCount, $this> */
+    public function studentCounts(): HasMany
+    {
+        return $this->hasMany(StudentCount::class);
     }
 }
