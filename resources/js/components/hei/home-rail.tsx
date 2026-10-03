@@ -144,7 +144,12 @@ export function HomeRail({
                 </ul>
             </Group>
 
-            <Group id="resources" title="Resources" icon={LibraryBig}>
+            <Group
+                id="resources"
+                title="Resources"
+                icon={LibraryBig}
+                defaultOpen
+            >
                 <ul className="space-y-0.5 pb-1">
                     {resources.map((resource) => {
                         const Icon = resourceIcons[resource.id];

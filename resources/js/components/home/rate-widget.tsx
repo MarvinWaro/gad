@@ -26,7 +26,10 @@ const meanings = [
  * ratings, where the button can also be switched off.
  */
 export function RateWidget() {
-    const [open, setOpen] = useState(false);
+    // A link to /#rate (the HEI home's "Need help?" card) opens it at once.
+    const [open, setOpen] = useState(
+        () => typeof window !== 'undefined' && window.location.hash === '#rate',
+    );
     const [sent, setSent] = useState(false);
     const [preview, setPreview] = useState(0);
     const form = useForm({ rating: 0, suggestion: '', website: '' });

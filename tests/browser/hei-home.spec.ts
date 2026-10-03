@@ -1,11 +1,10 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
-async function logIn(page: Page) {
+/** An HEI Focal by default; `browser-member` is a plain HEI user. */
+async function logIn(page: Page, email = 'browser-monitoring@example.test') {
     await page.goto('/login');
-    await page
-        .getByLabel('Email address')
-        .fill('browser-monitoring@example.test');
+    await page.getByLabel('Email address').fill(email);
     await page.getByLabel('Password', { exact: true }).fill('browser-password');
     await page.getByRole('button', { name: 'Log in', exact: true }).click();
     await expect(page).toHaveURL(/dashboard/);
@@ -72,7 +71,17 @@ for (const width of [1440, 1280]) {
         await expect(
             footer.getByRole('link', { name: 'Feedback' }),
         ).toHaveAttribute('href', '/feedback');
-        // Middle: only the posts. Right: events and links.
+        // Middle: the feed's banner over its illustration, then the posts.
+        await expect(
+            feed(page).getByRole('heading', {
+                name: 'HEI Gender Mainstreaming Efforts',
+            }),
+        ).toBeVisible();
+        await expect(feed(page).locator('header img')).toHaveAttribute(
+            'alt',
+            '',
+        );
+        // Right: events and links.
         await expect(
             feed(page).getByRole('button', { name: /Share a GAD activity/ }),
         ).toBeVisible();
@@ -116,9 +125,12 @@ test('the left menu folds its groups and remembers them', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await logIn(page);
     const left = leftRail(page);
+    // Both groups start open, so the column reads full.
     const resources = left.getByRole('button', { name: 'Resources' });
-    await expect(resources).toHaveAttribute('aria-expanded', 'false');
-    await resources.click();
+    await expect(resources).toHaveAttribute('aria-expanded', 'true');
+    await expect(
+        left.getByRole('button', { name: 'Law surveys' }),
+    ).toHaveAttribute('aria-expanded', 'true');
     await expect(
         left.getByRole('link', { name: /Definition of Terms/ }),
     ).toHaveAttribute('href', '/resources/definition-of-terms');
@@ -151,6 +163,7 @@ test('the footer rests at the bottom of the screen until the groups outgrow it',
     // Both groups folded: the footer sits 24px above the screen's bottom,
     // the GAD Quest card well above it.
     await left.getByRole('button', { name: 'Law surveys' }).click();
+    await left.getByRole('button', { name: 'Resources' }).click();
     await expect
         .poll(async () => {
             const box = (await footer.boundingBox())!;
@@ -175,6 +188,57 @@ test('the footer rests at the bottom of the screen until the groups outgrow it',
     expect((await footer.boundingBox())!.y).toBeGreaterThan(
         manuals.y + manuals.height,
     );
+});
+
+test('plain HEI users get people to ask and help in place of Quick links', async ({
+    page,
+}, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await logIn(page, 'browser-member@example.test');
+    const right = rightRail(page);
+    await expect(
+        right.getByRole('region', { name: 'Quick links' }),
+    ).toHaveCount(0);
+
+    // A static preview for now, and it says so.
+    const people = right.getByRole('region', {
+        name: 'People at your institution',
+    });
+    await expect(people).toContainText('Preview');
+    await expect(people).toContainText('GAD Focal Person');
+    await expect(people.getByRole('listitem')).toHaveCount(4);
+
+    const help = right.getByRole('region', { name: 'Need help?' });
+    await expect(help.getByRole('link', { name: 'FAQ' })).toHaveAttribute(
+        'href',
+        '/help/faq',
+    );
+    await expect(
+        help.getByRole('link', { name: 'Send feedback' }),
+    ).toHaveAttribute('href', '/feedback');
+    await right.screenshot({
+        path: testInfo.outputPath('hei-home-member-rail.png'),
+    });
+
+    // "Rate PHLGADIS" opens the homepage's rating card.
+    await help.getByRole('link', { name: 'Rate PHLGADIS' }).click();
+    await expect(
+        page.getByRole('dialog', { name: 'How would you rate PHLGADIS?' }),
+    ).toBeVisible();
+});
+
+test('HEI Focals keep their Quick links, without the extra cards', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await logIn(page);
+    const right = rightRail(page);
+    await expect(
+        right.getByRole('region', { name: 'Quick links' }),
+    ).toBeVisible();
+    await expect(
+        right.getByRole('region', { name: 'People at your institution' }),
+    ).toHaveCount(0);
 });
 
 test('narrower, the home keeps the right rail beside the feed, then one column', async ({
