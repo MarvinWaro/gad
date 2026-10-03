@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 /*
 |--------------------------------------------------------------------------
@@ -65,20 +65,18 @@ export default function HeiIndex() {
     const [regions, setRegions] = useState<Region[]>([]);
     const [heis, setHeis] = useState<Hei[]>([]);
 
-    const [regionId, setRegionId] = useState<string>("");
-    const [search, setSearch] = useState<string>("");
-    const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+    const [regionId, setRegionId] = useState<string>('');
+    const [search, setSearch] = useState<string>('');
+    const [debouncedSearch, setDebouncedSearch] = useState<string>('');
 
     const [page, setPage] = useState<number>(1);
     const [meta, setMeta] = useState<PaginationMeta | null>(null);
 
-    const [loadingRegions, setLoadingRegions] =
-        useState<boolean>(false);
+    const [loadingRegions, setLoadingRegions] = useState<boolean>(false);
 
-    const [loadingHeis, setLoadingHeis] =
-        useState<boolean>(false);
+    const [loadingHeis, setLoadingHeis] = useState<boolean>(false);
 
-    const [error, setError] = useState<string>("");
+    const [error, setError] = useState<string>('');
 
     /*
     |--------------------------------------------------------------------------
@@ -113,10 +111,10 @@ export default function HeiIndex() {
             setLoadingRegions(true);
 
             try {
-                const response = await fetch("/api/regions", {
-                    method: "GET",
+                const response = await fetch('/api/regions', {
+                    method: 'GET',
                     headers: {
-                        Accept: "application/json",
+                        Accept: 'application/json',
                     },
                     signal: controller.signal,
                 });
@@ -127,27 +125,23 @@ export default function HeiIndex() {
                     );
                 }
 
-                const result: RegionsResponse =
-                    await response.json();
+                const result: RegionsResponse = await response.json();
 
                 setRegions(result.data ?? []);
             } catch (err: unknown) {
-                if (
-                    err instanceof Error &&
-                    err.name === "AbortError"
-                ) {
+                if (err instanceof Error && err.name === 'AbortError') {
                     return;
                 }
 
-                console.error("Region error:", err);
+                console.error('Region error:', err);
 
-                setError("Unable to load regions.");
+                setError('Unable to load regions.');
             } finally {
                 setLoadingRegions(false);
             }
         };
 
-        fetchRegions();
+        void fetchRegions();
 
         return () => {
             controller.abort();
@@ -165,7 +159,7 @@ export default function HeiIndex() {
 
         const fetchHeis = async () => {
             setLoadingHeis(true);
-            setError("");
+            setError('');
 
             try {
                 const params = new URLSearchParams();
@@ -173,61 +167,47 @@ export default function HeiIndex() {
                 /*
                  * Region filter
                  */
-                if (regionId !== "") {
-                    params.set("region_id", regionId);
+                if (regionId !== '') {
+                    params.set('region_id', regionId);
                 }
 
                 /*
                  * Search HEI name/code
                  */
-                if (debouncedSearch.trim() !== "") {
-                    params.set(
-                        "search",
-                        debouncedSearch.trim(),
-                    );
+                if (debouncedSearch.trim() !== '') {
+                    params.set('search', debouncedSearch.trim());
                 }
 
                 /*
                  * Pagination
                  */
-                params.set("page", page.toString());
-                params.set("per_page", "25");
+                params.set('page', page.toString());
+                params.set('per_page', '25');
 
-                const response = await fetch(
-                    `/api/heis?${params.toString()}`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Accept: "application/json",
-                        },
-                        signal: controller.signal,
+                const response = await fetch(`/api/heis?${params.toString()}`, {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
                     },
-                );
+                    signal: controller.signal,
+                });
 
                 if (!response.ok) {
-                    throw new Error(
-                        `Failed to fetch HEIs: ${response.status}`,
-                    );
+                    throw new Error(`Failed to fetch HEIs: ${response.status}`);
                 }
 
-                const result: HeisResponse =
-                    await response.json();
+                const result: HeisResponse = await response.json();
 
                 setHeis(result.data ?? []);
                 setMeta(result.meta ?? null);
             } catch (err: unknown) {
-                if (
-                    err instanceof Error &&
-                    err.name === "AbortError"
-                ) {
+                if (err instanceof Error && err.name === 'AbortError') {
                     return;
                 }
 
-                console.error("HEI error:", err);
+                console.error('HEI error:', err);
 
-                setError(
-                    "Unable to load Higher Education Institutions.",
-                );
+                setError('Unable to load Higher Education Institutions.');
 
                 setHeis([]);
             } finally {
@@ -235,7 +215,7 @@ export default function HeiIndex() {
             }
         };
 
-        fetchHeis();
+        void fetchHeis();
 
         return () => {
             controller.abort();
@@ -261,9 +241,7 @@ export default function HeiIndex() {
     |--------------------------------------------------------------------------
     */
 
-    const handleSearchChange = (
-        event: React.ChangeEvent<HTMLInputElement>,
-    ) => {
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearch(event.target.value);
     };
 
@@ -274,9 +252,9 @@ export default function HeiIndex() {
     */
 
     const clearFilters = () => {
-        setRegionId("");
-        setSearch("");
-        setDebouncedSearch("");
+        setRegionId('');
+        setSearch('');
+        setDebouncedSearch('');
         setPage(1);
     };
 
@@ -313,7 +291,7 @@ export default function HeiIndex() {
     */
 
     const getAddress = (hei: Hei): string => {
-        if (hei.address && hei.address.trim() !== "") {
+        if (hei.address && hei.address.trim() !== '') {
             return hei.address;
         }
 
@@ -324,13 +302,10 @@ export default function HeiIndex() {
             hei.region_name,
         ].filter(
             (value): value is string =>
-                typeof value === "string" &&
-                value.trim() !== "",
+                typeof value === 'string' && value.trim() !== '',
         );
 
-        return parts.length > 0
-            ? parts.join(", ")
-            : "-";
+        return parts.length > 0 ? parts.join(', ') : '-';
     };
 
     /*
@@ -350,8 +325,7 @@ export default function HeiIndex() {
                     </h1>
 
                     <p className="mt-1 text-sm text-gray-500">
-                        List of Higher Education Institutions by
-                        region
+                        List of Higher Education Institutions by region
                     </p>
                 </div>
 
@@ -378,15 +352,12 @@ export default function HeiIndex() {
                             >
                                 <option value="">
                                     {loadingRegions
-                                        ? "Loading regions..."
-                                        : "All Regions"}
+                                        ? 'Loading regions...'
+                                        : 'All Regions'}
                                 </option>
 
                                 {regions.map((region) => (
-                                    <option
-                                        key={region.id}
-                                        value={region.id}
-                                    >
+                                    <option key={region.id} value={region.id}>
                                         {region.name}
                                     </option>
                                 ))}
@@ -448,9 +419,9 @@ export default function HeiIndex() {
 
                             <p className="text-sm text-gray-500">
                                 {loadingHeis
-                                    ? "Loading records..."
+                                    ? 'Loading records...'
                                     : `${total} record${
-                                          total !== 1 ? "s" : ""
+                                          total !== 1 ? 's' : ''
                                       } found`}
                             </p>
                         </div>
@@ -468,31 +439,31 @@ export default function HeiIndex() {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-600 uppercase">
                                         #
                                     </th>
 
-                                    <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-600 uppercase">
                                         UII / HEI Code
                                     </th>
 
-                                    <th className="min-w-[300px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                    <th className="min-w-[300px] px-4 py-3 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
                                         HEI Name
                                     </th>
 
-                                    <th className="min-w-[200px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                    <th className="min-w-[200px] px-4 py-3 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
                                         Region
                                     </th>
 
-                                    <th className="min-w-[350px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                    <th className="min-w-[350px] px-4 py-3 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
                                         Address
                                     </th>
 
-                                    <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-600 uppercase">
                                         HEI Type
                                     </th>
 
-                                    <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-600 uppercase">
                                         Status
                                     </th>
                                 </tr>
@@ -509,7 +480,6 @@ export default function HeiIndex() {
                                         >
                                             <div className="flex items-center justify-center gap-3 text-sm text-gray-500">
                                                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" />
-
                                                 Loading HEIs...
                                             </div>
                                         </td>
@@ -518,166 +488,140 @@ export default function HeiIndex() {
 
                                 {/* Empty */}
 
-                                {!loadingHeis &&
-                                    heis.length === 0 && (
-                                        <tr>
-                                            <td
-                                                colSpan={7}
-                                                className="px-4 py-12 text-center"
-                                            >
-                                                <div className="text-sm text-gray-500">
-                                                    No Higher
-                                                    Education
-                                                    Institutions found.
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )}
+                                {!loadingHeis && heis.length === 0 && (
+                                    <tr>
+                                        <td
+                                            colSpan={7}
+                                            className="px-4 py-12 text-center"
+                                        >
+                                            <div className="text-sm text-gray-500">
+                                                No Higher Education Institutions
+                                                found.
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
 
                                 {/* HEI Records */}
 
                                 {!loadingHeis &&
-                                    heis.map(
-                                        (hei, index) => (
-                                            <tr
-                                                key={hei.id}
-                                                className="transition hover:bg-gray-50"
-                                            >
-                                                {/* Number */}
+                                    heis.map((hei, index) => (
+                                        <tr
+                                            key={hei.id}
+                                            className="transition hover:bg-gray-50"
+                                        >
+                                            {/* Number */}
 
-                                                <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">
-                                                    {(currentPage -
-                                                        1) *
-                                                        (meta?.per_page ??
-                                                            25) +
-                                                        index +
-                                                        1}
-                                                </td>
+                                            <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500">
+                                                {(currentPage - 1) *
+                                                    (meta?.per_page ?? 25) +
+                                                    index +
+                                                    1}
+                                            </td>
 
-                                                {/* HEI Code */}
+                                            {/* HEI Code */}
 
-                                                <td className="whitespace-nowrap px-4 py-3">
-                                                    <span className="font-mono text-sm font-medium text-gray-900">
-                                                        {hei.code ??
-                                                            "-"}
-                                                    </span>
-                                                </td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <span className="font-mono text-sm font-medium text-gray-900">
+                                                    {hei.code ?? '-'}
+                                                </span>
+                                            </td>
 
-                                                {/* HEI Name */}
+                                            {/* HEI Name */}
 
-                                                <td className="px-4 py-3">
-                                                    <div className="font-medium text-gray-900">
-                                                        {hei.name ??
-                                                            "-"}
+                                            <td className="px-4 py-3">
+                                                <div className="font-medium text-gray-900">
+                                                    {hei.name ?? '-'}
+                                                </div>
+
+                                                {hei.abbreviation && (
+                                                    <div className="mt-1 text-xs text-gray-500">
+                                                        {hei.abbreviation}
                                                     </div>
+                                                )}
+                                            </td>
 
-                                                    {hei.abbreviation && (
-                                                        <div className="mt-1 text-xs text-gray-500">
-                                                            {
-                                                                hei.abbreviation
-                                                            }
-                                                        </div>
-                                                    )}
-                                                </td>
+                                            {/* Region */}
 
-                                                {/* Region */}
+                                            <td className="px-4 py-3 text-sm text-gray-700">
+                                                {hei.region_name ?? '-'}
+                                            </td>
 
-                                                <td className="px-4 py-3 text-sm text-gray-700">
-                                                    {hei.region_name ??
-                                                        "-"}
-                                                </td>
+                                            {/* Address */}
 
-                                                {/* Address */}
+                                            <td className="px-4 py-3 text-sm text-gray-700">
+                                                {getAddress(hei)}
+                                            </td>
 
-                                                <td className="px-4 py-3 text-sm text-gray-700">
-                                                    {getAddress(
-                                                        hei,
-                                                    )}
-                                                </td>
+                                            {/* Type */}
 
-                                                {/* Type */}
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                {hei.hei_type ? (
+                                                    <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
+                                                        {hei.hei_type}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-sm text-gray-400">
+                                                        -
+                                                    </span>
+                                                )}
+                                            </td>
 
-                                                <td className="whitespace-nowrap px-4 py-3">
-                                                    {hei.hei_type ? (
-                                                        <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
-                                                            {
-                                                                hei.hei_type
-                                                            }
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-sm text-gray-400">
-                                                            -
-                                                        </span>
-                                                    )}
-                                                </td>
+                                            {/* Status */}
 
-                                                {/* Status */}
-
-                                                <td className="whitespace-nowrap px-4 py-3">
-                                                    {hei.status ? (
-                                                        <span
-                                                            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-                                                                hei.status.toLowerCase() ===
-                                                                "active"
-                                                                    ? "bg-green-100 text-green-700"
-                                                                    : "bg-gray-100 text-gray-700"
-                                                            }`}
-                                                        >
-                                                            {
-                                                                hei.status
-                                                            }
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-sm text-gray-400">
-                                                            -
-                                                        </span>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ),
-                                    )}
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                {hei.status ? (
+                                                    <span
+                                                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                                                            hei.status.toLowerCase() ===
+                                                            'active'
+                                                                ? 'bg-green-100 text-green-700'
+                                                                : 'bg-gray-100 text-gray-700'
+                                                        }`}
+                                                    >
+                                                        {hei.status}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-sm text-gray-400">
+                                                        -
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
                             </tbody>
                         </table>
                     </div>
 
                     {/* Pagination */}
 
-                    {!loadingHeis &&
-                        heis.length > 0 && (
-                            <div className="flex flex-col gap-3 border-t border-gray-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-                                <div className="text-sm text-gray-500">
-                                    Page {currentPage} of{" "}
-                                    {lastPage}
-                                </div>
-
-                                <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={
-                                            previousPage
-                                        }
-                                        disabled={
-                                            currentPage <= 1
-                                        }
-                                        className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        Previous
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={nextPage}
-                                        disabled={
-                                            currentPage >=
-                                            lastPage
-                                        }
-                                        className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        Next
-                                    </button>
-                                </div>
+                    {!loadingHeis && heis.length > 0 && (
+                        <div className="flex flex-col gap-3 border-t border-gray-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="text-sm text-gray-500">
+                                Page {currentPage} of {lastPage}
                             </div>
-                        )}
+
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={previousPage}
+                                    disabled={currentPage <= 1}
+                                    className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Previous
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={nextPage}
+                                    disabled={currentPage >= lastPage}
+                                    className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
