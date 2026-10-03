@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-//use App\Http\Controllers\Api\HeidaStatisticsController;
 use App\Http\Controllers\Api\HeiController;
+// use App\Http\Controllers\Api\HeidaStatisticsController;
+use Illuminate\Support\Facades\Route;
 
 // Route::get(
 //     '/heida/statistics',

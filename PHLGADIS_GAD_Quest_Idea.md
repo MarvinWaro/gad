@@ -21,6 +21,7 @@ The value is not the quiz itself. The value is the **participation history, even
 A user opens PHLGADIS and sees an active quest such as:
 
 **Women's Month 2027**
+
 - 5 short questions
 - related to the current event
 - available only during the event period
@@ -252,9 +253,11 @@ For now, QR scanning does not need to be part of the first version.
 ## 1. Users Keep Retaking Until They Get 100%
 
 ### Problem
+
 A user can memorize the answers and retry until they get a perfect score.
 
 ### Simple solution
+
 For official event quests:
 
 - allow one official attempt
@@ -271,9 +274,11 @@ Because this is not a serious examination, there is no need for extreme anti-che
 ## 2. Users Share Answers
 
 ### Problem
+
 Someone can screenshot the questions and send the answers to friends.
 
 ### Simple solution
+
 Randomize:
 
 - question order
@@ -288,9 +293,11 @@ But do not over-engineer this. The purpose is interaction, not exam security.
 ## 3. Too Many Perfect Scores
 
 ### Problem
+
 If many users get 10/10, there is no clear "highest scorer."
 
 ### Solution
+
 Treat all perfect scores equally.
 
 Do not force a single winner unless the GAD Focal specifically designs the activity that way.
@@ -302,9 +309,11 @@ A badge can be awarded to every qualifying participant.
 ## 4. Badges Become Meaningless
 
 ### Problem
+
 If every tiny quiz gives a badge, profiles will become full of meaningless achievements.
 
 ### Solution
+
 Reserve badges for:
 
 - official events
@@ -319,9 +328,11 @@ Small practice quizzes do not always need badges.
 ## 5. Profile Becomes Cluttered
 
 ### Problem
+
 A user may eventually have dozens of badges.
 
 ### Solution
+
 Show only around 5–6 featured achievements on the main profile.
 
 Then provide:
@@ -335,9 +346,11 @@ where the complete history can be seen.
 ## 6. Questions Are Wrong or Poorly Written
 
 ### Problem
+
 Someone may create incorrect or confusing questions.
 
 ### Solution
+
 Only authorized GAD personnel can create quests.
 
 A quest should be reviewed before it becomes active, especially when it discusses laws, harassment, violence, discrimination, or institutional policy.
@@ -347,9 +360,11 @@ A quest should be reviewed before it becomes active, especially when it discusse
 ## 7. Serious Topics Feel Too Much Like a Game
 
 ### Problem
+
 Topics such as harassment or violence can feel inappropriate if the interface becomes too playful.
 
 ### Solution
+
 Keep the interaction lightweight, but keep the wording respectful.
 
 Avoid:
@@ -367,9 +382,11 @@ Phlia can still be friendly, but not childish.
 ## 8. Public Leaderboard Can Embarrass Users
 
 ### Problem
+
 People may not want their low scores shown publicly.
 
 ### Solution
+
 Keep the leaderboard private to Admin and CHED GAD Focal.
 
 Regular users see only:
@@ -383,9 +400,11 @@ Regular users see only:
 ## 9. Users Stop Halfway
 
 ### Problem
+
 Someone closes the browser or loses internet.
 
 ### Solution
+
 Their current progress should be resumable.
 
 The user returns later and sees:
@@ -399,9 +418,11 @@ instead of starting over.
 ## 10. Too Many Quests Become Annoying
 
 ### Problem
+
 If Admin constantly creates quests, users may ignore them.
 
 ### Solution
+
 Use GAD Quest primarily for meaningful moments:
 
 - campaigns
@@ -419,31 +440,31 @@ The feature should feel like this:
 
 **Event or GAD topic**
 
-↓  
+↓
 
 **A short GAD Quest becomes available**
 
-↓  
+↓
 
 **User answers a few questions**
 
-↓  
+↓
 
 **User learns something through short explanations**
 
-↓  
+↓
 
 **User completes the activity**
 
-↓  
+↓
 
 **User earns an achievement**
 
-↓  
+↓
 
 **Achievement stays on the profile**
 
-↓  
+↓
 
 **Admin and GAD Focal can see participation**
 
@@ -451,15 +472,15 @@ Later:
 
 **Physical event**
 
-↓  
+↓
 
 **QR interaction**
 
-↓  
+↓
 
 **Quest**
 
-↓  
+↓
 
 **Achievement**
 
