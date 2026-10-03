@@ -22,6 +22,7 @@ export default function Feedback({
     questions,
     types,
     regions,
+    region,
     heis,
     prefill,
     textMax,
@@ -30,6 +31,8 @@ export default function Feedback({
     questions: FeedbackQuestions;
     types: FeedbackTypeOption[];
     regions: DirectoryOption[];
+    /** The region whose institutions `heis` holds. */
+    region: number | null;
     heis: FeedbackHei[];
     prefill: { region_id: string; hei_id: string };
     textMax: number;
@@ -51,6 +54,7 @@ export default function Feedback({
                         questions={questions}
                         types={types}
                         regions={regions}
+                        loadedRegionId={region}
                         heis={heis}
                         prefill={prefill}
                         textMax={textMax}

@@ -284,6 +284,25 @@ test('HEIs yet to contribute are named for the regional office', function () {
     ]]);
 });
 
+test('regions reach the card leaders first: share, then HEIs contributing, then office order', function () {
+    $offices = collect(['Regional Office I', 'Regional Office II', 'Regional Office III', 'Regional Office IV'])
+        ->mapWithKeys(fn (string $name): array => [$name => statsRegion($name)]);
+    // I: none of 2. II: 1 of 4. III: 1 of 2. IV: none of 1.
+    statsHei($offices['Regional Office I'], 'One A');
+    statsHei($offices['Regional Office I'], 'One B');
+    statsResponse(statsHei($offices['Regional Office II'], 'Two A'));
+    foreach (['Two B', 'Two C', 'Two D'] as $name) {
+        statsHei($offices['Regional Office II'], $name);
+    }
+    statsResponse(statsHei($offices['Regional Office III'], 'Three A'));
+    statsHei($offices['Regional Office III'], 'Three B');
+    statsHei($offices['Regional Office IV'], 'Four A');
+
+    expect(collect(statsFor(statsStaff())['reach']['regions'])->pluck('name')->all())->toBe([
+        'Regional Office III', 'Regional Office II', 'Regional Office I', 'Regional Office IV',
+    ]);
+});
+
 test('HEIs rank by their posts on each goal', function () {
     $xii = statsRegion('Regional Office XII');
     foreach (['Koronadal College' => 1, 'Notre Dame of Marbel University' => 3, 'Sultan Kudarat State University' => 2] as $name => $posts) {

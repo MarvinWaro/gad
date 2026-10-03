@@ -45,7 +45,6 @@ function ra9710Payload(array $overrides = []): array
         'sex' => 'female',
         'respondent_group' => 'student',
         'region_id' => test()->region->id,
-        'cluster_id' => test()->cluster->id,
         'hei_id' => test()->hei->id,
         'experiences' => ['expulsion-pregnancy'],
         'perpetrators' => ['expulsion-pregnancy' => ['superior-supervisor']],

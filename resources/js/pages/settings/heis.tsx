@@ -28,16 +28,9 @@ import {
     SearchFilter,
     useRecordFilters,
 } from '@/components/record-filters';
-import { UNASSIGNED_CLUSTER } from '@/lib/places';
 import { cn } from '@/lib/utils';
 
 type Region = { id: number; name: string };
-type Cluster = {
-    id: number;
-    name: string;
-    survey_region_id: number;
-    region: { id: number; name: string };
-};
 type Hei = {
     id: number;
     uii: string | null;
@@ -45,14 +38,12 @@ type Hei = {
     ownership: 'public' | 'private' | null;
     is_active: boolean;
     portal_synced_at: string | null;
-    survey_cluster_id: number;
-    cluster: { id: number; name: string; region: { id: number; name: string } };
+    region: Region;
 };
 type Permissions = { create: boolean; update: boolean; delete: boolean };
 type HeiFilters = {
     search: string;
     region: string;
-    cluster: string;
     status: string;
     ownership: string;
 };
@@ -70,28 +61,19 @@ const ownershipOptions = [
 
 export default function Heis({
     regions,
-    clusters,
     heis,
     filters,
-    clusterOptions,
-    clusterRegions,
     permissions,
 }: {
     regions: Region[];
-    clusters: Cluster[];
     heis: Paginated<Hei>;
     filters: HeiFilters;
-    /** The chosen region's clusters, when there are two or more to pick. */
-    clusterOptions: Region[];
-    /** Regions whose institutions sit in two or more clusters. */
-    clusterRegions: number[];
     permissions: Permissions;
 }) {
     const { values, loading, filtered, apply, change, search } =
         useRecordFilters('/settings/heis', filters);
-    // Region, status and ownership, plus the cluster when offered; the search
-    // takes its own row on phones.
-    const filterCount = 3 + (clusterOptions.length > 0 ? 1 : 0);
+    // Region, status and ownership; the search takes its own row on phones.
+    const filterCount = 3;
 
     return (
         <>
@@ -101,15 +83,9 @@ export default function Heis({
                     <Heading
                         variant="small"
                         title="HEIs"
-                        description="The higher education institutions respondents choose from, grouped by the cluster they sit in."
+                        description="The higher education institutions respondents choose from, by region."
                     />
-                    {permissions.create && (
-                        <HeiDialog
-                            regions={regions}
-                            clusters={clusters}
-                            clusterRegions={clusterRegions}
-                        />
-                    )}
+                    {permissions.create && <HeiDialog regions={regions} />}
                 </div>
                 <div className="@container overflow-hidden rounded-xl border bg-card">
                     <FilterBar label="Filter HEIs" filters={filterCount}>
@@ -125,11 +101,7 @@ export default function Heis({
                                 className={selectClass}
                                 value={values.region}
                                 onChange={(value) =>
-                                    change({
-                                        ...values,
-                                        region: value,
-                                        cluster: '',
-                                    })
+                                    change({ ...values, region: value })
                                 }
                                 placeholder="All regions"
                                 allowEmpty
@@ -139,24 +111,6 @@ export default function Heis({
                                 }))}
                             />
                         </Filter>
-                        {clusterOptions.length > 0 && (
-                            <Filter label="Cluster" id="cluster">
-                                <FormSelect
-                                    id="cluster"
-                                    className={selectClass}
-                                    value={values.cluster}
-                                    onChange={(value) =>
-                                        change({ ...values, cluster: value })
-                                    }
-                                    placeholder="All clusters"
-                                    allowEmpty
-                                    options={clusterOptions.map((cluster) => ({
-                                        value: String(cluster.id),
-                                        label: cluster.name,
-                                    }))}
-                                />
-                            </Filter>
-                        )}
                         <Filter label="Status" id="status">
                             <FormSelect
                                 id="status"
@@ -193,7 +147,6 @@ export default function Heis({
                                 change({
                                     search: '',
                                     region: '',
-                                    cluster: '',
                                     status: '',
                                     ownership: '',
                                 })
@@ -222,8 +175,6 @@ export default function Heis({
                             <HeiTable
                                 heis={heis.data}
                                 regions={regions}
-                                clusters={clusters}
-                                clusterRegions={clusterRegions}
                                 permissions={permissions}
                             />
                             <Pagination page={heis} label="institutions" />
@@ -240,14 +191,10 @@ const OWNERSHIP_LABEL = { public: 'Public', private: 'Private' } as const;
 function HeiTable({
     heis,
     regions,
-    clusters,
-    clusterRegions,
     permissions,
 }: {
     heis: Hei[];
     regions: Region[];
-    clusters: Cluster[];
-    clusterRegions: number[];
     permissions: Permissions;
 }) {
     return (
@@ -285,15 +232,7 @@ function HeiTable({
                                     </Badge>
                                 )}
                             </td>
-                            <td className="px-4 py-4">
-                                <p>{hei.cluster.region.name}</p>
-                                {/* The holding cluster is not a place. */}
-                                {hei.cluster.name !== UNASSIGNED_CLUSTER && (
-                                    <p className="mt-0.5 text-xs text-muted-foreground">
-                                        {hei.cluster.name}
-                                    </p>
-                                )}
-                            </td>
+                            <td className="px-4 py-4">{hei.region.name}</td>
                             <td className="px-4 py-4">
                                 {hei.ownership ? (
                                     <Badge variant="outline">
@@ -312,8 +251,6 @@ function HeiTable({
                                             <HeiDialog
                                                 hei={hei}
                                                 regions={regions}
-                                                clusters={clusters}
-                                                clusterRegions={clusterRegions}
                                             />
                                             {hei.is_active ? (
                                                 <ConfirmPopover
@@ -384,46 +321,23 @@ function toggleActive(hei: Hei, visit?: ConfirmVisit) {
             uii: hei.uii,
             name: hei.name,
             ownership: hei.ownership,
-            survey_cluster_id: hei.survey_cluster_id,
+            survey_region_id: hei.region.id,
             is_active: !hei.is_active,
         },
         { preserveScroll: true, ...visit },
     );
 }
 
-function HeiDialog({
-    hei,
-    regions,
-    clusters,
-    clusterRegions,
-}: {
-    hei?: Hei;
-    regions: Region[];
-    clusters: Cluster[];
-    clusterRegions: number[];
-}) {
+function HeiDialog({ hei, regions }: { hei?: Hei; regions: Region[] }) {
     const [open, setOpen] = useState(false);
     const editing = hei !== undefined;
     const form = useForm({
         uii: hei?.uii ?? '',
         name: hei?.name ?? '',
-        survey_region_id: String(hei?.cluster.region.id ?? ''),
-        survey_cluster_id: String(hei?.survey_cluster_id ?? ''),
+        survey_region_id: String(hei?.region.id ?? ''),
         ownership: hei?.ownership ?? '',
         is_active: hei?.is_active ?? true,
     });
-    // Clusters only when used: the form asks for one only where the region's
-    // institutions already sit in two or more. Elsewhere the server files the
-    // institution in the region's holding cluster. A chosen cluster must
-    // belong to the region, or respondents could never select the HEI.
-    const pickCluster = clusterRegions.includes(
-        Number(form.data.survey_region_id),
-    );
-    const available = clusters.filter(
-        (cluster) =>
-            String(cluster.region.id) === form.data.survey_region_id &&
-            cluster.name !== UNASSIGNED_CLUSTER,
-    );
 
     function submit(event: FormEvent) {
         event.preventDefault();
@@ -493,71 +407,28 @@ function HeiDialog({
                         />
                         <InputError message={form.errors.name} />
                     </div>
-                    <div
-                        className={cn(
-                            'grid gap-4',
-                            pickCluster && 'sm:grid-cols-2',
-                        )}
-                    >
-                        <div>
-                            <Label htmlFor="hei-region">Region</Label>
-                            <FormSelect
-                                id="hei-region"
-                                className="mt-1.5"
-                                value={form.data.survey_region_id}
-                                onChange={(value) =>
-                                    form.setData((data) => ({
-                                        ...data,
-                                        survey_region_id: value,
-                                        survey_cluster_id: '',
-                                    }))
-                                }
-                                placeholder="Select region"
-                                options={regions.map((region) => ({
-                                    value: String(region.id),
-                                    label: region.name,
-                                }))}
-                                aria-required
-                                aria-invalid={Boolean(
-                                    form.errors.survey_region_id,
-                                )}
-                            />
-                            <InputError
-                                message={form.errors.survey_region_id}
-                            />
-                        </div>
-                        {pickCluster && (
-                            <div>
-                                <Label htmlFor="hei-cluster">
-                                    Cluster (optional)
-                                </Label>
-                                <FormSelect
-                                    id="hei-cluster"
-                                    className="mt-1.5"
-                                    value={form.data.survey_cluster_id}
-                                    onChange={(value) =>
-                                        form.setData('survey_cluster_id', value)
-                                    }
-                                    placeholder="Not grouped yet"
-                                    emptyLabel="Not grouped yet"
-                                    options={available.map((cluster) => ({
-                                        value: String(cluster.id),
-                                        label: cluster.name,
-                                    }))}
-                                    allowEmpty
-                                />
-                                <InputError
-                                    message={form.errors.survey_cluster_id}
-                                />
-                            </div>
-                        )}
+                    <div>
+                        <Label htmlFor="hei-region">Region</Label>
+                        <FormSelect
+                            id="hei-region"
+                            className="mt-1.5"
+                            value={form.data.survey_region_id}
+                            onChange={(value) =>
+                                form.setData('survey_region_id', value)
+                            }
+                            placeholder="Select region"
+                            options={regions.map((region) => ({
+                                value: String(region.id),
+                                label: region.name,
+                            }))}
+                            aria-required
+                            aria-invalid={Boolean(form.errors.survey_region_id)}
+                        />
+                        <InputError message={form.errors.survey_region_id} />
+                        <p className="mt-1.5 text-xs text-muted-foreground">
+                            Respondents pick the region, then the HEI.
+                        </p>
                     </div>
-                    <p className="-mt-1 text-xs text-muted-foreground">
-                        Respondents pick the region, then the HEI. Once a
-                        region&rsquo;s institutions sit in two or more clusters,
-                        a cluster can be chosen here and respondents pick it in
-                        between.
-                    </p>
                     <div>
                         <Label htmlFor="hei-ownership">Ownership</Label>
                         <FormSelect

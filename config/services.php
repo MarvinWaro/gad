@@ -28,16 +28,20 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    'portal' => [
-        'key' => env('PORTAL_API'),
-        'base_url' => env('PORTAL_BASE_URL'),
-    ],
-
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
+    ],
+
+    'heida' => [
+        'url' => env(
+            'HEIDA_API_URL',
+            'https://v2.heida.ched.gov.ph'
+        ),
+
+        'token' => env('HEIDA_API_TOKEN'),
     ],
 
 ];

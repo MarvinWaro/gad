@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 /**
  * @property int $id
+ * @property string|null $code PSGC code from HEIDA, which the directory sync matches on
  * @property string $name
  * @property bool $is_active
  * @property string|null $office_city
@@ -21,7 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $instant_registration
  * @property CarbonImmutable|null $instant_registration_until
  */
-#[Fillable(['name', 'is_active', 'office_city', 'office_address', 'office_email', 'office_website', 'office_phone', 'instant_registration', 'instant_registration_until'])]
+#[Fillable(['code', 'name', 'is_active', 'office_city', 'office_address', 'office_email', 'office_website', 'office_phone', 'instant_registration', 'instant_registration_until'])]
 class SurveyRegion extends Model
 {
     /** Letterhead details a regional office keeps up to date. */
@@ -40,6 +42,16 @@ class SurveyRegion extends Model
     public function clusters(): HasMany
     {
         return $this->hasMany(SurveyCluster::class);
+    }
+
+    /**
+     * Its institutions, through the clusters that link them to it.
+     *
+     * @return HasManyThrough<SurveyHei, SurveyCluster, $this>
+     */
+    public function heis(): HasManyThrough
+    {
+        return $this->hasManyThrough(SurveyHei::class, SurveyCluster::class);
     }
 
     /**

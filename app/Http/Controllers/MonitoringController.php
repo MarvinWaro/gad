@@ -49,7 +49,7 @@ class MonitoringController extends Controller
                 MonitoringReport::query()
                     ->where('survey_hei_id', $user->survey_hei_id)
                     ->whereIn('status', ['draft', 'returned'])
-                    ->with(['currentRevision', 'cluster:id,name', 'region:id,name'])
+                    ->with(['currentRevision', 'region:id,name'])
                     ->latest('updated_at')
                     ->limit(6)
                     ->get(),
@@ -78,7 +78,7 @@ class MonitoringController extends Controller
         $filters = $request->validated();
         $reports = MonitoringReport::query()
             ->where('survey_hei_id', $user->survey_hei_id)
-            ->with(['currentRevision', 'cluster:id,name', 'region:id,name']);
+            ->with(['currentRevision', 'region:id,name']);
 
         foreach (['academic_year', 'semester', 'status'] as $field) {
             if (! empty($filters[$field])) {
@@ -103,7 +103,6 @@ class MonitoringController extends Controller
         $user = $request->user();
         $report->load([
             'currentRevision',
-            'cluster:id,name',
             'region',
             'revisions' => fn ($query) => $query->with([
                 'answers', 'attachment', 'reviews', 'finalizer:id,name', 'submitter:id,name',

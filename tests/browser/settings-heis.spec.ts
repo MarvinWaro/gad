@@ -21,7 +21,7 @@ test('the HEI directory filters as soon as a filter changes', async ({
     await filters.getByRole('combobox', { name: 'Region' }).click();
     await page.getByRole('option', { name: 'Regional Office XII' }).click();
     await expect(page).toHaveURL(/region=\d+/);
-    // The fixture's institutions sit in one cluster, so there is none to pick.
+    // Clusters are never shown, so there is none to pick.
     await expect(
         filters.getByRole('combobox', { name: 'Cluster' }),
     ).toHaveCount(0);
@@ -70,9 +70,7 @@ test('the HEI directory filters as soon as a filter changes', async ({
     });
 });
 
-test('an HEI is added with its region alone, with no cluster to pick', async ({
-    page,
-}) => {
+test('an HEI is added with its region alone', async ({ page }) => {
     await page.goto('/login');
     await page.getByLabel('Email address').fill('browser-admin@example.test');
     await page.getByLabel('Password', { exact: true }).fill('browser-password');
@@ -82,7 +80,7 @@ test('an HEI is added with its region alone, with no cluster to pick', async ({
 
     await page.getByRole('button', { name: 'Add HEI' }).click();
     const dialog = page.getByRole('dialog', { name: 'Add HEI' });
-    // The region's institutions sit in one cluster, so none is asked for.
+    // Clusters are never shown, so none is asked for.
     await expect(dialog.getByRole('combobox', { name: /Cluster/ })).toHaveCount(
         0,
     );
@@ -96,6 +94,6 @@ test('an HEI is added with its region alone, with no cluster to pick', async ({
     const rows = page.getByRole('table').locator('tbody tr');
     await expect(rows).toHaveCount(1);
     await expect(rows.first()).toContainText('Regional Office XII');
-    // The holding cluster is never shown as a place.
+    // Nor is the cluster it waits in.
     await expect(rows.first()).not.toContainText('Unassigned');
 });

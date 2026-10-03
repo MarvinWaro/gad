@@ -6,6 +6,7 @@ use App\Enums\ActivityAction;
 use App\Enums\ActivityModule;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\HeiFilterRequest;
+use App\Jobs\SyncHeidaDirectory;
 use App\Models\Post;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
@@ -14,15 +15,14 @@ use App\Models\SurveyRespondentGroup;
 use App\Models\SurveyResponse;
 use App\Models\User;
 use App\Services\ActivityRecorder;
-use App\Services\PortalHeiSync;
 use App\Support\CountPhrase;
 use App\Support\InstitutionName;
-use App\Support\PlaceFilters;
 use App\Support\RespondentFollowUps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -33,23 +33,13 @@ class SurveyDirectoryController extends Controller
     /** Field names as they are labelled in the UI, so errors read naturally. */
     private const ATTRIBUTE_NAMES = [
         'uii' => 'UII',
-        'survey_cluster_id' => 'cluster',
         'survey_region_id' => 'region',
     ];
 
     public function regions(Request $request): Response
     {
         return Inertia::render('settings/regions', [
-            'regions' => SurveyRegion::query()->withCount('clusters')->orderBy('name')->get(),
-            'permissions' => $this->permissions($request),
-        ]);
-    }
-
-    public function clusters(Request $request): Response
-    {
-        return Inertia::render('settings/clusters', [
-            'regions' => SurveyRegion::query()->orderBy('name')->get(['id', 'name']),
-            'clusters' => SurveyCluster::query()->with('region:id,name')->withCount('heis')->orderBy('name')->get(),
+            'regions' => SurveyRegion::query()->withCount('heis')->orderBy('name')->get(),
             'permissions' => $this->permissions($request),
         ]);
     }
@@ -62,36 +52,33 @@ class SurveyDirectoryController extends Controller
 
         return Inertia::render('settings/heis', [
             'regions' => SurveyRegion::query()->orderBy('name')->get(['id', 'name']),
-            'clusters' => SurveyCluster::query()->with('region:id,name')->orderBy('name')->get(),
             // The directory runs to thousands of institutions nationally, so
-            // it is filtered and paged rather than rendered whole.
-            'heis' => SurveyHei::query()->with('cluster:id,name,survey_region_id', 'cluster.region:id,name')
+            // it is filtered and paged rather than rendered whole. Each is
+            // shown with its region; the cluster linking them stays out of
+            // sight.
+            'heis' => SurveyHei::query()->with('cluster:id,survey_region_id', 'cluster.region:id,name')
                 ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                     ->where('name', 'like', "%{$search}%")
                     ->orWhere('uii', 'like', "%{$search}%")))
                 ->when($regionId, fn ($query) => $query->whereHas('cluster', fn ($query) => $query->where('survey_region_id', $regionId)))
-                ->when($filters['cluster'] ?? null, fn ($query, $cluster) => $query->where('survey_cluster_id', $cluster))
                 ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('is_active', $status === 'active'))
                 ->when($filters['ownership'] ?? null, fn ($query, $ownership) => $ownership === 'none'
                     ? $query->whereNull('ownership')
                     : $query->where('ownership', $ownership))
                 ->orderBy('name')
                 ->paginate(10, ['id', 'survey_cluster_id', 'uii', 'name', 'ownership', 'is_active', 'portal_synced_at'])
-                ->withQueryString(),
+                ->withQueryString()
+                ->through(fn (SurveyHei $hei): array => [
+                    ...$hei->only(['id', 'uii', 'name', 'ownership', 'is_active']),
+                    'portal_synced_at' => $hei->portal_synced_at?->toIso8601String(),
+                    'region' => $hei->cluster->region->only(['id', 'name']),
+                ]),
             'filters' => [
                 'search' => $search,
                 'region' => (string) ($filters['region'] ?? ''),
-                'cluster' => (string) ($filters['cluster'] ?? ''),
                 'status' => (string) ($filters['status'] ?? ''),
                 'ownership' => (string) ($filters['ownership'] ?? ''),
             ],
-            // Offered only when the region's institutions sit in two or more
-            // clusters; until then (all "Unassigned", say) a region goes
-            // straight to its institutions.
-            'clusterOptions' => $regionId === null ? [] : PlaceFilters::clusterChoices($regionId),
-            // Only there does the HEI form ask for a cluster; elsewhere a new
-            // institution waits in its region's holding cluster.
-            'clusterRegions' => PlaceFilters::regionsWithClusterChoices(),
             'permissions' => $this->permissions($request),
         ]);
     }
@@ -131,41 +118,19 @@ class SurveyDirectoryController extends Controller
     }
 
     /**
-     * Pull the HEI list from the CHED portal. No page links to this yet — the
-     * panel is withdrawn until the portal's API base URL is confirmed — but the
-     * endpoint and `php artisan surveys:sync-heis` both still work.
+     * Copy the regions and HEIs from HEIDA now, rather than waiting for the
+     * nightly run. It goes to the queue: HEIDA is read a page at a time with a
+     * pause between pages, longer than a web request should take. No page
+     * links here yet; `php artisan surveys:sync-heis` does the same.
      */
-    public function sync(PortalHeiSync $sync): RedirectResponse
+    public function sync(): RedirectResponse
     {
-        try {
-            $result = $sync->sync();
-        } catch (\Throwable $exception) {
-            return back()->withErrors(['portal' => $exception->getMessage()]);
-        }
-
-        $summary = collect([
-            $result['created'] ? "{$result['created']} added" : null,
-            $result['updated'] ? "{$result['updated']} updated" : null,
-            $result['reactivated'] ? "{$result['reactivated']} restored" : null,
-            $result['deactivated'] ? "{$result['deactivated']} deactivated" : null,
-        ])->filter()->implode(', ');
+        SyncHeidaDirectory::dispatch();
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('Synced :total institutions from the CHED portal:notes.', [
-                'total' => $result['total'],
-                'notes' => $summary === '' ? ' (no changes)' : " ({$summary})",
-            ]),
+            'message' => __('The HEI sync from HEIDA has started. It takes about a minute.'),
         ]);
-
-        if ($result['clusters_created'] !== []) {
-            Inertia::flash('toast', [
-                'type' => 'success',
-                'message' => __('New clusters created from portal provinces: :names', [
-                    'names' => implode(', ', $result['clusters_created']),
-                ]),
-            ]);
-        }
 
         return back();
     }
@@ -179,13 +144,9 @@ class SurveyDirectoryController extends Controller
         if ($type === 'heis') {
             return $this->saveHei($request, null, $activity);
         }
-        $parent = $type === 'clusters' ? 'survey_region_id' : null;
-        $table = $model->getTable();
-        $rules = ['name' => ['required', 'string', 'max:180', Rule::unique($table)->where(fn ($query) => $parent ? $query->where($parent, $request->input($parent)) : $query)]];
-        if ($parent !== null) {
-            $rules[$parent] = ['required', 'integer', Rule::exists('survey_regions', 'id')];
-        }
-        $validated = $request->validate($rules, [], self::ATTRIBUTE_NAMES);
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:180', Rule::unique($model->getTable())],
+        ], [], self::ATTRIBUTE_NAMES);
         $record = $model->newQuery()->create([...$validated, 'is_active' => true]);
         $activity->recordSave($this->moduleFor($type), $record);
 
@@ -297,28 +258,23 @@ class SurveyDirectoryController extends Controller
     }
 
     /**
-     * Add or edit an institution. It is placed by its region; the cluster is
-     * optional. Until a region's institutions are grouped (clusters only when
-     * used), they wait in the region's holding cluster, which is never shown
-     * as a place. A cluster given on its own still places the institution in
-     * that cluster's region. The UII is CHED's institution key, so it is
-     * unique across the whole directory rather than per cluster.
+     * Add or edit an institution. It is placed by its region. The cluster
+     * that links it there stays out of sight: an institution keeps its own
+     * while its region stays the same, and otherwise goes beside the region's
+     * others (SurveyCluster::defaultIdFor) or into its holding cluster. The
+     * UII is CHED's institution key, so it is unique across the whole
+     * directory.
      */
     private function saveHei(Request $request, ?SurveyHei $hei, ActivityRecorder $activity): RedirectResponse
     {
-        $cluster = Rule::exists('survey_clusters', 'id');
-        if ($request->filled('survey_region_id')) {
-            $cluster = $cluster->where('survey_region_id', $request->integer('survey_region_id'));
-        }
         $validated = $request->validate([
             'name' => [
                 'required', 'string', 'max:180',
                 Rule::unique('survey_heis')
-                    ->where(fn ($query) => $query->where('survey_cluster_id', $this->heiClusterId($request)))
+                    ->where(fn ($query) => $query->where('survey_cluster_id', $this->heiClusterId($request->integer('survey_region_id'), $hei)))
                     ->ignore($hei?->getKey()),
             ],
-            'survey_region_id' => ['required_without:survey_cluster_id', 'nullable', 'integer', Rule::exists('survey_regions', 'id')],
-            'survey_cluster_id' => ['nullable', 'integer', $cluster],
+            'survey_region_id' => ['required', 'integer', Rule::exists('survey_regions', 'id')],
             'uii' => [
                 'nullable', 'string', 'max:40', 'regex:/^[A-Za-z0-9-]+$/',
                 Rule::unique('survey_heis', 'uii')->ignore($hei?->getKey()),
@@ -326,11 +282,11 @@ class SurveyDirectoryController extends Controller
             'ownership' => ['nullable', Rule::in(SurveyHei::OWNERSHIPS)],
             'is_active' => [$hei === null ? 'exclude' : 'required', 'boolean'],
         ], [], self::ATTRIBUTE_NAMES);
+        $regionId = (int) $validated['survey_region_id'];
         $attributes = [
             ...Arr::except($validated, ['survey_region_id']),
-            'survey_cluster_id' => $validated['survey_cluster_id']
-                ?? SurveyCluster::defaultIdFor((int) $validated['survey_region_id'])
-                ?? SurveyCluster::holdingFor((int) $validated['survey_region_id'])->id,
+            'survey_cluster_id' => $this->heiClusterId($regionId, $hei)
+                ?? SurveyCluster::holdingFor($regionId)->id,
         ];
 
         if ($hei === null) {
@@ -349,14 +305,17 @@ class SurveyDirectoryController extends Controller
     }
 
     /**
-     * The cluster a submitted institution would sit in, for the per-cluster
-     * name check: the chosen one, or where one without a cluster goes.
+     * The cluster an institution sits in within a region: its own while the
+     * region stays the same, or where a new one goes. Null until the region
+     * has a holding cluster.
      */
-    private function heiClusterId(Request $request): ?int
+    private function heiClusterId(int $regionId, ?SurveyHei $hei): ?int
     {
-        return $request->filled('survey_cluster_id')
-            ? $request->integer('survey_cluster_id')
-            : SurveyCluster::defaultIdFor($request->integer('survey_region_id'));
+        $hei?->loadMissing('cluster:id,survey_region_id');
+
+        return $hei !== null && $hei->cluster->survey_region_id === $regionId
+            ? $hei->survey_cluster_id
+            : SurveyCluster::defaultIdFor($regionId);
     }
 
     public function destroy(string $type, int $id, ActivityRecorder $activity): RedirectResponse
@@ -384,10 +343,20 @@ class SurveyDirectoryController extends Controller
             }
         }
 
-        $name = $record instanceof SurveyRespondentGroup ? $record->label : $record->getAttribute('name');
+        // A region holds its institutions through clusters kept out of
+        // sight; with no institutions left, its empty clusters go with it.
+        if ($record instanceof SurveyRegion && $record->heis()->exists()) {
+            return $this->refuse(__('Regions with institutions cannot be deleted. Deactivate it instead.'));
+        }
 
+        $name = $record instanceof SurveyRespondentGroup ? $record->label : $record->getAttribute('name');
         try {
-            $record->delete();
+            DB::transaction(function () use ($record): void {
+                if ($record instanceof SurveyRegion) {
+                    $record->clusters()->delete();
+                }
+                $record->delete();
+            });
         } catch (\Throwable) {
             return $this->refuse(__('This directory record is in use. Deactivate it instead.'));
         }
@@ -405,7 +374,6 @@ class SurveyDirectoryController extends Controller
     {
         return match ($type) {
             'regions' => ActivityModule::Regions,
-            'clusters' => ActivityModule::Clusters,
             'heis' => ActivityModule::Heis,
             default => ActivityModule::RespondentGroups,
         };
@@ -415,7 +383,6 @@ class SurveyDirectoryController extends Controller
     {
         return match ($type) {
             'regions' => new SurveyRegion,
-            'clusters' => new SurveyCluster,
             'heis' => new SurveyHei,
             'respondent-groups' => new SurveyRespondentGroup,
             default => abort(404),

@@ -143,6 +143,21 @@ foreach ([['ra-7877', 'female'], ['ra-7877', 'male'], ['ra-9710', 'female']] as 
     ]);
 }
 
+// Six more regions with an HEI each, so a Central Office account's dashboard
+// lists more regions than its "Every campus counts" card shows. They are
+// inactive, so registration, feedback and the surveys still offer Region XII
+// alone.
+foreach (['I', 'II', 'III', 'IV', 'V', 'VI'] as $number) {
+    $extra = SurveyRegion::query()->create(['name' => "Regional Office {$number}", 'is_active' => false]);
+    SurveyHei::query()->create([
+        'name' => "Region {$number} Fixture College",
+        'survey_cluster_id' => SurveyCluster::holdingFor($extra->id)->id,
+        'is_active' => true,
+    ]);
+}
+$national = User::factory()->nationalOffice()->create(['email' => 'browser-national@example.test', 'password' => 'browser-password']);
+$national->assignRole('admin');
+
 // Twelve notifications for the member, two of them read: comments on their
 // seed posts, written as the app writes them and dated days back, so the
 // bell's panel and the Notifications page have more to load.

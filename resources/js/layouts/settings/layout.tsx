@@ -1,7 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     CalendarRange,
-    Building2,
     ContactRound,
     GraduationCap,
     History,
@@ -69,7 +68,6 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
         isCurrentOrParentUrl('/settings/users') ||
         isCurrentOrParentUrl('/settings/roles') ||
         isCurrentOrParentUrl('/settings/regions') ||
-        isCurrentOrParentUrl('/settings/clusters') ||
         isCurrentOrParentUrl('/settings/heis') ||
         isCurrentOrParentUrl('/settings/respondent-groups') ||
         isCurrentOrParentUrl('/settings/academic-years') ||
@@ -92,11 +90,6 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                       title: 'Regions',
                       href: '/settings/regions',
                       icon: Map,
-                  },
-                  {
-                      title: 'Clusters',
-                      href: '/settings/clusters',
-                      icon: Building2,
                   },
                   {
                       title: 'HEIs',

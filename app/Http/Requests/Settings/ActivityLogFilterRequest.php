@@ -25,7 +25,7 @@ class ActivityLogFilterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            ...Arr::only(PlaceFilters::rules(), ['region', 'cluster', 'hei', 'search', 'page']),
+            ...Arr::only(PlaceFilters::rules(), ['region', 'hei', 'search', 'page']),
             'module' => ['nullable', Rule::enum(ActivityModule::class)],
             'action' => ['nullable', Rule::enum(ActivityAction::class)],
             'user' => ['nullable', 'integer', 'exists:users,id'],

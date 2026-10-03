@@ -63,11 +63,9 @@ export type PublishedSurvey = {
     required: Record<string, 'required' | 'sometimes'>;
 };
 export type DirectoryItem = { id: number; name: string };
-export type Cluster = DirectoryItem & { survey_region_id: number };
-export type Hei = DirectoryItem & { survey_cluster_id: number };
+export type Hei = DirectoryItem & { survey_region_id: number };
 export type Directories = {
     regions: DirectoryItem[];
-    clusters: Cluster[];
     heis: Hei[];
     respondent_groups: Option[];
 };
@@ -87,7 +85,6 @@ export type SurveyAnswers = {
     /** What was typed for a choice that asks to specify, by question key. */
     group_answer_details: Record<string, string>;
     region_id: string;
-    cluster_id: string;
     hei_id: string;
     experiences: string[];
     /** Check-all-that-apply answers, keyed by the question's answer key. */

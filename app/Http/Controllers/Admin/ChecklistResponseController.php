@@ -28,7 +28,6 @@ class ChecklistResponseController extends Controller
                 'answers:id,checklist_response_id,item_key',
                 'submitter:id,name',
                 'hei:id,name',
-                'cluster:id,name',
                 'region:id,name',
             ]);
         PlaceFilters::apply($responses, $filters);

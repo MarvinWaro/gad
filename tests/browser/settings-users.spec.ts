@@ -114,8 +114,8 @@ test('the users list filters by role and place as soon as they change', async ({
         await expect(row).toContainText('HEI Focal');
     }
 
-    // A regional office's own region. Its institutions sit in one cluster,
-    // so there is no cluster to pick: the HEIs list straight away.
+    // A regional office's own region. Clusters are never shown, so the HEIs
+    // list straight away.
     await expect(
         filters.getByRole('combobox', { name: 'Cluster' }),
     ).toHaveCount(0);

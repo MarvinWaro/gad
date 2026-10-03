@@ -33,7 +33,7 @@ class MyProfileController extends Controller
             'activity' => Inertia::scroll(fn () => ActivityLogResource::collection(
                 ActivityLog::query()
                     ->where('user_id', $user->id)
-                    ->with(['user:id,avatar_path', 'subject', 'region:id,name', 'cluster:id,name', 'hei:id,name'])
+                    ->with(['user:id,avatar_path', 'subject', 'region:id,name', 'hei:id,name'])
                     ->latest('created_at')
                     ->latest('id')
                     ->simplePaginate(self::ACTIVITY_PER_PAGE, pageName: 'activity_page'),

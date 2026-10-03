@@ -288,7 +288,6 @@ function ReadinessItem({
                                 directoryStatus.regions,
                                 'active region',
                             )}{' '}
-                            · {countLabel(directoryStatus.clusters, 'cluster')}{' '}
                             · {countLabel(directoryStatus.heis, 'HEI')}
                         </p>
                     )}

@@ -167,7 +167,6 @@ test('the staff pages fit a 360px phone', async ({ browser }) => {
         '/settings/users',
         '/settings/roles',
         '/settings/regions',
-        '/settings/clusters',
         '/settings/heis',
         '/settings/respondent-groups',
         '/settings/academic-years',

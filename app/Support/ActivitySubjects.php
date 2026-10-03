@@ -137,7 +137,8 @@ class ActivitySubjects
             ! $viewer->can('survey-directories.view') && ($subject instanceof SurveyRegion || $subject instanceof SurveyCluster
                 || $subject instanceof SurveyHei || $subject instanceof SurveyRespondentGroup) => null,
             $subject instanceof SurveyRegion => route('settings.regions.index'),
-            $subject instanceof SurveyCluster => route('settings.clusters.index'),
+            // Clusters are kept out of sight, so there is no page to open.
+            $subject instanceof SurveyCluster => null,
             $subject instanceof SurveyHei => route('settings.heis.index', ['search' => $subject->name]),
             $subject instanceof SurveyRespondentGroup => route('settings.respondent-groups.index'),
             $subject instanceof Survey => $viewer->can('surveys.view') ? route('admin.surveys.edit', $subject) : null,

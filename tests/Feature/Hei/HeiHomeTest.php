@@ -3,7 +3,6 @@
 use App\Models\GadEvent;
 use App\Models\Post;
 use App\Models\Survey;
-use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyResponse;
 use App\Models\User;
@@ -52,7 +51,7 @@ test('HEI users get the HEI home with their institution and the law surveys', fu
         ->assertInertia(fn (Assert $page) => $page
             ->component('hei/home')
             ->where('hei.name', 'Notre Dame of Marbel University')
-            ->where('hei.cluster', 'South Cotabato')
+            ->missing('hei.cluster')
             ->has('surveys', 4)
             ->where('surveys.0.code', 'RA 7877')
             ->where('surveys.3.code', 'RA 11313')
@@ -206,15 +205,6 @@ test('institution names are sent in readable casing alongside the official name'
         ->assertInertia(fn (Assert $page) => $page
             ->where('hei.name', 'ACLC COLLEGE OF MARBEL')
             ->where('hei.display_name', 'ACLC College of Marbel'));
-});
-
-test('the placeholder cluster is left out of the greeting', function () {
-    $hei = createSurveyHei();
-    $hei->cluster->update(['name' => SurveyCluster::UNASSIGNED]);
-
-    $this->actingAs(heiHomeMember($hei))
-        ->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page->where('hei.cluster', null));
 });
 
 test('the feed shows the newest posts first, five at a time', function () {

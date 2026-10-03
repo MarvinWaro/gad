@@ -1,4 +1,4 @@
-import type { HeiSummary } from '@/types';
+import type { HeiRef } from '@/types';
 
 /** "Good morning", "Good afternoon" or "Good evening", by the hour. */
 export function greeting(hour: number = new Date().getHours()): string {
@@ -23,7 +23,7 @@ export function WelcomeBand({
     hei,
     userName,
 }: {
-    hei: HeiSummary | null;
+    hei: HeiRef | null;
     userName: string;
 }) {
     return (
@@ -33,12 +33,6 @@ export function WelcomeBand({
             </h1>
             <p className="mt-3 text-sm text-muted-foreground">
                 {greeting()}, {firstName(userName)}
-                {hei?.cluster && (
-                    <>
-                        <span aria-hidden> · </span>
-                        {hei.cluster} cluster, CHED Regional Office XII
-                    </>
-                )}
             </p>
         </section>
     );

@@ -26,7 +26,7 @@
 
 **Filters**
 
-- **Cluster, HEI or ownership** narrows everything to HEIs, so CHED posts and staff accounts drop out.
+- **HEI or ownership** narrows everything to HEIs, so CHED posts and staff accounts drop out.
 - **Law survey** narrows only the survey figures.
 
 ## Periods

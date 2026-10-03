@@ -86,8 +86,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:survey-directories.view')->name('settings.regions.index');
     Route::put('settings/regions/{region}/office', [RegionOfficeController::class, 'update'])
         ->middleware('can:survey-directories.update')->name('settings.regions.office');
-    Route::get('settings/clusters', [SurveyDirectoryController::class, 'clusters'])
-        ->middleware('can:survey-directories.view')->name('settings.clusters.index');
     Route::get('settings/heis', [SurveyDirectoryController::class, 'heis'])
         ->middleware('can:survey-directories.view')->name('settings.heis.index');
     Route::put('settings/respondent-groups/{group}/follow-ups', [SurveyDirectoryController::class, 'updateFollowUps'])

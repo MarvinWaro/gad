@@ -35,7 +35,6 @@ type Props = {
     hasOffice: boolean;
     permissions: { export: boolean; delete: boolean };
     regions: DirectoryOption[];
-    clusters: DirectoryOption[];
     heis: DirectoryOption[];
 };
 
@@ -53,7 +52,6 @@ export default function FeedbackIndex({
     hasOffice,
     permissions,
     regions,
-    clusters,
     heis,
 }: Props) {
     const { values, loading, filtered, apply, change, search, pick } =
@@ -107,7 +105,7 @@ export default function FeedbackIndex({
                 <div className="@container overflow-hidden rounded-xl border bg-card">
                     <FilterBar
                         label="Filter feedback"
-                        filters={1 + placeFilterCount(regions, clusters)}
+                        filters={1 + placeFilterCount(regions)}
                         className="border-b-0"
                     >
                         <SearchFilter
@@ -134,7 +132,6 @@ export default function FeedbackIndex({
                             values={values}
                             onPick={pick}
                             regions={regions}
-                            clusters={clusters}
                             heis={heis}
                         />
                     </FilterBar>

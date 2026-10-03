@@ -3,6 +3,9 @@
 use App\Enums\UserStatus;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\SurveyCluster;
+use App\Models\SurveyHei;
+use App\Models\SurveyRegion;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -113,7 +116,8 @@ test('the user list filters by status and counts each status', function () {
             ->where('users.data.0.status', 'pending')
             ->where('users.data.0.hei.name', $hei->name)
             ->where('statusCounts', ['pending' => 1, 'active' => 1, 'inactive' => 1])
-            ->has('heis', 1));
+            // A manager with no office yet is offered no institutions.
+            ->has('heis', 0));
 });
 
 test('pending registrations are listed first', function () {
@@ -188,8 +192,22 @@ test('an HEI account needs its institution, and a CHED account has none', functi
 
 test('the user form lists institutions with their region', function () {
     $hei = createSurveyHei(['name' => 'Example College']);
+    $central = User::factory()->nationalOffice()->create();
+    $central->assignRole('admin');
 
-    $this->actingAs($this->admin)->get(route('settings.users.index'))->assertInertia(fn (Assert $page) => $page
+    $this->actingAs($central)->get(route('settings.users.index'))->assertInertia(fn (Assert $page) => $page
         ->where('heis', [['id' => $hei->id, 'name' => 'Example College', 'region_id' => $hei->cluster->survey_region_id]])
         ->where('heiRegions', [['id' => $hei->cluster->survey_region_id, 'name' => 'Regional Office XII']]));
+});
+
+test('a regional office\'s user form lists only its own region\'s institutions', function () {
+    $own = createSurveyHei(['name' => 'Own College']);
+    $elsewhere = SurveyRegion::query()->create(['name' => 'Regional Office XI', 'is_active' => true]);
+    SurveyHei::query()->create(['survey_cluster_id' => SurveyCluster::holdingFor($elsewhere->id)->id, 'name' => 'Other College', 'is_active' => true]);
+    $manager = User::factory()->regionalOffice($own->cluster->region)->create();
+    $manager->assignRole('admin');
+
+    $this->actingAs($manager)->get(route('settings.users.index'))->assertInertia(fn (Assert $page) => $page
+        ->where('heis', [['id' => $own->id, 'name' => 'Own College', 'region_id' => $own->cluster->survey_region_id]])
+        ->has('heiRegions', 1));
 });

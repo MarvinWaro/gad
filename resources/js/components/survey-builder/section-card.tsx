@@ -5,6 +5,7 @@ import {
     moveWithin,
     newQuestion,
     questionTypes,
+    shownQuestionIndexes,
 } from '@/components/survey-builder/definition';
 import { Field } from '@/components/survey-builder/field';
 import { QuestionEditor } from '@/components/survey-builder/question-editor';
@@ -53,6 +54,7 @@ export function SectionCard({
     onChange: (mutate: (section: Section) => void) => void;
 }) {
     const readOnly = useReadOnly();
+    const shown = shownQuestionIndexes(section);
 
     return (
         <Collapsible open={open} onOpenChange={onOpenChange}>
@@ -78,10 +80,7 @@ export function SectionCard({
                                 {section.title || 'Untitled section'}
                             </span>
                             <span className="ml-auto shrink-0 text-xs font-normal text-muted-foreground">
-                                {countLabel(
-                                    section.questions.length,
-                                    'question',
-                                )}
+                                {countLabel(shown.length, 'question')}
                             </span>
                         </Button>
                     </CollapsibleTrigger>
@@ -140,28 +139,30 @@ export function SectionCard({
                                 />
                             </Field>
                         </div>
-                        {section.questions.length === 0 && (
+                        {shown.length === 0 && (
                             <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
                                 This section is empty. A section without
                                 questions blocks publication.
                             </p>
                         )}
-                        {section.questions.map((question, questionIndex) => (
+                        {shown.map((questionIndex, position) => (
                             <QuestionEditor
-                                key={question.clientKey ?? question.id}
-                                question={question}
-                                idPrefix={`question-${index}-${questionIndex}`}
-                                isFirst={questionIndex === 0}
-                                isLast={
-                                    questionIndex ===
-                                    section.questions.length - 1
+                                key={
+                                    section.questions[questionIndex]
+                                        .clientKey ??
+                                    section.questions[questionIndex].id
                                 }
+                                question={section.questions[questionIndex]}
+                                idPrefix={`question-${index}-${questionIndex}`}
+                                isFirst={position === 0}
+                                isLast={position === shown.length - 1}
+                                // Past any question kept out of sight.
                                 onMove={(offset) =>
                                     onChange((target) =>
                                         moveWithin(
                                             target.questions,
                                             questionIndex,
-                                            questionIndex + offset,
+                                            shown[position + offset],
                                         ),
                                     )
                                 }

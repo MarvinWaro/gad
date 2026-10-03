@@ -358,7 +358,6 @@ test('a public survey answer reaches the managers without slowing or naming the 
         'sex' => 'female',
         'respondent_group' => 'student',
         'region_id' => $region->id,
-        'cluster_id' => $cluster->id,
         'hei_id' => $this->hei->id,
         'experiences' => ['none'],
         'perpetrators' => [],

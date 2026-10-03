@@ -35,8 +35,7 @@ Profile, and user management never overwrites them.
 The users list filters by role and by place, applying each filter as soon as
 it changes, the same way the monitoring lists do:
 
-- Places run region, then cluster, then HEI. Only the Central Office picks the
-  region.
+- Places run region, then HEI. Only the Central Office picks the region.
 - HEI accounts are placed through their institution, and CHED staff through
   their regional office (`User::scopePlacedIn`).
 - The status tabs count within the active filters and the search.
@@ -107,7 +106,7 @@ from the CHED list. In the local environment it also adds one demo account per
 role, with the administrator's password: `ched-focal@phlgadis.test` and
 `ched-employee@phlgadis.test` in the Region XII office, and
 `hei-focal@phlgadis.test` and `hei@phlgadis.test` at a Region XII HEI
-(`DemoUserSeeder`). Each HEI keeps its UII. The screenshots did not include
-province or cluster, so the initial HEIs are under `Unassigned` until an
-administrator maps them to the existing clusters. Running the seed again keeps
+(`DemoUserSeeder`). Each HEI keeps its UII. The screenshots did not include a
+province, so the initial HEIs wait in the region's holding cluster until the
+HEIDA sync files them by province (`docs/heida-sync.md`). Running the seed again keeps
 changed passwords, HEI edits, deactivations, and survey responses.

@@ -21,7 +21,7 @@ class SiteFeedbackFilterRequest extends FormRequest
     {
         return [
             'type' => ['nullable', Rule::enum(FeedbackType::class)],
-            ...Arr::only(PlaceFilters::rules(), ['region', 'cluster', 'hei', 'search', 'page']),
+            ...Arr::only(PlaceFilters::rules(), ['region', 'hei', 'search', 'page']),
         ];
     }
 }

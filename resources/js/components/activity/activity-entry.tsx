@@ -13,7 +13,6 @@ import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { PersonAvatar } from '@/components/person-avatar';
 import { localDate, localDateTime } from '@/lib/manila-time';
-import { placeLine } from '@/lib/places';
 import { tones } from '@/lib/tones';
 import { cn } from '@/lib/utils';
 import type { ActivityEntry } from '@/types/activity';
@@ -40,10 +39,7 @@ export function ActivityItem({
     const tone = tones[entry.action.tone];
     const { actor, sentence, subject } = entry;
     const actorId = actor.id;
-    const place = [
-        entry.place.hei,
-        placeLine(entry.place.cluster, entry.place.region),
-    ]
+    const place = [entry.place.hei, entry.place.region]
         .filter(Boolean)
         .join(' · ');
 

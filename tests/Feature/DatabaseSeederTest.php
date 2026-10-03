@@ -31,7 +31,7 @@ test('default seed creates the admin, survey drafts and all 129 supplied HEIs', 
         ->and(SurveyRegion::query()->where('is_active', true)->count())->toBe(17)
         ->and(SurveyRegion::query()->where('name', 'Regional Office XII')->exists())->toBeTrue()
         ->and(SurveyRegion::query()->orderBy('id')->pluck('name')->all())
-        ->toBe(SurveyRegionSeeder::OFFICES)
+        ->toBe(array_keys(SurveyRegionSeeder::OFFICES))
         ->and(SurveyHei::query()->count())->toBe(129)
         ->and(SurveyHei::query()->where('is_active', true)->count())->toBe(129)
         ->and(SurveyHei::query()->where('ownership', 'public')->count())->toBe(22)

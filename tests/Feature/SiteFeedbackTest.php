@@ -53,7 +53,9 @@ test('anyone can open the feedback form, with the old form\'s questions and the 
             ->where('questions.scales.0.low', 'Strongly Disagree')
             ->where('questions.scales.1.items.2.label', 'User Friendliness of the system')
             ->has('regions', 2)
-            ->has('heis', 2)
+            // Institutions come once a region is picked.
+            ->where('region', null)
+            ->where('heis', [])
             ->where('prefill', ['region_id' => '', 'hei_id' => ''])
             ->where('sent', false));
 });
@@ -64,12 +66,30 @@ test('a signed-in visitor finds their own region and institution filled in', fun
 
     $this->actingAs($member)->get(route('feedback.create'))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('prefill', ['region_id' => (string) $this->region->id, 'hei_id' => (string) $this->hei->id]));
+            ->where('prefill', ['region_id' => (string) $this->region->id, 'hei_id' => (string) $this->hei->id])
+            // Their region's institutions come with the page, so theirs shows.
+            ->where('region', $this->region->id)
+            ->where('heis', [['id' => $this->hei->id, 'name' => 'NOTRE DAME OF MARBEL UNIVERSITY', 'region_id' => $this->region->id]]));
 
     $staff = feedbackStaff('ched-employee', $this->otherRegion);
     $this->actingAs($staff)->get(route('feedback.create'))
         ->assertInertia(fn (Assert $page) => $page
             ->where('prefill', ['region_id' => (string) $this->otherRegion->id, 'hei_id' => '']));
+});
+
+test('picking a region loads only its institutions', function () {
+    $this->get(route('feedback.create', ['region' => $this->otherRegion->id]))->assertInertia(fn (Assert $page) => $page
+        ->reloadOnly(['region', 'heis'], fn (Assert $reload) => $reload
+            ->where('region', $this->otherRegion->id)
+            ->where('heis', [[
+                'id' => $this->otherHei->id,
+                'name' => 'University of Southeastern Philippines',
+                'region_id' => $this->otherRegion->id,
+            ]])
+            ->missing('questions')));
+
+    $this->get(route('feedback.create', ['region' => 999999]))
+        ->assertInertia(fn (Assert $page) => $page->where('region', null)->where('heis', []));
 });
 
 test('only the type and the feedback are required', function () {
@@ -239,7 +259,7 @@ test('the list filters by place and by search', function () {
     $this->actingAs($admin)->get(route('admin.feedback.index', ['hei' => $this->hei->id]))
         ->assertInertia(fn (Assert $page) => $page
             ->has('feedback.data', 1)
-            ->where('feedback.data.0.place', ['region' => 'Regional Office XII', 'cluster' => 'South Cotabato', 'hei' => 'Notre Dame of Marbel University']));
+            ->where('feedback.data.0.place', ['region' => 'Regional Office XII', 'hei' => 'Notre Dame of Marbel University']));
     $this->actingAs($admin)->get(route('admin.feedback.index', ['search' => 'login']))
         ->assertInertia(fn (Assert $page) => $page->has('feedback.data', 2));
 });

@@ -7,7 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['survey_region_id', 'name', 'is_active'])]
+/**
+ * @property int $id
+ * @property int $survey_region_id
+ * @property string|null $code PSGC code of the province from HEIDA, which the directory sync matches on
+ * @property string $name
+ * @property bool $is_active
+ */
+#[Fillable(['survey_region_id', 'code', 'name', 'is_active'])]
 class SurveyCluster extends Model
 {
     /** Holding cluster for institutions whose province is not known yet. */

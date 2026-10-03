@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import { ArrowLeft, ArrowRight, Check, Lock, Send } from 'lucide-react';
 import { type FormEvent, useRef, useState } from 'react';
 import { ScaleQuestion } from '@/components/feedback/scale-question';
@@ -13,7 +13,7 @@ import {
     feedbackSteps,
     firstStepIssues,
 } from '@/lib/feedback';
-import { store } from '@/routes/feedback';
+import { create, store } from '@/routes/feedback';
 import type {
     FeedbackAnswers,
     FeedbackHei,
@@ -36,6 +36,7 @@ export function FeedbackForm({
     questions,
     types,
     regions,
+    loadedRegionId,
     heis,
     prefill,
     textMax,
@@ -43,6 +44,8 @@ export function FeedbackForm({
     questions: FeedbackQuestions;
     types: FeedbackTypeOption[];
     regions: DirectoryOption[];
+    /** The region whose institutions `heis` holds; picking another reloads them. */
+    loadedRegionId: number | null;
     heis: FeedbackHei[];
     prefill: { region_id: string; hei_id: string };
     textMax: number;
@@ -57,9 +60,25 @@ export function FeedbackForm({
     const heading = useRef<HTMLHeadingElement>(null);
     const errorSummary = useRef<HTMLDivElement>(null);
     const form = useForm<FeedbackAnswers>(emptyAnswers(questions, prefill));
-    const regionHeis = heis.filter(
-        (hei) => String(hei.region_id) === form.data.region_id,
-    );
+    // Still on its way while the list is another region's.
+    const loaded = String(loadedRegionId) === form.data.region_id;
+    const loadingHeis = form.data.region_id !== '' && !loaded;
+    const regionHeis = loaded ? heis : [];
+
+    function chooseRegion(value: string) {
+        // Another region lists other institutions.
+        form.setData((data) => ({ ...data, region_id: value, hei_id: '' }));
+        router.get(
+            create.url(),
+            { region: value },
+            {
+                only: ['region', 'heis'],
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
+    }
 
     // Nothing is marked wrong until the visitor has tried to continue; after
     // that it updates as they fix each one.
@@ -355,14 +374,7 @@ export function FeedbackForm({
                             >
                                 <PublicSelect
                                     value={form.data.region_id}
-                                    onChange={(value) =>
-                                        // Another region lists other institutions.
-                                        form.setData((data) => ({
-                                            ...data,
-                                            region_id: value,
-                                            hei_id: '',
-                                        }))
-                                    }
+                                    onChange={chooseRegion}
                                     placeholder="Select region"
                                     options={regions.map((region) => ({
                                         value: String(region.id),
@@ -384,16 +396,15 @@ export function FeedbackForm({
                                         form.setData('hei_id', value)
                                     }
                                     options={regionHeis}
-                                    disabled={
-                                        form.data.region_id === '' ||
-                                        regionHeis.length === 0
-                                    }
+                                    disabled={regionHeis.length === 0}
                                     placeholder={
                                         form.data.region_id === ''
                                             ? 'Choose a region first'
-                                            : regionHeis.length === 0
-                                              ? 'No institutions listed yet'
-                                              : 'Search or select an institution'
+                                            : loadingHeis
+                                              ? 'Loading institutions…'
+                                              : regionHeis.length === 0
+                                                ? 'No institutions listed yet'
+                                                : 'Search or select an institution'
                                     }
                                     allowClear
                                 />

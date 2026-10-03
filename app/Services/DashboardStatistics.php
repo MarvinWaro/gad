@@ -56,7 +56,6 @@ class DashboardStatistics
                 'semester' => $period->semester === null ? '' : (string) $period->semester,
                 'month' => $period->month === null ? '' : (string) $period->month,
                 'region' => $user->national_access && $scope->regionId !== null ? (string) $scope->regionId : '',
-                'cluster' => $scope->clusterId === null ? '' : (string) $scope->clusterId,
                 'hei' => $scope->heiId === null ? '' : (string) $scope->heiId,
                 'ownership' => $scope->ownership ?? '',
                 'survey' => $scope->surveyId === null ? '' : (string) $scope->surveyId,
@@ -226,13 +225,19 @@ class DashboardStatistics
                 ->pluck('participating', 'region');
 
             return [
+                // Leaders first: the highest share, then the most HEIs
+                // contributing, then the office order. The card shows the
+                // first few and the rest open in a table.
                 'regions' => array_values(SurveyRegion::query()->whereIn('id', $totals->keys())->orderBy('id')->get(['id', 'name'])
                     ->map(fn (SurveyRegion $region): array => [
                         'id' => $region->id,
                         'name' => $region->name,
                         'participating' => (int) ($participating[$region->id] ?? 0),
                         'total' => (int) $totals[$region->id],
-                    ])->all()),
+                    ])
+                    ->sort(fn (array $a, array $b): int => [$b['participating'] * $a['total'], $b['participating'], $a['id']]
+                        <=> [$a['participating'] * $b['total'], $a['participating'], $b['id']])
+                    ->all()),
                 'waiting' => ['count' => 0, 'heis' => []],
             ];
         }

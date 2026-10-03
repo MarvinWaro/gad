@@ -1,5 +1,4 @@
 import type {
-    Cluster,
     Directories,
     FollowUpQuestion,
     Hei,
@@ -48,8 +47,7 @@ export type Respondent = {
     groupFollowUps: FollowUpQuestion[];
     /** The chosen group asks the respondent to name it. */
     groupRequiresText: boolean;
-    /** Narrowed to the region, then the cluster, chosen so far. */
-    clusters: Cluster[];
+    /** The chosen region's institutions. */
     heis: Hei[];
     /**
      * One source of truth for "must this be answered", so the asterisk, the
@@ -142,7 +140,6 @@ export function initialAnswers(
         group_answers: {},
         group_answer_details: {},
         region_id: '',
-        cluster_id: '',
         hei_id: '',
         experiences: [],
         selections: Object.fromEntries(
@@ -182,11 +179,8 @@ export function describeRespondent(
         genderIdentities: respondentDetails.gender_identities[data.sex] ?? [],
         groupFollowUps: group?.follow_ups ?? [],
         groupRequiresText: Boolean(group?.requires_text),
-        clusters: directories.clusters.filter(
-            (item) => String(item.survey_region_id) === data.region_id,
-        ),
         heis: directories.heis.filter(
-            (item) => String(item.survey_cluster_id) === data.cluster_id,
+            (item) => String(item.survey_region_id) === data.region_id,
         ),
         isRequired: (id) =>
             (id === 'age' && forMinor) ||

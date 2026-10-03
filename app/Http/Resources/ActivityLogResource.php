@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 
 /**
  * An activity log entry as the list and the API show it. Load `user`,
- * `subject`, `region`, `cluster` and `hei` first. The raw user agent stays
+ * `subject`, `region` and `hei` first. The raw user agent stays
  * on the server; only the device it names is sent.
  *
  * @mixin ActivityLog
@@ -75,7 +75,6 @@ class ActivityLogResource extends JsonResource
             ],
             'place' => [
                 'region' => $this->region?->name,
-                'cluster' => $this->cluster?->name,
                 'hei' => $this->hei !== null ? InstitutionName::display($this->hei->name) : null,
             ],
             'changes' => collect($this->changes ?? [])->map(fn (array $change, string $field): array => [

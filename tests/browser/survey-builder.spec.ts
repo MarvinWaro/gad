@@ -82,8 +82,9 @@ test('survey sections collapse and option editors accept new lines', async ({
 }) => {
     await openRa9262Draft(page);
 
+    // Six: the definition's Cluster question is kept out of sight.
     const respondent = page.getByRole('button', {
-        name: /Respondent details.*7 questions/i,
+        name: /Respondent details.*6 questions/i,
     });
     const violence = page.getByRole('button', {
         name: /Violence Experiences.*1 question/i,

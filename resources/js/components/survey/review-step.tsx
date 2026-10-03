@@ -4,7 +4,6 @@ import type {
     Respondent,
 } from '@/components/survey/questionnaire';
 import type { Directories, SurveyAnswers } from '@/components/survey/types';
-import { placeLine } from '@/lib/places';
 
 /** Step 4: the answers as they will be submitted. */
 export function ReviewStep({
@@ -25,7 +24,6 @@ export function ReviewStep({
         genderIdentities,
         groupFollowUps,
         groupRequiresText,
-        clusters,
         detailLabel,
     } = respondent;
 
@@ -114,12 +112,9 @@ export function ReviewStep({
                         directories.heis.find(
                             (i) => String(i.id) === data.hei_id,
                         )?.name,
-                        // The holding cluster is not a place.
-                        placeLine(
-                            clusters.find(
-                                (i) => String(i.id) === data.cluster_id,
-                            )?.name,
-                        ),
+                        directories.regions.find(
+                            (i) => String(i.id) === data.region_id,
+                        )?.name,
                     ]
                         .filter(Boolean)
                         .join(', ')}

@@ -21,7 +21,7 @@ class UserFilterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            ...Arr::only(PlaceFilters::rules(), ['region', 'cluster', 'hei', 'search', 'page']),
+            ...Arr::only(PlaceFilters::rules(), ['region', 'hei', 'search', 'page']),
             'status' => ['nullable', Rule::enum(UserStatus::class)],
             'role' => ['nullable', 'string', Rule::exists('roles', 'slug')],
         ];

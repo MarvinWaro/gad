@@ -39,7 +39,7 @@ export function DashboardFilterBar({
         change({ ...values, [key]: value });
     const count =
         (values.view === 'year' ? 2 : 3) +
-        placeFilterCount(options.regions, options.clusters) +
+        placeFilterCount(options.regions) +
         2;
 
     return (
@@ -108,7 +108,6 @@ export function DashboardFilterBar({
                     values={values}
                     onPick={pick}
                     regions={options.regions}
-                    clusters={options.clusters}
                     heis={options.heis}
                 />
                 <Filter label="Ownership" id="ownership">

@@ -116,7 +116,7 @@ test('approving and deactivating accounts are logged as such', function () {
 
 test('switching an HEI off is logged as deactivating it, and an edit that changes nothing is not logged', function () {
     $route = route('settings.survey-directories.update', ['type' => 'heis', 'id' => $this->hei->id]);
-    $fields = ['name' => $this->hei->name, 'survey_cluster_id' => $this->hei->survey_cluster_id];
+    $fields = ['name' => $this->hei->name, 'survey_region_id' => $this->hei->cluster->survey_region_id];
 
     $this->actingAs($this->admin)->put($route, [...$fields, 'is_active' => true])->assertSessionHasNoErrors();
     $this->actingAs($this->admin)->put($route, [...$fields, 'is_active' => false])->assertSessionHasNoErrors();

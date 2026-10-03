@@ -20,7 +20,6 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { placeLine } from '@/lib/places';
 import { cn } from '@/lib/utils';
 import type {
     ChecklistDefinition,
@@ -37,7 +36,6 @@ type Props = {
     academicYears: string[];
     hasOffice: boolean;
     regions: DirectoryOption[];
-    clusters: DirectoryOption[];
     heis: DirectoryOption[];
 };
 
@@ -49,7 +47,6 @@ export default function ChecklistResponses({
     academicYears,
     hasOffice,
     regions,
-    clusters,
     heis,
 }: Props) {
     const { values, loading, filtered, apply, change, search, pick } =
@@ -81,7 +78,7 @@ export default function ChecklistResponses({
                 <div className="@container overflow-hidden rounded-xl border bg-card">
                     <FilterBar
                         label="Filter answers"
-                        filters={1 + placeFilterCount(regions, clusters)}
+                        filters={1 + placeFilterCount(regions)}
                     >
                         <SearchFilter
                             value={values.search ?? ''}
@@ -100,7 +97,6 @@ export default function ChecklistResponses({
                             values={values}
                             onPick={pick}
                             regions={regions}
-                            clusters={clusters}
                             heis={heis}
                         />
                     </FilterBar>
@@ -179,8 +175,8 @@ function ResponseRow({
     response: ChecklistResponse;
     checklist: ChecklistDefinition;
 }) {
-    const { hei, cluster, region } = response.place;
-    const place = placeLine(cluster?.name, region?.name);
+    const { hei, region } = response.place;
+    const place = region?.name;
     const count = response.items.length;
     const all = checklist.items.length;
 

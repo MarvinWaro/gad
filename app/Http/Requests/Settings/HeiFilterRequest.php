@@ -19,7 +19,7 @@ class HeiFilterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            ...Arr::only(PlaceFilters::rules(), ['region', 'cluster', 'search', 'page']),
+            ...Arr::only(PlaceFilters::rules(), ['region', 'search', 'page']),
             'status' => ['nullable', 'in:active,inactive'],
             // "none": the ownership is not set yet.
             'ownership' => ['nullable', 'in:public,private,none'],

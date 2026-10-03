@@ -16,7 +16,6 @@ type Row = {
     respondent_group: string;
     respondent_group_other: string | null;
     region: string;
-    cluster: string;
     hei: string;
     submitted_at: string;
     expires_at: string;
@@ -146,8 +145,7 @@ export default function Responses({
                                                 <td className="px-5 py-4">
                                                     {row.hei}
                                                     <p className="text-xs text-muted-foreground">
-                                                        {row.region} ·{' '}
-                                                        {row.cluster}
+                                                        {row.region}
                                                     </p>
                                                 </td>
                                                 <td className="px-5 py-4 text-xs">
