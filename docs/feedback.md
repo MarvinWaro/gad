@@ -34,9 +34,9 @@ Only the type and the feedback are required, as on the old form.
 - the suggestions
 - one nullable score per rated question
 - the optional email and name
-- the region, cluster and HEI
+- the region and HEI
 
-The cluster comes from the HEI, never from the visitor (`App\Actions\Feedback\SubmitSiteFeedback`).
+The HEI's cluster is kept with them, never asked of the visitor and never shown (`App\Actions\Feedback\SubmitSiteFeedback`).
 
 No account, IP address or browser details are kept. Submissions are not written to the activity log, for the same reason as survey answers.
 

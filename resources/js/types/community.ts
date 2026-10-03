@@ -163,8 +163,6 @@ export type HeiSurvey = {
     responses_from_hei: number;
 };
 
-export type HeiSummary = HeiRef & { cluster: string | null };
-
 /** A colleague on the HEI home (App\Http\Resources\InstitutionPersonResource). */
 export type InstitutionPerson = {
     id: number;

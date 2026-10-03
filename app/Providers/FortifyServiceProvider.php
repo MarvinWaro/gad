@@ -103,26 +103,33 @@ class FortifyServiceProvider extends ServiceProvider
             ])
             : to_route('dashboard'));
 
-        Fortify::registerView(function () {
+        Fortify::registerView(function (Request $request) {
             $openRegions = SurveyRegion::query()->openForInstantRegistration()->pluck('id');
+            $regions = SurveyRegion::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'office_email']);
+            // The region picked (?region=), or the only one there is.
+            $regionId = $regions->count() === 1
+                ? $regions->first()?->id
+                : $regions->firstWhere('id', $request->integer('region'))?->id;
 
             return Inertia::render('auth/register', [
                 'passwordRules' => Password::defaults()->toPasswordRulesString(),
                 // Every active region, as the surveys list them; a region can
-                // be listed before its institutions arrive from the CHED
-                // directory. `instant`: new accounts need no approval there;
-                // `email`: its office, for having an institution added.
-                'regions' => SurveyRegion::query()
-                    ->where('is_active', true)
-                    ->orderBy('name')
-                    ->get(['id', 'name', 'office_email'])
-                    ->map(fn (SurveyRegion $region): array => [
-                        'id' => $region->id,
-                        'name' => $region->name,
-                        'instant' => $openRegions->contains($region->id),
-                        'email' => $region->office_email,
-                    ]),
-                'heis' => SurveyHei::pickerOptions(),
+                // be listed before its institutions arrive from HEIDA.
+                // `instant`: new accounts need no approval there; `email`:
+                // its office, for having an institution added.
+                'regions' => $regions->map(fn (SurveyRegion $region): array => [
+                    'id' => $region->id,
+                    'name' => $region->name,
+                    'instant' => $openRegions->contains($region->id),
+                    'email' => $region->office_email,
+                ]),
+                // Only the picked region's institutions, reloaded when the
+                // region changes: the whole country's would weigh the page down.
+                'region' => $regionId,
+                'heis' => fn (): array => $regionId === null ? [] : SurveyHei::pickerOptions($regionId),
             ]);
         });
 

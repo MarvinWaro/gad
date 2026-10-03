@@ -67,16 +67,8 @@ export function detailErrors(
     }
     if (isRequired('region') && !data.region_id) {
         errors.region_id = 'Choose your region.';
-    } else if (data.cluster_id && !data.region_id) {
-        errors.region_id = 'Choose the region this cluster belongs to.';
-    }
-    // The cluster is asked once a region is chosen, and only when the region
-    // has two or more (one is picked with the region). Until then the region's
-    // own error covers it.
-    if (data.region_id && isRequired('cluster') && !data.cluster_id) {
-        errors.cluster_id = 'Choose your cluster.';
-    } else if (data.hei_id && !data.cluster_id) {
-        errors.cluster_id = 'Choose the cluster this institution belongs to.';
+    } else if (data.hei_id && !data.region_id) {
+        errors.region_id = 'Choose the region this institution belongs to.';
     }
     if (isRequired('hei') && !data.hei_id) {
         errors.hei_id = 'Choose your institution.';

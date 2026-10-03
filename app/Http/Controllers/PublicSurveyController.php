@@ -55,7 +55,7 @@ class PublicSurveyController extends Controller
                         $this->directoryGroups($groupQuestion),
                     ),
                 ]
-                : ['regions' => [], 'clusters' => [], 'heis' => [], 'respondent_groups' => []],
+                : ['regions' => [], 'heis' => [], 'respondent_groups' => []],
             'respondentDetails' => RespondentDetails::forForm(),
             'confirmation' => $request->session()->pull('survey_confirmation'),
         ]);
@@ -92,7 +92,7 @@ class PublicSurveyController extends Controller
 
         // A question the editor did not mark Required may be left blank, but a
         // value that IS given still has to be real and still has to sit under
-        // the region and cluster the respondent chose.
+        // the region the respondent chose.
         $selectionRules = [];
         foreach ($multiSelects as $id => $question) {
             $selectionRules["selections.{$id}"] = ($required[$id] ?? 'sometimes') === 'required'
@@ -122,19 +122,16 @@ class PublicSurveyController extends Controller
             'gender_identity' => [Rule::excludeIf($genderIdentities === []), $required['sex'], 'nullable', Rule::in(array_keys($genderIdentities))],
             ...RespondentFollowUps::answerRules($groupQuestions, $request->input('group_answers')),
             'region_id' => [
-                $required['region'], 'nullable',
-                Rule::requiredIf(fn (): bool => $request->filled('cluster_id')),
+                // An institution without its region would not narrow to anything.
+                Rule::requiredIf(fn (): bool => $required['region'] === 'required' || $request->filled('hei_id')),
+                'nullable',
                 Rule::exists('survey_regions', 'id')->where('is_active', true),
-            ],
-            'cluster_id' => [
-                $required['cluster'], 'nullable',
-                // A cluster without its region would not narrow to anything.
-                Rule::requiredIf(fn (): bool => $request->filled('hei_id')),
-                Rule::exists('survey_clusters', 'id')->where(fn ($query) => $query->where('is_active', true)->where('survey_region_id', $request->integer('region_id'))),
             ],
             'hei_id' => [
                 $required['hei'], 'nullable',
-                Rule::exists('survey_heis', 'id')->where(fn ($query) => $query->where('is_active', true)->where('survey_cluster_id', $request->integer('cluster_id'))),
+                Rule::exists('survey_heis', 'id')->where(fn ($query) => $query
+                    ->where('is_active', true)
+                    ->whereIn('survey_cluster_id', SurveyCluster::query()->select('id')->where('survey_region_id', $request->integer('region_id')))),
             ],
             'experiences' => [Rule::excludeIf($matrix === null), $required['experiences'], 'nullable', 'array'],
             'experiences.*' => ['distinct', Rule::in($experienceValues)],
@@ -190,7 +187,10 @@ class PublicSurveyController extends Controller
             'respondent_group_other' => $validated['respondent_group_other'] ?? null,
             'gender_identity' => $validated['gender_identity'] ?? null,
             'survey_region_id' => $validated['region_id'] ?? null,
-            'survey_cluster_id' => $validated['cluster_id'] ?? null,
+            // Never asked: the institution's own, kept for the statistics.
+            'survey_cluster_id' => isset($validated['hei_id'])
+                ? SurveyHei::query()->whereKey($validated['hei_id'])->value('survey_cluster_id')
+                : null,
             'survey_hei_id' => $validated['hei_id'] ?? null,
             'answers' => [
                 ...($multiSelects === [] ? [] : ['selections' => $this->selections($multiSelects, $validated)]),
@@ -347,22 +347,22 @@ class PublicSurveyController extends Controller
         }
 
         $rules = [];
-        $ids = [...array_keys($flags), 'age', 'sex', 'respondent_group', 'region', 'cluster', 'hei', 'experiences', 'answering_for'];
+        $ids = [...array_keys($flags), 'age', 'sex', 'respondent_group', 'region', 'hei', 'experiences', 'answering_for'];
         foreach (array_unique($ids) as $id) {
             $rules[$id] = ($flags[$id] ?? ! in_array($id, ['experiences', 'answering_for'], true)) ? 'required' : 'sometimes';
         }
+        // The definitions still carry a Cluster question, but respondents
+        // are never asked it: the institution they pick decides it.
+        unset($rules['cluster']);
 
         return $rules;
     }
 
     /**
-     * The choices a respondent can actually complete.
-     *
-     * Region, cluster, and HEI narrow each other, so a branch that ends before
-     * a *required* level is a dead end: picking it would leave the respondent
-     * unable to continue and unable to see why. Those branches are withheld
-     * rather than offered and then rejected. A level the questionnaire marks
-     * optional is free to be empty, because the respondent can move on.
+     * The choices a respondent can actually complete: regions, then each
+     * region's institutions, which carry their region so the form can narrow
+     * them. When the institution is required, a region with none is withheld
+     * rather than offered and then rejected. Clusters are never asked.
      *
      * @param  array<string, string>  $required
      * @return array<string, mixed>
@@ -370,20 +370,23 @@ class PublicSurveyController extends Controller
     private function directories(array $required): array
     {
         $regions = SurveyRegion::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
-        $clusters = SurveyCluster::query()->where('is_active', true)->orderBy('name')->get(['id', 'survey_region_id', 'name']);
-        $heis = SurveyHei::query()->where('is_active', true)->orderBy('name')->get(['id', 'survey_cluster_id', 'name']);
+        $heis = SurveyHei::query()
+            ->join('survey_clusters', 'survey_clusters.id', '=', 'survey_heis.survey_cluster_id')
+            ->where('survey_heis.is_active', true)
+            ->whereIn('survey_clusters.survey_region_id', $regions->pluck('id'))
+            ->orderBy('survey_heis.name')
+            ->get(['survey_heis.id', 'survey_heis.name', 'survey_clusters.survey_region_id'])
+            ->map(fn (SurveyHei $hei): array => [
+                'id' => $hei->id,
+                'name' => $hei->name,
+                'survey_region_id' => (int) $hei->getAttribute('survey_region_id'),
+            ]);
 
         if ($required['hei'] === 'required') {
-            $clusters = $clusters->whereIn('id', $heis->pluck('survey_cluster_id')->unique())->values();
-        }
-        if ($required['cluster'] === 'required' || $required['hei'] === 'required') {
-            $regions = $regions->whereIn('id', $clusters->pluck('survey_region_id')->unique())->values();
+            $regions = $regions->whereIn('id', $heis->pluck('survey_region_id')->unique())->values();
         }
 
-        $clusters = $clusters->whereIn('survey_region_id', $regions->pluck('id'))->values();
-        $heis = $heis->whereIn('survey_cluster_id', $clusters->pluck('id'))->values();
-
-        return ['regions' => $regions, 'clusters' => $clusters, 'heis' => $heis];
+        return ['regions' => $regions, 'heis' => $heis->values()];
     }
 
     /** @param array<string, mixed> $definition

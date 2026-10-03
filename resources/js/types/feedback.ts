@@ -49,7 +49,6 @@ export type SiteFeedback = {
     contact: { name: string | null; email: string | null };
     place: {
         region: string | null;
-        cluster: string | null;
         hei: string | null;
     };
     submitted_at: string;
@@ -79,7 +78,6 @@ export type FeedbackSummary = {
 export type FeedbackFilters = {
     type?: string;
     region?: string;
-    cluster?: string;
     hei?: string;
     search?: string;
 };

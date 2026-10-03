@@ -27,7 +27,7 @@ class DashboardFilterRequest extends FormRequest
         }
 
         return [
-            ...Arr::only(PlaceFilters::rules(), ['academic_year', 'region', 'cluster', 'hei']),
+            ...Arr::only(PlaceFilters::rules(), ['academic_year', 'region', 'hei']),
             'view' => ['nullable', Rule::in(ReportingPeriod::VIEWS)],
             'semester' => ['nullable', 'integer', Rule::in([1, 2])],
             'month' => ['nullable', 'integer', 'between:1,12'],

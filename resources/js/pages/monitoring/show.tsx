@@ -67,9 +67,7 @@ function ReportPage({ report, templates, office, viewer }: Props) {
         .flatMap((revision) => revision.reviews)
         .filter((review) => review.decision === 'returned')
         .at(-1);
-    const place = [report.place.cluster?.name, report.place.region?.name]
-        .filter(Boolean)
-        .join(' · ');
+    const place = report.place.region?.name ?? '';
 
     return (
         <>

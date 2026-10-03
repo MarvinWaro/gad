@@ -139,9 +139,8 @@ test('staff see the answers from the regions their office covers', function () {
             ->where('responses.meta.total', 1)
             ->where('hasOffice', true)
             ->has('regions', 1)
-            // The region's institutions sit in one cluster: no cluster to
-            // choose, so they list straight away.
-            ->has('clusters', 0)
+            // No clusters: the region's institutions list straight away.
+            ->missing('clusters')
             ->where('heis.0.name', 'Fictional Checklist HEI'));
 
     $this->actingAs(checklistStaff($elsewhere))->get('/admin/monitoring/compliance')
@@ -167,10 +166,11 @@ test('CHED filters the answers by year, place and name', function () {
     $this->get('/admin/monitoring/training')->assertInertia(fn (Assert $page) => $page->has('responses.data', 3));
     $this->get('/admin/monitoring/training?academic_year=2025-2026')
         ->assertInertia(fn (Assert $page) => $page->has('responses.data', 1));
-    $this->get('/admin/monitoring/training?cluster='.$cluster->id)->assertInertia(fn (Assert $page) => $page
+    $this->get('/admin/monitoring/training?hei='.$other->id)->assertInertia(fn (Assert $page) => $page
         ->has('responses.data', 1)
         ->where('responses.data.0.place.hei.name', 'Example Other College')
-        ->has('heis', 1));
+        ->missing('responses.data.0.place.cluster')
+        ->has('heis', 2));
     $this->get('/admin/monitoring/training?search=Checklist')
         ->assertInertia(fn (Assert $page) => $page->has('responses.data', 2));
     $this->get('/admin/monitoring/training?academic_year=2026')->assertSessionHasErrors('academic_year');

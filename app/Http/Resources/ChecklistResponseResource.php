@@ -26,7 +26,6 @@ class ChecklistResponseResource extends JsonResource
             'submitted_by' => $this->whenLoaded('submitter', fn (): ?string => $this->submitter?->name),
             'place' => [
                 'hei' => $this->whenLoaded('hei', fn (): array => $this->hei->only(['id', 'name'])),
-                'cluster' => $this->whenLoaded('cluster', fn (): array => $this->cluster->only(['id', 'name'])),
                 'region' => $this->whenLoaded('region', fn (): array => $this->region->only(['id', 'name'])),
             ],
         ];

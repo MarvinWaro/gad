@@ -109,6 +109,50 @@ test('the registration form lists every active region, and says which register o
             'instant' => false,
             'email' => 'chedro12@ched.gov.ph',
         ])
-        ->where('heis.0', ['id' => $closed->id, 'name' => 'Closed Region College', 'region_id' => $closed->cluster->survey_region_id])
-        ->where('heis.1', ['id' => $open->id, 'name' => 'Open Region College', 'region_id' => $openRegion->id]));
+        // No region picked yet, so no institutions are sent.
+        ->where('region', null)
+        ->where('heis', []));
+
+    $this->get(route('register', ['region' => $openRegion->id]))->assertInertia(fn (Assert $page) => $page
+        ->where('region', $openRegion->id)
+        ->where('heis', [['id' => $open->id, 'name' => 'Open Region College', 'region_id' => $openRegion->id]]));
+});
+
+test('picking a region reloads only its active institutions', function () {
+    $listed = createSurveyHei(['name' => 'Listed College']);
+    $regionId = $listed->cluster->survey_region_id;
+    createSurveyHei(['name' => 'Closed College', 'is_active' => false]);
+    $elsewhere = SurveyRegion::query()->create(['name' => 'Regional Office XI']);
+    SurveyHei::query()->create([
+        'survey_cluster_id' => SurveyCluster::query()->create(['survey_region_id' => $elsewhere->id, 'name' => 'Davao', 'is_active' => true])->id,
+        'name' => 'Elsewhere College',
+        'is_active' => true,
+    ]);
+
+    $this->get(route('register', ['region' => $regionId]))->assertInertia(fn (Assert $page) => $page
+        ->reloadOnly(['region', 'heis'], fn (Assert $reload) => $reload
+            ->where('region', $regionId)
+            ->where('heis', [['id' => $listed->id, 'name' => 'Listed College', 'region_id' => $regionId]])
+            ->missing('regions')));
+});
+
+test('an unknown or inactive region sends no institutions', function () {
+    createSurveyHei();
+    SurveyRegion::query()->create(['name' => 'Regional Office XI']);
+    $inactive = SurveyRegion::query()->create(['name' => 'Regional Office NIR', 'is_active' => false]);
+
+    foreach ([999999, $inactive->id] as $region) {
+        $this->get(route('register', ['region' => $region]))->assertInertia(fn (Assert $page) => $page
+            ->where('region', null)
+            ->where('heis', []));
+    }
+});
+
+test('with one region to choose from, its institutions come straight away', function () {
+    $hei = createSurveyHei(['name' => 'Only Region College']);
+
+    $this->get(route('register'))->assertInertia(fn (Assert $page) => $page
+        ->has('regions', 1)
+        ->where('region', $hei->cluster->survey_region_id)
+        ->where('heis.0.name', 'Only Region College'));
 });

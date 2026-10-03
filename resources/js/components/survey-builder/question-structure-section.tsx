@@ -1,7 +1,11 @@
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
-import { moveWithin, newSection } from '@/components/survey-builder/definition';
+import {
+    moveWithin,
+    newSection,
+    shownQuestionIndexes,
+} from '@/components/survey-builder/definition';
 import { FormSection } from '@/components/survey-builder/form-section';
 import { useReadOnly } from '@/components/survey-builder/read-only';
 import { SectionCard } from '@/components/survey-builder/section-card';
@@ -73,7 +77,11 @@ export function QuestionStructureSection({
                                                     'Untitled section'}
                                             </span>
                                             <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                                                {section.questions.length}
+                                                {
+                                                    shownQuestionIndexes(
+                                                        section,
+                                                    ).length
+                                                }
                                             </span>
                                         </a>
                                     </li>

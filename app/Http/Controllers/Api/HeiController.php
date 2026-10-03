@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Http\JsonResponse;
 use Throwable;
 
 class HeiController extends Controller
@@ -22,14 +22,6 @@ class HeiController extends Controller
     }
 
     /**
-     * HEIDA Bearer token.
-     */
-    private function token(): ?string
-    {
-        return config('services.heida.token');
-    }
-
-    /**
      * Get Regions
      *
      * GET /api/regions
@@ -37,14 +29,14 @@ class HeiController extends Controller
     public function regions(): JsonResponse
     {
         try {
-            $url = $this->baseUrl() . '/api/regions';
+            $url = $this->baseUrl().'/api/regions';
 
-          $response = Http::withoutVerifying()
-            ->acceptJson()
-            ->timeout(30)
-            ->get($url, [
-                'per_page' => 100,
-            ]);
+            $response = Http::withoutVerifying()
+                ->acceptJson()
+                ->timeout(30)
+                ->get($url, [
+                    'per_page' => 100,
+                ]);
 
             if ($response->failed()) {
                 return response()->json([
@@ -75,7 +67,7 @@ class HeiController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $url = $this->baseUrl() . '/api/heis';
+            $url = $this->baseUrl().'/api/heis';
 
             $params = [
                 'per_page' => $request->integer(
@@ -117,7 +109,7 @@ class HeiController extends Controller
             |--------------------------------------------------------------------------
             */
 
-           $response = Http::withoutVerifying()
+            $response = Http::withoutVerifying()
                 ->acceptJson()
                 ->timeout(30)
                 ->get($url, $params);
@@ -140,7 +132,12 @@ class HeiController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            $heis = collect($json['data'] ?? [])
+            // HEIDA's list, or none if the reply is not the expected shape.
+            $rows = is_array($json) && is_array($json['data'] ?? null)
+                ? $json['data']
+                : [];
+
+            $heis = collect($rows)
                 ->map(function (array $hei) {
 
                     $region =
@@ -180,83 +177,70 @@ class HeiController extends Controller
                     ]);
 
                     return [
-                        'id' =>
-                            $hei['id'] ?? null,
+                        'id' => $hei['id'] ?? null,
 
                         /*
                          * UII / HEI Code
                          */
-                        'code' =>
-                            $hei['code'] ?? null,
+                        'code' => $hei['code'] ?? null,
 
                         /*
                          * HEI
                          */
-                        'name' =>
-                            $hei['name'] ?? null,
+                        'name' => $hei['name'] ?? null,
 
-                        'abbreviation' =>
-                            $hei['abbreviation'] ?? null,
+                        'abbreviation' => $hei['abbreviation'] ?? null,
 
                         /*
                          * Region
                          */
-                        'region_id' =>
-                            is_array($region)
+                        'region_id' => is_array($region)
                                 ? ($region['id'] ?? null)
                                 : null,
 
-                        'region_code' =>
-                            is_array($region)
+                        'region_code' => is_array($region)
                                 ? ($region['code'] ?? null)
                                 : null,
 
-                        'region_name' =>
-                            is_array($region)
+                        'region_name' => is_array($region)
                                 ? ($region['name'] ?? null)
                                 : null,
 
                         /*
                          * Province
                          */
-                        'province' =>
-                            is_array($province)
+                        'province' => is_array($province)
                                 ? ($province['name'] ?? null)
                                 : null,
 
                         /*
                          * City / Municipality
                          */
-                        'city_municipality' =>
-                            is_array($city)
+                        'city_municipality' => is_array($city)
                                 ? ($city['name'] ?? null)
                                 : null,
 
                         /*
                          * Barangay
                          */
-                        'barangay' =>
-                            is_array($barangay)
+                        'barangay' => is_array($barangay)
                                 ? ($barangay['name'] ?? null)
                                 : null,
 
                         /*
                          * Full Address
                          */
-                        'address' =>
-                            implode(', ', $addressParts),
+                        'address' => implode(', ', $addressParts),
 
                         /*
                          * HEI Type
                          */
-                        'hei_type' =>
-                            $hei['hei_type'] ?? null,
+                        'hei_type' => $hei['hei_type'] ?? null,
 
                         /*
                          * Status
                          */
-                        'status' =>
-                            $hei['status'] ?? null,
+                        'status' => $hei['status'] ?? null,
                     ];
                 })
                 ->values();
@@ -270,29 +254,24 @@ class HeiController extends Controller
             return response()->json([
                 'data' => $heis,
 
-                'meta' =>
-                    $json['meta'] ?? [
-                        'total' => $heis->count(),
-                        'per_page' =>
-                            $request->integer(
-                                'per_page',
-                                25
-                            ),
-                        'current_page' =>
-                            $request->integer(
-                                'page',
-                                1
-                            ),
-                        'last_page' => 1,
-                    ],
+                'meta' => $json['meta'] ?? [
+                    'total' => $heis->count(),
+                    'per_page' => $request->integer(
+                        'per_page',
+                        25
+                    ),
+                    'current_page' => $request->integer(
+                        'page',
+                        1
+                    ),
+                    'last_page' => 1,
+                ],
             ]);
         } catch (Throwable $e) {
             return response()->json([
-                'message' =>
-                    'Unable to connect to HEIDA.',
+                'message' => 'Unable to connect to HEIDA.',
 
-                'error' =>
-                    $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

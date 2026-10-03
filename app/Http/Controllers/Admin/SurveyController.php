@@ -6,7 +6,6 @@ use App\Enums\ActivityAction;
 use App\Enums\ActivityModule;
 use App\Http\Controllers\Controller;
 use App\Models\Survey;
-use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\SurveyVersion;
@@ -123,7 +122,6 @@ class SurveyController extends Controller
             ],
             'directoryStatus' => [
                 'regions' => SurveyRegion::query()->where('is_active', true)->count(),
-                'clusters' => SurveyCluster::query()->where('is_active', true)->count(),
                 'heis' => SurveyHei::query()->where('is_active', true)->count(),
             ],
             'readiness' => $this->publishChecks($request, $survey, $draft),
@@ -289,8 +287,7 @@ class SurveyController extends Controller
     {
         $hasDirectoryChain = SurveyHei::query()
             ->where('is_active', true)
-            ->whereHas('cluster', fn ($query) => $query->where('is_active', true)
-                ->whereHas('region', fn ($query) => $query->where('is_active', true)))
+            ->whereHas('cluster.region', fn ($query) => $query->where('is_active', true))
             ->exists();
         $definitionError = $this->definitionError($draft->definition, $survey->slug);
 
@@ -314,9 +311,9 @@ class SurveyController extends Controller
             [
                 'key' => 'directories',
                 'error_key' => 'directories',
-                'label' => 'Region, cluster, and HEI directory',
+                'label' => 'Region and HEI directory',
                 'passed' => $hasDirectoryChain,
-                'detail' => 'Respondents choose their institution from this list. Add at least one active Region, Cluster, and HEI.',
+                'detail' => 'Respondents choose their institution from this list. Add at least one active Region and HEI.',
                 'href' => $request->user()?->can('survey-directories.view')
                     ? route('settings.regions.index')
                     : null,

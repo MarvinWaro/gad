@@ -30,7 +30,7 @@ beforeEach(function () {
         ...respondentFollowUps(),
         'version_id' => $this->survey->publishedVersion()->id,
         'answering_for' => 'self', 'age' => 22, 'sex' => 'female', 'respondent_group' => 'student',
-        'region_id' => $this->region->id, 'cluster_id' => $this->cluster->id, 'hei_id' => $this->hei->id,
+        'region_id' => $this->region->id, 'hei_id' => $this->hei->id,
         'experiences' => ['physical-violence'], 'perpetrators' => ['physical-violence' => ['teacher']],
         'other_relative_details' => [], 'consent' => true,
     ];

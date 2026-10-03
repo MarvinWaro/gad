@@ -207,7 +207,7 @@ test('public page receives only the immutable published version', function () {
             ->where('survey.version', 1)
             ->where('survey.introduction', $publishedIntroduction)
             ->has('directories.regions', 1)
-            ->has('directories.clusters', 1)
+            ->missing('directories.clusters')
             ->has('directories.heis', 1));
 });
 
@@ -225,7 +225,6 @@ test('anonymous responses validate conditional answers and store no direct ident
         'sex' => 'female',
         'respondent_group' => 'student',
         'region_id' => $region->id,
-        'cluster_id' => $cluster->id,
         'hei_id' => $hei->id,
         'experiences' => ['catcalling'],
         'perpetrators' => ['catcalling' => ['supervisor']],
@@ -261,7 +260,7 @@ test('respondents under eighteen require guardian confirmation', function () {
     $this->post(route('surveys.responses.store', $survey), [
         'version_id' => $version->id, 'age' => 17, 'sex' => 'prefer-not-to-say',
         'respondent_group' => 'student', 'region_id' => $region->id,
-        'cluster_id' => $cluster->id, 'hei_id' => $hei->id,
+        'hei_id' => $hei->id,
         'experiences' => ['none'], 'perpetrators' => [],
         'other_relative_details' => [], 'consent' => true,
     ])->assertSessionHasErrors('guardian_consent');

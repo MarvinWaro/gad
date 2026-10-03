@@ -29,7 +29,6 @@ const emptyFilters: ActivityFilters = {
     from: '',
     to: '',
     region: '',
-    cluster: '',
     hei: '',
 };
 
@@ -50,7 +49,6 @@ export default function ActivityLogs({
     actions: FormSelectOption[];
     places: {
         regions: DirectoryOption[];
-        clusters: DirectoryOption[];
         heis: DirectoryOption[];
     };
     hasOffice: boolean;
@@ -58,7 +56,7 @@ export default function ActivityLogs({
     const { values, loading, filtered, apply, change, search, pick } =
         useRecordFilters('/settings/activity-logs', filters);
     // Action, module and the two dates, then the places.
-    const filterCount = 4 + placeFilterCount(places.regions, places.clusters);
+    const filterCount = 4 + placeFilterCount(places.regions);
 
     return (
         <>

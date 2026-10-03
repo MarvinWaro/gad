@@ -12,11 +12,11 @@ use App\Models\User;
  */
 class MonitoringReportPolicy
 {
-    /** HEI focal persons of an active HEI, in an active cluster and region. */
+    /** HEI focal persons of an active HEI in an active region. */
     public function create(User $user): bool
     {
         return $user->hasPermissionTo('monitoring.submit') && $user->hei?->is_active
-            && $user->hei->cluster?->is_active && $user->hei->cluster->region?->is_active;
+            && $user->hei->cluster?->region?->is_active;
     }
 
     /** HEI focal persons see their institution's reports in Records. */

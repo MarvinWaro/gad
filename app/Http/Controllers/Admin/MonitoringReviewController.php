@@ -25,7 +25,7 @@ class MonitoringReviewController extends Controller
         $filters = $request->validated();
         $reports = MonitoringReport::query()
             ->withinReachOf($user)
-            ->with(['currentRevision', 'cluster:id,name', 'region:id,name']);
+            ->with(['currentRevision', 'region:id,name']);
 
         PlaceFilters::apply($reports, $filters);
 

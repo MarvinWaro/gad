@@ -71,7 +71,6 @@ export type DirectoryOption = { id: number; name: string };
 
 export type MonitoringPlace = {
     hei: DirectoryOption;
-    cluster: DirectoryOption | null;
     region: DirectoryOption | null;
 };
 
@@ -125,7 +124,6 @@ export type ReportFilters = {
     semester?: string;
     status?: string;
     region?: string;
-    cluster?: string;
     hei?: string;
     search?: string;
 };

@@ -82,14 +82,14 @@ test('unchecking Required on a question really makes that answer optional', func
     $survey = publishOptionalHeiRa7877();
     $version = $survey->publishedVersion();
     $region = SurveyRegion::query()->sole();
-    $cluster = SurveyCluster::query()->sole();
 
-    // The public page tells the form which answers may be left blank.
+    // The public page tells the form which answers may be left blank. The
+    // definition still has a Cluster question, but it is never asked.
     $this->get(route('surveys.show', ['law' => 'ra-7877']))
         ->assertInertia(fn (Assert $page) => $page
             ->where('survey.required.hei', 'sometimes')
             ->where('survey.required.region', 'required')
-            ->where('survey.required.cluster', 'required'));
+            ->missing('survey.required.cluster'));
 
     $this->post(route('surveys.responses.store', $survey), [
         ...respondentFollowUps(),
@@ -98,7 +98,6 @@ test('unchecking Required on a question really makes that answer optional', func
         'sex' => 'female',
         'respondent_group' => 'student',
         'region_id' => $region->id,
-        'cluster_id' => $cluster->id,
         'experiences' => ['none'],
         'perpetrators' => [],
         'other_relative_details' => [],
@@ -111,33 +110,28 @@ test('unchecking Required on a question really makes that answer optional', func
 test('a question left Required still has to be answered', function () {
     $survey = publishOptionalHeiRa7877();
     $version = $survey->publishedVersion();
-    $region = SurveyRegion::query()->sole();
 
-    // HEI is optional now, but cluster was left Required.
+    // HEI is optional now, but region was left Required.
     $this->post(route('surveys.responses.store', $survey), [
         ...respondentFollowUps(),
         'version_id' => $version->id,
         'age' => 24,
         'sex' => 'female',
         'respondent_group' => 'student',
-        'region_id' => $region->id,
         'experiences' => ['none'],
         'perpetrators' => [],
         'other_relative_details' => [],
         'consent' => true,
-    ])->assertSessionHasErrors('cluster_id');
+    ])->assertSessionHasErrors('region_id');
 });
 
 test('an optional answer that is supplied still has to be real and in scope', function () {
     $survey = publishOptionalHeiRa7877();
     $version = $survey->publishedVersion();
     $region = SurveyRegion::query()->sole();
-    $cluster = SurveyCluster::query()->sole();
-    $otherCluster = SurveyCluster::query()->create([
-        'survey_region_id' => $region->id, 'name' => 'Another Cluster', 'is_active' => true,
-    ]);
+    $elsewhere = SurveyRegion::query()->create(['name' => 'Regional Office XI', 'is_active' => true]);
     $strayHei = SurveyHei::query()->create([
-        'survey_cluster_id' => $otherCluster->id, 'name' => 'Stray HEI', 'is_active' => true,
+        'survey_cluster_id' => SurveyCluster::holdingFor($elsewhere->id)->id, 'name' => 'Stray HEI', 'is_active' => true,
     ]);
 
     $this->post(route('surveys.responses.store', $survey), [
@@ -147,7 +141,6 @@ test('an optional answer that is supplied still has to be real and in scope', fu
         'sex' => 'female',
         'respondent_group' => 'student',
         'region_id' => $region->id,
-        'cluster_id' => $cluster->id,
         'hei_id' => $strayHei->id,
         'experiences' => ['none'],
         'perpetrators' => [],
@@ -156,10 +149,9 @@ test('an optional answer that is supplied still has to be real and in scope', fu
     ])->assertSessionHasErrors('hei_id');
 });
 
-test('an HEI cannot be submitted without the cluster that narrows it', function () {
-    $survey = publishOptionalHeiRa7877();
+test('an HEI cannot be submitted without the region that narrows it', function () {
+    $survey = publishRa7877WithOptional(['region', 'hei']);
     $version = $survey->publishedVersion();
-    $region = SurveyRegion::query()->sole();
     $hei = SurveyHei::query()->sole();
 
     $this->post(route('surveys.responses.store', $survey), [
@@ -168,25 +160,38 @@ test('an HEI cannot be submitted without the cluster that narrows it', function 
         'age' => 24,
         'sex' => 'female',
         'respondent_group' => 'student',
-        'region_id' => $region->id,
         'hei_id' => $hei->id,
         'experiences' => ['none'],
         'perpetrators' => [],
         'other_relative_details' => [],
         'consent' => true,
-    ])->assertSessionHasErrors('cluster_id');
+    ])->assertSessionHasErrors('region_id');
+});
+
+test('the institution decides the cluster a response is filed under', function () {
+    $survey = publishOptionalHeiRa7877();
+    $hei = SurveyHei::query()->sole();
+
+    $this->post(route('surveys.responses.store', $survey), [
+        ...respondentFollowUps(),
+        'version_id' => $survey->publishedVersion()->id,
+        'age' => 24, 'sex' => 'female', 'respondent_group' => 'student',
+        'region_id' => SurveyRegion::query()->sole()->id, 'hei_id' => $hei->id,
+        'experiences' => ['none'], 'perpetrators' => [], 'other_relative_details' => [], 'consent' => true,
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    expect(SurveyResponse::query()->sole()->survey_cluster_id)->toBe($hei->survey_cluster_id);
 });
 
 test('a response missing its optional institution still renders for reviewers', function () {
     $survey = publishOptionalHeiRa7877();
     $version = $survey->publishedVersion();
     $region = SurveyRegion::query()->sole();
-    $cluster = SurveyCluster::query()->sole();
     $this->post(route('surveys.responses.store', $survey), [
         ...respondentFollowUps(),
         'version_id' => $version->id, 'age' => 24, 'sex' => 'female',
         'respondent_group' => 'student', 'region_id' => $region->id,
-        'cluster_id' => $cluster->id, 'experiences' => ['none'],
+        'experiences' => ['none'],
         'perpetrators' => [], 'other_relative_details' => [], 'consent' => true,
     ])->assertRedirect();
 
@@ -206,10 +211,24 @@ test('a response missing its optional institution still renders for reviewers', 
         ->assertOk();
 });
 
-test('a region that cannot reach a required cluster is never offered', function () {
-    // RA 7877 keeps cluster Required; this region has none, so choosing it
-    // would strand the respondent on a disabled, empty dropdown.
-    $survey = publishOptionalHeiRa7877();
+test('the survey never asks for a cluster: each institution carries its region', function () {
+    publishOptionalHeiRa7877();
+    $hei = SurveyHei::query()->sole();
+
+    $this->get(route('surveys.show', ['law' => 'ra-7877']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->missing('directories.clusters')
+            ->where('directories.heis', [[
+                'id' => $hei->id,
+                'name' => 'Test HEI',
+                'survey_region_id' => SurveyRegion::query()->sole()->id,
+            ]]));
+});
+
+test('a region with no institutions is never offered while the HEI is required', function () {
+    // Choosing it would strand the respondent on a disabled, empty dropdown.
+    publishRa7877WithOptional([]);
     SurveyRegion::query()->create(['name' => 'BARMM B', 'is_active' => true]);
 
     $this->get(route('surveys.show', ['law' => 'ra-7877']))
@@ -219,19 +238,19 @@ test('a region that cannot reach a required cluster is never offered', function 
             ->where('directories.regions.0.name', 'Regional Office XII'));
 });
 
-test('a region whose clusters are all deactivated drops out of the list too', function () {
-    $survey = publishOptionalHeiRa7877();
-    SurveyCluster::query()->sole()->update(['is_active' => false]);
+test('a region whose institutions are all deactivated drops out of the list too', function () {
+    publishRa7877WithOptional([]);
+    SurveyHei::query()->sole()->update(['is_active' => false]);
 
     $this->get(route('surveys.show', ['law' => 'ra-7877']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->has('directories.regions', 0)
-            ->has('directories.clusters', 0));
+            ->has('directories.heis', 0));
 });
 
-test('when the cluster is optional an empty region stays available', function () {
-    $survey = publishRa7877WithOptional(['cluster', 'hei']);
+test('when the HEI is optional an empty region stays available', function () {
+    $survey = publishOptionalHeiRa7877();
     SurveyRegion::query()->create(['name' => 'BARMM B', 'is_active' => true]);
 
     $this->get(route('surveys.show', ['law' => 'ra-7877']))
@@ -249,30 +268,4 @@ test('when the cluster is optional an empty region stays available', function ()
     ])->assertRedirect()->assertSessionHasNoErrors();
 
     expect(SurveyResponse::query()->sole()->survey_cluster_id)->toBeNull();
-});
-
-test('a cluster with no institutions is still offered while the HEI is optional', function () {
-    $survey = publishOptionalHeiRa7877();
-    $region = SurveyRegion::query()->sole();
-    SurveyCluster::query()->create([
-        'survey_region_id' => $region->id, 'name' => 'Empty Cluster', 'is_active' => true,
-    ]);
-
-    $this->get(route('surveys.show', ['law' => 'ra-7877']))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->has('directories.clusters', 2));
-});
-
-test('making the HEI required withdraws clusters that have no institutions', function () {
-    $survey = publishRa7877WithOptional([]);
-    $region = SurveyRegion::query()->sole();
-    SurveyCluster::query()->create([
-        'survey_region_id' => $region->id, 'name' => 'Empty Cluster', 'is_active' => true,
-    ]);
-
-    $this->get(route('surveys.show', ['law' => 'ra-7877']))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->has('directories.clusters', 1)
-            ->where('directories.clusters.0.name', 'Test Cluster'));
 });

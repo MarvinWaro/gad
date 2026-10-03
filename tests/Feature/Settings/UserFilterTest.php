@@ -57,10 +57,10 @@ test('users filter by where they are placed: their institution, or their regiona
     // An HEI account through its institution's region; CHED staff through their office.
     $this->get(route('settings.users.index', ['region' => $this->xi->id]))->assertInertia(function (Assert $page) {
         expect(listedUsers($page))->toBe(['Eleven Staff', 'Eleven User']);
-        // One cluster is no choice: the region's institutions list straight away.
-        $page->has('places.clusters', 0)->where('places.heis.0.name', 'Eleven College');
+        // No clusters: the region's institutions list straight away.
+        $page->missing('places.clusters')->where('places.heis.0.name', 'Eleven College');
     });
-    $this->get(route('settings.users.index', ['region' => $this->xii->id, 'cluster' => $this->xiiHei->survey_cluster_id]))
+    $this->get(route('settings.users.index', ['region' => $this->xii->id]))
         ->assertInertia(function (Assert $page) {
             expect(listedUsers($page))->toBe(['Twelve Focal', 'Twelve User']);
             $page->has('places.heis', 1)->where('places.heis.0.name', 'Twelve College');

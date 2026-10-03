@@ -42,7 +42,7 @@ function groupPayload(string $group): array
         ...respondentFollowUps(),
         'version_id' => test()->survey->refresh()->publishedVersion()->id,
         'age' => 24, 'sex' => 'female', 'respondent_group' => $group,
-        'region_id' => test()->region->id, 'cluster_id' => test()->cluster->id,
+        'region_id' => test()->region->id,
         'hei_id' => test()->hei->id, 'experiences' => ['none'],
         'perpetrators' => [], 'other_relative_details' => [], 'consent' => true,
     ];

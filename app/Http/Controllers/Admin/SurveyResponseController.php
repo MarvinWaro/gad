@@ -24,7 +24,7 @@ class SurveyResponseController extends Controller
     public function index(Request $request, Survey $survey): Response
     {
         $responses = $this->query($request, $survey)
-            ->with(['version:id,version', 'region:id,name', 'cluster:id,name', 'hei:id,name'])
+            ->with(['version:id,version', 'region:id,name', 'hei:id,name'])
             ->latest()
             ->paginate(20)
             ->withQueryString()
@@ -44,7 +44,7 @@ class SurveyResponseController extends Controller
     public function show(Request $request, Survey $survey, SurveyResponse $surveyResponse): Response
     {
         abort_unless($surveyResponse->version()->where('survey_id', $survey->id)->exists(), 404);
-        $surveyResponse->load(['version.survey', 'region', 'cluster', 'hei']);
+        $surveyResponse->load(['version.survey', 'region', 'hei']);
 
         return Inertia::render('admin/surveys/response-show', [
             'survey' => ['id' => $survey->id, 'code' => $survey->code, 'title' => $survey->title],
@@ -71,8 +71,8 @@ class SurveyResponseController extends Controller
             }
             $selectionColumns = $this->selectionColumns($survey);
             $followUpColumns = $this->followUpColumns();
-            fputcsv($handle, ['Reference', 'Version', 'Submitted', 'Age', 'Sex', 'Respondent group', 'Gender identity', ...array_column($followUpColumns, 'heading'), 'Region', 'Cluster', 'HEI', 'Experiences', 'Perpetrators', 'Expires', 'Specified perpetrator details', ...($survey->slug === 'ra-9262' ? ['Answering for'] : []), ...array_values($selectionColumns)]);
-            $this->query($request, $survey)->with(['version', 'region', 'cluster', 'hei', 'groupAnswers.option'])->latest()->each(function (SurveyResponse $response) use ($handle, $survey, $selectionColumns, $followUpColumns): void {
+            fputcsv($handle, ['Reference', 'Version', 'Submitted', 'Age', 'Sex', 'Respondent group', 'Gender identity', ...array_column($followUpColumns, 'heading'), 'Region', 'HEI', 'Experiences', 'Perpetrators', 'Expires', 'Specified perpetrator details', ...($survey->slug === 'ra-9262' ? ['Answering for'] : []), ...array_values($selectionColumns)]);
+            $this->query($request, $survey)->with(['version', 'region', 'hei', 'groupAnswers.option'])->latest()->each(function (SurveyResponse $response) use ($handle, $survey, $selectionColumns, $followUpColumns): void {
                 fputcsv($handle, [
                     $response->public_reference,
                     $response->version->version,
@@ -86,7 +86,6 @@ class SurveyResponseController extends Controller
                         $response->groupAnswers->firstWhere('question_id', $column['question']->id),
                     ), $followUpColumns),
                     $response->region?->name,
-                    $response->cluster?->name,
                     $response->hei?->name,
                     implode('; ', $response->answers['experiences'] ?? []),
                     $this->formatPerpetrators($response->answers['perpetrators'] ?? []),
@@ -136,7 +135,6 @@ class SurveyResponseController extends Controller
             // These answers are optional when the questionnaire says so, so a
             // reviewer sees an explicit gap rather than a crash or a blank.
             'region' => $response->region->name ?? 'Not provided',
-            'cluster' => $response->cluster->name ?? 'Not provided',
             'hei' => $response->hei->name ?? 'Not provided',
             'submitted_at' => $response->created_at?->toISOString(),
             'expires_at' => $response->expires_at->toISOString(),

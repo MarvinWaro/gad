@@ -21,7 +21,6 @@ export type ActivityEntry = {
     subject: { type: string | null; id: string | null; url: string | null };
     place: {
         region: string | null;
-        cluster: string | null;
         hei: string | null;
     };
     changes: { field: string; before: string | null; after: string | null }[];
@@ -41,6 +40,5 @@ export type ActivityFilters = {
     from: string;
     to: string;
     region: string;
-    cluster: string;
     hei: string;
 };

@@ -60,7 +60,6 @@ export type Draft = {
 };
 export type DirectoryStatus = {
     regions: number;
-    clusters: number;
     heis: number;
 };
 export type Permissions = { update: boolean; publish: boolean };

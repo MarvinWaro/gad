@@ -9,7 +9,6 @@ import {
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { localDate } from '@/lib/manila-time';
-import { placeLine } from '@/lib/places';
 import { destroy } from '@/routes/admin/feedback';
 import type { FeedbackQuestions, SiteFeedback } from '@/types/feedback';
 
@@ -27,8 +26,8 @@ export function FeedbackRow({
     canDelete: boolean;
 }) {
     const Icon = feedbackTypeIcons[feedback.type.code];
-    const { region, cluster, hei } = feedback.place;
-    const place = [hei, placeLine(cluster, region)].filter(Boolean).join(' · ');
+    const { region, hei } = feedback.place;
+    const place = [hei, region].filter(Boolean).join(' · ');
     const sender = [feedback.contact.name, feedback.contact.email]
         .filter(Boolean)
         .join(' · ');

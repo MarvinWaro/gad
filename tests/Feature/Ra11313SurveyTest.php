@@ -44,7 +44,6 @@ function ra11313Payload(array $overrides = []): array
         'sex' => 'female',
         'respondent_group' => 'student',
         'region_id' => test()->region->id,
-        'cluster_id' => test()->cluster->id,
         'hei_id' => test()->hei->id,
         'experiences' => ['catcalling'],
         'perpetrators' => ['catcalling' => ['teacher']],
@@ -170,7 +169,7 @@ test('surveys without a check-all-that-apply question are unaffected', function 
         ...respondentFollowUps(),
         'version_id' => $ra7877->refresh()->publishedVersion()->id,
         'age' => 33, 'sex' => 'male', 'respondent_group' => 'student',
-        'region_id' => $this->region->id, 'cluster_id' => $this->cluster->id,
+        'region_id' => $this->region->id,
         'hei_id' => $this->hei->id, 'experiences' => ['none'],
         'perpetrators' => [], 'other_relative_details' => [], 'consent' => true,
     ])->assertRedirect()->assertSessionHasNoErrors();

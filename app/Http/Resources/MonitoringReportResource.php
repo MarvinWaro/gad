@@ -25,7 +25,6 @@ class MonitoringReportResource extends JsonResource
             'place' => [
                 // The name printed for signing, kept as it was when the report began.
                 'hei' => ['id' => $this->survey_hei_id, 'name' => $this->institution_name],
-                'cluster' => $this->whenLoaded('cluster', fn (): array => $this->cluster->only(['id', 'name'])),
                 'region' => $this->whenLoaded('region', fn (): array => $this->region->only(['id', 'name'])),
             ],
             'current' => $current === null ? null : [

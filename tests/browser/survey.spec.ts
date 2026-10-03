@@ -101,8 +101,7 @@ test('respondent detail fields are reachable by their visible labels', async ({
     ]) {
         await expect(page.getByLabel(label)).toHaveCount(1);
     }
-    // The cluster is asked only once a region's institutions sit in two or
-    // more clusters; the fixture's sit in one.
+    // Respondents are never asked for a cluster: the institution decides it.
     await expect(page.getByLabel(/^Cluster/)).toHaveCount(0);
 });
 
@@ -124,10 +123,9 @@ test('survey choices open in a rounded accessible menu', async ({ page }) => {
     await expect(sex).toContainText('Female');
 });
 
-// A cluster with no institutions used to leave a required, empty, enabled
-// dropdown with no way forward. A region whose institutions sit in one
-// cluster skips the step: the region picks it, and its HEIs list at once.
-test('a cluster with no institutions explains itself instead of dead-ending', async ({
+// Region, then institution: picking the region lists its HEIs at once,
+// with no cluster step in between.
+test('picking a region lists its institutions straight away', async ({
     page,
 }) => {
     await page.goto('/surveys/ra-7877');
@@ -135,40 +133,16 @@ test('a cluster with no institutions explains itself instead of dead-ending', as
 
     await page.getByRole('checkbox').first().check();
     await page.getByRole('button', { name: /Continue/ }).click();
+    const institution = page.getByLabel(/^Name of HEI/);
+    await expect(institution).toBeDisabled();
     await page.getByLabel(/^Region/).click();
-    await page.getByRole('option').nth(1).click();
+    await page.getByRole('option', { name: 'Regional Office XII' }).click();
 
-    const cluster = page.getByLabel(/^Cluster/);
-    if ((await cluster.count()) === 0) {
-        const institution = page.getByLabel(/^Name of HEI/);
-        await expect(institution).toBeEnabled();
-        await institution.click();
-        expect(await page.getByRole('option').count()).toBeGreaterThan(1);
-        await page.keyboard.press('Escape');
-
-        return;
-    }
-    await cluster.click();
-    const clusterCount = await page.getByRole('option').count();
-    await page.keyboard.press('Escape');
-    const hei = page.getByLabel(/^Name of HEI/);
-
-    for (let index = 1; index < clusterCount; index += 1) {
-        await cluster.click();
-        await page.getByRole('option').nth(index).click();
-
-        if (await hei.isDisabled()) {
-            // Empty: locked, and the reason plus a route forward is on screen.
-            await expect(hei).toContainText('No institutions available');
-            await expect(
-                page.getByText('No institutions are listed for this cluster'),
-            ).toBeVisible();
-        } else {
-            await hei.click();
-            expect(await page.getByRole('option').count()).toBeGreaterThan(1);
-            await page.keyboard.press('Escape');
-        }
-    }
+    await expect(page.getByLabel(/^Cluster/)).toHaveCount(0);
+    await expect(institution).toBeEnabled();
+    await institution.click();
+    await page.getByRole('option', { name: 'Browser Test HEI' }).click();
+    await expect(institution).toContainText('Browser Test HEI');
 });
 
 // A summary that only says "review the highlighted fields" leaves the

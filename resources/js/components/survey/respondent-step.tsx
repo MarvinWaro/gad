@@ -44,16 +44,12 @@ export function RespondentStep({
         genderIdentities,
         groupFollowUps,
         groupRequiresText,
-        clusters,
         heis,
         isRequired,
         detailLabel,
     } = respondent;
     const fieldError = (id: string, serverError?: string) =>
         issues[id] ?? serverError;
-    // The cluster is a choice only once a region's institutions sit in two or
-    // more; with one, the region picks it (see the region's onChange).
-    const showCluster = form.data.region_id !== '' && clusters.length !== 1;
 
     return (
         <section className="survey-form-card">
@@ -232,24 +228,14 @@ export function RespondentStep({
                 >
                     <PublicSelect
                         value={form.data.region_id}
-                        onChange={(value) => {
-                            // A region whose institutions sit in one cluster
-                            // (such as "Unassigned") has no cluster to choose:
-                            // it is picked here, and the HEIs list straight away.
-                            const regionClusters = directories.clusters.filter(
-                                (item) =>
-                                    String(item.survey_region_id) === value,
-                            );
+                        onChange={(value) =>
+                            // Another region lists other institutions.
                             form.setData((data) => ({
                                 ...data,
                                 region_id: value,
-                                cluster_id:
-                                    regionClusters.length === 1
-                                        ? String(regionClusters[0].id)
-                                        : '',
                                 hei_id: '',
-                            }));
-                        }}
+                            }))
+                        }
                         placeholder="Select region"
                         options={directories.regions.map((item) => ({
                             value: String(item.id),
@@ -257,58 +243,15 @@ export function RespondentStep({
                         }))}
                     />
                 </Field>
-                {showCluster && (
-                    <Field
-                        label={detailLabel('Cluster')}
-                        fieldId="cluster_id"
-                        error={fieldError('cluster_id', form.errors.cluster_id)}
-                        required={isRequired('cluster')}
-                        note={
-                            clusters.length === 0 ? (
-                                <>
-                                    No clusters are listed for this region yet.
-                                    Please choose another region, or email{' '}
-                                    <a href="mailto:chedro12@ched.gov.ph">
-                                        chedro12@ched.gov.ph
-                                    </a>{' '}
-                                    so yours can be added.
-                                </>
-                            ) : undefined
-                        }
-                    >
-                        <PublicSelect
-                            value={form.data.cluster_id}
-                            onChange={(value) =>
-                                form.setData((data) => ({
-                                    ...data,
-                                    cluster_id: value,
-                                    hei_id: '',
-                                }))
-                            }
-                            placeholder={
-                                clusters.length === 0
-                                    ? 'No clusters available'
-                                    : 'Select cluster'
-                            }
-                            options={clusters.map((item) => ({
-                                value: String(item.id),
-                                label: item.name,
-                            }))}
-                            disabled={clusters.length === 0}
-                        />
-                    </Field>
-                )}
                 <Field
                     label={detailLabel('Name of HEI')}
                     fieldId="hei_id"
                     error={fieldError('hei_id', form.errors.hei_id)}
                     note={
-                        form.data.cluster_id && heis.length === 0 ? (
+                        form.data.region_id && heis.length === 0 ? (
                             <>
-                                No institutions are listed for this{' '}
-                                {showCluster ? 'cluster' : 'region'} yet. Please
-                                choose another{' '}
-                                {showCluster ? 'cluster' : 'region'}, or email{' '}
+                                No institutions are listed for this region yet.
+                                Please choose another region, or email{' '}
                                 <a href="mailto:chedro12@ched.gov.ph">
                                     chedro12@ched.gov.ph
                                 </a>{' '}
@@ -322,7 +265,7 @@ export function RespondentStep({
                         value={form.data.hei_id}
                         onChange={(value) => form.setData('hei_id', value)}
                         placeholder={
-                            form.data.cluster_id && heis.length === 0
+                            form.data.region_id && heis.length === 0
                                 ? 'No institutions available'
                                 : 'Select HEI'
                         }
@@ -330,7 +273,7 @@ export function RespondentStep({
                             value: String(item.id),
                             label: item.name,
                         }))}
-                        disabled={!form.data.cluster_id || heis.length === 0}
+                        disabled={heis.length === 0}
                     />
                 </Field>
             </div>

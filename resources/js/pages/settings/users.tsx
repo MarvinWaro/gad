@@ -89,11 +89,10 @@ type Filters = {
     /** A role's slug. */
     role: string;
     region: string;
-    cluster: string;
     hei: string;
 };
 /** The places to filter by, as the monitoring lists offer them. */
-type Places = { regions: Region[]; clusters: Region[]; heis: HeiOption[] };
+type Places = { regions: Region[]; heis: HeiOption[] };
 type UserForm = {
     name: string;
     email: string;
@@ -174,9 +173,7 @@ export default function Users({
     const totalUsers =
         statusCounts.pending + statusCounts.active + statusCounts.inactive;
     // Role and place narrow the list; the status tabs count within them.
-    const narrowed = Boolean(
-        filters.role || filters.region || filters.cluster || filters.hei,
-    );
+    const narrowed = Boolean(filters.role || filters.region || filters.hei);
 
     function visit(next: Partial<Filters>) {
         const query = { ...filters, ...next };
@@ -198,11 +195,7 @@ export default function Users({
     function pick(key: PlaceKey, value: string) {
         visit({
             [key]: value,
-            ...(key === 'region'
-                ? { cluster: '', hei: '' }
-                : key === 'cluster'
-                  ? { hei: '' }
-                  : {}),
+            ...(key === 'region' ? { hei: '' } : {}),
         });
     }
 
@@ -312,10 +305,7 @@ export default function Users({
                     {/* Applied as soon as they change, like the monitoring lists. */}
                     <FilterBar
                         label="Filter users"
-                        filters={
-                            1 +
-                            placeFilterCount(places.regions, places.clusters)
-                        }
+                        filters={1 + placeFilterCount(places.regions)}
                     >
                         <Filter label="Role" id="role">
                             <FormSelect
@@ -335,7 +325,6 @@ export default function Users({
                             values={filters}
                             onPick={pick}
                             regions={places.regions}
-                            clusters={places.clusters}
                             heis={places.heis}
                         />
                     </FilterBar>
@@ -357,7 +346,6 @@ export default function Users({
                                         visit({
                                             role: '',
                                             region: '',
-                                            cluster: '',
                                             hei: '',
                                         })
                                     }

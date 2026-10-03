@@ -9,7 +9,7 @@ import { FormSelect } from '@/components/ui/form-select';
 import { cn } from '@/lib/utils';
 import type { DirectoryOption, ReportFilters } from '@/types/monitoring';
 
-export type PlaceKey = 'region' | 'cluster' | 'hei';
+export type PlaceKey = 'region' | 'hei';
 
 /** How long typing pauses before the search runs. */
 const SEARCH_DELAY = 350;
@@ -64,11 +64,7 @@ export function useRecordFilters<
         change({
             ...values,
             [key]: value,
-            ...(key === 'region'
-                ? { cluster: '', hei: '' }
-                : key === 'cluster'
-                  ? { hei: '' }
-                  : {}),
+            ...(key === 'region' ? { hei: '' } : {}),
         });
     }
 
@@ -207,32 +203,22 @@ export function YearFilter({
 
 type PlaceOptions = {
     regions: DirectoryOption[];
-    clusters: DirectoryOption[];
     heis: DirectoryOption[];
 };
 
-/**
- * How many place filters show: a regional office has its one region, and a
- * cluster shows only when the server offers two or more to choose between.
- */
-export function placeFilterCount(
-    regions: DirectoryOption[],
-    clusters: DirectoryOption[],
-): number {
-    return (regions.length > 1 ? 1 : 0) + (clusters.length > 0 ? 1 : 0) + 1;
+/** How many place filters show: a regional office has its one region. */
+export function placeFilterCount(regions: DirectoryOption[]): number {
+    return (regions.length > 1 ? 1 : 0) + 1;
 }
 
 /**
- * Region (Central Office only), cluster and HEI. Each list fills once the
- * place above it is chosen. The server offers clusters only when a region's
- * institutions sit in two or more (`PlaceFilters::clusterChoices`); until
- * then the cluster is skipped and the region's HEIs list straight away.
+ * Region (Central Office only), then HEI, whose list fills once a region is
+ * chosen (`PlaceFilters::options`).
  */
 export function PlaceFilters({
     values,
     onPick,
     regions,
-    clusters,
     heis,
 }: PlaceOptions & {
     /** Only the place keys are read, so any list's filters will do. */
@@ -240,7 +226,6 @@ export function PlaceFilters({
     onPick: (key: PlaceKey, value: string) => void;
 }) {
     const pickRegion = regions.length > 1;
-    const pickCluster = clusters.length > 0;
     const places: {
         key: PlaceKey;
         label: string;
@@ -259,23 +244,12 @@ export function PlaceFilters({
                   },
               ]
             : []),
-        ...(pickCluster
-            ? [
-                  {
-                      key: 'cluster' as const,
-                      label: 'Cluster',
-                      all: 'All clusters',
-                      options: clusters,
-                      parent: pickRegion ? ('region' as const) : undefined,
-                  },
-              ]
-            : []),
         {
             key: 'hei',
             label: 'HEI',
             all: 'All HEIs',
             options: heis,
-            parent: pickCluster ? 'cluster' : pickRegion ? 'region' : undefined,
+            parent: pickRegion ? 'region' : undefined,
         },
     ];
 

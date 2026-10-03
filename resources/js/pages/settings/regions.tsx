@@ -25,7 +25,7 @@ type Region = {
     id: number;
     name: string;
     is_active: boolean;
-    clusters_count: number;
+    heis_count: number;
     office_city: string | null;
     office_address: string | null;
     office_email: string | null;
@@ -82,7 +82,7 @@ export default function Regions({
                     <Heading
                         variant="small"
                         title="Regions"
-                        description="The top level of the institution directory. Respondents pick a region first, then a cluster, then their HEI."
+                        description="The top level of the institution directory. Respondents pick a region first, then their HEI."
                     />
                     {permissions.create && <RegionDialog />}
                 </div>
@@ -95,7 +95,7 @@ export default function Regions({
                             </h2>
                             <p className="mt-1 max-w-sm text-sm text-muted-foreground">
                                 A survey cannot be published until at least one
-                                active Region, Cluster and HEI exists.
+                                active Region and HEI exists.
                             </p>
                         </div>
                     ) : (
@@ -103,7 +103,7 @@ export default function Regions({
                             <thead className="border-b bg-muted/50 text-xs">
                                 <tr>
                                     <th className="px-5 py-3">Name</th>
-                                    <th className="px-5 py-3">Clusters</th>
+                                    <th className="px-5 py-3">HEIs</th>
                                     <th className="px-5 py-3 text-right">
                                         Actions
                                     </th>
@@ -125,8 +125,8 @@ export default function Regions({
                                                 </Badge>
                                             )}
                                         </td>
-                                        <td className="px-5 py-4 text-muted-foreground">
-                                            {region.clusters_count}
+                                        <td className="px-5 py-4 text-muted-foreground tabular-nums">
+                                            {region.heis_count}
                                         </td>
                                         <td className="px-5 py-4">
                                             <div className="flex justify-end gap-1">
@@ -139,7 +139,7 @@ export default function Regions({
                                                     (region.is_active ? (
                                                         <ConfirmPopover
                                                             title={`Deactivate ${region.name}?`}
-                                                            description="It will be hidden from the public surveys. Its clusters and responses are kept, and you can activate it again anytime."
+                                                            description="It will be hidden from the public surveys. Its institutions and responses are kept, and you can activate it again anytime."
                                                             confirmLabel="Deactivate"
                                                             onConfirm={(
                                                                 visit,
@@ -173,7 +173,7 @@ export default function Regions({
                                                 {permissions.delete && (
                                                     <ConfirmPopover
                                                         title={`Delete ${region.name}?`}
-                                                        description="Regions with clusters cannot be deleted. Deactivate them instead."
+                                                        description="Regions with institutions cannot be deleted. Deactivate them instead."
                                                         confirmLabel="Delete"
                                                         onConfirm={(visit) =>
                                                             router.delete(

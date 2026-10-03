@@ -39,7 +39,7 @@ class SiteFeedbackController extends Controller
         return Inertia::render('admin/feedback/index', [
             'feedback' => SiteFeedbackResource::collection(
                 $this->filtered($user, $filters, $type)
-                    ->with(['region:id,name', 'cluster:id,name', 'hei:id,name'])
+                    ->with(['region:id,name', 'hei:id,name'])
                     ->latest()
                     ->orderByDesc('id')
                     ->paginate(20)
@@ -80,9 +80,9 @@ class SiteFeedbackController extends Controller
             fputcsv($handle, [
                 'Submitted', 'Feedback Type', 'Feedback', 'Suggestions for improvement',
                 ...array_map(FeedbackQuestions::label(...), array_keys($columns)),
-                'Email', 'Name', 'Region', 'Cluster', 'HEI',
+                'Email', 'Name', 'Region', 'HEI',
             ]);
-            $query->with(['region:id,name', 'cluster:id,name', 'hei:id,name'])
+            $query->with(['region:id,name', 'hei:id,name'])
                 ->latest()
                 ->orderByDesc('id')
                 ->each(function (SiteFeedback $feedback) use ($handle, $columns): void {
@@ -99,7 +99,6 @@ class SiteFeedbackController extends Controller
                         CsvCell::safe($feedback->email),
                         CsvCell::safe($feedback->name),
                         $feedback->region?->name,
-                        $feedback->cluster?->name,
                         $feedback->hei !== null ? InstitutionName::display($feedback->hei->name) : null,
                     ]);
                 });

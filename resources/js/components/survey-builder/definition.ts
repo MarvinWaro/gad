@@ -22,14 +22,9 @@ export const questionTypes = [
         hint: 'Pulled from the Region directory.',
     },
     {
-        value: 'directory_cluster',
-        label: 'Cluster',
-        hint: 'Narrows to the region the respondent picked.',
-    },
-    {
         value: 'directory_hei',
         label: 'HEI',
-        hint: 'Narrows to the cluster the respondent picked.',
+        hint: 'Narrows to the region the respondent picked.',
     },
     {
         value: 'experience_matrix',
@@ -37,6 +32,17 @@ export const questionTypes = [
         hint: 'Experiences, each revealing its own perpetrator list.',
     },
 ];
+
+/**
+ * The questions an editor sees. The definitions still carry a Cluster
+ * question, but respondents are never asked it (the institution they pick
+ * decides it), so the builder keeps it out of sight and leaves it as it is.
+ * Returns each shown question's index in the section.
+ */
+export const shownQuestionIndexes = (section: Section): number[] =>
+    section.questions.flatMap((question, index) =>
+        question.type === 'directory_cluster' ? [] : [index],
+    );
 
 export const typeLabel = (type: string): string =>
     questionTypes.find((entry) => entry.value === type)?.label ??

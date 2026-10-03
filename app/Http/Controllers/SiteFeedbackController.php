@@ -22,12 +22,19 @@ class SiteFeedbackController extends Controller
 {
     public function create(Request $request): Response
     {
+        $regions = SurveyRegion::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $prefill = $this->prefill($request->user());
+        // The region picked (?region=), or else the visitor's own.
+        $regionId = $regions->firstWhere('id', $request->integer('region') ?: (int) $prefill['region_id'])?->id;
+
         return Inertia::render('feedback', [
             'questions' => FeedbackQuestions::forForm(),
             'types' => FeedbackType::options(),
-            'regions' => SurveyRegion::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
-            'heis' => SurveyHei::pickerOptions(),
-            'prefill' => $this->prefill($request->user()),
+            'regions' => $regions,
+            // Only that region's institutions, reloaded when it changes.
+            'region' => $regionId,
+            'heis' => fn (): array => $regionId === null ? [] : SurveyHei::pickerOptions($regionId),
+            'prefill' => $prefill,
             'textMax' => StoreSiteFeedbackRequest::TEXT_MAX,
             'sent' => $request->session()->get('feedback_sent', false),
         ]);

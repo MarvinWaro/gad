@@ -21,6 +21,7 @@ import {
 } from '@/components/dashboard/dashboard-charts';
 import { DashboardFilterBar } from '@/components/dashboard/dashboard-filters';
 import { GoalInsights } from '@/components/dashboard/goal-insights';
+import { ReachTable } from '@/components/dashboard/reach-table';
 import { EventCategoryLabel } from '@/components/hei/event-category';
 import { EventDateBlock } from '@/components/hei/upcoming-events';
 import { NoOfficeNotice } from '@/components/record-filters';
@@ -196,6 +197,7 @@ export default function Dashboard(props: DashboardProps) {
                     <ReachCard
                         reach={props.reach}
                         participation={participation}
+                        period={period.label}
                     />
 
                     <GoalInsights
@@ -440,15 +442,26 @@ export default function Dashboard(props: DashboardProps) {
     );
 }
 
-/** "Every campus counts": participation by region, or who is still to join in. */
+/** How many regions the card lists; the rest open in a table. */
+const REACH_ROWS = 5;
+
+/**
+ * "Every campus counts": participation by region, leaders first (the server
+ * orders them), or who is still to join in. Past five regions the card lists
+ * the leaders and the rest open in a table, so it stays as tall as the chart
+ * beside it.
+ */
 function ReachCard({
     reach,
     participation,
+    period,
 }: Pick<DashboardProps, 'reach'> & {
     participation: DashboardProps['kpis']['participation'];
+    period: string;
 }) {
     const { participating, total } = participation;
     const { regions, waiting } = reach;
+    const more = regions.length > REACH_ROWS;
 
     return (
         <section
@@ -476,9 +489,18 @@ function ReachCard({
                 </span>
             </div>
             <div className="flex-1">
+                {more && (
+                    <h3 className="mt-6 text-xs text-on-signature/80">
+                        Leading regions
+                    </h3>
+                )}
                 {regions.length > 0 && (
-                    <ul className="mt-6 space-y-3.5">
-                        {regions.map((region) => (
+                    <ul
+                        className={
+                            more ? 'mt-3 space-y-3.5' : 'mt-6 space-y-3.5'
+                        }
+                    >
+                        {regions.slice(0, REACH_ROWS).map((region) => (
                             <li key={region.id}>
                                 <div className="mb-1.5 flex justify-between gap-3 text-xs">
                                     <span className="truncate">
@@ -502,6 +524,11 @@ function ReachCard({
                             </li>
                         ))}
                     </ul>
+                )}
+                {more && (
+                    <div className="mt-3">
+                        <ReachTable regions={regions} period={period} />
+                    </div>
                 )}
                 {regions.length === 0 && waiting.count > 0 && (
                     <div className="mt-6">

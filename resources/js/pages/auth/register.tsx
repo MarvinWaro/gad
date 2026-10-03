@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { HeiCombobox } from '@/components/hei-combobox';
 import type { HeiOption } from '@/components/hei-combobox';
@@ -10,7 +10,7 @@ import { FormSelect } from '@/components/ui/form-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { login } from '@/routes';
+import { login, register } from '@/routes';
 import { store } from '@/routes/register';
 
 type Props = {
@@ -25,19 +25,47 @@ type Props = {
         instant: boolean;
         email: string | null;
     }[];
+    /**
+     * The region whose institutions `heis` holds: the one picked, or the only
+     * one there is. Picking another reloads `heis`.
+     */
+    region: number | null;
     heis: (HeiOption & { region_id: number })[];
 };
 
-export default function Register({ passwordRules, regions, heis }: Props) {
-    // With a single region to choose from, it is chosen already.
+export default function Register({
+    passwordRules,
+    regions,
+    region: loadedRegionId,
+    heis,
+}: Props) {
     const [regionId, setRegionId] = useState(
-        regions.length === 1 ? String(regions[0].id) : '',
+        loadedRegionId === null ? '' : String(loadedRegionId),
     );
     const [heiId, setHeiId] = useState('');
     const region = regions.find((option) => String(option.id) === regionId);
-    const regionHeis = heis.filter((hei) => String(hei.region_id) === regionId);
-    // The CHED directory has not sent this region's institutions yet.
-    const noHeis = region !== undefined && regionHeis.length === 0;
+    // Still on its way while the list is another region's.
+    const loaded = String(loadedRegionId) === regionId;
+    const loading = region !== undefined && !loaded;
+    const regionHeis = loaded ? heis : [];
+    // HEIDA has not sent this region's institutions yet.
+    const noHeis = loaded && heis.length === 0;
+
+    const chooseRegion = (value: string) => {
+        setRegionId(value);
+        setHeiId('');
+        // In the address too, so a failed submit comes back with the list.
+        router.get(
+            register.url(),
+            { region: value },
+            {
+                only: ['region', 'heis'],
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
+    };
 
     return (
         <>
@@ -90,10 +118,7 @@ export default function Register({ passwordRules, regions, heis }: Props) {
                                 <FormSelect
                                     id="region"
                                     value={regionId}
-                                    onChange={(value) => {
-                                        setRegionId(value);
-                                        setHeiId('');
-                                    }}
+                                    onChange={chooseRegion}
                                     placeholder="Choose your region"
                                     options={regions.map((option) => ({
                                         value: String(option.id),
@@ -110,7 +135,7 @@ export default function Register({ passwordRules, regions, heis }: Props) {
                                     role="status"
                                     className="text-sm text-muted-foreground empty:hidden"
                                 >
-                                    {region === undefined ? (
+                                    {region === undefined || loading ? (
                                         ''
                                     ) : noHeis ? (
                                         <>
@@ -149,13 +174,19 @@ export default function Register({ passwordRules, regions, heis }: Props) {
                                     value={heiId}
                                     onChange={setHeiId}
                                     options={regionHeis}
-                                    disabled={region === undefined || noHeis}
+                                    disabled={
+                                        region === undefined ||
+                                        loading ||
+                                        noHeis
+                                    }
                                     placeholder={
                                         region === undefined
                                             ? 'Choose a region first'
-                                            : noHeis
-                                              ? 'No institutions available'
-                                              : undefined
+                                            : loading
+                                              ? 'Loading institutions…'
+                                              : noHeis
+                                                ? 'No institutions available'
+                                                : undefined
                                     }
                                     tabIndex={4}
                                     aria-invalid={Boolean(errors.survey_hei_id)}

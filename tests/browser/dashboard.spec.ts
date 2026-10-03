@@ -294,3 +294,88 @@ test('zoomed out, the dashboard keeps the same padding as the other modules', as
     const users = await edges('/settings/users', 'Filter users');
     expect(users.right).toBeCloseTo(feedback.right, 0);
 });
+
+test('with many regions, the campus card lists the leaders and opens the rest in a table', async ({
+    page,
+}, testInfo) => {
+    // The Central Office sees every region: Region XII and six more.
+    await page.context().clearCookies();
+    await page.goto('/login');
+    await page
+        .getByLabel('Email address')
+        .fill('browser-national@example.test');
+    await page.getByLabel('Password', { exact: true }).fill('browser-password');
+    await page.getByRole('button', { name: 'Log in', exact: true }).click();
+    await expect(page).toHaveURL(/dashboard/);
+    const { academicYear, month } = seeded();
+    await page.goto(
+        `/dashboard?academic_year=${academicYear}&view=month&month=${month}`,
+    );
+    await page.setViewportSize({ width: 1440, height: 1000 });
+
+    const card = page.getByRole('region', { name: 'Every campus counts.' });
+    await expect(card.getByRole('listitem')).toHaveCount(5);
+    // Leaders first: the one region with responses heads the list.
+    await expect(card.getByRole('listitem').first()).toContainText(
+        'Regional Office XII',
+    );
+
+    // The card no longer stretches the chart beside it.
+    const chart = page.getByRole('region', {
+        name: 'Participation over time',
+    });
+    const [cardBox, chartBox] = [
+        (await card.boundingBox())!,
+        (await chart.boundingBox())!,
+    ];
+    expect(
+        Math.abs(cardBox.y + cardBox.height - (chartBox.y + chartBox.height)),
+    ).toBeLessThanOrEqual(2);
+    expect(cardBox.height).toBeLessThan(560);
+
+    await card.screenshot({ path: testInfo.outputPath('reach-card.png') });
+
+    const all = card.getByRole('button', { name: 'View all 7 regions' });
+    await all.click();
+    const dialog = page.getByRole('dialog', {
+        name: 'Participation by region',
+    });
+    await expect(dialog.locator('tbody tr')).toHaveCount(7);
+    await expect(dialog.locator('tbody tr').first()).toContainText(
+        'Regional Office XII',
+    );
+    for (const theme of ['light', 'dark']) {
+        await page.evaluate(
+            (value) =>
+                document.documentElement.classList.toggle(
+                    'dark',
+                    value === 'dark',
+                ),
+            theme,
+        );
+        // Let the dialog's entrance and the theme's colour change finish.
+        await page.evaluate(() =>
+            Promise.all(
+                document
+                    .getAnimations()
+                    .filter(
+                        (animation) =>
+                            animation.effect?.getComputedTiming().iterations !==
+                            Infinity,
+                    )
+                    .map((animation) => animation.finished),
+            ),
+        );
+        const scan = await new AxeBuilder({ page })
+            .include('[role="dialog"]')
+            .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+            .analyze();
+        expect(scan.violations).toEqual([]);
+        await dialog.screenshot({
+            path: testInfo.outputPath(`reach-table-${theme}.png`),
+        });
+    }
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    await expect(all).toBeFocused();
+});

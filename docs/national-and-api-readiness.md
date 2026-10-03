@@ -28,8 +28,9 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 
 **Data and sync.**
 
-- [ ] `PortalHeiSync` files every synced HEI under a region named "Regional Office XII". A national sync must file each HEI under its own region.
-- [ ] `PortalService` is written as a client for the CHEDRO XII portal only.
+- [x] The directory comes from HEIDA, CHED's national HEI directory, since 2026-10-03. The CHEDRO XII portal sync (`PortalHeiSync`, `PortalService`) is gone. `HeidaDirectorySync` files each HEI under its own region, matched by PSGC code, and its province as the cluster (`docs/heida-sync.md`).
+- [ ] **Public surveys send every active HEI with each survey page** (`PublicSurveyController::directories()`): about 2,600 since the HEIDA sync. They should load a region's HEIs once it is picked, as registration and website feedback do. Keep the survey's rule that withholds dead-end regions and clusters.
+- [ ] **Settings → Users sends the Central Office every active HEI** for its account form (`UserManagementController`), about 2,600 rows; a regional office gets only its own region's since 2026-10-03. It should load the chosen region's HEIs instead. The server does not yet refuse an HEI outside the manager's region when saving.
 - [ ] `SurveySeeder`, `SurveyHeiSeeder` and `SurveyDirectorySeeder` look regions up by the name "Regional Office XII". This is fine for seeding Region XII, but no runtime code may look a region up by name.
 - [x] The dashboard's demo figures (`components/dashboard/dashboard-data.ts`, with Region XII cluster names) are gone (2026-10-02). It now shows real figures for the viewer's office, filterable by region, cluster, HEI, ownership and law (`docs/dashboard.md`).
 
@@ -56,7 +57,7 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
         - community moderation
         - site ratings
 - [ ] **Office details per region:** the letterhead is in data since 2026-09-29 (`survey_regions.office_city`, `office_address`, `office_email`, `office_website`, `office_phone`; Settings → Regions → Office details) and prints on monitoring reports. `resources/js/data/contact.ts` (the footer and FAQ hotline) still hard-codes Region XII and should read the viewer's office instead.
-- [ ] **Filters and exports:** every statistic and export takes a region, cluster and HEI filter.
+- [ ] **Filters and exports:** every statistic and export takes a region and HEI filter. (Clusters are kept out of sight since 2026-10-03.)
 - [ ] **Philippine time:** dates show in Asia/Manila time throughout. The app timezone stays UTC for storage.
 
 ## Missing for the API
@@ -65,10 +66,10 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 - [ ] **Few API Resource classes:** only `PostReactorResource` (a post's reactions list, cursor-paginated with Laravel's `meta`) so far. Other controllers build arrays inline, for example `SurveyResponseController::serialize` and `SiteRatingManagementController::index`. Move each model's shape into one Resource as it is touched.
 - [ ] **Validation is mostly inline** `$request->validate(...)`. Move rules into Form Requests as endpoints are touched, so web and API share them.
 - [ ] **First endpoints to offer, read-only:**
-    - directories (regions, clusters, HEIs)
+    - directories (regions, HEIs)
     - aggregate survey statistics, never individual responses
     - published events
-    - counts of community posts per SDG and per A.C.H.I.E.V.E. item, by region, cluster, HEI and year. Posts store these as codes in `post_sdgs` and `post_achieve_items`, both indexed by code. Count original posts only, since a share carries none of its own.
+    - counts of community posts per SDG and per A.C.H.I.E.V.E. item, by region, HEI and year. Posts store these as codes in `post_sdgs` and `post_achieve_items`, both indexed by code. Count original posts only, since a share carries none of its own.
 
     Write endpoints come later, behind tokens and the same permissions.
 

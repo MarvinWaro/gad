@@ -8,7 +8,6 @@ export type DashboardFilters = {
     semester: string;
     month: string;
     region: string;
-    cluster: string;
     hei: string;
     ownership: string;
     survey: string;
@@ -104,7 +103,6 @@ export type DashboardProps = {
         surveys: { id: number; code: string }[];
         ownerships: string[];
         regions: DirectoryOption[];
-        clusters: DirectoryOption[];
         heis: DirectoryOption[];
     };
     hasOffice: boolean;

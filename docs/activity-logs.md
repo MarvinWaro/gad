@@ -2,7 +2,7 @@
 
 Settings → System configuration → **Activity logs** (`/settings/activity-logs`)
 shows who did what in PHLGADIS, newest first: the person, the action, the
-module, the record, where it happened (HEI → cluster → region), the time in
+module, the record, where it happened (HEI → region), the time in
 Philippine time, the device and the IP address. Edits fold out what changed,
 field by field. Naming a person narrows the list to them; so does the clock
 icon on each row of Settings → Users.
@@ -35,7 +35,7 @@ icon on each row of Settings → Users.
 | Roles & permissions               | Created, updated (permissions added or removed), deleted                                                                                                                              |
 | Academic years                    | Created, updated, activated, deactivated, deleted                                                                                                                                     |
 | Regions                           | Created, updated, activated, deactivated, deleted; office details updated                                                                                                             |
-| Clusters                          | Created, updated, activated, deactivated, deleted                                                                                                                                     |
+| Clusters                          | Older entries only: clusters are no longer edited, and the Module filter leaves them out                                                                                              |
 | HEIs                              | Created, updated, activated, deactivated, deleted; synced from the CHED portal (one entry with the counts)                                                                            |
 | Respondent groups                 | Created, updated, activated, deactivated, deleted; follow-up questions saved                                                                                                          |
 | Surveys                           | Created, draft updated, published, archived, made active again, deleted                                                                                                               |

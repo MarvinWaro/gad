@@ -52,7 +52,6 @@ class UserManagementController extends Controller
             ->when($role !== '', fn ($query) => $query->whereHas('roles', fn ($query) => $query->where('slug', $role)))
             ->placedIn(
                 isset($validated['region']) ? (int) $validated['region'] : null,
-                isset($validated['cluster']) ? (int) $validated['cluster'] : null,
                 isset($validated['hei']) ? (int) $validated['hei'] : null,
             );
         $users = $filtered()
@@ -101,11 +100,13 @@ class UserManagementController extends Controller
 
         // Active institutions, plus any inactive one still linked to an
         // account so editing that account keeps its current selection. The
-        // form picks the region first, so each carries its region.
+        // form picks the region first, so each carries its region. A
+        // regional office places accounts in its own region only.
         $heis = $canEdit
             ? SurveyHei::query()
                 ->join('survey_clusters', 'survey_clusters.id', '=', 'survey_heis.survey_cluster_id')
                 ->join('survey_regions', 'survey_regions.id', '=', 'survey_clusters.survey_region_id')
+                ->when(! $actor->national_access, fn ($query) => $query->where('survey_regions.id', $actor->survey_region_id))
                 ->where(fn ($query) => $query
                     ->where('survey_heis.is_active', true)
                     ->orWhereIn('survey_heis.id', User::query()->whereNotNull('survey_hei_id')->select('survey_hei_id')))
@@ -154,7 +155,6 @@ class UserManagementController extends Controller
                 'status' => $status->value ?? '',
                 'role' => $role,
                 'region' => (string) ($validated['region'] ?? ''),
-                'cluster' => (string) ($validated['cluster'] ?? ''),
                 'hei' => (string) ($validated['hei'] ?? ''),
             ],
             // Every role, to filter by, including any this manager cannot assign.

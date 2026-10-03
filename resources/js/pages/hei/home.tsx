@@ -18,7 +18,7 @@ import { faq } from '@/routes/help';
 import type {
     CalendarEvent,
     CalendarMonth,
-    HeiSummary,
+    HeiRef,
     HeiSurvey,
     InstitutionPeopleSummary,
     Post,
@@ -26,7 +26,7 @@ import type {
 } from '@/types';
 
 type Props = {
-    hei: HeiSummary | null;
+    hei: HeiRef | null;
     surveys: HeiSurvey[];
     calendar: CalendarMonth;
     upcoming: CalendarEvent[];

@@ -26,7 +26,6 @@ import { Pagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
 import { FormSelect } from '@/components/ui/form-select';
 import { stageOf } from '@/lib/monitoring-draft';
-import { placeLine } from '@/lib/places';
 import { cn } from '@/lib/utils';
 import type {
     DirectoryOption,
@@ -43,7 +42,6 @@ type Props = {
     canCreate: boolean;
     hasOffice?: boolean;
     regions?: DirectoryOption[];
-    clusters?: DirectoryOption[];
     heis?: DirectoryOption[];
 };
 
@@ -55,7 +53,6 @@ export default function Records({
     canCreate,
     hasOffice = true,
     regions = [],
-    clusters = [],
     heis = [],
 }: Props) {
     const { values, loading, filtered, apply, change, search, pick } =
@@ -103,10 +100,7 @@ export default function Records({
                 <div className="@container overflow-hidden rounded-xl border bg-card">
                     <FilterBar
                         label="Filter reports"
-                        filters={
-                            3 +
-                            (staff ? placeFilterCount(regions, clusters) : 0)
-                        }
+                        filters={3 + (staff ? placeFilterCount(regions) : 0)}
                     >
                         {staff && (
                             <SearchFilter
@@ -154,7 +148,6 @@ export default function Records({
                                 values={values}
                                 onPick={pick}
                                 regions={regions}
-                                clusters={clusters}
                                 heis={heis}
                             />
                         )}
@@ -240,10 +233,7 @@ function ReportRow({
     report: MonitoringReport;
     staff: boolean;
 }) {
-    const place = placeLine(
-        report.place.cluster?.name,
-        report.place.region?.name,
-    );
+    const place = report.place.region?.name;
     const revision = report.current?.number ?? 1;
     const action =
         report.abilities.edit || report.abilities.sign

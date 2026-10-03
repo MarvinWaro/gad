@@ -104,9 +104,7 @@ function DetailsCard({
                 </dt>
                 <dd>{place.hei.name}</dd>
                 <dd className="text-sm text-muted-foreground">
-                    {[place.cluster?.name, place.region?.name]
-                        .filter(Boolean)
-                        .join(' · ')}
+                    {place.region?.name}
                 </dd>
             </dl>
             <DetailInput

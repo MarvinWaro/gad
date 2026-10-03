@@ -24,11 +24,11 @@ function heiPayload(array $overrides = []): array
         'uii' => '12001',
         'name' => 'Notre Dame of Marbel University',
         'ownership' => 'private',
-        'survey_cluster_id' => test()->cluster->id,
+        'survey_region_id' => test()->cluster->survey_region_id,
     ], ...$overrides];
 }
 
-test('an HEI is created with its UII, region, cluster, and ownership', function () {
+test('an HEI is created with its UII, region and ownership', function () {
     $this->actingAs($this->admin)
         ->post(route('settings.survey-directories.store', ['type' => 'heis']), heiPayload())
         ->assertRedirect()
@@ -39,7 +39,6 @@ test('an HEI is created with its UII, region, cluster, and ownership', function 
     expect($hei->name)->toBe('Notre Dame of Marbel University')
         ->and($hei->ownership)->toBe('private')
         ->and($hei->is_active)->toBeTrue()
-        ->and($hei->cluster->name)->toBe('South Cotabato')
         ->and($hei->cluster->region->name)->toBe('Regional Office XII');
 });
 
@@ -81,14 +80,6 @@ test('a UII with unexpected characters is rejected', function () {
         ->assertSessionHasErrors('uii');
 });
 
-test('a chosen cluster must exist', function () {
-    $this->actingAs($this->admin)
-        ->post(route('settings.survey-directories.store', ['type' => 'heis']), heiPayload([
-            'survey_cluster_id' => 9999,
-        ]))
-        ->assertSessionHasErrors('survey_cluster_id');
-});
-
 test('an HEI needs only its region, and waits in the region\'s holding cluster', function () {
     $region = $this->cluster->region;
     foreach (['Notre Dame of Marbel University' => '12001', 'Koronadal College' => '12002'] as $name => $uii) {
@@ -96,8 +87,6 @@ test('an HEI needs only its region, and waits in the region\'s holding cluster',
             ->post(route('settings.survey-directories.store', ['type' => 'heis']), heiPayload([
                 'uii' => $uii,
                 'name' => $name,
-                'survey_region_id' => $region->id,
-                'survey_cluster_id' => null,
             ]))
             ->assertSessionHasNoErrors();
     }
@@ -113,62 +102,33 @@ test('an HEI without a cluster joins the region\'s others when they share one', 
     SurveyHei::query()->create(['survey_cluster_id' => $this->cluster->id, 'name' => 'Placed College', 'is_active' => true]);
 
     $this->actingAs($this->admin)
-        ->post(route('settings.survey-directories.store', ['type' => 'heis']), heiPayload([
-            'survey_region_id' => $this->cluster->survey_region_id,
-            'survey_cluster_id' => null,
-        ]))
+        ->post(route('settings.survey-directories.store', ['type' => 'heis']), heiPayload())
         ->assertSessionHasNoErrors();
 
-    // No second cluster appears, so pickers still go region → HEI.
+    // No second, holding cluster appears.
     expect(SurveyHei::query()->where('uii', '12001')->sole()->survey_cluster_id)->toBe($this->cluster->id)
         ->and(SurveyCluster::query()->where('name', SurveyCluster::UNASSIGNED)->exists())->toBeFalse();
 });
 
-test('an HEI needs a region when no cluster is chosen', function () {
+test('an HEI needs a region', function () {
     $this->actingAs($this->admin)
         ->post(route('settings.survey-directories.store', ['type' => 'heis']), heiPayload([
-            'survey_cluster_id' => null,
+            'survey_region_id' => null,
         ]))
         ->assertSessionHasErrors('survey_region_id');
 
     expect(SurveyHei::query()->count())->toBe(0);
 });
 
-test('a chosen cluster must lie in the chosen region', function () {
-    $elsewhere = SurveyRegion::query()->create(['name' => 'Regional Office XI', 'is_active' => true]);
-
-    $this->actingAs($this->admin)
-        ->post(route('settings.survey-directories.store', ['type' => 'heis']), heiPayload([
-            'survey_region_id' => $elsewhere->id,
-        ]))
-        ->assertSessionHasErrors('survey_cluster_id');
-});
-
-test('the HEI form asks for a cluster only where a region already uses two', function () {
-    $regionId = $this->cluster->survey_region_id;
-    SurveyHei::query()->create(['survey_cluster_id' => SurveyCluster::holdingFor($regionId)->id, 'name' => 'Waiting College', 'is_active' => true]);
-
-    $this->actingAs($this->admin)->get(route('settings.heis.index'))
-        ->assertInertia(fn (Assert $page) => $page->where('clusterRegions', []));
-
-    SurveyHei::query()->create(['survey_cluster_id' => $this->cluster->id, 'name' => 'Placed College', 'is_active' => true]);
-
-    $this->actingAs($this->admin)->get(route('settings.heis.index'))
-        ->assertInertia(fn (Assert $page) => $page->where('clusterRegions', [$regionId]));
-});
-
-test('an HEI can be edited, including moving it to another cluster', function () {
-    $this->actingAs($this->admin)
-        ->post(route('settings.survey-directories.store', ['type' => 'heis']), heiPayload());
-    $hei = SurveyHei::query()->sole();
-    $sarangani = SurveyCluster::query()->where('name', 'Sarangani')->sole();
+test('an HEI can be edited, and keeps its cluster while its region stays', function () {
+    $hei = SurveyHei::query()->create(['survey_cluster_id' => $this->cluster->id, 'uii' => '12001', 'name' => 'Notre Dame of Marbel University', 'is_active' => true]);
 
     $this->actingAs($this->admin)
         ->put(route('settings.survey-directories.update', ['type' => 'heis', 'id' => $hei->id]), [
             'uii' => '12001-A',
             'name' => 'Notre Dame University',
             'ownership' => 'public',
-            'survey_cluster_id' => $sarangani->id,
+            'survey_region_id' => $this->cluster->survey_region_id,
             'is_active' => true,
         ])
         ->assertRedirect()
@@ -179,7 +139,22 @@ test('an HEI can be edited, including moving it to another cluster', function ()
     expect($hei->uii)->toBe('12001-A')
         ->and($hei->name)->toBe('Notre Dame University')
         ->and($hei->ownership)->toBe('public')
-        ->and($hei->survey_cluster_id)->toBe($sarangani->id);
+        ->and($hei->survey_cluster_id)->toBe($this->cluster->id);
+});
+
+test('an HEI moved to another region is filed there', function () {
+    $hei = SurveyHei::query()->create(['survey_cluster_id' => $this->cluster->id, 'name' => 'Moving College', 'is_active' => true]);
+    $elsewhere = SurveyRegion::query()->create(['name' => 'Regional Office XI', 'is_active' => true]);
+
+    $this->actingAs($this->admin)
+        ->put(route('settings.survey-directories.update', ['type' => 'heis', 'id' => $hei->id]), [
+            'name' => 'Moving College',
+            'survey_region_id' => $elsewhere->id,
+            'is_active' => true,
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect($hei->refresh()->cluster->survey_region_id)->toBe($elsewhere->id);
 });
 
 test('editing an HEI keeps its own UII without tripping the unique rule', function () {
@@ -262,11 +237,13 @@ test('the directory page ships the columns the HEI table renders', function () {
             ->where('heis.data.0.name', 'Notre Dame of Marbel University')
             ->where('heis.data.0.ownership', 'private')
             ->where('heis.data.0.is_active', true)
-            ->where('heis.data.0.cluster.name', 'South Cotabato')
-            ->where('heis.data.0.cluster.region.name', 'Regional Office XII'));
+            ->where('heis.data.0.region.name', 'Regional Office XII')
+            // The cluster linking it to the region stays out of sight.
+            ->missing('heis.data.0.cluster')
+            ->missing('heis.data.0.survey_cluster_id'));
 });
 
-test('creating regions and clusters is unchanged by the HEI fields', function () {
+test('regions can be added, and clusters no longer can', function () {
     $this->actingAs($this->admin)
         ->post(route('settings.survey-directories.store', ['type' => 'regions']), ['name' => 'Region XI'])
         ->assertSessionHasNoErrors();
@@ -278,10 +255,30 @@ test('creating regions and clusters is unchanged by the HEI fields', function ()
             'name' => 'Davao del Sur',
             'survey_region_id' => $region->id,
         ])
-        ->assertSessionHasNoErrors();
+        ->assertNotFound();
+    $this->actingAs($this->admin)->get('/settings/clusters')->assertNotFound();
+});
 
-    expect(SurveyCluster::query()->where('name', 'Davao del Sur')->sole()->survey_region_id)
-        ->toBe($region->id);
+test('a region with no institutions is deleted with its empty clusters', function () {
+    $region = SurveyRegion::query()->create(['name' => 'Regional Office XI', 'is_active' => true]);
+    SurveyCluster::query()->create(['survey_region_id' => $region->id, 'name' => 'Davao', 'is_active' => true]);
+
+    $this->actingAs($this->admin)
+        ->delete(route('settings.survey-directories.destroy', ['type' => 'regions', 'id' => $region->id]))
+        ->assertSessionHas('inertia.flash_data.toast.type', 'deleted');
+
+    expect(SurveyRegion::query()->whereKey($region->id)->exists())->toBeFalse()
+        ->and(SurveyCluster::query()->where('survey_region_id', $region->id)->exists())->toBeFalse();
+});
+
+test('a region with institutions cannot be deleted', function () {
+    SurveyHei::query()->create(['survey_cluster_id' => $this->cluster->id, 'name' => 'Placed College', 'is_active' => true]);
+
+    $this->actingAs($this->admin)
+        ->delete(route('settings.survey-directories.destroy', ['type' => 'regions', 'id' => $this->cluster->survey_region_id]))
+        ->assertSessionHas('inertia.flash_data.toast.type', 'error');
+
+    expect(SurveyRegion::query()->whereKey($this->cluster->survey_region_id)->exists())->toBeTrue();
 });
 
 test('a hand-entered HEI reaches the published public survey', function () {
@@ -321,21 +318,16 @@ test('the directory filters by name or UII, region, status and ownership', funct
     $this->get(route('settings.heis.index', ['status' => 'closed']))->assertSessionHasErrors('status');
 });
 
-test('the cluster filter appears only when a region\'s institutions sit in two or more clusters', function () {
+test('the HEI directory never offers clusters', function () {
     $regionId = $this->cluster->survey_region_id;
-    $unassigned = SurveyCluster::query()->create(['survey_region_id' => $regionId, 'name' => SurveyCluster::UNASSIGNED, 'is_active' => true]);
-    SurveyHei::query()->create(['survey_cluster_id' => $unassigned->id, 'name' => 'Waiting College', 'is_active' => true]);
-
-    // Every institution in one cluster: region goes straight to institution.
-    $this->actingAs($this->admin)->get(route('settings.heis.index', ['region' => $regionId]))
-        ->assertInertia(fn (Assert $page) => $page->where('clusterOptions', []));
-
+    SurveyHei::query()->create(['survey_cluster_id' => SurveyCluster::holdingFor($regionId)->id, 'name' => 'Waiting College', 'is_active' => true]);
     SurveyHei::query()->create(['survey_cluster_id' => $this->cluster->id, 'name' => 'Placed College', 'is_active' => true]);
-    $this->get(route('settings.heis.index', ['region' => $regionId]))
-        ->assertInertia(fn (Assert $page) => $page->where('clusterOptions', [
-            ['id' => $this->cluster->id, 'name' => 'South Cotabato'],
-            ['id' => $unassigned->id, 'name' => SurveyCluster::UNASSIGNED],
-        ]));
-    $this->get(route('settings.heis.index', ['region' => $regionId, 'cluster' => $this->cluster->id]))
-        ->assertInertia(fn (Assert $page) => $page->has('heis.data', 1)->where('heis.data.0.name', 'Placed College'));
+
+    $this->actingAs($this->admin)->get(route('settings.heis.index', ['region' => $regionId]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('heis.data', 2)
+            ->missing('clusters')
+            ->missing('clusterOptions')
+            ->missing('clusterRegions')
+            ->missing('filters.cluster'));
 });

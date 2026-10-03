@@ -6,7 +6,6 @@ use App\Enums\ChecklistType;
 use App\Http\Requests\DashboardFilterRequest;
 use App\Models\MonitoringReport;
 use App\Models\Survey;
-use App\Models\SurveyCluster;
 use App\Models\SurveyResponse;
 use App\Models\User;
 use App\Services\DashboardStatistics;
@@ -29,17 +28,11 @@ class DashboardController extends Controller
             return Inertia::render('dashboard', $statistics->for($user, $request->validated()));
         }
 
-        $user->loadMissing('hei.cluster:id,name');
-
         return Inertia::render('hei/home', [
             'hei' => $user->hei ? [
                 'id' => $user->hei->id,
                 'name' => $user->hei->name,
                 'display_name' => InstitutionName::display($user->hei->name),
-                // The holding cluster is not a place; leave it out of the greeting.
-                'cluster' => $user->hei->cluster?->name === SurveyCluster::UNASSIGNED
-                    ? null
-                    : $user->hei->cluster?->name,
             ] : null,
             'surveys' => fn (): array => $this->surveys($user->survey_hei_id),
             'calendar' => fn (): array => EventCalendar::month($request->string('month')->toString() ?: null),

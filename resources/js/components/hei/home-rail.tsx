@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import { about, dashboard, home, myProfile } from '@/routes';
 import { create as feedback } from '@/routes/feedback';
 import { faq } from '@/routes/help';
-import type { HeiSummary, HeiSurvey } from '@/types';
+import type { HeiRef, HeiSurvey } from '@/types';
 
 /** A row of the list: 44px, rounded, a muted tint on hover. */
 const rowClass =
@@ -44,7 +44,7 @@ export function HomeRail({
     hei,
     surveys,
 }: {
-    hei: HeiSummary | null;
+    hei: HeiRef | null;
     surveys: HeiSurvey[];
 }) {
     const { auth } = usePage().props;

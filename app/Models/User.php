@@ -135,17 +135,16 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
-     * Accounts placed in a region, cluster or HEI: HEI accounts through their
+     * Accounts placed in a region or HEI: HEI accounts through their
      * institution, CHED staff through their regional office. Central Office
      * staff belong to no one region.
      *
      * @param  Builder<User>  $query
      */
-    public function scopePlacedIn(Builder $query, ?int $regionId = null, ?int $clusterId = null, ?int $heiId = null): void
+    public function scopePlacedIn(Builder $query, ?int $regionId = null, ?int $heiId = null): void
     {
         $query
             ->when($heiId, fn (Builder $query) => $query->where('survey_hei_id', $heiId))
-            ->when($clusterId, fn (Builder $query) => $query->whereHas('hei', fn (Builder $query) => $query->where('survey_cluster_id', $clusterId)))
             ->when($regionId, fn (Builder $query) => $query->where(fn (Builder $query) => $query
                 ->where('survey_region_id', $regionId)
                 ->orWhereHas('hei.cluster', fn (Builder $query) => $query->where('survey_region_id', $regionId))));

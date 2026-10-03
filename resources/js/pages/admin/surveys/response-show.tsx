@@ -13,7 +13,6 @@ type ResponseData = {
     respondent_group: string;
     respondent_group_other: string | null;
     region: string;
-    cluster: string;
     hei: string;
     submitted_at: string;
     expires_at: string;
@@ -154,7 +153,6 @@ export default function ResponseShow({
                                     />
                                 ))}
                             <Item label="Region" value={response.region} />
-                            <Item label="Cluster" value={response.cluster} />
                             <Item label="HEI" value={response.hei} />
                         </CardContent>
                     </Card>

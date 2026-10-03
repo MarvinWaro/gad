@@ -9,8 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * Website feedback as staff read it. Load `region`, `cluster` and `hei`
- * first. The sender's name and email are here because only staff with
+ * Website feedback as staff read it. Load `region` and `hei` first. The sender's name and email are here because only staff with
  * `feedback.view` ever receive this shape.
  *
  * @mixin SiteFeedback
@@ -35,7 +34,6 @@ class SiteFeedbackResource extends JsonResource
             'contact' => ['name' => $this->name, 'email' => $this->email],
             'place' => [
                 'region' => $this->region?->name,
-                'cluster' => $this->cluster?->name,
                 'hei' => $this->hei !== null ? InstitutionName::display($this->hei->name) : null,
             ],
             'submitted_at' => $this->created_at?->toIso8601ZuluString(),

@@ -24,8 +24,18 @@ test('every CHED regional office is seeded, in order', function () {
     // seeder already made one, so compare the set.
     expect(SurveyRegion::query()->count())->toBe(17)
         ->and(SurveyRegion::query()->pluck('name')->sort()->values()->all())
-        ->toBe(collect(SurveyRegionSeeder::OFFICES)->sort()->values()->all())
+        ->toBe(collect(SurveyRegionSeeder::OFFICES)->keys()->sort()->values()->all())
         ->and(SurveyRegion::query()->where('is_active', false)->count())->toBe(0);
+});
+
+test('each office carries the PSGC code of its region, for the HEIDA sync', function () {
+    // The survey seeder made Regional Office XII before any code existed.
+    $this->seed(SurveyRegionSeeder::class);
+
+    expect(SurveyRegion::query()->whereNull('code')->exists())->toBeFalse()
+        ->and(SurveyRegion::query()->where('name', 'Regional Office XII')->value('code'))->toBe('1200000000')
+        ->and(SurveyRegion::query()->where('name', 'Regional Office IV')->value('code'))->toBe('0400000000')
+        ->and(SurveyRegion::query()->where('name', 'Regional Office NCR')->value('code'))->toBe('1300000000');
 });
 
 test('the older "Region XII" row is renamed rather than duplicated', function () {
@@ -101,7 +111,9 @@ test('the other directory pages are not paged', function () {
     $this->seed(SurveyDirectorySeeder::class);
 
     $this->actingAs($this->admin)->get(route('settings.regions.index'))
-        ->assertInertia(fn (Assert $page) => $page->has('regions', 1));
-    $this->actingAs($this->admin)->get(route('settings.clusters.index'))
-        ->assertInertia(fn (Assert $page) => $page->has('clusters', 4));
+        // Each region with its institutions' count; clusters stay out of sight.
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('regions', 1)
+            ->where('regions.0.heis_count', 0)
+            ->missing('regions.0.clusters_count'));
 });

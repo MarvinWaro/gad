@@ -27,7 +27,7 @@ class ActivityLogController extends Controller
         $logs = ActivityLog::query()
             ->withinReachOf($actor)
             ->filter($filters)
-            ->with(['user:id,avatar_path', 'subject', 'region:id,name', 'cluster:id,name', 'hei:id,name'])
+            ->with(['user:id,avatar_path', 'subject', 'region:id,name', 'hei:id,name'])
             ->latest('created_at')
             ->latest('id')
             ->paginate(20)
@@ -43,17 +43,17 @@ class ActivityLogController extends Controller
                 'from' => (string) ($filters['from'] ?? ''),
                 'to' => (string) ($filters['to'] ?? ''),
                 'region' => (string) ($filters['region'] ?? ''),
-                'cluster' => (string) ($filters['cluster'] ?? ''),
                 'hei' => (string) ($filters['hei'] ?? ''),
             ],
             // The person the list is narrowed to, named for the filter chip.
             'person' => isset($filters['user'])
                 ? User::query()->whereKey($filters['user'])->first(['id', 'name'])?->only(['id', 'name'])
                 : null,
-            'modules' => array_map(fn (ActivityModule $module): array => [
+            // Clusters are kept out of sight, so they are not a module to pick.
+            'modules' => array_values(array_map(fn (ActivityModule $module): array => [
                 'value' => $module->value,
                 'label' => $module->label(),
-            ], ActivityModule::cases()),
+            ], array_filter(ActivityModule::cases(), fn (ActivityModule $module): bool => $module !== ActivityModule::Clusters))),
             'actions' => collect(ActivityAction::cases())
                 ->map(fn (ActivityAction $action): array => ['value' => $action->value, 'label' => $action->label()])
                 ->sortBy('label')
