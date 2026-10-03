@@ -1,14 +1,5 @@
 import { Link } from '@inertiajs/react';
-import {
-    ArrowRight,
-    ArrowUpRight,
-    BookOpen,
-    FileText,
-    Heart,
-    NotebookTabs,
-    Scale,
-    Video,
-} from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PostImages } from '@/components/hei/post-images';
@@ -21,6 +12,7 @@ import {
 import { achieveAgenda } from '@/data/achieve';
 import type { LawRecord, ResourceRecord } from '@/data/phlgadis-demo';
 import { localDay } from '@/lib/manila-time';
+import { resourceIcons } from '@/lib/resource-icons';
 import { create as feedback } from '@/routes/feedback';
 import type { HomepageStory } from '@/types';
 
@@ -216,13 +208,6 @@ function StoryPreview({
     );
 }
 
-const resourceIcons = {
-    terms: BookOpen,
-    acts: Scale,
-    videos: Video,
-    issuances: FileText,
-    manuals: NotebookTabs,
-} satisfies Record<ResourceRecord['id'], typeof BookOpen>;
 export function Resources({ resources }: { resources: ResourceRecord[] }) {
     return (
         <section id="resources" className="public-container public-section">

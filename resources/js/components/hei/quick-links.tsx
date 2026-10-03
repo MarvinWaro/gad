@@ -2,10 +2,13 @@ import { Link } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
 import {
     ArrowUpRight,
+    CircleHelp,
     ClipboardList,
     FileSpreadsheet,
     Folder,
     LayoutGrid,
+    MessageSquareText,
+    Star,
     VenusAndMars,
 } from 'lucide-react';
 import { useId } from 'react';
@@ -13,23 +16,29 @@ import { cn } from '@/lib/utils';
 
 export type QuickLink = { key: string; label: string; href: string | null };
 
-// The icons follow the old portal's quick links.
+// The icons follow the old portal's quick links, then the help links'.
 const icons: Record<string, LucideIcon> = {
     'upload-monitoring': FileSpreadsheet,
     'gad-training-survey': VenusAndMars,
     'gad-compliance-survey': ClipboardList,
     records: Folder,
+    faq: CircleHelp,
+    feedback: MessageSquareText,
+    rate: Star,
 };
 
 /**
- * The HEI modules, each with its icon. A module without an href is not built
- * yet, so it shows a "Soon" tag instead of pretending to be a link.
+ * A card of links, each with its icon: the HEI modules ("Quick links"), or
+ * the help pages ("Need help?"). A module without an href is not built yet,
+ * so it shows a "Soon" tag instead of pretending to be a link.
  */
 export function QuickLinks({
     links,
+    title = 'Quick links',
     className,
 }: {
     links: QuickLink[];
+    title?: string;
     className?: string;
 }) {
     const titleId = useId();
@@ -44,7 +53,7 @@ export function QuickLinks({
             className={cn('rounded-[10px] border bg-card', className)}
         >
             <h2 id={titleId} className="px-4 pt-4 text-base font-medium">
-                Quick links
+                {title}
             </h2>
             <ul className="space-y-0.5 px-2 pt-2 pb-2">
                 {links.map((link) => {

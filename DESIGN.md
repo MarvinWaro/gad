@@ -19,7 +19,6 @@ colors:
     signature-red: '#ce1126'
     signature-cream: '#f5e9d4'
     callout: '#fce6ee'
-    callout-gradient: 'linear-gradient(120deg, #fde2eb 0%, #fbe9f0 45%, #efe3f8 100%)'
     signature-mustard: '#d9a441'
     flag-blue: '#0038a8'
     link: '#1b61c9'
@@ -139,12 +138,6 @@ components:
         textColor: '{colors.on-signature}'
         rounded: '{rounded.lg}'
         padding: 24px
-    callout:
-        backgroundColor: '{colors.callout}'
-        backgroundImage: '{colors.callout-gradient}'
-        textColor: '{colors.ink}'
-        rounded: '{rounded.md}'
-        padding: 24px
     content-card:
         backgroundColor: '{colors.canvas}'
         textColor: '{colors.ink}'
@@ -160,7 +153,7 @@ components:
 
 PHLGADIS serves CHED regional staff, HEI GAD focal persons, and students answering anonymous law surveys. The interface should read as **calm, trustworthy, and humane**: a public-sector information system, not a SaaS marketing site.
 
-The structure is editorial: white canvas, dark-ink type, generous whitespace, one near-black primary action per view. The brand is **not** spread across every control. It appears in a few deliberate **signature surfaces**: a deep-violet card, a soft pink-to-lilac callout, the logo itself.
+The structure is editorial: white canvas, dark-ink type, generous whitespace, one near-black primary action per view. The brand is **not** spread across every control. It appears in a few deliberate **signature surfaces**: a deep-violet card and the logo itself.
 
 **Where the colors come from.** Every accent traces back to the PHLGADIS logo:
 
@@ -188,7 +181,7 @@ Neutrals lean **warm** so they sit with cream. Don't reintroduce cool slate gray
 - **Brand soft** `{colors.brand-soft}`: selected or tinted states that need a brand hint.
 - **Signature violet** `{colors.signature-violet}`: full dark cards (the HEI "next event" card, the featured story). White text, about 14:1.
 - **Signature cream** `{colors.signature-cream}`: the active sidebar item, avatar backgrounds and hover tints.
-- **Callout** `{colors.callout-gradient}`: the HEI law-surveys panel, a pastel pink (from the PHLGADIS pink) drifting to lilac toward the violet card beside it. Applied with `bg-callout bg-callout-gradient`; the solid `{colors.callout}` is the fallback and the HEI text-selection color. Keep it pastel: ink text must stay ≥4.5:1 across the whole gradient.
+- **Callout** `{colors.callout}`: the PHLGADIS logo's pastel pink, now only the colour of text selected on the HEI pages. (The law surveys sat on a pink-to-lilac gradient until 2026-10-03; they are a plain card now.)
 - **Signature mustard** `{colors.signature-mustard}`: the "deadline" category only.
 
 ### Semantic
@@ -226,13 +219,13 @@ Never put a font that isn't actually loaded first in the stack. The browser sile
     - Filters, partial reloads, infinite scroll, forms and background refreshes never fade, so they never flash or block a click.
     - With reduced motion the swap is instant. Browsers without View Transitions swap as before.
 - **The app's top bar sticks** in both navigation styles and for every role, on an opaque `background` so the page scrolls under it. With the sidebar it holds just inside the inset card's 8px frame on desktop, keeping its rounded top corners (a `sidebar`-coloured cap behind it hides what scrolls past), and sits at the very top on phones. The top header (HEI accounts, and staff who choose it) is one 56px row that sticks at every width. The layouts set `--app-header` to where the sticking bar ends; sticky rails and in-page jumps use `top-below-header` and `scroll-mt-below-header` (24px below it) instead of fixed offsets.
-- Whitespace is the atmosphere. No gradient, mesh or glow backdrops, with one exception: the pastel callout gradient on the HEI law-surveys panel. (Line fades, such as the timeline's, and the corner fade behind a post's goal badges are not backdrops.)
+- Whitespace is the atmosphere. No gradient, mesh or glow backdrops. (Line fades, such as the timeline's, and the corner fade behind a post's goal badges are not backdrops.) The one illustrated surface in the app is the HEI home's feed banner (see HEI home).
 - **Dot texture** (`dot-backdrop` utility in `app.css`): a faint 14px halftone dot grid (ink at 16%) pinned to the top-right corner of the window, and softly the bottom-left, staying put while the page scrolls. It is a sticky, screen-sized layer that takes no space, so it stays inside its surface (the admin card keeps a clean frame). It goes on page surfaces (HEI shell, admin inset card, auth wrapper, public landing and survey pages) as a block or top-aligned flex column, never on cards, dialogs or menus. Opaque sections such as the landing statistics band cover it by design.
 
 ## Elevation and shape
 
 - Depth comes from **color blocks first, shadow second**. Cards are flat with a hairline border. Law cards lift with a soft shadow on hover and focus only.
-- Radius: 12px (`rounded.lg`) for buttons, cards and signature surfaces; 10px for callouts and date badges; 6px for inputs; full for avatars and icon buttons. No pill-shaped buttons.
+- Radius: 12px (`rounded.lg`) for buttons, cards and signature surfaces; 10px for date badges; 6px for inputs; full for avatars and icon buttons. No pill-shaped buttons.
 
 ## Components
 
@@ -242,7 +235,6 @@ Never put a font that isn't actually loaded first in the stack. The browser sile
 - **Confirm popover** (`confirm-popover.tsx`): every delete and deactivate asks here, anchored to the button that asked, never in a browser `confirm()` or a full modal. It has a title naming the item, one or two lines on the consequence, then Cancel (which gets focus) and a red confirm. The confirm shows a spinner while the request runs, and the popover closes when the request ends. Reactivating, restoring or un-archiving needs no confirmation. When a menu item asks, like a post's "⋯ → Delete post", the popover opens once the menu has closed and points at the menu's button (`anchorOnly` with a controlled `open`).
 - **View-only pages**: when someone can open a page but not change it (the survey builder without `surveys.update`), a "View only" note at the top names the permission to ask for. Fields turn read-only with a `muted` fill and full-strength text, which can still be selected. The editing buttons (add, move, remove, save) are hidden, not disabled. Never leave fields that take typing but cannot be saved. The builder does this through `ReadOnlyContext` (`components/survey-builder/read-only.ts`).
 - **Signature violet card**: HEI home "next event". White text at 75–80% opacity for meta text, underlined links in `on-signature`.
-- **Callout**: HEI law-surveys panel on `{colors.callout-gradient}`. Ink text, dividers in ink at 15% opacity.
 - **Sidebar**: `surface-soft` background, cream active item. Staff items sit under four labels, in this order: Overview (Dashboard), Monitoring (Reports, Training Survey, Compliance Survey), Community (Gender Mainstreaming, Events) and Public site (Surveys, Carousel, Feedback). A label with nothing the account may open is left out. `appNavigationGroups` in `lib/app-navigation.ts` is the one list for the sidebar, the top header and the phone menu. The current item is the one whose address the page's path starts with, the longest match winning (`activeNavItem`), so the Training Survey page lights Training Survey, not Reports.
 - **Top header** (`app-header.tsx`): one row across the full width, laid out like Facebook's (a `1fr auto 1fr` grid, so the tabs sit in the true centre), 56px with a hairline under it.
     - **Left:** the official icon alone on its round white plate, a link named "PHLGADIS home", then the search.
@@ -250,7 +242,7 @@ Never put a font that isn't actually loaded first in the stack. The browser sile
     - **Middle (from 1024px):** the navigation as icon tabs, a 48px hover box (`muted`, rounded-lg) 64px wide, 96px from 1280px. Each is named by its label (a bottom tooltip on hover and focus, and its accessible name); the current one is ink over a 2px ink line on the hairline, the others muted. A group marked `menu` (Monitoring) is one tab with a small chevron that opens its labelled items; it carries the line when one of them is current.
     - **Right:** the header actions, then the account avatar (its name is for screen readers only, as on Facebook).
     - **Phones and tablets** (below 1024px): the tabs give way to a menu button, left of the icon, opening a side sheet with the same groups under their labels.
-    - HEI accounts get Home, Events, then Monitoring (Records, Training Survey, Compliance Survey) for HEI Focals.
+    - HEI accounts get Community (their home, the feed; a people icon), Events, then Monitoring (Records, Training Survey, Compliance Survey) for HEI Focals.
 - **App icon** (`app-logo-icon.tsx` → `public/assets/img/gadicon.png`): the official ⚥ icon supplied by CHED central office. It is used as-is in the sidebar, header, auth pages, the CHED official-post avatar and the favicons (`public/favicon.svg` embeds the same PNG, unmodified). Never redraw, recolor or replace official CHED/PHLGADIS assets.
 - **Header actions** (`header-actions.tsx`): the notifications bell (`NotificationBell`, see Notifications) and a light/dark toggle, to the left of the account avatar in the top header and at the right end of the sidebar layout's top bar. The toggle is `ThemeToggle` (`theme-toggle.tsx`), which the public site header uses too.
 - **FAQ** (public header): a plain "FAQ" link after the section links, styled like them, and last in the phone menu. The FAQ opens with the old page's prose: a larger lead paragraph, then the objectives as a two-column bulleted list (one column on phones). The questions follow as `<details>` rows on hairlines under an ink rule, and the page ends with a contact panel (the survey "coming soon" panel style) holding the hotline and email.
@@ -348,11 +340,20 @@ Never put a font that isn't actually loaded first in the stack. The browser sile
     - **Older posts** load by themselves, five at a time, 800px before the reader reaches the end, with the same skeleton meanwhile. "You're all caught up" with a check marks the end.
     - **Photos** shimmer in their tiles (`bg-primary/10`, pulsing unless the reader prefers reduced motion) until each one arrives.
     - **Newer posts:** a reader who comes back after 30 seconds or more away (another tab, a locked phone) triggers one small check. At the top of the feed the new posts load straight in, with a skeleton at the top meanwhile. Further down, a "3 new posts ↑" button (ink, 12px radius, float shadow) floats 12px under the top bar without moving the page; it scrolls up and loads them. A status line announces both to screen readers.
-- **HEI home** (`pages/hei/home.tsx`), laid out like Facebook from 1280px: the page drops the 1280px column (`data-layout="wide"`) and spreads three columns across the screen, the rails at its edges and the feed centred, at most 42rem (`17rem · 42rem · 20rem`, then `22rem · 42rem · 22rem` from 1536px).
-    - **Left rail:** the institution's name (h1, 24px) and greeting, then the law surveys stacked in their callout (`SurveyPanel variant="rail"`): each law on hairlines with its code, title, count from the HEI and Open survey · Copy link.
-    - **Middle:** "HEI Gender Mainstreaming Efforts", the composer and the feed, nothing else.
-    - **Right rail:** the next event, the calendar, later events and quick links.
-    - **1024–1279px:** the name over the page, the law surveys panel above the feed, the right rail beside it. **Below 1024px:** one column: name, law surveys, events and links, then the feed.
+- **HEI home** (`pages/hei/home.tsx`), the community feed, laid out like Facebook from 1280px: the page drops the 1280px column (`data-layout="wide"`) and spreads three columns across the screen, the rails at its edges and the feed centred, at most 42rem (`17rem · 42rem · 20rem`, then `22rem · 42rem · 22rem` from 1536px).
+    - **Left rail** (`HomeRail`, `components/hei/home-rail.tsx`): a plain list on the page, no card chrome, as on Facebook. Rows are 44px, rounded-lg, `muted` on hover, each led by a 36px round `brand-soft` tile with a `brand` icon (the Quick links' style).
+        - **You:** your photo or initials, the institution's name (the page's h1, 15px at 500), "Good morning, {name}" in muted 13px and a chevron: a link to My Profile.
+        - **Menu** ("Your PHLGADIS"): Community (current, the cream active fill) and GAD Quest with a "Soon" tag, not a link. Events and Records are left to the top bar and Quick links rather than listed twice.
+        - **Groups that fold** (`Collapsible`, the chevron turns; both start open so the column reads full, and each remembers in this browser if it was folded): Law surveys lists each law indented under the icon column, its code at 500 and title in muted text on one line, the HEI's count, then Open survey ↗ · Copy link (`SurveyActions`, shared with the panel). Resources lists the landing page's five areas with their icons (`lib/resource-icons.ts`) and counts; GAD Videos says "Coming soon" and is not a link.
+        - **GAD Quest card**: a plain bordered card, "GAD Quest", one line on what it will be and a "Coming soon" tag, with the PHLGADIS persona (`persona-card.webp`, a resized copy of the user's `persona.png`; not an official CHED asset) at 80px on the right. Static until the game is built.
+        - **Footer**: after a hairline, 12px muted links (About · Resources · FAQ · Feedback) and "PHLGADIS © {year}", wrapping inside the column. As on Facebook it rests at the bottom of the screen: the column is at least the screen's height beside the feed (`min-h-[calc(100dvh-var(--app-header)-3rem)]`) and the footer is pushed to its end. Open groups that outgrow the screen push it down after them; it never covers them. The GAD Quest card stays right under the groups.
+        - Hairlines separate the menu, the groups, the card and the footer.
+    - **Middle:** the feed banner, the composer and the feed, nothing else.
+        - **Feed banner** (`FeedBanner`, `components/hei/feed-banner.tsx`): "HEI Gender Mainstreaming Efforts" (title-md, title-lg from 640px, at 500) and its line, word for word from the old HEI page, on a card with a hairline border over the campus illustration (hills, the sun and a school building). The picture is `hei-banner-720.webp` / `-1440.webp`, about 5 and 11 KB, resized from the user's 1 MB `background-HEI.png`, which stays as the source. It covers the card, anchored to the building at the right (`object-[right_72%]`), and is hidden from assistive technology. The words keep to the open sky on the left (at most 70% of the width on phones), ink and muted text on the pale sky well above 4.5:1. In dark mode the picture fades to 16% so it never glares.
+    - **Right rail:** the next event, the calendar, later events and Quick links (HEI Focals). HEI users without Quick links get two cards in their place:
+        - **People at your institution** (`InstitutionPeople`), like Facebook's Contacts: the GAD Focal Person first, on a `brand-soft` row with a "GAD Focal Person" label in `brand` and "Ask about GAD reports and surveys", then colleagues as 32px avatars with names, and a muted count line. **A static preview for now**: sample names, a "Preview" tag and a line saying so, until it reads the institution's real accounts.
+        - **Need help?**: the Quick links card (`QuickLinks` with a title) with FAQ, Send feedback and Rate PHLGADIS. The last opens the homepage with its rating card already open (`/#rate`).
+    - **1024–1279px:** the name over the page, the law surveys as a plain card above the feed (`SurveyPanel`: the four laws on hairlines, no background), the right rail beside it. **Below 1024px:** one column: name, law surveys, events and links, then the feed.
     - **Both rails** stick via `useStickyRail`: under the header when they fit, otherwise they scroll until their end is visible and hold. They never scroll internally.
 - **Event category dots**: training = brand, campaign = signature red, deadline = mustard, meeting = ink, other = muted.
 - **Glossary** (`pages/resources/definition-of-terms.tsx`, `.glossary-*` in `public.css`): term | definition rows on hairlines, grouped under each Act by an ink rule with its cream `law-number` pill and a "Read the Act" link to its full text. A toolbar (sticky from 901px) holds the search (matches in `brand-soft` with a brand underline, `/` to focus, Esc to clear) and law chips; the chip for the group in view is cream. Every term has an anchor and a copy-link button, and a term opened from a link tints `brand-soft` once. Resource pages live at `/resources/{area}`, share the `ResourcePage` frame, and, like `welcome` and `surveys/`, render without the app layout (`app.tsx`). Document pages (Republic Acts, Issuances, Manuals) share `DocumentRow` / `.resource-row`: one row per document on hairlines under an ink rule, led by its artwork or a small document tile (`data-media="icon"`), a cream number pill, and an outline "Read the …" button (no primary button, since a page has several) with "PDF · size" or the host site written underneath. Links to related laws are small bordered chips.
