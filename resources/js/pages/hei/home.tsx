@@ -20,6 +20,7 @@ import type {
     CalendarMonth,
     HeiSummary,
     HeiSurvey,
+    InstitutionPeopleSummary,
     Post,
     ScrollPage,
 } from '@/types';
@@ -32,6 +33,7 @@ type Props = {
     /** Deferred: arrives just after the page. */
     posts?: ScrollPage<Post>;
     quickLinks: QuickLink[];
+    people: InstitutionPeopleSummary;
 };
 
 /** Where to find help: the FAQ, the feedback form and the rating card. */
@@ -59,6 +61,7 @@ export default function HeiHome({
     upcoming,
     posts,
     quickLinks,
+    people,
 }: Props) {
     const { auth } = usePage().props;
     const [nextEvent, ...laterEvents] = upcoming;
@@ -133,17 +136,10 @@ export default function HeiHome({
                             />
                         )}
                         <QuickLinks links={quickLinks} />
-                        {/* HEI users without reporting work get people to
-                            ask and places to find help instead. */}
-                        {quickLinks.length === 0 && (
-                            <>
-                                <InstitutionPeople />
-                                <QuickLinks
-                                    title="Need help?"
-                                    links={helpLinks}
-                                />
-                            </>
-                        )}
+                        {/* Everyone at the HEI: people to ask, and where
+                            to find help. */}
+                        <InstitutionPeople summary={people} />
+                        <QuickLinks title="Need help?" links={helpLinks} />
                     </aside>
                 </div>
             </div>

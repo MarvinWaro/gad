@@ -58,7 +58,7 @@ export function RateWidget() {
             <PopoverTrigger asChild>
                 <Button className="rate-trigger">
                     <Star aria-hidden="true" />
-                    Rate PHLGADIS
+                    <span className="rate-trigger-label">Rate PHLGADIS</span>
                 </Button>
             </PopoverTrigger>
             <PopoverContent

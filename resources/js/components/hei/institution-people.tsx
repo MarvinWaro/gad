@@ -1,79 +1,104 @@
 import { useId } from 'react';
 import { PersonAvatar } from '@/components/person-avatar';
-
-/**
- * A static preview of the names, to judge the card before it reads the
- * institution's real accounts. Replace with server data (the HEI's active
- * accounts, its GAD Focal Persons first) when it is approved.
- */
-const preview = {
-    focal: { name: 'Ana Reyes' },
-    colleagues: [
-        { name: 'Mark Villanueva' },
-        { name: 'Joy Santos' },
-        { name: 'Carlo Dela Cruz' },
-        { name: 'Liza Mendoza' },
-    ],
-    total: 8,
-};
+import { cn } from '@/lib/utils';
+import type { InstitutionPeopleSummary } from '@/types';
 
 /**
  * "People at your institution", like Facebook's Contacts column: the GAD
  * Focal Person first, as the one to ask about GAD work, then colleagues on
- * PHLGADIS. Only signed-in members of the same institution see it.
+ * PHLGADIS (App\Support\InstitutionPeople). Only signed-in members of the
+ * same institution see it.
  */
-export function InstitutionPeople() {
+export function InstitutionPeople({
+    summary,
+}: {
+    summary: InstitutionPeopleSummary;
+}) {
     const titleId = useId();
+    const focal = summary.people.filter((person) => person.focal);
+    const colleagues = summary.people.filter((person) => !person.focal);
 
     return (
         <section
             aria-labelledby={titleId}
             className="rounded-[10px] border bg-card"
         >
-            <div className="flex items-center justify-between gap-2 px-4 pt-4">
-                <h2 id={titleId} className="text-base font-medium">
-                    People at your institution
-                </h2>
-                <span className="rounded-[6px] border px-1.5 py-0.5 text-xs leading-none text-muted-foreground">
-                    Preview
-                </span>
-            </div>
-            <p className="px-4 pt-1 text-xs text-muted-foreground">
-                Sample names. Your colleagues will show here soon.
-            </p>
+            <h2 id={titleId} className="px-4 pt-4 text-base font-medium">
+                People at your institution
+            </h2>
 
-            <div className="mx-2 mt-3 flex items-center gap-3 rounded-md bg-brand-soft/60 px-2 py-2.5">
-                <PersonAvatar name={preview.focal.name} className="size-9" />
-                <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
-                        {preview.focal.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                        <span className="font-medium text-brand">
-                            GAD Focal Person
-                        </span>{' '}
-                        · Ask about GAD reports and surveys
-                    </p>
-                </div>
-            </div>
+            {summary.people.length === 0 ? (
+                <p className="px-4 pt-1 pb-4 text-sm text-muted-foreground">
+                    Colleagues from your institution appear here as they join
+                    PHLGADIS.
+                </p>
+            ) : (
+                <>
+                    {focal.length > 0 && (
+                        <ul
+                            className={cn(
+                                'mx-2 mt-3 space-y-1',
+                                colleagues.length === 0 && 'mb-2',
+                            )}
+                        >
+                            {focal.map((person) => (
+                                <li
+                                    key={person.id}
+                                    className="flex items-center gap-3 rounded-md bg-brand-soft/60 px-2 py-2.5"
+                                >
+                                    <PersonAvatar
+                                        name={person.name}
+                                        src={person.avatar}
+                                        className="size-9"
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-medium">
+                                            {person.name}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            <span className="font-medium text-brand">
+                                                GAD Focal Person
+                                            </span>{' '}
+                                            · Ask about GAD reports and surveys
+                                        </p>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                    {colleagues.length > 0 && (
+                        <ul
+                            className={
+                                focal.length > 0
+                                    ? 'space-y-0.5 px-2 pt-1 pb-2'
+                                    : 'space-y-0.5 px-2 pt-2 pb-2'
+                            }
+                        >
+                            {colleagues.map((person) => (
+                                <li
+                                    key={person.id}
+                                    className="flex items-center gap-3 rounded-md px-2 py-1.5 text-sm"
+                                >
+                                    <PersonAvatar
+                                        name={person.name}
+                                        src={person.avatar}
+                                    />
+                                    <span className="min-w-0 flex-1 truncate">
+                                        {person.name}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </>
+            )}
 
-            <ul className="space-y-0.5 px-2 pt-1 pb-2">
-                {preview.colleagues.map((person) => (
-                    <li
-                        key={person.name}
-                        className="flex items-center gap-3 rounded-md px-2 py-1.5 text-sm"
-                    >
-                        <PersonAvatar name={person.name} />
-                        <span className="min-w-0 flex-1 truncate">
-                            {person.name}
-                        </span>
-                    </li>
-                ))}
-            </ul>
-
-            <p className="border-t px-4 py-3 text-xs text-muted-foreground">
-                {preview.total} people from your institution are on PHLGADIS
-            </p>
+            {summary.total > 1 && (
+                <p className="border-t px-4 py-3 text-xs text-muted-foreground">
+                    {summary.total.toLocaleString()} people from your
+                    institution are on PHLGADIS
+                </p>
+            )}
         </section>
     );
 }

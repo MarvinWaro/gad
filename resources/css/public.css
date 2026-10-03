@@ -3293,6 +3293,12 @@
     background: var(--background);
     font-size: 15px;
 }
+/* 16px on phones and tablets, so iOS does not zoom in on focus. */
+@media (max-width: 900px) {
+    .public-theme .glossary-search input {
+        font-size: 16px;
+    }
+}
 .glossary-search input::-webkit-search-cancel-button {
     appearance: none;
 }
@@ -4425,9 +4431,37 @@
     margin-top: 8px;
 }
 @media (max-width: 600px) {
+    /* On phones the button shrinks to its star, so it covers less of the
+       page; the name stays for screen readers. */
     .public-theme .rate-trigger {
         bottom: 16px;
         left: 16px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border-radius: 999px;
+    }
+    .public-theme .rate-trigger-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+}
+/* Touch screens: small text links get a 44px tap height, so a thumb lands
+   on them. */
+@media (pointer: coarse) {
+    .public-theme .text-action,
+    .glossary-source,
+    .resource-row-link,
+    .resource-row-secondary {
+        min-height: 44px;
+    }
+    .footer-contact a {
+        display: flex;
+        align-items: center;
+        min-height: 44px;
     }
 }

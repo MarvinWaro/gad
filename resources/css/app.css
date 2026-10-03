@@ -314,6 +314,25 @@
     scroll-margin-top: calc(var(--app-header, 0px) + 1.5rem);
 }
 
+/* On touch screens a small text link or button gets a tap area at least
+   44px tall (Apple's and Android's guidance; WCAG 2.5.8 asks for 24px),
+   without moving anything: an invisible box centred on it. Not for links
+   stacked closer than that, whose boxes would overlap. */
+@utility tap-target {
+    position: relative;
+
+    @media (pointer: coarse) {
+        &::after {
+            content: '';
+            position: absolute;
+            inset-inline: -4px;
+            top: 50%;
+            height: max(100%, 44px);
+            translate: 0 -50%;
+        }
+    }
+}
+
 /* A soft fade from the bottom-right corner of a post's photos, behind its
    goal badges. The ellipse meets the box's top and left edges fully clear,
    so it has no visible edge. It darkens the photo, never the SDG icons laid

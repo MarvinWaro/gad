@@ -13,6 +13,7 @@ use App\Services\DashboardStatistics;
 use App\Support\CommunityFeed;
 use App\Support\EventCalendar;
 use App\Support\InstitutionName;
+use App\Support\InstitutionPeople;
 use App\Support\SurveyDefinitions;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -43,6 +44,8 @@ class DashboardController extends Controller
             'surveys' => fn (): array => $this->surveys($user->survey_hei_id),
             'calendar' => fn (): array => EventCalendar::month($request->string('month')->toString() ?: null),
             'upcoming' => fn (): array => EventCalendar::upcoming(),
+            // "People at your institution": colleagues, its GAD Focal Persons first.
+            'people' => fn (): array => InstitutionPeople::for($user),
             // Loaded just after the page appears, which shows skeletons meanwhile.
             'posts' => Inertia::scroll(fn () => CommunityFeed::page($user))->defer(),
             // The institution's reporting, which its focal persons do. Only

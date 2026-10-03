@@ -233,3 +233,49 @@ test('the feed shows the newest posts first, five at a time', function () {
             ->where('posts.data.0.body', 'Post 12')
             ->where('posts.data.4.body', 'Post 8')));
 });
+
+test('the home lists colleagues on PHLGADIS, the GAD Focal Person first', function () {
+    $hei = createSurveyHei();
+    $viewer = heiHomeMember($hei);
+    $viewer->update(['name' => 'Viewer Member']);
+    heiHomeMember($hei)->update(['name' => 'Zed Colleague']);
+    heiHomeMember($hei)->update(['name' => 'Amy Colleague']);
+    heiHomeMember($hei, 'hei-focal')->update(['name' => 'Yna Focal']);
+    // Not listed: another institution's account, and one that cannot sign in.
+    heiHomeMember(SurveyHei::query()->create([
+        'survey_cluster_id' => $hei->survey_cluster_id,
+        'name' => 'Another College',
+        'is_active' => true,
+    ]))->update(['name' => 'Elsewhere Person']);
+    User::factory()->pending()->create(['name' => 'Pending Person', 'survey_hei_id' => $hei->id]);
+
+    $this->actingAs($viewer)->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('hei/home')
+            ->where('people.total', 4)
+            ->where('people.people', fn ($people) => collect($people)->map(fn (array $person): array => [$person['name'], $person['focal']])->all() === [
+                ['Yna Focal', true],
+                ['Amy Colleague', false],
+                ['Zed Colleague', false],
+            ])
+            // Only who they are: no email or roles leave the server.
+            ->where('people.people.0', fn ($person) => array_keys(collect($person)->all()) === ['id', 'name', 'avatar', 'focal']));
+});
+
+test('the people list stops at six, and is empty for the first account', function () {
+    $hei = createSurveyHei();
+    $viewer = heiHomeMember($hei);
+
+    $this->actingAs($viewer)->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('people', ['people' => [], 'total' => 1]));
+
+    foreach (range(1, 8) as $index) {
+        heiHomeMember($hei);
+    }
+
+    $this->actingAs($viewer)->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('people.people', 6)
+            ->where('people.total', 9));
+});

@@ -69,7 +69,7 @@ export function ActivityItem({
                                 type="button"
                                 onClick={() => onPerson(actorId)}
                                 aria-label={`Show only the activity of ${actor.name}`}
-                                className="rounded-sm font-medium break-all outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                                className="tap-target rounded-sm font-medium break-all outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
                             >
                                 {actor.name}
                             </button>

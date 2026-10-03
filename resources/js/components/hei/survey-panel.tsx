@@ -13,7 +13,7 @@ export function responsesLabel(responses: number): string {
 }
 
 const actionClass =
-    'inline-flex items-center gap-1 rounded-sm underline decoration-foreground/30 underline-offset-4 outline-none hover:decoration-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50';
+    'tap-target inline-flex items-center gap-1 rounded-sm underline decoration-foreground/30 underline-offset-4 outline-none hover:decoration-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
 /**
  * The two things a focal person does with a law survey: open it, or copy its
