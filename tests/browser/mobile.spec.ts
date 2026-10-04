@@ -147,9 +147,17 @@ test('the HEI pages fit a 360px phone', async ({ browser }) => {
         '/settings/profile',
         '/settings/security',
         '/settings/appearance',
+        '/quests',
     ]) {
         await checkPage(page, path);
     }
+
+    // The game, opened from the quest list.
+    const quest = await page
+        .locator('a[href*="/quests/"]')
+        .first()
+        .getAttribute('href');
+    await checkPage(page, quest!);
 });
 
 test('the staff pages fit a 360px phone', async ({ browser }) => {
@@ -173,11 +181,22 @@ test('the staff pages fit a 360px phone', async ({ browser }) => {
         '/settings/activity-logs',
         '/settings/ratings',
         '/settings/student-counts',
+        '/settings/badges',
+        '/quests/manage',
+        '/quests/manage/create',
         '/notifications',
         '/profile',
     ]) {
         await checkPage(page, path);
     }
+
+    // A quest's results, opened from the list.
+    await page.goto('/quests/manage');
+    const results = await page
+        .locator('a[href*="/quests/manage/"]:not([href$="/create"])')
+        .first()
+        .getAttribute('href');
+    await checkPage(page, results!);
 
     // The survey builder, opened from the list.
     await page.goto('/admin/surveys');

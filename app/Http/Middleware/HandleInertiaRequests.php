@@ -47,6 +47,8 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => fn (): array => $user?->permissionSlugs() ?? [],
                 // HEI roles only: the HEI home and header shell.
                 'heiOnly' => fn (): bool => $user?->isHeiOnly() ?? false,
+                // GAD Quest: everyone with the permission but administrators.
+                'playsQuests' => fn (): bool => $user?->playsQuests() ?? false,
             ],
             // The bell's count. The browser asks for it again every 30 seconds.
             'inbox' => fn (): ?array => $user !== null ? app(NotificationInbox::class)->summary($user) : null,

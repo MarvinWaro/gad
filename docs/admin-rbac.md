@@ -9,14 +9,18 @@ only see actions they can perform.
 `RbacSeeder` defines the roles below. Administrators can change their
 permissions in Settings → Roles & permissions.
 
-| Role (slug)                           | Interface | Place   | What it can do                                                                                     |
-| ------------------------------------- | --------- | ------- | -------------------------------------------------------------------------------------------------- |
-| Administrator (`admin`)               | Staff     | Office  | Everything, including users, roles and settings                                                    |
-| CHED Focal (`ched-focal`)             | Staff     | Office  | View and review its region's monitoring reports, see its GAD surveys; post in Gender Mainstreaming |
-| CHED Employee (`ched-employee`)       | Staff     | Office  | View its region's monitoring reports and GAD surveys; post in Gender Mainstreaming                 |
-| GAD Focal Person (`gad-focal-person`) | Staff     | Office  | Create and update carousel slides, survey drafts and events; review reports                        |
-| HEI Focal (`hei-focal`)               | HEI       | Its HEI | Everything an HEI user has, plus the HEI's monitoring report and GAD surveys                       |
-| HEI User (`hei`)                      | HEI       | Its HEI | The HEI home, events and Gender Mainstreaming (no permissions)                                     |
+| Role (slug)                           | Interface | Place   | What it can do                                                                                                                     |
+| ------------------------------------- | --------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Administrator (`admin`)               | Staff     | Office  | Everything, including users, roles and settings; runs GAD quests but does not play them                                            |
+| CHED Focal (`ched-focal`)             | Staff     | Office  | View and review its region's monitoring reports, see its GAD surveys; post in Gender Mainstreaming; write, run and play GAD quests |
+| CHED Employee (`ched-employee`)       | Staff     | Office  | View its region's monitoring reports and GAD surveys; post in Gender Mainstreaming; play GAD quests                                |
+| GAD Focal Person (`gad-focal-person`) | Staff     | Office  | Create and update carousel slides, survey drafts and events; review reports; play GAD quests                                       |
+| HEI Focal (`hei-focal`)               | HEI       | Its HEI | Everything an HEI user has, plus the HEI's monitoring report and GAD surveys                                                       |
+| HEI User (`hei`)                      | HEI       | Its HEI | The HEI home, events, Gender Mainstreaming and GAD Quest (`quests.play` only)                                                      |
+
+GAD Quest's permissions and its one exception (Administrators hold `quests.play`
+so they can manage every account, but never play) are in `docs/gad-quest.md`.
+Badge permissions (`badges.*`, Administrators only) are in `docs/badges.md`.
 
 A staff account's **office** is one region, or the Central Office for all
 regions (Settings → Users → Office), and it decides whose reports the account

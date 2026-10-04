@@ -9,9 +9,13 @@ import {
     type LucideIcon,
 } from 'lucide-react';
 import { Fragment, type ReactNode, useState } from 'react';
+import { BetaTag } from '@/components/beta-tag';
 import { responsesLabel, SurveyActions } from '@/components/hei/survey-panel';
 import { firstName, greeting } from '@/components/hei/welcome-band';
 import { PersonAvatar } from '@/components/person-avatar';
+import { LevelMark } from '@/components/quests/quest-badge';
+import { questAction } from '@/components/quests/quest-card';
+import { Button } from '@/components/ui/button';
 import {
     Collapsible,
     CollapsibleContent,
@@ -23,7 +27,9 @@ import { cn } from '@/lib/utils';
 import { about, dashboard, home, myProfile } from '@/routes';
 import { create as feedback } from '@/routes/feedback';
 import { faq } from '@/routes/help';
+import { index as quests, show as quest } from '@/routes/quests';
 import type { HeiRef, HeiSurvey } from '@/types';
+import type { QuestCard } from '@/types/quests';
 
 /** A row of the list: 44px, rounded, a muted tint on hover. */
 const rowClass =
@@ -32,7 +38,7 @@ const rowClass =
 /**
  * The HEI home's left column from 1280px, laid out like Facebook's: you,
  * where you are, the law surveys and resources as groups that fold, the
- * coming GAD Quest, then a small footer. Events and Records are left to the
+ * open GAD Quest, then a small footer. Events and Records are left to the
  * top bar and Quick links rather than listed twice. A plain list on the
  * page, without cards, so the feed stays the centre of attention.
  *
@@ -43,9 +49,12 @@ const rowClass =
 export function HomeRail({
     hei,
     surveys,
+    quest,
 }: {
     hei: HeiRef | null;
     surveys: HeiSurvey[];
+    /** The newest quest open to them; null when none is. */
+    quest: QuestCard | null;
 }) {
     const { auth } = usePage().props;
 
@@ -89,12 +98,11 @@ export function HomeRail({
                         </Link>
                     </li>
                     <li>
-                        {/* Not built yet: a row that says so, not a link. */}
-                        <div className={cn(rowClass, 'hover:bg-transparent')}>
+                        <Link href={quests()} className={rowClass}>
                             <IconTile icon={Gamepad2} />
                             <span className="flex-1">GAD Quest</span>
-                            <SoonTag />
-                        </div>
+                            <BetaTag />
+                        </Link>
                     </li>
                 </ul>
             </nav>
@@ -197,7 +205,7 @@ export function HomeRail({
 
             <hr className="mx-2 border-border" />
 
-            <GadQuestCard />
+            <GadQuestCard quest={quest} />
 
             <div className="mt-auto space-y-3 pt-3">
                 <hr className="mx-2 border-border" />
@@ -214,14 +222,6 @@ function IconTile({ icon: Icon }: { icon: LucideIcon }) {
             className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand"
         >
             <Icon className="size-[1.125rem]" />
-        </span>
-    );
-}
-
-function SoonTag({ children = 'Soon' }: { children?: ReactNode }) {
-    return (
-        <span className="rounded-[6px] border px-1.5 py-0.5 text-xs leading-none text-muted-foreground">
-            {children}
         </span>
     );
 }
@@ -281,24 +281,55 @@ function Group({
     );
 }
 
-/** GAD Quest is coming; until then the card only says what it will be. */
-function GadQuestCard() {
+/** The open GAD Quest and where they stand with it, or that none is open. */
+function GadQuestCard({ quest: open }: { quest: QuestCard | null }) {
     return (
         <section
             aria-labelledby="gad-quest-title"
             className="relative mx-1 flex items-center gap-2 overflow-hidden rounded-xl border bg-card p-4"
         >
             <div className="min-w-0 flex-1">
-                <h2 id="gad-quest-title" className="font-medium">
+                <h2
+                    id="gad-quest-title"
+                    className="flex items-center gap-2 font-medium"
+                >
                     GAD Quest
+                    <BetaTag />
                 </h2>
-                <p className="mt-1 text-[13px] leading-snug text-muted-foreground">
-                    A quick game on gender and development, for your whole
-                    campus.
-                </p>
-                <p className="mt-3">
-                    <SoonTag>Coming soon</SoonTag>
-                </p>
+                {open ? (
+                    <>
+                        <p className="mt-1 line-clamp-2 text-[13px] leading-snug">
+                            {open.title}
+                        </p>
+                        {open.best && (
+                            <p className="mt-1.5 flex items-center gap-1.5 text-[13px] text-muted-foreground">
+                                <LevelMark
+                                    level={open.best.level}
+                                    className="size-5"
+                                />
+                                {open.best.level_label} badge
+                            </p>
+                        )}
+                        <Button asChild size="sm" className="mt-3">
+                            <Link
+                                href={quest(open.id)}
+                                aria-label={`${questAction(open)}: ${open.title}`}
+                            >
+                                {questAction(open)}
+                            </Link>
+                        </Button>
+                    </>
+                ) : (
+                    <p className="mt-1 text-[13px] leading-snug text-muted-foreground">
+                        No quest is open right now.{' '}
+                        <Link
+                            href={quests()}
+                            className="text-foreground underline underline-offset-2"
+                        >
+                            See your badges
+                        </Link>
+                    </p>
+                )}
             </div>
             <img
                 src="/assets/img/persona-card.webp"

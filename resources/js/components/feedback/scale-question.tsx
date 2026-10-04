@@ -2,8 +2,8 @@ import { type CSSProperties, useId } from 'react';
 import InputError from '@/components/input-error';
 
 /**
- * A rated question as a row of buttons: the numbers 1 to 5 with the words for
- * each end under them, or the answer's words themselves. They are real radio
+ * A rated question as faces with descriptive labels, or the answer's words
+ * themselves. Faces still submit numeric scores. They are real radio
  * buttons, so arrow keys move along the row. Every rated question is
  * optional, so a chosen answer can be cleared.
  */
@@ -12,8 +12,6 @@ export function ScaleQuestion({
     label,
     optional = false,
     options,
-    low,
-    high,
     value,
     onChange,
     error,
@@ -23,18 +21,15 @@ export function ScaleQuestion({
     label: string;
     /** Marks the question optional, where required ones sit beside it. */
     optional?: boolean;
-    options: { value: number; label: string }[];
-    /** The words at each end of a numbered scale. */
-    low?: string;
-    high?: string;
+    options: { value: number; label: string; emoji?: string }[];
     value: string;
     onChange: (value: string) => void;
     error?: string;
 }) {
     const labelId = useId();
     const errorId = useId();
-    const numbered = low !== undefined && high !== undefined;
-    const last = options.length - 1;
+    const faces = options.some((option) => option.emoji !== undefined);
+    const selected = options.find((option) => String(option.value) === value);
 
     return (
         <div className="feedback-question">
@@ -71,11 +66,15 @@ export function ScaleQuestion({
                 aria-labelledby={labelId}
                 aria-describedby={error ? errorId : undefined}
                 className="feedback-scale"
-                data-numbered={numbered || undefined}
+                data-faces={faces || undefined}
                 style={{ '--options': options.length } as CSSProperties}
             >
                 {options.map((option, index) => (
-                    <label key={option.value} className="feedback-option">
+                    <label
+                        key={option.value}
+                        className="feedback-option"
+                        title={option.emoji ? option.label : undefined}
+                    >
                         <input
                             type="radio"
                             id={index === 0 ? id : `${id}.${option.value}`}
@@ -84,23 +83,34 @@ export function ScaleQuestion({
                             checked={value === String(option.value)}
                             onChange={() => onChange(String(option.value))}
                             aria-invalid={error ? true : undefined}
+                            aria-describedby={error ? errorId : undefined}
                         />
-                        <span>{option.label}</span>
-                        {/* The end words belong to the end numbers: "1
-                            Strongly Disagree". */}
-                        {numbered && (index === 0 || index === last) && (
-                            <span className="sr-only">
-                                {index === 0 ? low : high}
-                            </span>
+                        {option.emoji ? (
+                            <>
+                                <span
+                                    aria-hidden="true"
+                                    className="feedback-face"
+                                >
+                                    {option.emoji}
+                                </span>
+                                <span className="sr-only">{option.label}</span>
+                            </>
+                        ) : (
+                            <span>{option.label}</span>
                         )}
                     </label>
                 ))}
             </div>
-            {numbered && (
-                <p className="feedback-scale-ends" aria-hidden="true">
-                    <span>{low}</span>
-                    <span>{high}</span>
-                </p>
+            {faces && (
+                <>
+                    <p className="feedback-scale-ends" aria-hidden="true">
+                        <span>{options[0]?.label}</span>
+                        <span>{options.at(-1)?.label}</span>
+                    </p>
+                    <p className="feedback-scale-selection" role="status">
+                        {selected ? `Selected: ${selected.label}` : ''}
+                    </p>
+                </>
             )}
             <InputError id={errorId} message={error} />
         </div>

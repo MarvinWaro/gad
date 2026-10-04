@@ -8,6 +8,7 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { feedbackScaleOptions } from '@/lib/feedback';
 import { localDate } from '@/lib/manila-time';
 import { destroy } from '@/routes/admin/feedback';
 import type { FeedbackQuestions, SiteFeedback } from '@/types/feedback';
@@ -173,16 +174,21 @@ function Answers({
                 answer:
                     question.options.find((option) => option.value === value)
                         ?.label ?? null,
+                emoji: undefined,
             };
         }),
         ...questions.scales.flatMap((scale) =>
             scale.items.map((item) => {
                 const value = feedback.answers[item.key];
+                const option = feedbackScaleOptions(scale).find(
+                    (option) => option.value === value,
+                );
 
                 return {
                     key: item.key,
                     label: item.label,
-                    answer: value === null ? null : `${value} of 5`,
+                    answer: option?.label ?? null,
+                    emoji: option?.emoji,
                 };
             }),
         ),
@@ -200,6 +206,14 @@ function Answers({
                                 : 'mb-1 font-medium tabular-nums sm:mb-0'
                         }
                     >
+                        {row.emoji && (
+                            <span
+                                aria-hidden="true"
+                                className="mr-1.5 inline-block align-middle text-xl leading-none"
+                            >
+                                {row.emoji}
+                            </span>
+                        )}
                         {row.answer ?? 'Not answered'}
                     </dd>
                 </div>

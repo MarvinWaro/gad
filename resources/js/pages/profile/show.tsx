@@ -1,6 +1,9 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Building2, MapPin, Pencil, UsersRound } from 'lucide-react';
+import { useState } from 'react';
 import { ActivityTimeline } from '@/components/activity/activity-timeline';
+import { AchievementTile } from '@/components/badges/achievement-tile';
+import { BetaTag } from '@/components/beta-tag';
 import { Feed } from '@/components/hei/feed';
 import { ProfilePhoto } from '@/components/profile-photo';
 import { Button } from '@/components/ui/button';
@@ -8,8 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { myProfileHref } from '@/lib/my-profile';
 import { dashboard } from '@/routes';
 import { edit } from '@/routes/profile';
+import { index as quests } from '@/routes/quests';
 import type { Auth, Post, ScrollPage } from '@/types';
 import type { ActivityEntry } from '@/types/activity';
+import type { Achievement } from '@/types/badges';
+
+/** Badges shown before "Show all". */
+const FEATURED_BADGES = 6;
 
 const roleNames: Record<string, string> = {
     admin: 'Administrator',
@@ -41,10 +49,13 @@ function postingHref(auth: Auth): string | null {
  */
 export default function MyProfile({
     institution,
+    achievements,
     posts,
     activity,
 }: {
     institution: string | null;
+    /** Badges and GAD Quest badges, newest first. */
+    achievements: Achievement[];
     /** Deferred. */
     posts?: ScrollPage<Post>;
     /** Deferred. */
@@ -125,6 +136,11 @@ export default function MyProfile({
                             </span>{' '}
                             Following and public profiles are not available yet.
                         </div>
+
+                        <Achievements
+                            badges={achievements}
+                            canPlay={auth.playsQuests}
+                        />
 
                         <Tabs defaultValue="posts" className="mt-8 gap-6">
                             <TabsList
@@ -312,6 +328,76 @@ export default function MyProfile({
                 </div>
             </div>
         </>
+    );
+}
+
+/**
+ * Their badges and GAD Quest badges, like GitHub's achievements: the newest
+ * few, each opening its details, and the way to all of them.
+ */
+function Achievements({
+    badges,
+    canPlay,
+}: {
+    badges: Achievement[];
+    canPlay: boolean;
+}) {
+    const [showAll, setShowAll] = useState(false);
+
+    if (badges.length === 0 && !canPlay) {
+        return null;
+    }
+
+    return (
+        <section aria-labelledby="achievements" className="mt-8">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2
+                    id="achievements"
+                    className="flex items-center gap-2 text-lg font-medium"
+                >
+                    Achievements
+                    <BetaTag />
+                </h2>
+                {canPlay && (
+                    <Link
+                        href={quests()}
+                        className="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                    >
+                        Open GAD Quest
+                    </Link>
+                )}
+            </div>
+            {badges.length > 0 ? (
+                <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                    {(showAll ? badges : badges.slice(0, FEATURED_BADGES)).map(
+                        (badge) => (
+                            <li key={badge.key}>
+                                <AchievementTile achievement={badge} />
+                            </li>
+                        ),
+                    )}
+                </ul>
+            ) : (
+                <p className="mt-2 text-sm text-muted-foreground">
+                    Share a photo of GAD work tagged with an SDG or an
+                    A.C.H.I.E.V.E. item, or finish a GAD Quest, to earn your
+                    first badge.
+                </p>
+            )}
+            {badges.length > FEATURED_BADGES && (
+                <Button
+                    type="button"
+                    variant="ghost"
+                    className="mt-2"
+                    aria-expanded={showAll}
+                    onClick={() => setShowAll(!showAll)}
+                >
+                    {showAll
+                        ? 'Show fewer'
+                        : `Show all ${badges.length} badges`}
+                </Button>
+            )}
+        </section>
     );
 }
 

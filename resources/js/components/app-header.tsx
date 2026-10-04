@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown, Menu } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
+import { BetaTag } from '@/components/beta-tag';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { HeaderActions } from '@/components/header-actions';
 import { HeaderSearch } from '@/components/header-search';
@@ -55,7 +56,11 @@ const tabClass =
  */
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const { auth } = usePage().props;
-    const groups = appNavigationGroups(auth.permissions, auth.heiOnly);
+    const groups = appNavigationGroups(
+        auth.permissions,
+        auth.heiOnly,
+        auth.playsQuests,
+    );
     const { currentUrl } = useCurrentUrl();
     const active = activeNavItem(groups, currentUrl);
 
@@ -137,7 +142,9 @@ function Tab({ item, current }: { item: NavItem; current: boolean }) {
                     <Link
                         href={item.href}
                         prefetch
-                        aria-label={item.title}
+                        aria-label={
+                            item.beta ? `${item.title} (Beta)` : item.title
+                        }
                         aria-current={current ? 'page' : undefined}
                         className={cn(
                             tabClass,
@@ -149,7 +156,10 @@ function Tab({ item, current }: { item: NavItem; current: boolean }) {
                         {item.icon && <item.icon className="size-5" />}
                     </Link>
                 </TooltipTrigger>
-                <TooltipContent side="bottom">{item.title}</TooltipContent>
+                <TooltipContent side="bottom">
+                    {item.title}
+                    {item.beta && ' · Beta'}
+                </TooltipContent>
             </Tooltip>
             {current && <CurrentLine />}
         </li>
@@ -209,6 +219,7 @@ function TabMenu({
                             >
                                 {item.icon && <item.icon className="size-4" />}
                                 {item.title}
+                                {item.beta && <BetaTag className="ml-auto" />}
                             </Link>
                         </DropdownMenuItem>
                     ))}
@@ -278,6 +289,9 @@ function MobileNavigation({
                                                         <item.icon className="size-4 shrink-0" />
                                                     )}
                                                     {item.title}
+                                                    {item.beta && (
+                                                        <BetaTag className="ml-auto" />
+                                                    )}
                                                 </Link>
                                             </SheetClose>
                                         </li>

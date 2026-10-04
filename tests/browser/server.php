@@ -2,6 +2,8 @@
 
 // This server always creates its own database. Never reuse a development server
 // or load cached application configuration for browser tests.
+use App\Actions\Quests\ManageQuest;
+use App\Actions\Quests\SaveQuest;
 use App\Enums\ActivityAction;
 use App\Enums\ActivityModule;
 use App\Enums\StudentCountKind;
@@ -185,6 +187,25 @@ foreach ([
         ]);
     }
 }
+
+// GAD Quest: a CHED Focal of Region XII and the open quest they wrote, with
+// placeholder questions (the first choice is right), and an HEI account
+// that plays it in gad-quest.spec.ts.
+$questFocal = User::factory()->regionalOffice($region)->create(['name' => 'Fictional Quest Focal', 'email' => 'browser-quest-focal@example.test', 'password' => 'browser-password']);
+$questFocal->assignRole('ched-focal');
+$questPlayer = User::factory()->create(['name' => 'Fictional Quest Player', 'email' => 'browser-quest-player@example.test', 'password' => 'browser-password', 'survey_hei_id' => $hei->id, 'sex' => 'female']);
+$questPlayer->assignRole('hei');
+$fixtureQuest = app(SaveQuest::class)->create($questFocal, $region->id, [
+    'title' => 'Fixture GAD Quest',
+    'description' => 'Five placeholder questions for the browser tests.',
+    'questions' => array_map(fn (int $number): array => [
+        'prompt' => "Fixture question {$number}?",
+        'explanation' => "Fixture explanation {$number}.",
+        'choices' => ["Right answer {$number}", "Wrong answer {$number}", "Other answer {$number}"],
+        'correct' => 0,
+    ], range(1, 5)),
+]);
+app(ManageQuest::class)->open($fixtureQuest);
 
 // Six more regions with an HEI each, so a Central Office account's dashboard
 // lists more regions than its "Every campus counts" card shows. They are

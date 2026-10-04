@@ -83,6 +83,12 @@ class Notifier
         $this->send(NotificationKind::PostTagged, $entry, $post->tags()->pluck('users.id')->all());
     }
 
+    /** A badge awarded by hand: the person who now holds it. */
+    public function badgeAwarded(User $recipient, ?ActivityLog $entry): void
+    {
+        $this->send(NotificationKind::BadgeAwarded, $entry, [$recipient->id]);
+    }
+
     /** A post removed by a moderator; removing your own tells no one. */
     public function postRemoved(Post $post, ?ActivityLog $entry): void
     {

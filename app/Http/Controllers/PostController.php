@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Badges\AwardEarnedBadges;
 use App\Actions\Community\CreatePost;
 use App\Enums\ActivityAction;
 use App\Enums\ActivityModule;
@@ -34,7 +35,7 @@ class PostController extends Controller
         ]);
     }
 
-    public function store(StorePostRequest $request, CreatePost $createPost): RedirectResponse
+    public function store(StorePostRequest $request, CreatePost $createPost, AwardEarnedBadges $badges): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -42,8 +43,14 @@ class PostController extends Controller
         $images = $request->file('images', []);
 
         $createPost->handle($user, $request->validated(), $images);
+        // Sharing GAD work can earn a badge (docs/badges.md).
+        $earned = $badges->for($user);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Post shared.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => $earned === []
+            ? __('Post shared.')
+            : trans_choice('Post shared. You earned the :names badge.|Post shared. You earned the :names badges.', count($earned), [
+                'names' => collect($earned)->pluck('name')->join(', ', ' and '),
+            ])]);
 
         return back();
     }

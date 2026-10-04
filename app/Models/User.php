@@ -135,6 +135,15 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
+     * The region the account belongs to: an HEI account's through its HEI,
+     * otherwise its regional office. Central Office staff have none.
+     */
+    public function regionId(): ?int
+    {
+        return $this->hei?->cluster->survey_region_id ?? $this->survey_region_id;
+    }
+
+    /**
      * Accounts placed in a region or HEI: HEI accounts through their
      * institution, CHED staff through their regional office. Central Office
      * staff belong to no one region.
@@ -194,6 +203,16 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasMany(Notification::class);
     }
 
+    /**
+     * The badges they hold. GAD Quest badges come from their quests.
+     *
+     * @return HasMany<BadgeAward, $this>
+     */
+    public function badgeAwards(): HasMany
+    {
+        return $this->hasMany(BadgeAward::class);
+    }
+
     /** @return HasMany<Post, $this> */
     public function posts(): HasMany
     {
@@ -242,6 +261,16 @@ class User extends Authenticatable implements PasskeyUser
         $this->loadMissing('roles');
 
         return Role::onlyHei(array_values($this->roles->map(fn (Role $role): string => $role->slug)->all()));
+    }
+
+    /**
+     * Whether the account plays GAD Quest. Administrators hold every
+     * permission, so they can manage every account, but they run quests
+     * rather than play them.
+     */
+    public function playsQuests(): bool
+    {
+        return $this->hasPermissionTo('quests.play') && ! $this->hasRole('admin');
     }
 
     public function hasPermissionTo(string $permission): bool

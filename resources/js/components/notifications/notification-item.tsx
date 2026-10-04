@@ -1,5 +1,6 @@
 import { Link, useHttp } from '@inertiajs/react';
 import {
+    Award,
     BadgeCheck,
     Bell,
     CalendarPlus,
@@ -58,6 +59,7 @@ const kindIcons: Record<string, LucideIcon> = {
     event_created: CalendarPlus,
     survey_responses: ClipboardList,
     site_feedback: MessageSquareText,
+    badge_awarded: Award,
 };
 
 export type NotificationChanges = {

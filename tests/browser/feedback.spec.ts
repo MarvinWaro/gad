@@ -54,7 +54,7 @@ test('the homepage leads to the feedback form', async ({ page }) => {
     ).toBeVisible();
 });
 
-for (const width of [375, 1280]) {
+for (const width of [360, 1280]) {
     test(`a visitor sends feedback in four steps at ${width}px`, async ({
         page,
     }, testInfo) => {
@@ -116,16 +116,41 @@ for (const width of [375, 1280]) {
         });
         await page.getByRole('button', { name: 'Continue' }).click();
 
-        // Agreement: the end numbers carry their words for screen readers.
+        // Faces have descriptive names and still carry numeric values.
         await expect(
             page.getByRole('heading', { name: /Agreement/ }),
         ).toBeFocused();
         const terms = page.getByRole('radiogroup', {
             name: 'Use of terms throughout the system is consistent',
         });
-        await terms.getByRole('radio', { name: '5 Strongly Agree' }).check();
+        await terms
+            .getByRole('radio', { name: 'Strongly Agree', exact: true })
+            .check();
         await page.keyboard.press('ArrowLeft');
-        await expect(terms.getByRole('radio', { name: '4' })).toBeChecked();
+        const agree = terms.getByRole('radio', { name: 'Agree', exact: true });
+        await expect(agree).toBeChecked();
+        await expect(agree).toHaveValue('4');
+        await expect(terms.locator('.feedback-face')).toHaveText([
+            '😞',
+            '🙁',
+            '😐',
+            '🙂',
+            '😄',
+        ]);
+        const termsQuestion = terms.locator('..');
+        await expect(termsQuestion.getByRole('status')).toHaveText(
+            'Selected: Agree',
+        );
+        await termsQuestion.getByRole('button', { name: /^Clear/ }).click();
+        await expect(agree).not.toBeChecked();
+        await expect(termsQuestion.getByRole('status')).toBeEmpty();
+        await expect(
+            terms.getByRole('radio', {
+                name: 'Strongly Disagree',
+                exact: true,
+            }),
+        ).toBeFocused();
+        await agree.check();
         await fitsWidth(page);
         await page.screenshot({
             path: testInfo.outputPath(`feedback-step-2-${width}.png`),
@@ -133,10 +158,26 @@ for (const width of [375, 1280]) {
         });
         await page.getByRole('button', { name: 'Continue' }).click();
 
-        // Ease of use can be skipped.
+        // The same faces describe difficulty, rather than agreement.
         await expect(
             page.getByRole('heading', { name: /Ease of use/ }),
         ).toBeFocused();
+        const navigation = page.getByRole('radiogroup', {
+            name: 'Navigation around the website',
+        });
+        await navigation
+            .getByRole('radio', {
+                name: 'Neither difficult nor easy',
+                exact: true,
+            })
+            .check();
+        await expect(
+            navigation.getByRole('radio', {
+                name: 'Neither difficult nor easy',
+                exact: true,
+            }),
+        ).toHaveValue('3');
+        await fitsWidth(page);
         await page.getByRole('button', { name: 'Continue' }).click();
 
         // The sender's details: region first, then its institutions.
@@ -169,7 +210,16 @@ for (const width of [375, 1280]) {
             'Browser Feedback Sender',
         );
 
+        const submission = page.waitForRequest(
+            (request) =>
+                new URL(request.url()).pathname === '/feedback' &&
+                request.method() === 'POST',
+        );
         await page.getByRole('button', { name: 'Send feedback' }).click();
+        const submitted = (await submission).postDataJSON();
+        expect(submitted.terms_consistent).toBe('4');
+        expect(submitted.navigation_ease).toBe('3');
+        expect(submitted.prompts_clear).toBe('');
         const thanks = page.getByRole('heading', {
             name: 'Thank you for your feedback.',
         });
@@ -198,13 +248,23 @@ for (const colorScheme of ['light', 'dark'] as const) {
         await page.getByRole('button', { name: 'Continue' }).click();
         await page
             .getByRole('radiogroup', { name: 'Prompts for inputs are clear' })
-            .getByRole('radio', { name: '3' })
+            .getByRole('radio', { name: 'Neutral', exact: true })
             .check();
         await noViolations(page);
+        await page.screenshot({
+            path: testInfo.outputPath(`feedback-agreement-${colorScheme}.png`),
+            fullPage: true,
+        });
 
-        for (const _ of [3, 4]) {
-            await page.getByRole('button', { name: 'Continue' }).click();
-        }
+        // Scale answers remain optional, including the ease-of-use step.
+        await page.getByRole('button', { name: 'Continue' }).click();
+        await page
+            .getByRole('radiogroup', { name: 'Navigation around the website' })
+            .getByRole('radio', { name: 'Very Easy', exact: true })
+            .check();
+        await noViolations(page);
+        await page.getByRole('button', { name: /^Clear/ }).click();
+        await page.getByRole('button', { name: 'Continue' }).click();
         await noViolations(page);
         await page.getByRole('button', { name: 'Send feedback' }).click();
         await expect(
@@ -222,9 +282,19 @@ test('an admin reads the feedback under Public site → Feedback', async ({
     await page
         .getByRole('textbox', { name: 'Feedback', exact: true })
         .fill('Where do I find the GAD agenda template?');
-    for (const _ of [2, 3, 4]) {
-        await page.getByRole('button', { name: 'Continue' }).click();
-    }
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await page
+        .getByRole('radiogroup', {
+            name: 'Use of terms throughout the system is consistent',
+        })
+        .getByRole('radio', { name: 'Agree', exact: true })
+        .check();
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await page
+        .getByRole('radiogroup', { name: 'Navigation around the website' })
+        .getByRole('radio', { name: 'Very Easy', exact: true })
+        .check();
+    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByLabel('Email').fill('asker@example.test');
     await page.getByRole('button', { name: 'Send feedback' }).click();
     await expect(
@@ -250,6 +320,22 @@ test('an admin reads the feedback under Public site → Feedback', async ({
     await expect(row).toContainText(
         'Use of terms throughout the system is consistent',
     );
+    const termsAnswer = row
+        .locator('dt')
+        .filter({ hasText: 'Use of terms throughout the system is consistent' })
+        .locator('+ dd');
+    await expect(termsAnswer).toHaveText('🙂Agree');
+    const navigationAnswer = row
+        .locator('dt')
+        .filter({ hasText: 'Navigation around the website' })
+        .locator('+ dd');
+    await expect(navigationAnswer).toHaveText('😄Very Easy');
+    await expect(
+        row
+            .locator('dt')
+            .filter({ hasText: 'Prompts for inputs are clear' })
+            .locator('+ dd'),
+    ).toHaveText('Not answered');
     await expect(
         row.getByRole('link', { name: 'asker@example.test' }),
     ).toHaveAttribute('href', 'mailto:asker@example.test');
@@ -266,6 +352,14 @@ test('an admin reads the feedback under Public site → Feedback', async ({
     await noViolations(page);
     await page.screenshot({
         path: testInfo.outputPath('feedback-admin.png'),
+        fullPage: true,
+    });
+    await page.setViewportSize({ width: 360, height: 900 });
+    await page.getByRole('button', { name: 'Toggle dark mode' }).click();
+    await fitsWidth(page);
+    await noViolations(page);
+    await page.screenshot({
+        path: testInfo.outputPath('feedback-admin-mobile-dark.png'),
         fullPage: true,
     });
 });

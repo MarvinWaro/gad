@@ -24,6 +24,7 @@ import type {
     Post,
     ScrollPage,
 } from '@/types';
+import type { QuestCard } from '@/types/quests';
 
 type Props = {
     hei: HeiRef | null;
@@ -34,6 +35,8 @@ type Props = {
     posts?: ScrollPage<Post>;
     quickLinks: QuickLink[];
     people: InstitutionPeopleSummary;
+    /** The GAD Quest card's quest: the newest open to them. */
+    quest: QuestCard | null;
 };
 
 /** Where to find help: the FAQ, the feedback form and the rating card. */
@@ -62,6 +65,7 @@ export default function HeiHome({
     posts,
     quickLinks,
     people,
+    quest,
 }: Props) {
     const { auth } = usePage().props;
     const [nextEvent, ...laterEvents] = upcoming;
@@ -86,7 +90,7 @@ export default function HeiHome({
                         aria-label="Your institution, law surveys and resources"
                         className="hidden min-w-0 xl:sticky xl:block xl:self-start"
                     >
-                        <HomeRail hei={hei} surveys={surveys} />
+                        <HomeRail hei={hei} surveys={surveys} quest={quest} />
                     </aside>
 
                     <div className="min-w-0 space-y-10">

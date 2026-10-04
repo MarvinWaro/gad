@@ -25,6 +25,7 @@ enum NotificationKind: string
     case EventCreated = 'event_created';
     case SurveyResponses = 'survey_responses';
     case SiteFeedback = 'site_feedback';
+    case BadgeAwarded = 'badge_awarded';
 
     /** Its name in the Type filter. */
     public function label(): string
@@ -46,6 +47,7 @@ enum NotificationKind: string
             self::EventCreated => 'New GAD events',
             self::SurveyResponses => 'New survey responses',
             self::SiteFeedback => 'New website feedback',
+            self::BadgeAwarded => 'Badges awarded to you',
         };
     }
 
@@ -60,6 +62,7 @@ enum NotificationKind: string
             self::EventCreated => ActivityModule::Events,
             self::SurveyResponses => ActivityModule::SurveyResponses,
             self::SiteFeedback => ActivityModule::SiteFeedback,
+            self::BadgeAwarded => ActivityModule::Badges,
         };
     }
 
@@ -68,7 +71,7 @@ enum NotificationKind: string
     {
         return match ($this) {
             self::ReportSubmitted, self::ReportReviewed, self::GadSurveySubmitted,
-            self::AccountApproved => 'positive',
+            self::AccountApproved, self::BadgeAwarded => 'positive',
             self::ReportReturned, self::AccountPending => 'warning',
             self::PostRemoved, self::CommentRemoved => 'danger',
             default => 'info',
@@ -99,6 +102,7 @@ enum NotificationKind: string
             self::EventCreated => 'added a GAD event: :subject',
             self::SurveyResponses => $count === 1 ? '1 new response to :subject' : ':count new responses to :subject',
             self::SiteFeedback => $count === 1 ? '1 new website feedback response' : ':count new website feedback responses',
+            self::BadgeAwarded => 'awarded you the :subject badge',
         };
     }
 

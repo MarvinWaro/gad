@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ActivityLogResource;
 use App\Models\ActivityLog;
 use App\Models\User;
+use App\Support\Achievements;
 use App\Support\CommunityFeed;
 use App\Support\InstitutionName;
 use Illuminate\Http\Request;
@@ -28,6 +29,8 @@ class MyProfileController extends Controller
 
         return Inertia::render('profile/show', [
             'institution' => $user->hei ? InstitutionName::display($user->hei->name) : null,
+            // Their badges and GAD Quest badges, newest first.
+            'achievements' => fn (): array => Achievements::for($user),
             'posts' => Inertia::scroll(fn () => CommunityFeed::page($user, author: $user))->defer(),
             // What they did themselves; anyone may read their own.
             'activity' => Inertia::scroll(fn () => ActivityLogResource::collection(

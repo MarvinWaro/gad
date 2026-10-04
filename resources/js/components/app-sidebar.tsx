@@ -16,7 +16,11 @@ import { appNavigationGroups } from '@/lib/app-navigation';
 
 export function AppSidebar() {
     const { auth } = usePage().props;
-    const navGroups = appNavigationGroups(auth.permissions, auth.heiOnly);
+    const navGroups = appNavigationGroups(
+        auth.permissions,
+        auth.heiOnly,
+        auth.playsQuests,
+    );
 
     return (
         <Sidebar collapsible="icon" variant="inset">

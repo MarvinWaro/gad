@@ -16,6 +16,8 @@ export type Auth = {
     permissions: string[];
     /** HEI roles only: the HEI home and header shell. */
     heiOnly: boolean;
+    /** Plays GAD Quest: everyone with the permission but administrators. */
+    playsQuests: boolean;
 };
 
 export type Passkey = {
