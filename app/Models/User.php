@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\UserStatus;
+use App\Support\InstitutionName;
+use App\Support\PeopleSearch;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -31,6 +33,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $mobile_number
  * @property string|null $sex
  * @property string|null $avatar_path
+ * @property string $search_name Derived from the name by PeopleSearch.
+ * @property string $search_sounds Derived from the name by PeopleSearch.
  * @property-read string|null $avatar
  * @property UserStatus $status
  * @property Carbon|null $email_verified_at
@@ -43,7 +47,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $updated_at
  */
 #[Fillable(['name', 'email', 'password', 'survey_hei_id', 'mobile_number', 'sex', 'status'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'avatar_path'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'avatar_path', 'search_name', 'search_sounds'])]
 #[Appends(['avatar'])]
 // Email verification is temporarily optional. Restore MustVerifyEmail here to
 // require verification again; keep the verification routes and stored status.
@@ -82,9 +86,18 @@ class User extends Authenticatable implements PasskeyUser
         ];
     }
 
-    /** A removed account takes its profile photo with it. */
+    /**
+     * The name's search keys follow the name. A removed account takes its
+     * profile photo with it.
+     */
     protected static function booted(): void
     {
+        static::saving(function (User $user): void {
+            if ($user->isDirty('name') || ! $user->exists) {
+                $user->forceFill(PeopleSearch::keysFor($user->name));
+            }
+        });
+
         static::deleted(function (User $user): void {
             if ($user->avatar_path !== null) {
                 Storage::disk('public')->delete($user->avatar_path);
@@ -132,6 +145,19 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->national_access
             || ($regionId !== null && $this->survey_region_id === $regionId);
+    }
+
+    /**
+     * Where the account belongs, as profiles and lists name it: its
+     * institution, or its CHED office. Load `hei` and `officeRegion` first.
+     */
+    public function affiliation(): string
+    {
+        return match (true) {
+            $this->hei !== null => InstitutionName::display($this->hei->name),
+            $this->officeRegion !== null => 'CHED '.$this->officeRegion->name,
+            default => 'CHED Central Office',
+        };
     }
 
     /**
@@ -211,6 +237,22 @@ class User extends Authenticatable implements PasskeyUser
     public function badgeAwards(): HasMany
     {
         return $this->hasMany(BadgeAward::class);
+    }
+
+    /**
+     * The people they follow, whose posts fill their Following feed.
+     *
+     * @return BelongsToMany<User, $this>
+     */
+    public function following(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'follows', 'follower_id', 'followed_id')->withPivot('created_at');
+    }
+
+    /** @return BelongsToMany<User, $this> */
+    public function followers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'follows', 'followed_id', 'follower_id')->withPivot('created_at');
     }
 
     /** @return HasMany<Post, $this> */

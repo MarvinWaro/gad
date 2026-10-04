@@ -9,14 +9,14 @@ only see actions they can perform.
 `RbacSeeder` defines the roles below. Administrators can change their
 permissions in Settings → Roles & permissions.
 
-| Role (slug)                           | Interface | Place   | What it can do                                                                                                                     |
-| ------------------------------------- | --------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Administrator (`admin`)               | Staff     | Office  | Everything, including users, roles and settings; runs GAD quests but does not play them                                            |
-| CHED Focal (`ched-focal`)             | Staff     | Office  | View and review its region's monitoring reports, see its GAD surveys; post in Gender Mainstreaming; write, run and play GAD quests |
-| CHED Employee (`ched-employee`)       | Staff     | Office  | View its region's monitoring reports and GAD surveys; post in Gender Mainstreaming; play GAD quests                                |
-| GAD Focal Person (`gad-focal-person`) | Staff     | Office  | Create and update carousel slides, survey drafts and events; review reports; play GAD quests                                       |
-| HEI Focal (`hei-focal`)               | HEI       | Its HEI | Everything an HEI user has, plus the HEI's monitoring report and GAD surveys                                                       |
-| HEI User (`hei`)                      | HEI       | Its HEI | The HEI home, events, Gender Mainstreaming and GAD Quest (`quests.play` only)                                                      |
+| Role (slug)                           | Interface | Place        | What it can do                                                                                                                     |
+| ------------------------------------- | --------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Administrator (`admin`)               | Staff     | Every region | Everything, including users, roles and settings; runs GAD quests but does not play them                                            |
+| CHED Focal (`ched-focal`)             | Staff     | Office       | View and review its region's monitoring reports, see its GAD surveys; post in Gender Mainstreaming; write, run and play GAD quests |
+| CHED Employee (`ched-employee`)       | Staff     | Office       | View its region's monitoring reports and GAD surveys; post in Gender Mainstreaming; play GAD quests                                |
+| GAD Focal Person (`gad-focal-person`) | Staff     | Office       | Create and update carousel slides, survey drafts and events; review reports; play GAD quests                                       |
+| HEI Focal (`hei-focal`)               | HEI       | Its HEI      | Everything an HEI user has, plus the HEI's monitoring report and GAD surveys                                                       |
+| HEI User (`hei`)                      | HEI       | Its HEI      | The HEI home, events, Gender Mainstreaming and GAD Quest (`quests.play` only)                                                      |
 
 GAD Quest's permissions and its one exception (Administrators hold `quests.play`
 so they can manage every account, but never play) are in `docs/gad-quest.md`.
@@ -24,7 +24,8 @@ Badge permissions (`badges.*`, Administrators only) are in `docs/badges.md`.
 
 A staff account's **office** is one region, or the Central Office for all
 regions (Settings → Users → Office), and it decides whose reports the account
-sees. HEI accounts never hold an office; their region comes through their HEI
+sees. Administrators have no office to pick: they always cover every region
+(since 2026-10-07; Settings → Users saves them as Central Office). HEI accounts never hold an office; their region comes through their HEI
 and its cluster. `Role::HEI_SLUGS` lists the HEI roles: an account holding only
 those gets the HEI home and header, and every other account gets the staff
 interface.
@@ -96,6 +97,12 @@ also removes the old file.
 
 The public homepage queries active slides by display order. If none exist, the
 existing static homepage carousel remains visible as a fallback.
+
+**Administrators from the command line.** `php artisan make:admin` asks for a
+name, an email and a password (typed twice, never stored in `.env`) and creates
+a verified Central Office administrator. Use it on a new server, or whenever
+nobody can sign in. The seeded `admin@gmail.com` takes `ADMIN_PASSWORD` from
+`.env`, and production refuses to seed without it.
 
 For a new environment, run:
 

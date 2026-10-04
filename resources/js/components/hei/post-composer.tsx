@@ -223,6 +223,8 @@ export function PostComposer({
             forceFormData: true,
             preserveScroll: true,
             reset: ['posts'],
+            // A post can earn a badge, which the bell tells of at once.
+            only: ['inbox'],
             onSuccess: () => {
                 previews.forEach((url) => URL.revokeObjectURL(url));
                 setPreviews([]);

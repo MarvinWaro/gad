@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -93,5 +94,29 @@ class SurveyResponse extends Model
     public function groupAnswers(): HasMany
     {
         return $this->hasMany(SurveyGroupAnswer::class);
+    }
+
+    /**
+     * Responses a staff account's office reaches: every one for the Central
+     * Office; its own region's and those that name no region for a regional
+     * office (as with website feedback); none without an office.
+     *
+     * @param  Builder<SurveyResponse>  $query
+     */
+    public function scopeReachableBy(Builder $query, User $user): void
+    {
+        if ($user->national_access) {
+            return;
+        }
+
+        $query->where(fn (Builder $query) => $user->survey_region_id === null
+            ? $query->whereRaw('1 = 0')
+            : $query->where('survey_region_id', $user->survey_region_id)->orWhereNull('survey_region_id'));
+    }
+
+    public function isReachableBy(User $user): bool
+    {
+        return $user->national_access
+            || ($user->survey_region_id !== null && in_array($this->survey_region_id, [null, $user->survey_region_id], true));
     }
 }

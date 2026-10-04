@@ -3,7 +3,6 @@
 namespace App\Http\Resources;
 
 use App\Models\BadgeAward;
-use App\Support\InstitutionName;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -26,11 +25,7 @@ class BadgeAwardResource extends JsonResource
                 'id' => $user->id,
                 'name' => $user->name,
                 'avatar' => $user->avatar,
-                'place' => match (true) {
-                    $user->hei !== null => InstitutionName::display($user->hei->name),
-                    $user->officeRegion !== null => $user->officeRegion->name,
-                    default => __('CHED Central Office'),
-                },
+                'place' => $user->affiliation(),
             ],
             'awarded_by' => $this->awarder?->name,
             'note' => $this->note,

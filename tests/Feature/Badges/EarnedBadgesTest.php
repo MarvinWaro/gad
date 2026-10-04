@@ -139,3 +139,23 @@ test('badges:award gives people who already posted the badges their posts earn',
     expect($this->member->badgeAwards()->count())->toBe(1)
         ->and($other->badgeAwards()->count())->toBe(0);
 });
+
+test('a badge earned is told to its earner, from the system, and opens their Badges tab', function () {
+    goalPost($this->member);
+    earnedNow($this->member);
+
+    $this->actingAs($this->member)->getJson(route('notifications.recent'))
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.kind.code', 'badge_earned')
+        ->assertJsonPath('data.0.actor', null)
+        ->assertJsonPath('data.0.sentence.before', 'You earned the')
+        ->assertJsonPath('data.0.sentence.subject', 'Community Spark')
+        ->assertJsonPath('data.0.url', route('my-profile', ['tab' => 'badges']));
+
+    // A deactivated account is told nothing.
+    $other = User::factory()->inactive()->create();
+    goalPost($other);
+    earnedNow($other);
+    expect($other->notifications()->count())->toBe(0);
+});

@@ -8,9 +8,12 @@ use App\Http\Controllers\Admin\SurveyResponseController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\FollowController;
 use App\Http\Controllers\MyProfileController;
 use App\Http\Controllers\NewerPostsController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PeopleSearchController;
+use App\Http\Controllers\PersonProfileController;
 use App\Http\Controllers\PostCommentController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostHomepageController;
@@ -69,9 +72,9 @@ Route::get('/hei', function () {
     return Inertia::render('Index');
 })->name('hei.index');
 
-// The homepage's anonymous "Rate PHLGADIS" answers, throttled like the surveys.
+// The homepage's anonymous "Rate PHLGADIS" answers, throttled per visitor.
 Route::post('/ratings', [SiteRatingController::class, 'store'])
-    ->middleware('throttle:5,60')
+    ->middleware('throttle:ratings')
     ->name('ratings.store');
 
 // The website feedback form, which replaced the old system's Google Form.
@@ -96,13 +99,35 @@ Route::get('/surveys/{law}', [PublicSurveyController::class, 'show'])->whereIn('
     'ra-11313',
 ])->name('surveys.show');
 Route::post('/surveys/{survey:slug}/responses', [PublicSurveyController::class, 'store'])
-    ->middleware('throttle:5,60')
+    ->middleware('throttle:survey-answers')
     ->name('surveys.responses.store');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('events', [EventController::class, 'index'])->name('events.index');
     Route::get('profile', MyProfileController::class)->name('my-profile');
+
+    // People: profiles, following and search (docs/people-and-following.md).
+    Route::whereNumber('person')->group(function () {
+        Route::get('people/{person}', [PersonProfileController::class, 'show'])->name('people.show');
+        Route::get('people/{person}/followers', [PersonProfileController::class, 'followers'])
+            ->middleware('throttle:60,1')
+            ->name('people.followers');
+        Route::get('people/{person}/following', [PersonProfileController::class, 'following'])
+            ->middleware('throttle:60,1')
+            ->name('people.following');
+        Route::post('people/{person}/follow', [FollowController::class, 'store'])
+            ->middleware('throttle:30,1')
+            ->name('people.follow');
+        Route::delete('people/{person}/follow', [FollowController::class, 'destroy'])
+            ->middleware('throttle:30,1')
+            ->name('people.unfollow');
+    });
+    Route::get('search', [PeopleSearchController::class, 'index'])->name('search');
+    // Asked as the reader types, a pause after each change.
+    Route::get('search/people', [PeopleSearchController::class, 'suggestions'])
+        ->middleware('throttle:90,1')
+        ->name('search.people');
 
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     // The bell asks every 30 seconds, and again whenever it opens.

@@ -12,7 +12,8 @@ beforeEach(function () {
 
 function managedUserWithRole(string $role): User
 {
-    $user = User::factory()->create();
+    // Administrators work for the Central Office, as the seeded one does.
+    $user = ($role === 'admin' ? User::factory()->nationalOffice() : User::factory())->create();
     $user->assignRole($role);
 
     return $user;

@@ -96,6 +96,12 @@ class Notification extends Model
 
         return match (true) {
             $subject === null => null,
+            // Badges are told to the person who now holds them: their profile.
+            in_array($this->kind, [NotificationKind::BadgeAwarded, NotificationKind::BadgeEarned], true) => route('my-profile', ['tab' => 'badges']),
+            // A new follower: who they are.
+            $this->kind === NotificationKind::UserFollowed => $this->activity?->user_id !== null
+                ? route('people.show', $this->activity->user_id)
+                : null,
             $this->kind === NotificationKind::SurveyResponses => $subject instanceof Survey && $viewer->can('survey-responses.view')
                 ? route('admin.surveys.responses.index', $subject)
                 : null,

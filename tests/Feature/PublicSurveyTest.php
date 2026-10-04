@@ -195,7 +195,7 @@ test('a response missing its optional institution still renders for reviewers', 
         'perpetrators' => [], 'other_relative_details' => [], 'consent' => true,
     ])->assertRedirect();
 
-    $admin = User::factory()->create();
+    $admin = User::factory()->nationalOffice()->create();
     $admin->assignRole('admin');
     $response = SurveyResponse::query()->sole();
 
@@ -268,4 +268,50 @@ test('when the HEI is optional an empty region stays available', function () {
     ])->assertRedirect()->assertSessionHasNoErrors();
 
     expect(SurveyResponse::query()->sole()->survey_cluster_id)->toBeNull();
+});
+
+/** A response to RA 7877 from Region XII, as a respondent sends it. */
+function regionXiiResponse(Survey $survey): SurveyResponse
+{
+    test()->post(route('surveys.responses.store', $survey), [
+        ...respondentFollowUps(),
+        'version_id' => $survey->publishedVersion()->id, 'age' => 24, 'sex' => 'female',
+        'respondent_group' => 'student', 'region_id' => SurveyRegion::query()->where('name', 'Regional Office XII')->value('id'),
+        'experiences' => ['none'],
+        'perpetrators' => [], 'other_relative_details' => [], 'consent' => true,
+    ])->assertRedirect();
+
+    return SurveyResponse::query()->latest()->firstOrFail();
+}
+
+test('a regional office reads only its own region\'s survey responses', function () {
+    $survey = publishOptionalHeiRa7877();
+    $response = regionXiiResponse($survey);
+    $elsewhere = SurveyRegion::query()->create(['name' => 'Regional Office XI', 'is_active' => true]);
+    $outsider = User::factory()->regionalOffice($elsewhere)->create();
+    $outsider->assignRole('admin');
+    $insider = User::factory()->regionalOffice($response->survey_region_id)->create();
+    $insider->assignRole('admin');
+
+    $this->actingAs($outsider)->get(route('admin.surveys.responses.index', $survey))
+        ->assertInertia(fn (Assert $page) => $page->has('responses.data', 0));
+    $this->actingAs($outsider)->get(route('admin.surveys.responses.show', [$survey, $response]))->assertNotFound();
+    expect($this->actingAs($outsider)->get(route('admin.surveys.responses.export', $survey))->streamedContent())
+        ->not->toContain($response->public_reference);
+    $this->actingAs($outsider)->delete(route('admin.surveys.responses.destroy', [$survey, $response]))->assertNotFound();
+
+    $this->actingAs($insider)->get(route('admin.surveys.responses.index', $survey))
+        ->assertInertia(fn (Assert $page) => $page->has('responses.data', 1));
+    $this->actingAs($insider)->get(route('admin.surveys.responses.show', [$survey, $response]))->assertOk();
+});
+
+test('the CSV export never hands a spreadsheet a formula', function () {
+    $survey = publishOptionalHeiRa7877();
+    regionXiiResponse($survey)->forceFill(['respondent_group' => 'other', 'respondent_group_other' => '=1+1'])->save();
+    $admin = User::factory()->nationalOffice()->create();
+    $admin->assignRole('admin');
+
+    $csv = $this->actingAs($admin)->get(route('admin.surveys.responses.export', $survey))->streamedContent();
+
+    expect($csv)->toContain("'=1+1")->not->toContain(',=1+1');
 });

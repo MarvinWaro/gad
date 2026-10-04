@@ -29,9 +29,14 @@ each one marks it read or unread, or deletes it after asking.
 | GAD events                        | CHED added a GAD event                        | Every active account except its creator                                                                                                                      |
 | Survey responses                  | New answers to a law survey                   | Accounts with `survey-responses.view` whose office covers the region the respondent chose (all of them when no region was chosen), and the Central Office    |
 | Website feedback                  | A visitor sent website feedback               | Accounts with `feedback.view` (administrators) whose office covers the region the sender named (all of them when none was named), and the Central Office     |
+| Badges                            | An office awarded you a badge by hand         | The person awarded. It opens their profile's Badges tab.                                                                                                     |
+|                                   | You earned a badge by sharing GAD work        | The earner, from the system: "You earned the … badge. See it on your profile." It opens their Badges tab.                                                    |
+| People                            | Someone started following you                 | The person followed. It opens the follower's profile. Unfollowing takes the notice away, read or not.                                                        |
 
-Nobody is told about their own actions. Pending and deactivated accounts are
-told nothing.
+Nobody is told about their own actions, except a badge they earn: the
+system gives it, so the notice names no one and speaks to them ("You
+earned …"; `NotificationKind::showsActor()`). Pending and deactivated
+accounts are told nothing.
 
 **Survey answers are grouped.** A survey drive can bring hundreds of answers,
 so there is one notification per survey that counts up while it is unread:

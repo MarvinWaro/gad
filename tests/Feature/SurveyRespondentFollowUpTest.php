@@ -17,7 +17,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     $this->seed([RbacSeeder::class, SurveySeeder::class]);
-    $this->admin = User::factory()->create();
+    $this->admin = User::factory()->nationalOffice()->create();
     $this->admin->assignRole('admin');
     $this->survey = Survey::query()->where('slug', 'ra-7877')->sole();
 

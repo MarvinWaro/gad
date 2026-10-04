@@ -8,15 +8,20 @@ use App\Models\Badge;
 use App\Models\BadgeAward;
 use App\Models\User;
 use App\Services\ActivityRecorder;
+use App\Services\Notifier;
 
 /**
  * Gives a person the system badges whose rules they now meet: after they
  * post, and for everyone at once from `php artisan badges:award`. A badge
- * is earned once and kept; a badge switched off is not given.
+ * is earned once and kept; a badge switched off is not given. Each new one
+ * is told to its earner, so they learn badges exist.
  */
 final class AwardEarnedBadges
 {
-    public function __construct(private readonly ActivityRecorder $activity) {}
+    public function __construct(
+        private readonly ActivityRecorder $activity,
+        private readonly Notifier $notifier,
+    ) {}
 
     /** @return list<Badge> The badges they earned just now. */
     public function for(User $user): array
@@ -43,7 +48,8 @@ final class AwardEarnedBadges
             ]);
 
             if ($inserted > 0) {
-                $this->activity->record(ActivityAction::Earned, ActivityModule::Badges, $badge, actor: $user);
+                $entry = $this->activity->record(ActivityAction::Earned, ActivityModule::Badges, $badge, actor: $user);
+                $this->notifier->badgeEarned($user, $entry);
                 $earned[] = $badge;
             }
         }

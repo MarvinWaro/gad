@@ -2,19 +2,36 @@
 
 namespace App\Support;
 
+use App\Models\Badge;
 use App\Models\BadgeAward;
 use App\Models\User;
 
 /**
  * A person's achievements as profiles and lists show them: the badges they
- * hold and their GAD Quest badges, in one shape, newest first. The one
- * place that shape is made.
+ * hold and their GAD Quest badges, in one shape. The one place that shape
+ * is made.
  *
  * @phpstan-type Achievement array{key: string, name: string, caption: string|null, description: string, medal: string, image: string|null, earned_at: string|null, facts: list<array{label: string, value: string}>}
+ * @phpstan-type ToEarn array{key: string, name: string, description: string, criterion: string, medal: string, image: string|null}
  */
 class Achievements
 {
-    /** @return list<Achievement> */
+    /**
+     * How great each kind is, greatest first: a GAD Quest Champion, a badge
+     * someone was given by hand, an Advocate, a milestone earned by sharing
+     * GAD work, then a Participant.
+     */
+    private const GREATNESS = ['champion' => 0, 'custom' => 1, 'advocate' => 2, 'participant' => 4];
+
+    /** Where an earned milestone ranks among them. */
+    private const MILESTONE = 3;
+
+    /**
+     * Everything they hold, greatest first and newest first within each, so
+     * a profile's highlights are simply the first few.
+     *
+     * @return list<Achievement>
+     */
     public static function for(User $user): array
     {
         $badges = $user->badgeAwards()
@@ -22,7 +39,37 @@ class Achievements
             ->get()
             ->map(fn (BadgeAward $award): array => self::fromAward($award));
 
-        return self::newestFirst([...$badges->all(), ...self::quests($user)]);
+        $all = self::newestFirst([...$badges->all(), ...self::quests($user)]);
+        // usort is stable, so newest first holds within each rank.
+        usort($all, fn (array $a, array $b): int => self::greatness($a) <=> self::greatness($b));
+
+        return $all;
+    }
+
+    /**
+     * The badges for sharing GAD work they have yet to earn, in the order
+     * people reach them, with how to earn each. Switched-off badges are left
+     * out, since nobody can earn them.
+     *
+     * @return list<ToEarn>
+     */
+    public static function toEarn(User $user): array
+    {
+        return array_values(Badge::query()
+            ->whereNotNull('rule')
+            ->where('is_active', true)
+            ->whereNotIn('id', $user->badgeAwards()->select('badge_id'))
+            ->inListOrder()
+            ->get()
+            ->map(fn (Badge $badge): array => [
+                'key' => 'badge:'.$badge->id,
+                'name' => $badge->name,
+                'description' => $badge->description,
+                'criterion' => (string) $badge->rule?->criterion(),
+                'medal' => $badge->medal(),
+                'image' => $badge->image,
+            ])
+            ->all());
     }
 
     /** @return list<Achievement> Their GAD Quest badges only. */
@@ -69,6 +116,12 @@ class Achievements
             'earned_at' => $award->awarded_at->toIso8601ZuluString(),
             'facts' => $facts,
         ];
+    }
+
+    /** @param  Achievement  $achievement */
+    private static function greatness(array $achievement): int
+    {
+        return self::GREATNESS[$achievement['medal']] ?? self::MILESTONE;
     }
 
     /**

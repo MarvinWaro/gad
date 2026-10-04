@@ -37,8 +37,9 @@ class NotificationResource extends JsonResource
                 'code' => $module->value,
                 'label' => $module->label(),
             ],
-            // Null when no one acted, as with survey answers.
-            'actor' => $entry === null ? null : [
+            // Null when no one acted, as with survey answers, or when the
+            // system did, as with a badge someone earned.
+            'actor' => $entry === null || ! $this->kind->showsActor() ? null : [
                 'id' => $entry->user_id,
                 'name' => $entry->actor_name,
                 'avatar' => $entry->user?->avatar,

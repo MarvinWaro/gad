@@ -1,5 +1,6 @@
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { HeaderActions } from '@/components/header-actions';
+import { HeaderSearch } from '@/components/header-search';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
@@ -25,7 +26,10 @@ export function AppSidebarHeader({
                     <SidebarTrigger className="-ml-1" />
                     <Breadcrumbs breadcrumbs={breadcrumbs} />
                 </div>
-                <HeaderActions navigation="sidebar" className="ml-auto" />
+                <div className="ml-auto flex items-center gap-2">
+                    <HeaderSearch placement="sidebar" />
+                    <HeaderActions navigation="sidebar" />
+                </div>
             </div>
         </header>
     );

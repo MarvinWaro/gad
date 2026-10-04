@@ -50,12 +50,19 @@ class UserManagementController extends Controller
                 });
             })
             ->when($role !== '', fn ($query) => $query->whereHas('roles', fn ($query) => $query->where('slug', $role)))
+            // A regional office lists its own region's accounts (staff by
+            // office, HEI accounts through their HEI) and those placed nowhere.
+            ->when(! $actor->national_access, fn ($query) => $query
+                ->where('national_access', false)
+                ->where(fn ($query) => $query
+                    ->placedIn($actor->survey_region_id)
+                    ->orWhere(fn ($query) => $query->whereNull('survey_region_id')->whereNull('survey_hei_id'))))
             ->placedIn(
                 isset($validated['region']) ? (int) $validated['region'] : null,
                 isset($validated['hei']) ? (int) $validated['hei'] : null,
             );
         $users = $filtered()
-            ->with(['roles:id,name,slug', 'hei:id,name', 'officeRegion:id,name'])
+            ->with(['roles:id,name,slug', 'hei:id,name,survey_cluster_id', 'hei.cluster:id,survey_region_id', 'officeRegion:id,name'])
             ->when($status !== null, fn ($query) => $query->where('status', $status))
             // Registrations awaiting approval are the admin's to-do list.
             ->orderByRaw('case when status = ? then 0 else 1 end', [UserStatus::Pending->value])
@@ -443,13 +450,19 @@ class UserManagementController extends Controller
     }
 
     /**
-     * Central Office staff manage everyone. Others manage accounts in their
-     * own regional office and accounts with no office, such as HEI users.
+     * Central Office staff manage everyone. Others manage accounts of their
+     * own region (staff by their office, HEI accounts through their HEI) and
+     * accounts placed nowhere yet.
      */
     private function reachesOffice(User $actor, User $target): bool
     {
-        return $actor->national_access || (! $target->national_access
-            && ($target->survey_region_id === null || $target->survey_region_id === $actor->survey_region_id));
+        if ($actor->national_access) {
+            return true;
+        }
+
+        $region = $target->regionId();
+
+        return ! $target->national_access && ($region === null || $region === $actor->survey_region_id);
     }
 
     /**
@@ -470,6 +483,8 @@ class UserManagementController extends Controller
     /**
      * The office a create or update sets, or null to keep the current one.
      * HEI-only accounts never hold one: their region comes through the HEI.
+     * Administrators run the whole system, so they always cover every
+     * region, whatever office the form sends.
      *
      * @param  list<string>  $slugs
      * @param  array<string, mixed>  $validated
@@ -479,6 +494,10 @@ class UserManagementController extends Controller
     {
         if (Role::onlyHei($slugs)) {
             return ['national_access' => false, 'survey_region_id' => null];
+        }
+
+        if (in_array('admin', $slugs, true)) {
+            return ['national_access' => true, 'survey_region_id' => null];
         }
 
         if (! array_key_exists('national_access', $validated) && ! array_key_exists('survey_region_id', $validated)) {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\FeedScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -23,6 +24,7 @@ class NewerPostsRequest extends FormRequest
         return [
             'after' => ['required', 'ulid'],
             'at' => ['required', 'date'],
+            'feed' => FeedScope::rules(),
         ];
     }
 

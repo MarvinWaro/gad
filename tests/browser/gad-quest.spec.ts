@@ -228,6 +228,10 @@ test('an HEI account plays a quest one question at a time and earns a badge', as
     await achievements
         .getByRole('button', { name: /Fixture GAD Quest/ })
         .click();
+    await page
+        .getByRole('tabpanel', { name: /^Badges/ })
+        .getByRole('button', { name: /Fixture GAD Quest/ })
+        .click();
     await expect(page.getByRole('dialog')).toContainText('4 of 5 correct');
     await expect(page.getByRole('dialog')).toContainText('Regional Office XII');
 });

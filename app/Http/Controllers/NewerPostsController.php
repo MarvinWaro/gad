@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\FeedScope;
 use App\Http\Requests\NewerPostsRequest;
 use App\Models\User;
 use App\Support\CommunityFeed;
@@ -19,7 +20,7 @@ class NewerPostsController extends Controller
         $viewer = $request->user();
 
         return response()->json([
-            'count' => CommunityFeed::newerCount($viewer, $request->postedAt(), $request->postId()),
+            'count' => CommunityFeed::newerCount($viewer, $request->postedAt(), $request->postId(), FeedScope::of($request)),
         ]);
     }
 }

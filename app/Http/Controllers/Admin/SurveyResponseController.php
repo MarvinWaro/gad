@@ -10,6 +10,7 @@ use App\Models\SurveyGroupQuestion;
 use App\Models\SurveyRespondentGroup;
 use App\Models\SurveyResponse;
 use App\Services\ActivityRecorder;
+use App\Support\CsvCell;
 use App\Support\RespondentDetails;
 use App\Support\RespondentFollowUps;
 use Illuminate\Database\Eloquent\Builder;
@@ -44,6 +45,7 @@ class SurveyResponseController extends Controller
     public function show(Request $request, Survey $survey, SurveyResponse $surveyResponse): Response
     {
         abort_unless($surveyResponse->version()->where('survey_id', $survey->id)->exists(), 404);
+        abort_unless($surveyResponse->isReachableBy($request->user()), 404);
         $surveyResponse->load(['version.survey', 'region', 'hei']);
 
         return Inertia::render('admin/surveys/response-show', [
@@ -73,7 +75,8 @@ class SurveyResponseController extends Controller
             $followUpColumns = $this->followUpColumns();
             fputcsv($handle, ['Reference', 'Version', 'Submitted', 'Age', 'Sex', 'Respondent group', 'Gender identity', ...array_column($followUpColumns, 'heading'), 'Region', 'HEI', 'Experiences', 'Perpetrators', 'Expires', 'Specified perpetrator details', ...($survey->slug === 'ra-9262' ? ['Answering for'] : []), ...array_values($selectionColumns)]);
             $this->query($request, $survey)->with(['version', 'region', 'hei', 'groupAnswers.option'])->latest()->each(function (SurveyResponse $response) use ($handle, $survey, $selectionColumns, $followUpColumns): void {
-                fputcsv($handle, [
+                // Free text could read as a formula in a spreadsheet (CsvCell).
+                fputcsv($handle, array_map(fn (mixed $cell): mixed => is_string($cell) ? CsvCell::safe($cell) : $cell, [
                     $response->public_reference,
                     $response->version->version,
                     $response->created_at?->toISOString(),
@@ -96,15 +99,16 @@ class SurveyResponseController extends Controller
                         fn (string $id): string => implode('; ', $response->answers['selections'][$id] ?? []),
                         array_keys($selectionColumns),
                     ),
-                ]);
+                ]));
             });
             fclose($handle);
         }, $file, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
-    public function destroy(Survey $survey, SurveyResponse $surveyResponse, ActivityRecorder $activity): RedirectResponse
+    public function destroy(Request $request, Survey $survey, SurveyResponse $surveyResponse, ActivityRecorder $activity): RedirectResponse
     {
         abort_unless($surveyResponse->version()->where('survey_id', $survey->id)->exists(), 404);
+        abort_unless($surveyResponse->isReachableBy($request->user()), 404);
         $surveyResponse->delete();
         $activity->record(ActivityAction::Deleted, ActivityModule::SurveyResponses, $surveyResponse, properties: ['survey' => $survey->title]);
 
@@ -115,6 +119,8 @@ class SurveyResponseController extends Controller
     private function query(Request $request, Survey $survey): Builder
     {
         return SurveyResponse::query()
+            // A regional office reads its own region's responses only.
+            ->reachableBy($request->user())
             ->whereHas('version', fn (Builder $query) => $query->where('survey_id', $survey->id))
             ->when($request->filled('search'), fn (Builder $query) => $query->where('public_reference', 'like', '%'.trim((string) $request->query('search')).'%'))
             ->when($request->filled('sex'), fn (Builder $query) => $query->where('sex', $request->query('sex')))

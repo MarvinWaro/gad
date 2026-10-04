@@ -55,3 +55,14 @@ export type BadgeHolder = {
 
 export type BadgePage = { data: BadgeRow[]; meta: PaginationMeta };
 export type BadgeHolderPage = { data: BadgeHolder[]; meta: PaginationMeta };
+
+/** `Achievements::toEarn`: a badge for sharing GAD work not earned yet. */
+export type BadgeToEarn = {
+    key: string;
+    name: string;
+    description: string;
+    /** How it is earned. */
+    criterion: string;
+    medal: MedalKind;
+    image: string | null;
+};

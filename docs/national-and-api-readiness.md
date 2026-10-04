@@ -45,7 +45,8 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 
 - [ ] **Staff scope in every module.** Since 2026-09-29 each staff account has an office (Settings → Users → Office): one region (`users.survey_region_id`) or the Central Office (`users.national_access`). HEI users still reach a region through HEI → cluster → region.
     - Done: monitoring reports use it (`BelongsToRegion::scopeWithinReachOf`, `User::reachesRegion`).
-    - Done: user management places and manages accounts only within the manager's office.
+    - Done: user management places and manages accounts only within the manager's office. Since 2026-10-04 a regional office's list and actions judge HEI accounts by their HEI's region (`User::regionId()`), not only staff by their office.
+    - Done: survey responses and their CSV export (2026-10-04). A regional office reads its own region's responses and those naming no region (`SurveyResponse::scopeReachableBy`); exports are formula-safe (`CsvCell`).
     - Done: activity logs (2026-10-01). Each entry is placed by its record, or by the person who acted, and is read through `ActivityLogFilterRequest` and `ActivityLogResource` (`docs/activity-logs.md`).
     - Done: the staff dashboard (2026-10-02). It covers the office's region, or every region for the Central Office, through `App\Support\DashboardScope`. A CHED post counts under its author's office region, and a Central Office post only nationally.
     - Done: website feedback (2026-10-02). It names a region when the sender gives one; that region's office and the Central Office read it, and feedback naming none goes to every office (`SiteFeedback::scopeVisibleTo`). It has its Resource (`SiteFeedbackResource`) and Form Requests (`docs/feedback.md`).
@@ -53,7 +54,6 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
     - Still to limit to the staff member's region:
         - account approval
         - directories
-        - survey responses and exports
         - events
         - community moderation
         - site ratings
@@ -61,10 +61,13 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 - [ ] **Filters and exports:** every statistic and export takes a region and HEI filter. (Clusters are kept out of sight since 2026-10-03.)
 - [ ] **Philippine time:** dates show in Asia/Manila time throughout. The app timezone stays UTC for storage.
 
+- [ ] **Email verification is not enforced.** `User` does not implement `MustVerifyEmail`, so the `verified` middleware lets every account through. That suits instant registration for launch (2026-10-07); revisit once the server's mail is proven.
+
 ## Missing for the API
 
 - [ ] **No API routes yet:** no `routes/api.php` and no token authentication. Laravel Sanctum is the likely fit.
 - [ ] **Few API Resource classes:** only `PostReactorResource` (a post's reactions list, cursor-paginated with Laravel's `meta`) so far. Other controllers build arrays inline, for example `SurveyResponseController::serialize` and `SiteRatingManagementController::index`. Move each model's shape into one Resource as it is touched.
+- [ ] **People are addressed by their integer id.** Profiles live at `/people/{id}` and follower lists and search send `id` (`PersonResource`, since 2026-10-04), as posts' authors already did. Before `/api/v1` exposes people, give users a ULID handle and route profiles by it.
 - [ ] **Validation is mostly inline** `$request->validate(...)`. Move rules into Form Requests as endpoints are touched, so web and API share them.
 - [ ] **First endpoints to offer, read-only:**
     - directories (regions, HEIs)

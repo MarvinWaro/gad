@@ -90,7 +90,7 @@ test('an HEI is added with its region alone', async ({ page }) => {
     await dialog.getByRole('button', { name: 'Add HEI' }).click();
     await expect(dialog).toHaveCount(0);
 
-    await page.getByLabel('Search').fill('Hand-Entered');
+    await page.getByLabel('Search', { exact: true }).fill('Hand-Entered');
     const rows = page.getByRole('table').locator('tbody tr');
     await expect(rows).toHaveCount(1);
     await expect(rows.first()).toContainText('Regional Office XII');

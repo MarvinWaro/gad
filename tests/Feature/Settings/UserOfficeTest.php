@@ -1,6 +1,9 @@
 <?php
 
+use App\Enums\UserStatus;
 use App\Models\Role;
+use App\Models\SurveyCluster;
+use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
@@ -127,4 +130,47 @@ test('a region with staff in its office cannot be deleted', function () {
     $this->actingAs($admin)->delete(route('settings.survey-directories.destroy', ['type' => 'regions', 'id' => $this->xi->id]));
 
     expect(SurveyRegion::query()->whereKey($this->xi->id)->exists())->toBeTrue();
+});
+
+test('a regional office lists and manages only its own region\'s HEI accounts', function () {
+    $clusterXi = SurveyCluster::query()->create(['survey_region_id' => $this->xi->id, 'name' => 'Davao', 'is_active' => true]);
+    $clusterXii = SurveyCluster::query()->create(['survey_region_id' => $this->xii->id, 'name' => 'South Cotabato', 'is_active' => true]);
+    $theirs = User::factory()->create(['name' => 'Davao Member', 'survey_hei_id' => SurveyHei::query()->create(['survey_cluster_id' => $clusterXi->id, 'name' => 'Davao College', 'is_active' => true])->id]);
+    $theirs->assignRole('hei');
+    $ours = User::factory()->create(['name' => 'Marbel Member', 'survey_hei_id' => SurveyHei::query()->create(['survey_cluster_id' => $clusterXii->id, 'name' => 'Marbel College', 'is_active' => true])->id]);
+    $ours->assignRole('hei');
+    $admin = officeAdmin($this->xii);
+
+    $this->actingAs($admin)->get(route('settings.users.index', ['search' => 'Member']))
+        ->assertInertia(fn (Assert $page) => $page->has('users.data', 1)->where('users.data.0.name', 'Marbel Member'));
+
+    $this->actingAs($admin)->patch(route('settings.users.status', $theirs), ['status' => 'inactive'])
+        ->assertSessionHas('inertia.flash_data.toast.type', 'error');
+    expect($theirs->fresh()->status)->toBe(UserStatus::Active);
+
+    $this->actingAs($admin)->patch(route('settings.users.status', $ours), ['status' => 'inactive']);
+    expect($ours->fresh()->status)->toBe(UserStatus::Inactive);
+});
+
+test('an Administrator always covers every region, whatever office is sent', function () {
+    $adminRole = Role::query()->where('slug', 'admin')->sole();
+
+    $this->actingAs(officeAdmin())
+        ->post(route('settings.users.store'), officeUserPayload([$adminRole->id], ['email' => 'second-admin@example.test', 'survey_region_id' => $this->xi->id]))
+        ->assertSessionHasNoErrors();
+
+    $second = User::query()->where('email', 'second-admin@example.test')->sole();
+    expect($second->national_access)->toBeTrue()->and($second->survey_region_id)->toBeNull();
+});
+
+test('admins given a regional office before become Central Office', function () {
+    $regional = officeAdmin($this->xii);
+    $focal = User::factory()->regionalOffice($this->xii)->create();
+    $focal->assignRole('ched-focal');
+
+    (require database_path('migrations/2026_10_07_000000_make_administrators_national.php'))->up();
+
+    expect($regional->fresh()->national_access)->toBeTrue()
+        ->and($regional->fresh()->survey_region_id)->toBeNull()
+        ->and($focal->fresh()->survey_region_id)->toBe($this->xii->id);
 });

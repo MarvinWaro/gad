@@ -60,6 +60,8 @@ const kindIcons: Record<string, LucideIcon> = {
     survey_responses: ClipboardList,
     site_feedback: MessageSquareText,
     badge_awarded: Award,
+    badge_earned: Award,
+    user_followed: UserPlus,
 };
 
 export type NotificationChanges = {

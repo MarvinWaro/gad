@@ -5,17 +5,15 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ActivityLogResource;
 use App\Models\ActivityLog;
 use App\Models\User;
-use App\Support\Achievements;
-use App\Support\CommunityFeed;
-use App\Support\InstitutionName;
+use App\Support\ProfilePage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The signed-in person's own profile: their Gender Mainstreaming posts and
- * their own activity log. Both arrive just after the page, loading more as
- * the reader scrolls.
+ * The signed-in person's own profile: what everyone sees on it (ProfilePage),
+ * plus their own activity log and the badges they can still earn. Posts and
+ * activity arrive just after the page, loading more as the reader scrolls.
  */
 class MyProfileController extends Controller
 {
@@ -28,10 +26,7 @@ class MyProfileController extends Controller
         $user = $request->user();
 
         return Inertia::render('profile/show', [
-            'institution' => $user->hei ? InstitutionName::display($user->hei->name) : null,
-            // Their badges and GAD Quest badges, newest first.
-            'achievements' => fn (): array => Achievements::for($user),
-            'posts' => Inertia::scroll(fn () => CommunityFeed::page($user, author: $user))->defer(),
+            ...ProfilePage::props($request, $user),
             // What they did themselves; anyone may read their own.
             'activity' => Inertia::scroll(fn () => ActivityLogResource::collection(
                 ActivityLog::query()

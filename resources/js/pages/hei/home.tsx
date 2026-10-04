@@ -2,6 +2,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { EventCalendar } from '@/components/hei/event-calendar';
 import { Feed } from '@/components/hei/feed';
 import { FeedBanner } from '@/components/hei/feed-banner';
+import { FeedTabs } from '@/components/hei/feed-tabs';
 import { HomeRail } from '@/components/hei/home-rail';
 import { InstitutionPeople } from '@/components/hei/institution-people';
 import { NextEventCard } from '@/components/hei/next-event-card';
@@ -12,7 +13,7 @@ import { SurveyPanel } from '@/components/hei/survey-panel';
 import { UpcomingEvents } from '@/components/hei/upcoming-events';
 import { WelcomeBand } from '@/components/hei/welcome-band';
 import { useStickyRail } from '@/hooks/use-sticky-rail';
-import { home } from '@/routes';
+import { dashboard, home } from '@/routes';
 import { create as feedback } from '@/routes/feedback';
 import { faq } from '@/routes/help';
 import type {
@@ -24,6 +25,7 @@ import type {
     Post,
     ScrollPage,
 } from '@/types';
+import type { FeedScope } from '@/types/people';
 import type { QuestCard } from '@/types/quests';
 
 type Props = {
@@ -31,6 +33,8 @@ type Props = {
     surveys: HeiSurvey[];
     calendar: CalendarMonth;
     upcoming: CalendarEvent[];
+    /** Everyone's posts, or the people they follow. */
+    feed: FeedScope;
     /** Deferred: arrives just after the page. */
     posts?: ScrollPage<Post>;
     quickLinks: QuickLink[];
@@ -62,6 +66,7 @@ export default function HeiHome({
     surveys,
     calendar,
     upcoming,
+    feed,
     posts,
     quickLinks,
     people,
@@ -121,7 +126,8 @@ export default function HeiHome({
                                     hei?.display_name ?? auth.user.name
                                 }
                             />
-                            <Feed posts={posts} />
+                            <FeedTabs scope={feed} href={dashboard.url()} />
+                            <Feed key={feed} posts={posts} scope={feed} />
                         </section>
                     </div>
 

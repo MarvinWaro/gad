@@ -658,6 +658,11 @@ function UserDialog({
     // their institution, CHED staff by their office.
     const heiAccount = roles.some((role) => role.hei && chosen(role));
     const staff = roles.some((role) => !role.hei && chosen(role));
+    // Administrators run the whole system: the server always makes them
+    // Central Office, so there is no office to pick.
+    const administrator = roles.some(
+        (role) => role.slug === 'admin' && chosen(role),
+    );
     const regionHeis = heis.filter(
         (hei) => String(hei.region_id) === form.data.region,
     );
@@ -703,9 +708,13 @@ function UserDialog({
             ...data,
             // Staff accounts have no institution; their office places them.
             survey_hei_id: heiAccount ? data.survey_hei_id : '',
-            national_access: staff && office === NATIONAL_OFFICE,
+            national_access:
+                administrator || (staff && office === NATIONAL_OFFICE),
             survey_region_id:
-                staff && office !== '' && office !== NATIONAL_OFFICE
+                !administrator &&
+                staff &&
+                office !== '' &&
+                office !== NATIONAL_OFFICE
                     ? Number(office)
                     : null,
         }));
@@ -845,7 +854,12 @@ function UserDialog({
                             </div>
                         </div>
                     )}
-                    {staff && (
+                    {administrator && (
+                        <p className="text-sm text-muted-foreground">
+                            Administrators cover every region.
+                        </p>
+                    )}
+                    {staff && !administrator && (
                         <div className="grid gap-2">
                             <Label htmlFor={`${fieldId}-office`}>Office</Label>
                             <FormSelect

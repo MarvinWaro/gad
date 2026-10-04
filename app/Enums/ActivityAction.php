@@ -45,6 +45,8 @@ enum ActivityAction: string
     case Completed = 'completed';
     case Earned = 'earned';
     case Awarded = 'awarded';
+    case Followed = 'followed';
+    case Unfollowed = 'unfollowed';
 
     /** The entry's badge. */
     public function label(): string
@@ -87,6 +89,8 @@ enum ActivityAction: string
             self::Completed => 'Completed',
             self::Earned => 'Earned',
             self::Awarded => 'Awarded',
+            self::Followed => 'Followed',
+            self::Unfollowed => 'Unfollowed',
         };
     }
 
@@ -134,6 +138,8 @@ enum ActivityAction: string
             self::Completed => 'Completed :noun :subject',
             self::Earned => 'Earned :noun :subject',
             self::Awarded => 'Awarded :noun :subject',
+            self::Followed => 'Followed :subject',
+            self::Unfollowed => 'Stopped following :subject',
         };
     }
 
@@ -151,7 +157,7 @@ enum ActivityAction: string
             self::Deactivated, self::MarkedPending, self::Archived, self::Reopened, self::Returned, self::Closed,
             self::Unreacted, self::TwoFactorDisabled, self::PasskeyRemoved => 'warning',
             self::Deleted, self::LoginFailed => 'danger',
-            self::Logout, self::Exported, self::Downloaded => 'neutral',
+            self::Logout, self::Exported, self::Downloaded, self::Unfollowed => 'neutral',
             default => 'info',
         };
     }

@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useNewPosts } from '@/hooks/use-new-posts';
 import { cn } from '@/lib/utils';
 import type { Post, ScrollPage } from '@/types';
+import type { FeedScope } from '@/types/people';
 
 /** A post card's outline while it loads: byline, text, photo, actions. */
 function PostSkeleton({ className }: { className?: string }) {
@@ -62,6 +63,8 @@ type FeedProps = {
      * person's posts, which the check (counting the whole feed) can't tell.
      */
     watchForNew?: boolean;
+    /** Everyone's posts, or only those of the people the reader follows. */
+    scope?: FeedScope;
 };
 
 /**
@@ -94,14 +97,20 @@ export function Feed({
  */
 function LoadedFeed({
     posts,
-    emptyTitle = 'The feed is quiet',
-    emptyMessage = 'No posts yet. Share your first GAD activity above: a seminar, a campaign, or a new policy on campus.',
+    scope = 'all',
+    emptyTitle = scope === 'following'
+        ? 'No posts from people you follow'
+        : 'The feed is quiet',
+    emptyMessage = scope === 'following'
+        ? 'Follow people to see their posts here. Find them with the search at the top, or open a profile from a name on a post.'
+        : 'No posts yet. Share your first GAD activity above: a seminar, a campaign, or a new policy on campus.',
     emptyAction,
     watchForNew = true,
 }: FeedProps) {
     const { waiting, refreshing, refresh } = useNewPosts(
         posts.data[0] ?? null,
         watchForNew,
+        scope,
     );
 
     return (

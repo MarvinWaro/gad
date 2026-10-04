@@ -173,7 +173,9 @@ test('a custom badge is awarded by hand to people of its region, once, and they 
         ->user_id->toBe($ana->id)
         ->awarded_by->toBe($this->regional->id)
         ->note->toBe('the Women\'s Month forum');
-    expect(Notification::query()->where('user_id', $ana->id)->sole()->kind)->toBe(NotificationKind::BadgeAwarded);
+    $notice = Notification::query()->where('user_id', $ana->id)->sole();
+    expect($notice->kind)->toBe(NotificationKind::BadgeAwarded)
+        ->and($notice->linkFor($ana))->toBe(route('my-profile', ['tab' => 'badges']));
     expect(ActivityLog::query()->where('module', ActivityModule::Badges)->where('action', ActivityAction::Awarded)->sole())
         ->survey_hei_id->toBe($this->hei->id)
         ->properties->toBe(['recipient' => 'Ana Dela Cruz']);

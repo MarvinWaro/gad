@@ -77,14 +77,34 @@ test('sharing a photo tagged with an SDG earns Community Spark', async ({
         page.getByText('Post shared. You earned the Community Spark badge.'),
     ).toBeVisible();
 
-    await page.goto('/profile');
+    // The bell tells them too, and opens their badges.
+    await page.getByRole('button', { name: /^Notifications, / }).click();
+    await page
+        .getByRole('link', { name: /You earned the Community Spark badge/ })
+        .click();
+    await expect(page).toHaveURL(/\/profile\?tab=badges$/);
+    const tab = page.getByRole('tab', { name: /^Badges/ });
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
+
+    // A highlight opens the Badges tab at that badge.
+    await page.getByRole('tab', { name: 'Posts' }).click();
     const achievements = page.getByRole('region', {
         name: 'Achievements Beta',
     });
-    await achievements.getByRole('button', { name: /Community Spark/ }).click();
+    await achievements.getByRole('button', { name: 'Community Spark' }).click();
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
+    const badges = page.getByRole('tabpanel', { name: /^Badges/ });
+    const tile = badges.getByRole('button', { name: /Community Spark/ });
+    await expect(tile).toBeFocused();
+    await tile.click();
     await expect(page.getByRole('dialog')).toContainText(
         'Shared a first photo of GAD work',
     );
+    await page.keyboard.press('Escape');
+    // The rest wait under "Still to earn", with how to earn them.
+    await expect(
+        badges.getByRole('region', { name: 'Still to earn' }),
+    ).toContainText('Tagged photo posts on 5 different days');
 });
 
 test('an administrator creates a badge with a picture and awards it by hand', async ({
@@ -156,6 +176,10 @@ test('the member finds both badges on their profile', async ({
     });
     await expect(achievements.getByRole('listitem')).toHaveCount(2);
     await achievements
+        .getByRole('button', { name: /Browser Forum Speaker/ })
+        .click();
+    await page
+        .getByRole('tabpanel', { name: /^Badges/ })
         .getByRole('button', { name: /Browser Forum Speaker/ })
         .click();
     await expect(page.getByRole('dialog')).toContainText('the October forum');

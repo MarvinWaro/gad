@@ -9,7 +9,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     $this->seed(RbacSeeder::class);
-    $this->admin = User::factory()->create();
+    $this->admin = User::factory()->nationalOffice()->create();
     $this->admin->assignRole('admin');
 });
 

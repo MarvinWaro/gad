@@ -137,7 +137,12 @@ class ActivitySubjects
     {
         return match (true) {
             $subject instanceof User && $subject->is($viewer) => route('profile.edit'),
-            $subject instanceof User => $viewer->can('users.view') ? route('settings.users.index', ['search' => $subject->email]) : null,
+            $subject instanceof User => match (true) {
+                $viewer->can('users.view') => route('settings.users.index', ['search' => $subject->email]),
+                // Anyone else opens their profile, while they can sign in.
+                $subject->isActive() => route('people.show', $subject),
+                default => null,
+            },
             $subject instanceof Role => $viewer->can('roles.view') ? route('settings.roles.index') : null,
             $subject instanceof AcademicYear => $viewer->can('academic-years.view') ? route('settings.academic-years.index') : null,
             ! $viewer->can('survey-directories.view') && ($subject instanceof SurveyRegion || $subject instanceof SurveyCluster
@@ -161,7 +166,7 @@ class ActivitySubjects
             $subject instanceof SiteRating => $viewer->can('site-ratings.view') ? route('settings.ratings.index') : null,
             $subject instanceof SiteFeedback => $viewer->can('feedback.view') ? route('admin.feedback.index') : null,
             // Whoever holds it sees it on their profile.
-            $subject instanceof Badge => $viewer->can('badges.view') ? route('settings.badges.show', $subject) : route('my-profile'),
+            $subject instanceof Badge => $viewer->can('badges.view') ? route('settings.badges.show', $subject) : route('my-profile', ['tab' => 'badges']),
             $subject instanceof Quest => match (true) {
                 $viewer->can('results', $subject) => route('quests.manage.show', $subject),
                 $viewer->can('play', $subject) => route('quests.show', $subject),

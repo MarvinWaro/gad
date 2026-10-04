@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { FeedScope } from '@/types/people';
 
 /** Away from the page this long, and coming back checks for new posts. */
 export const AWAY_MS = 30_000;
@@ -23,9 +24,14 @@ type Waiting = { query: string; count: number };
  * back after at least 30 seconds away (another tab, a locked phone), ask
  * how many posts arrived after the newest one they have. At the top of the
  * feed they load straight in; further down they wait behind a button, so
- * nothing moves under the reader. `enabled` false skips the check.
+ * nothing moves under the reader. `enabled` false skips the check; `scope`
+ * counts only the people followed.
  */
-export function useNewPosts(newest: FeedTop | null, enabled = true) {
+export function useNewPosts(
+    newest: FeedTop | null,
+    enabled = true,
+    scope: FeedScope = 'all',
+) {
     const [waiting, setWaiting] = useState<Waiting | null>(null);
     const [refreshing, setRefreshing] = useState(false);
     const hiddenAt = useRef<number | null>(null);
@@ -36,6 +42,7 @@ export function useNewPosts(newest: FeedTop | null, enabled = true) {
     const query = new URLSearchParams({
         after: top.id,
         at: top.created_at,
+        ...(scope === 'following' ? { feed: scope } : {}),
     }).toString();
 
     /** Load the feed's first page again, from the top if asked. */

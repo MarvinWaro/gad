@@ -5,8 +5,10 @@ use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\User;
+use Database\Seeders\AdminUserSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DemoUserSeeder;
+use Database\Seeders\RbacSeeder;
 use Database\Seeders\SurveyDirectorySeeder;
 use Database\Seeders\SurveyHeiSeeder;
 use Database\Seeders\SurveyRegionSeeder;
@@ -147,4 +149,18 @@ test('ambiguous manual HEI matches roll back the import instead of duplicating r
     expect(SurveyHei::query()->count())->toBe(2)
         ->and(SurveyHei::query()->whereNotNull('uii')->count())->toBe(0)
         ->and(SurveyCluster::query()->where('name', 'Unassigned')->exists())->toBeFalse();
+});
+
+test('the first administrator takes ADMIN_PASSWORD, and production refuses to seed without it', function () {
+    $this->seed(RbacSeeder::class);
+    config(['app.admin_password' => 'a-long-server-password']);
+    $this->seed(AdminUserSeeder::class);
+    expect(Hash::check('a-long-server-password', User::query()->sole()->password))->toBeTrue();
+
+    User::query()->delete();
+    config(['app.admin_password' => null]);
+    app()->detectEnvironment(fn (): string => 'production');
+
+    expect(fn () => app(AdminUserSeeder::class)->run())->toThrow(RuntimeException::class, 'Set ADMIN_PASSWORD');
+    expect(User::query()->count())->toBe(0);
 });

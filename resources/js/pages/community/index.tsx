@@ -1,13 +1,18 @@
 import { Head, usePage } from '@inertiajs/react';
 import { Feed } from '@/components/hei/feed';
+import { FeedTabs } from '@/components/hei/feed-tabs';
 import { PostComposer } from '@/components/hei/post-composer';
 import Heading from '@/components/heading';
 import type { Post, ScrollPage } from '@/types';
+import type { FeedScope } from '@/types/people';
 
 /** The Gender Mainstreaming feed for CHED staff, inside the staff shell. */
 export default function Community({
+    feed,
     posts,
 }: {
+    /** Everyone's posts, or the people the reader follows. */
+    feed: FeedScope;
     /** Deferred: arrives just after the page. */
     posts?: ScrollPage<Post>;
 }) {
@@ -31,9 +36,16 @@ export default function Community({
                     official
                     placeholder="Share an announcement from CHED Regional Office XII…"
                 />
+                <FeedTabs scope={feed} href="/community" />
                 <Feed
+                    key={feed}
                     posts={posts}
-                    emptyMessage="No HEI has posted yet. Posts appear here as soon as they are shared."
+                    scope={feed}
+                    emptyMessage={
+                        feed === 'all'
+                            ? 'No HEI has posted yet. Posts appear here as soon as they are shared.'
+                            : undefined
+                    }
                 />
             </div>
         </>
