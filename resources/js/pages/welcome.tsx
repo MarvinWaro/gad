@@ -114,11 +114,6 @@ export default function Welcome({
         >
             <Head>
                 <title>PHLGADIS | Gender-responsive higher education</title>
-                <link
-                    rel="icon"
-                    type="image/svg+xml"
-                    href="/phlgadis-placeholder.svg"
-                />
                 <meta
                     name="description"
                     content="Explore gender and development in Philippine higher education. Discover GAD resources, know your rights, and explore the PHLGADIS data preview."
