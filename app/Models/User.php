@@ -198,13 +198,14 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
-     * Accounts holding a permission through any of their roles.
+     * Accounts holding a permission (any of those given) through any of
+     * their roles.
      *
      * @param  Builder<User>  $query
      */
-    public function scopeWithPermission(Builder $query, string $permission): void
+    public function scopeWithPermission(Builder $query, string ...$permissions): void
     {
-        $query->whereHas('roles.permissions', fn (Builder $query) => $query->where('slug', $permission));
+        $query->whereHas('roles.permissions', fn (Builder $query) => $query->whereIn('slug', $permissions));
     }
 
     /**

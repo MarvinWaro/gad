@@ -268,31 +268,33 @@ export function BadgeDialog({
                         )
                     )}
 
-                    <div className="flex items-start justify-between gap-4">
-                        <div>
-                            <p
-                                id={`${id}-active`}
-                                className="text-sm font-medium"
-                            >
-                                On
-                            </p>
-                            <p
-                                id={`${id}-active-hint`}
-                                className="text-[13px] text-muted-foreground"
-                            >
-                                Off: nobody receives it; those who hold it keep
-                                it.
-                            </p>
+                    {(badge?.can.switch ?? true) && (
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p
+                                    id={`${id}-active`}
+                                    className="text-sm font-medium"
+                                >
+                                    On
+                                </p>
+                                <p
+                                    id={`${id}-active-hint`}
+                                    className="text-[13px] text-muted-foreground"
+                                >
+                                    Off: nobody receives it; those who hold it
+                                    keep it.
+                                </p>
+                            </div>
+                            <Switch
+                                checked={form.data.is_active}
+                                onCheckedChange={(active) =>
+                                    form.setData('is_active', active)
+                                }
+                                aria-labelledby={`${id}-active`}
+                                aria-describedby={`${id}-active-hint`}
+                            />
                         </div>
-                        <Switch
-                            checked={form.data.is_active}
-                            onCheckedChange={(active) =>
-                                form.setData('is_active', active)
-                            }
-                            aria-labelledby={`${id}-active`}
-                            aria-describedby={`${id}-active-hint`}
-                        />
-                    </div>
+                    )}
 
                     <DialogFooter>
                         <Button

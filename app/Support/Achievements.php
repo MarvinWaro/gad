@@ -72,6 +72,16 @@ class Achievements
             ->all());
     }
 
+    /**
+     * The GAD Quest levels, Participant first, for the "Still to earn" card.
+     *
+     * @return list<array{level: string, name: string, image: string|null}>
+     */
+    public static function questLevels(): array
+    {
+        return QuestBadges::load()->levels();
+    }
+
     /** @return list<Achievement> Their GAD Quest badges only. */
     public static function quests(User $user): array
     {
@@ -81,7 +91,7 @@ class Achievements
             'caption' => (string) $badge['level_label'],
             'description' => (string) $badge['meaning'],
             'medal' => (string) $badge['level'],
-            'image' => null,
+            'image' => $badge['image'],
             'earned_at' => $badge['earned_at'],
             'facts' => [
                 ['label' => __('Score'), 'value' => __(':score of :total correct', ['score' => $badge['score'], 'total' => $badge['total']])],

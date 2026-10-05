@@ -11,22 +11,26 @@ use App\Http\Requests\Settings\BadgeStatusRequest;
 use App\Http\Requests\Settings\SaveBadgeRequest;
 use App\Http\Resources\BadgeAwardResource;
 use App\Http\Resources\BadgeResource;
+use App\Http\Resources\QuestBadgeHolderResource;
 use App\Models\Badge;
 use App\Models\BadgeAward;
 use App\Models\User;
 use App\Support\InstitutionName;
 use App\Support\PlaceFilters;
+use App\Support\QuestBadgeHolders;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Settings → Badges: the badges people earn by sharing GAD work and the
- * custom ones an office awards by hand (docs/badges.md). The rules live in
- * ManageBadge and AwardEarnedBadges.
+ * Settings → Badges: the badges people earn by sharing GAD work, the GAD
+ * Quest levels, and the custom ones an office awards by hand
+ * (docs/badges.md). The rules live in ManageBadge and AwardEarnedBadges.
  */
 class BadgeController extends Controller
 {
@@ -50,6 +54,7 @@ class BadgeController extends Controller
             ->inListOrder()
             ->paginate(20)
             ->withQueryString();
+        QuestBadgeHolders::countInto($badges->getCollection());
 
         return Inertia::render('settings/badges', [
             'badges' => BadgeResource::collection($badges),
@@ -78,8 +83,27 @@ class BadgeController extends Controller
         /** @var User $user */
         $user = $request->user();
         $search = $request->search();
+        $badge->load('region:id,name')->loadCount('awards as holders_count');
+        QuestBadgeHolders::countInto(new Collection([$badge]));
 
-        $holders = $badge->awards()
+        return Inertia::render('settings/badge', [
+            'badge' => BadgeResource::make($badge)->resolve($request),
+            'holders' => $badge->quest_level !== null
+                ? QuestBadgeHolderResource::collection(QuestBadgeHolders::page($badge->quest_level, $user, $search))
+                : BadgeAwardResource::collection($this->awardHolders($badge, $user, $search)),
+            'filters' => ['search' => $search],
+        ]);
+    }
+
+    /**
+     * A badge's awards, newest first: an office sees its own region's
+     * holders of a national badge.
+     *
+     * @return LengthAwarePaginator<int, BadgeAward>
+     */
+    private function awardHolders(Badge $badge, User $user, string $search): LengthAwarePaginator
+    {
+        return $badge->awards()
             ->when(! $user->national_access, fn (Builder $query) => $query->whereHas(
                 'user',
                 fn (Builder $query) => $query->placedIn($user->survey_region_id),
@@ -93,12 +117,6 @@ class BadgeController extends Controller
             ->latest('id')
             ->paginate(20)
             ->withQueryString();
-
-        return Inertia::render('settings/badge', [
-            'badge' => BadgeResource::make($badge->load('region:id,name')->loadCount('awards as holders_count'))->resolve($request),
-            'holders' => BadgeAwardResource::collection($holders),
-            'filters' => ['search' => $search],
-        ]);
     }
 
     public function update(SaveBadgeRequest $request, Badge $badge, ManageBadge $manager): RedirectResponse

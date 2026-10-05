@@ -8,7 +8,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * A badge as Settings → Badges shows it, with what the viewer may do to it.
- * Load `region` first; `holders_count` is added when counted.
+ * Load `region` first; `holders_count` is added when counted (for a GAD
+ * Quest level, by App\Support\QuestBadgeHolders::countInto).
  *
  * @mixin Badge
  */
@@ -22,7 +23,8 @@ class BadgeResource extends JsonResource
         return [
             'id' => $this->id,
             'rule' => $this->rule?->value,
-            'criterion' => $this->rule?->criterion(),
+            'quest_level' => $this->quest_level?->value,
+            'criterion' => $this->rule?->criterion() ?? $this->quest_level?->criterion(),
             'name' => $this->name,
             'description' => $this->description,
             'medal' => $this->medal(),
@@ -32,6 +34,7 @@ class BadgeResource extends JsonResource
             'holders' => $this->whenCounted('holders'),
             'can' => [
                 'update' => $user?->can('update', $this->resource) ?? false,
+                'switch' => $this->canBeSwitchedOff() && ($user?->can('update', $this->resource) ?? false),
                 'delete' => ! $this->isSystem() && ($user?->can('delete', $this->resource) ?? false),
                 'award' => ! $this->isSystem() && $this->is_active && ($user?->can('award', $this->resource) ?? false),
             ],

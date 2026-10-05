@@ -199,8 +199,10 @@ class Notifier
     }
 
     /**
-     * An anonymous survey answer: staff who read survey responses, for the
-     * answer's region (all of them when it names none). It counts up an
+     * An anonymous survey answer: staff who read the surveys' answers or
+     * their Summary, such as a CHED Focal, for the answer's region (all of
+     * them when it names none), and the focal persons of the HEI the
+     * respondent chose, whose home counts its answers. It counts up an
      * unread notice about the same survey, or starts one. Nothing about the
      * respondent is kept, only how many answered.
      */
@@ -210,8 +212,13 @@ class Notifier
             $survey = $response->version()->firstOrFail()->survey()->firstOrFail();
             $recipients = User::query()
                 ->active()
-                ->withPermission('survey-responses.view')
-                ->when($response->survey_region_id !== null, fn (Builder $query) => $query->reaching($response->survey_region_id))
+                ->where(fn (Builder $query) => $query
+                    ->where(fn (Builder $query) => $query
+                        ->withPermission('survey-responses.view', 'surveys.view')
+                        ->when($response->survey_region_id !== null, fn (Builder $query) => $query->reaching($response->survey_region_id)))
+                    ->when($response->survey_hei_id !== null, fn (Builder $query) => $query->orWhere(fn (Builder $query) => $query
+                        ->withPermission('monitoring.submit')
+                        ->where('survey_hei_id', $response->survey_hei_id))))
                 ->pluck('id');
             $open = Notification::query()
                 ->where('kind', NotificationKind::SurveyResponses)

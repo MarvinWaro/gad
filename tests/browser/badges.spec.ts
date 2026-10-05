@@ -115,11 +115,17 @@ test('an administrator creates a badge with a picture and awards it by hand', as
     await page.goto('/settings/badges');
 
     const list = page.getByRole('region', { name: 'Badges' });
-    // The four badges earned by sharing GAD work come first.
-    await expect(list.getByRole('listitem')).toHaveCount(4);
+    // The four badges earned by sharing GAD work come first, then the three
+    // GAD Quest levels, which stay on: no switch.
+    await expect(list.getByRole('listitem')).toHaveCount(7);
     await expect(list).toContainText(
         'Earned by: A first photo post tagged with an SDG or an A.C.H.I.E.V.E. item',
     );
+    const champion = list
+        .getByRole('listitem')
+        .filter({ hasText: 'Earned by: Every answer right in a GAD Quest' });
+    await expect(champion).toContainText('Champion');
+    await expect(champion.getByRole('switch')).toHaveCount(0);
     await checkBothThemes(page, testInfo, 'badges');
 
     await page.getByRole('button', { name: 'New badge' }).click();

@@ -22,7 +22,7 @@ It follows the idea in `PHLGADIS_GAD_Quest_Idea.md`: interaction first, gaming s
 1. **Write.** An Administrator or CHED Focal writes a quest under GAD Quest → Manage → New quest: a title, an optional description, and exactly five questions. Each question has 2–4 choices, the correct one marked, and an explanation players read after answering. A new quest is a **draft**, which nobody else sees.
 2. **Open.** "Open quest" publishes it to the people of its region. "Close" stops new plays; players keep their badges. "Open again" reopens it.
 3. **Play.** A player opens the quest from the HEI home's GAD Quest card, the "GAD Quest" tab, or `/quests`. They see an introduction, then one question per screen. Choosing a choice sends it; the screen then shows "Correct." or "Not quite.", the right answer, and the explanation, then "Next question". The last answer leads to the score and the badge, and a review of every answer.
-4. **Badge.** The best finished attempt sets the badge, drawn with the medal every badge shares (`docs/badges.md`). It shows on My Profile (Achievements) and on `/quests`, and opens its details: the level and what it means, the score, the date earned and the organizer.
+4. **Badge.** The best finished attempt sets the badge, drawn with the medal every badge shares, or its level's picture. Each level's name, description and picture are its row in Settings → Badges (`docs/badges.md`). It shows on My Profile (Achievements) and on `/quests`, and opens its details: the level and what it means, the score, the date earned and the organizer. A finish that earns the badge, or a higher level of it on a replay, reaches the player's notifications: "You earned the … Champion badge. See it on your profile."
 5. **Results.** The quest's page in Manage shows players, finished, perfect scores and the average score, who finished by sex, and the participants, best score first, filtered by HEI (and region, for a quest for every region).
 
 ## Who and where
@@ -60,7 +60,7 @@ It follows the idea in `PHLGADIS_GAD_Quest_Idea.md`: interaction first, gaming s
 
 ## Not yet
 
-Notifications when a quest opens, QR codes at events, question pools, a separate reviewer before opening, custom badge art, practice retakes that do not count, and a public leaderboard. The idea document lists them.
+Notifications when a quest opens, QR codes at events, question pools, a separate reviewer before opening, practice retakes that do not count, and a public leaderboard. The idea document lists them.
 
 ## Checks
 

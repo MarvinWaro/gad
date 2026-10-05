@@ -189,9 +189,11 @@ export default function BadgeHolders({
                             text={
                                 filtered
                                     ? 'Try another name, or clear the search.'
-                                    : badge.criterion
-                                      ? 'People earn it as they share GAD work.'
-                                      : 'Award it to someone with the Award button.'
+                                    : badge.quest_level
+                                      ? 'People earn it by finishing GAD Quests.'
+                                      : badge.criterion
+                                        ? 'People earn it as they share GAD work.'
+                                        : 'Award it to someone with the Award button.'
                             }
                             onClear={() => change({})}
                         />

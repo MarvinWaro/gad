@@ -12,18 +12,24 @@ use App\Models\QuestAttempt;
 use App\Models\QuestChoice;
 use App\Models\User;
 use App\Services\ActivityRecorder;
+use App\Services\Notifier;
 use App\Support\ActivityPlace;
+use App\Support\QuestBadges;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
  * The game: starting a quest and answering its questions one at a time.
  * Each player plays a quest once, unless its staff turn retakes on. An
- * attempt finishes with its last answer.
+ * attempt finishes with its last answer, and a finish that earns the
+ * quest's badge, or a higher level of it, is told to the player.
  */
 final class PlayQuest
 {
-    public function __construct(private readonly ActivityRecorder $activity) {}
+    public function __construct(
+        private readonly ActivityRecorder $activity,
+        private readonly Notifier $notifier,
+    ) {}
 
     /** Starts an attempt, or carries on with the one already under way. */
     public function start(Quest $quest, User $player): QuestAttempt
@@ -112,6 +118,8 @@ final class PlayQuest
     {
         $score = (int) QuestAttempt::query()->whereKey($attempt->id)->withScore()->first()?->score;
         $total = $quest->questions()->count();
+        $level = QuestLevel::fromScore($score, $total);
+        $place = ActivityPlace::ofHei($attempt->survey_hei_id) ?? new ActivityPlace($attempt->survey_region_id);
 
         $this->activity->record(
             ActivityAction::Completed,
@@ -120,10 +128,40 @@ final class PlayQuest
             properties: [
                 'score' => $score,
                 'questions' => $total,
-                'level' => QuestLevel::fromScore($score, $total)->value,
+                'level' => $level->value,
             ],
             actor: $player,
-            place: ActivityPlace::ofHei($attempt->survey_hei_id) ?? new ActivityPlace($attempt->survey_region_id),
+            place: $place,
         );
+
+        if ($this->isNewBadge($quest, $attempt, $player, $level, $total)) {
+            $badge = QuestBadges::load()->of($level);
+            $entry = $this->activity->record(
+                ActivityAction::Earned,
+                ActivityModule::Badges,
+                $badge,
+                actor: $player,
+                label: __(':quest :badge', ['quest' => $quest->title, 'badge' => $badge->name]),
+                place: $place,
+            );
+            $this->notifier->badgeEarned($player, $entry);
+        }
+    }
+
+    /**
+     * Whether the finish earns the quest's badge: a first finish, or a
+     * replay reaching a higher level than any earlier finish.
+     */
+    private function isNewBadge(Quest $quest, QuestAttempt $attempt, User $player, QuestLevel $level, int $total): bool
+    {
+        $previous = $quest->attempts()
+            ->where('user_id', $player->id)
+            ->finished()
+            ->whereKeyNot($attempt->id)
+            ->withScore()
+            ->get()
+            ->max('score');
+
+        return $previous === null || $level->isAbove(QuestLevel::fromScore((int) $previous, $total));
     }
 }

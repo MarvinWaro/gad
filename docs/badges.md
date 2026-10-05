@@ -1,19 +1,20 @@
 # Badges
 
-Badges show on a person's profile, beside their GAD Quest badges: the greatest few as a row of medals above the tabs (Achievements), and all of them in the profile's Badges tab. Other members see them on the person's profile too (`docs/people-and-following.md`). Some are **earned** by sharing GAD work in Gender Mainstreaming; the rest are **custom** badges an office awards by hand, for things worth marking, such as speaking at a Women's Month forum. Every badge shares one flat medal style (`components/badges/medal.tsx`), or shows its uploaded picture.
+Badges show on a person's profile: the greatest few as a row of medals above the tabs (Achievements), and all of them in the profile's Badges tab. Other members see them on the person's profile too (`docs/people-and-following.md`). Some are **earned** by sharing GAD work in Gender Mainstreaming, **GAD Quest badges** come from finishing quests, and the rest are **custom** badges an office awards by hand, for things worth marking, such as speaking at a Women's Month forum. Every badge shares one flat medal style (`components/badges/medal.tsx`), or shows its uploaded picture.
 
 **Where things live**
 
-| Piece             | File                                                                                                                          |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Tables            | `badges`, `badge_awards` (migration `2026_10_06_000000_create_badges_tables.php`, which also adds the four earned badges)     |
-| Models            | `Badge`, `BadgeAward`; `App\Enums\BadgeRule` (how each earned badge is earned)                                                |
-| Rules             | `App\Actions\Badges\AwardEarnedBadges` (earning), `ManageBadge` (writing, pictures, on and off, awarding and taking back)     |
-| Who may do what   | `App\Policies\BadgePolicy`                                                                                                    |
-| Shapes            | `BadgeResource`, `BadgeAwardResource` (Settings), `App\Support\Achievements` (profiles: badges and GAD Quest badges together) |
-| Controller (thin) | `Settings\BadgeController`, with `SaveBadgeRequest`, `BadgeStatusRequest`, `AwardBadgeRequest`, `BadgeSearchRequest`          |
-| Pages             | `pages/settings/badges.tsx`, `pages/settings/badge.tsx`, `components/badges/`                                                 |
-| Command           | `php artisan badges:award`                                                                                                    |
+| Piece             | File                                                                                                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tables            | `badges`, `badge_awards` (migration `2026_10_06_000000_create_badges_tables.php`, which also adds the four earned badges; `2026_10_12_000000_add_gad_quest_level_badges.php` adds the three GAD Quest levels) |
+| Models            | `Badge`, `BadgeAward`; `App\Enums\BadgeRule` (how each earned badge is earned)                                                                                                                                |
+| Rules             | `App\Actions\Badges\AwardEarnedBadges` (earning), `ManageBadge` (writing, pictures, on and off, awarding and taking back)                                                                                     |
+| Who may do what   | `App\Policies\BadgePolicy`                                                                                                                                                                                    |
+| Shapes            | `BadgeResource`, `BadgeAwardResource`, `QuestBadgeHolderResource` (Settings), `App\Support\Achievements` (profiles: badges and GAD Quest badges together)                                                     |
+| GAD Quest levels  | `App\Support\QuestBadges` (each level's row), `QuestBadgeHolders` (who holds them, counted in SQL)                                                                                                            |
+| Controller (thin) | `Settings\BadgeController`, with `SaveBadgeRequest`, `BadgeStatusRequest`, `AwardBadgeRequest`, `BadgeSearchRequest`                                                                                          |
+| Pages             | `pages/settings/badges.tsx`, `pages/settings/badge.tsx`, `components/badges/`                                                                                                                                 |
+| Command           | `php artisan badges:award`                                                                                                                                                                                    |
 
 ## Earned badges
 
@@ -32,6 +33,21 @@ Milestones, so one rich post earns one badge and the rest take time. A post with
 - **Kept:** a badge once earned stays, even if the post is deleted later.
 - **Thresholds** are constants on `BadgeRule`. Changing a number is a code change, on purpose: a rule builder screen would be heavy and easy to break.
 - **The SDG Connector medal is a plain globe.** The UN's colour wheel and goal icons are not for badges (DESIGN.md, post goals).
+
+## GAD Quest badges
+
+Finishing a GAD Quest earns one badge for that quest, at the level of the best finish (`App\Enums\QuestLevel`, `docs/gad-quest.md`):
+
+| Level       | Earned by                    | Medal                |
+| ----------- | ---------------------------- | -------------------- |
+| Participant | finishing the quest          | plain, a check badge |
+| Advocate    | 80% or more correct (4 of 5) | violet, a medal      |
+| Champion    | every answer right           | gold, a trophy       |
+
+- **One row per level.** Settings → Badges lists the three levels after the earned badges. Their name, description and picture can change; the change shows wherever quest badges appear: profiles, the quest list and result, the HEI home's GAD Quest card, the staff results and the profile's Still to earn card (`App\Support\QuestBadges`, loaded once per page and passed on). The migration seeds them with the wording they had before.
+- **Never off, deleted or awarded by hand:** they come with every finished quest. To stop a quest's badges, close the quest.
+- **Holders** are not stored as awards: the quests hold them. A level's holders are the people whose best finish at some quest reached it, counted in SQL with the same thresholds as `QuestLevel::fromScore` (`QuestLevel::sql`, `App\Support\QuestBadgeHolders`). The level's page lists each person once, with the quests they hold it for ("For Safe Spaces Week") and when they first reached it.
+- **Told:** the finish that earns a quest's badge, and a replay reaching a higher level, reach the player's bell like an earned badge: "You earned the Safe Spaces Week Champion badge. See it on your profile." The activity log records it as earned, in the Badges module. A replay at the same level or lower tells nothing.
 
 ## Custom badges
 
@@ -66,4 +82,4 @@ Module "Badges": created, updated (including pictures and on or off), deleted, e
 
 ## Checks
 
-`tests/Feature/Badges/EarnedBadgesTest.php`, `tests/Feature/Badges/BadgeManagementTest.php`, and `tests/browser/badges.spec.ts`. Settings → Badges is in `tests/browser/mobile.spec.ts`.
+`tests/Feature/Badges/EarnedBadgesTest.php`, `tests/Feature/Badges/BadgeManagementTest.php`, `tests/Feature/Badges/QuestLevelBadgesTest.php`, and `tests/browser/badges.spec.ts`. Settings → Badges is in `tests/browser/mobile.spec.ts`.

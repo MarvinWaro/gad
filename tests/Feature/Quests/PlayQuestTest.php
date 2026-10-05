@@ -4,8 +4,11 @@ use App\Actions\Quests\ManageQuest;
 use App\Actions\Quests\PlayQuest;
 use App\Enums\ActivityAction;
 use App\Enums\ActivityModule;
+use App\Enums\NotificationKind;
+use App\Enums\QuestLevel;
 use App\Enums\QuestStatus;
 use App\Models\ActivityLog;
+use App\Models\Badge;
 use App\Models\Quest;
 use App\Models\QuestChoice;
 use App\Models\SurveyCluster;
@@ -178,6 +181,35 @@ test('each player plays once unless retakes are on, and their best attempt count
                 ['label' => 'Score', 'value' => '5 of 5 correct'],
                 ['label' => 'Organizer', 'value' => 'Regional Office XII'],
             ]));
+});
+
+test('a finish that earns the quest\'s badge, or a higher level of it, is told to the player', function () {
+    $quest = createQuest($this->region, overrides: ['title' => 'Safe Spaces Week']);
+    $advocate = Badge::query()->where('quest_level', QuestLevel::Advocate)->sole();
+    playQuest($quest, $this->player, 4);
+
+    $notice = $this->player->notifications()->sole();
+    $entry = $notice->activity;
+    expect($notice->kind)->toBe(NotificationKind::BadgeEarned)
+        ->and($entry->module)->toBe(ActivityModule::Badges)
+        ->and($entry->action)->toBe(ActivityAction::Earned)
+        ->and($entry->user_id)->toBe($this->player->id)
+        ->and($entry->subject_id)->toBe($advocate->id)
+        ->and($entry->survey_hei_id)->toBe($this->hei->id);
+    $this->actingAs($this->player)->getJson(route('notifications.recent'))
+        ->assertJsonPath('data.0.actor', null)
+        ->assertJsonPath('data.0.sentence', ['before' => 'You earned the', 'subject' => 'Safe Spaces Week Advocate', 'after' => 'badge. See it on your profile.'])
+        ->assertJsonPath('data.0.url', route('my-profile', ['tab' => 'badges']));
+
+    // A replay at the same level or below earns nothing new; a higher level does.
+    app(ManageQuest::class)->setRetakes($quest, true);
+    playQuest($quest, $this->player, 4);
+    playQuest($quest, $this->player, 2);
+    expect($this->player->notifications()->count())->toBe(1);
+
+    playQuest($quest, $this->player, 5);
+    expect($this->player->notifications()->count())->toBe(2)
+        ->and(ActivityLog::query()->where('module', ActivityModule::Badges)->latest('id')->first()->subject_label)->toBe('Safe Spaces Week Champion');
 });
 
 test('an unfinished attempt carries on where it stopped', function () {

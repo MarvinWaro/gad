@@ -305,6 +305,7 @@ function GadQuestCard({ quest: open }: { quest: QuestCard | null }) {
                             <p className="mt-1.5 flex items-center gap-1.5 text-[13px] text-muted-foreground">
                                 <LevelMark
                                     level={open.best.level}
+                                    image={open.best.image}
                                     className="size-5"
                                 />
                                 {open.best.level_label} badge

@@ -18,7 +18,7 @@ use stdClass;
  * once, by their best finished attempt. Counted in SQL, filtered by the
  * region and HEI the players played from.
  *
- * @phpstan-type Participant array{user_id: int, name: string, place: string, best: int|null, level: string|null, level_label: string|null, attempts: int, last_played: string|null}
+ * @phpstan-type Participant array{user_id: int, name: string, place: string, best: int|null, level: string|null, level_label: string|null, image: string|null, attempts: int, last_played: string|null}
  */
 class QuestResults
 {
@@ -99,12 +99,14 @@ class QuestResults
             ->withQueryString();
 
         $rows = collect($page->items());
+        $badges = QuestBadges::load();
         $heis = SurveyHei::query()->whereKey($rows->pluck('hei_id')->filter()->unique())->pluck('name', 'id');
         $regions = SurveyRegion::query()->whereKey($rows->pluck('region_id')->filter()->unique())->pluck('name', 'id');
 
-        return $page->through(function (stdClass $row) use ($heis, $regions, $total): array {
+        return $page->through(function (stdClass $row) use ($badges, $heis, $regions, $total): array {
             $best = $row->best !== null ? (int) $row->best : null;
             $level = $best !== null ? QuestLevel::fromScore($best, $total) : null;
+            $badge = $level !== null ? $badges->of($level) : null;
 
             return [
                 'user_id' => (int) $row->user_id,
@@ -116,7 +118,8 @@ class QuestResults
                 },
                 'best' => $best,
                 'level' => $level?->value,
-                'level_label' => $level?->label(),
+                'level_label' => $badge?->name,
+                'image' => $badge?->image,
                 'attempts' => (int) $row->attempts,
                 'last_played' => self::iso($row->last_played),
             ];

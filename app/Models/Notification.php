@@ -94,6 +94,18 @@ class Notification extends Model
 
         $subject = $this->about();
 
+        // Survey answers open the answers, else the survey's Summary, else
+        // (for an HEI's focal persons) their home, which counts their HEI's.
+        if ($this->kind === NotificationKind::SurveyResponses) {
+            return match (true) {
+                ! $subject instanceof Survey => null,
+                $viewer->can('survey-responses.view') => route('admin.surveys.responses.index', $subject),
+                $viewer->can('surveys.view') => route('admin.surveys.summary', $subject),
+                $viewer->isHeiOnly() => route('dashboard'),
+                default => null,
+            };
+        }
+
         return match (true) {
             $subject === null => null,
             // Badges are told to the person who now holds them: their profile.
@@ -101,9 +113,6 @@ class Notification extends Model
             // A new follower: who they are.
             $this->kind === NotificationKind::UserFollowed => $this->activity?->user_id !== null
                 ? route('people.show', $this->activity->user_id)
-                : null,
-            $this->kind === NotificationKind::SurveyResponses => $subject instanceof Survey && $viewer->can('survey-responses.view')
-                ? route('admin.surveys.responses.index', $subject)
                 : null,
             default => ActivitySubjects::url($subject, $viewer),
         };
