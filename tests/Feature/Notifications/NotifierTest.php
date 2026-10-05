@@ -342,6 +342,50 @@ test('survey answers count up one notice per survey until it is read', function 
         ->and($central->notifications()->sole()->count)->toBe(3);
 });
 
+test('survey answers also reach the region\'s CHED Focals and the focal persons of the HEI chosen', function () {
+    $this->seed(SurveySeeder::class);
+    $survey = Survey::query()->where('slug', 'ra-7877')->sole();
+    $version = $survey->versions()->firstOrFail();
+    $chedFocal = noticeStaff('ched-focal', $this->region);
+    $chedFocalElsewhere = noticeStaff('ched-focal', $this->otherRegion);
+    $heiFocal = noticeMember($this->hei, 'hei-focal');
+    $heiMember = noticeMember($this->hei);
+    $neighbourFocal = noticeMember(createSurveyHei(['name' => 'Fictional Neighbour HEI']), 'hei-focal');
+    $answer = fn (?SurveyHei $hei): SurveyResponse => SurveyResponse::query()->create([
+        'survey_version_id' => $version->id,
+        'public_reference' => 'RA7877-'.Str::upper(Str::random(10)),
+        'age' => 20,
+        'sex' => 'female',
+        'respondent_group' => 'student',
+        'survey_region_id' => $this->region->id,
+        'survey_cluster_id' => $hei?->survey_cluster_id,
+        'survey_hei_id' => $hei?->id,
+        'answers' => ['experiences' => ['none'], 'perpetrators' => []],
+        'consent_at' => now(),
+        'expires_at' => now()->addYear(),
+    ]);
+    $notifier = app(Notifier::class);
+
+    $notifier->surveyResponseReceived($answer($this->hei));
+    $notifier->surveyResponseReceived($answer($this->hei));
+    // An answer naming no HEI reaches the region's staff only.
+    $notifier->surveyResponseReceived($answer(null));
+
+    expect($chedFocal->notifications()->sole()->count)->toBe(3)
+        ->and($heiFocal->notifications()->sole()->count)->toBe(2)
+        ->and(noticesOf($chedFocalElsewhere))->toBe([])
+        ->and(noticesOf($heiMember))->toBe([])
+        ->and(noticesOf($neighbourFocal))->toBe([]);
+
+    // Each opens what they may read: the Summary, or their HEI's home and its counts.
+    $this->actingAs($chedFocal)->getJson(route('notifications.recent'))
+        ->assertJsonPath('data.0.sentence', ['before' => '3 new responses to', 'subject' => $survey->title, 'after' => ''])
+        ->assertJsonPath('data.0.url', route('admin.surveys.summary', $survey));
+    $this->actingAs($heiFocal)->getJson(route('notifications.recent'))
+        ->assertJsonPath('data.0.sentence', ['before' => '2 new responses to', 'subject' => $survey->title, 'after' => ''])
+        ->assertJsonPath('data.0.url', route('dashboard'));
+});
+
 test('a public survey answer reaches the managers without slowing or naming the respondent', function () {
     $this->seed(SurveySeeder::class);
     $manager = noticeStaff('admin', $this->region);
