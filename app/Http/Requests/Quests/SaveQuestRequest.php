@@ -77,6 +77,8 @@ class SaveQuestRequest extends FormRequest
             'questions.size' => __('A quest has exactly :size questions.'),
             'questions.*.prompt.required' => __('Write :attribute.'),
             'questions.*.explanation.required' => __('Explain the answer to :attribute.'),
+            // The form leaves new questions unmarked; same words as after().
+            'questions.*.correct.required' => __('Mark the correct choice for question :position.'),
             'questions.*.choices.min' => __('Give :attribute at least :min choices.'),
             'questions.*.choices.max' => __('Give :attribute at most :max choices.'),
             'questions.*.choices.*.required' => __('Fill in :attribute, or remove it.'),

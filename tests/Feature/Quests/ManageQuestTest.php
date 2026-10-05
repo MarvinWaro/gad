@@ -89,6 +89,18 @@ test('a quest has exactly five questions, each with 2 to 4 different choices and
     expect(Quest::query()->count())->toBe(0);
 });
 
+test('a question saved before its correct choice is marked asks for the mark', function () {
+    // The form leaves a new question unmarked rather than defaulting to A.
+    $payload = questPayload();
+    $payload['questions'][2]['correct'] = null;
+
+    $this->actingAs($this->focal)->post(route('quests.manage.store'), $payload)
+        ->assertSessionHasErrors(['questions.2.correct' => 'Mark the correct choice for question 3.']);
+
+    expect(session('errors')->first('questions.2.correct'))->toBe('Mark the correct choice for question 3.')
+        ->and(Quest::query()->count())->toBe(0);
+});
+
 test('only administrators and CHED Focals write quests', function (string $role) {
     $user = User::factory()->regionalOffice($this->region)->create();
     $user->assignRole($role);
