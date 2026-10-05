@@ -13,7 +13,9 @@ use Inertia\Response;
 /**
  * The signed-in person's own profile: what everyone sees on it (ProfilePage),
  * plus their own activity log and the badges they can still earn. Posts and
- * activity arrive just after the page, loading more as the reader scrolls.
+ * activity arrive just after the page: posts load more as the reader
+ * scrolls, and the activity log comes in numbered pages, like the full
+ * Activity logs.
  */
 class MyProfileController extends Controller
 {
@@ -27,15 +29,17 @@ class MyProfileController extends Controller
 
         return Inertia::render('profile/show', [
             ...ProfilePage::props($request, $user),
-            // What they did themselves; anyone may read their own.
-            'activity' => Inertia::scroll(fn () => ActivityLogResource::collection(
+            // What they did themselves; anyone may read their own. The page
+            // links keep the Activity tab open.
+            'activity' => Inertia::defer(fn () => ActivityLogResource::collection(
                 ActivityLog::query()
                     ->where('user_id', $user->id)
                     ->with(['user:id,avatar_path', 'subject', 'region:id,name', 'hei:id,name'])
                     ->latest('created_at')
                     ->latest('id')
-                    ->simplePaginate(self::ACTIVITY_PER_PAGE, pageName: 'activity_page'),
-            ))->defer(),
+                    ->paginate(self::ACTIVITY_PER_PAGE, pageName: 'activity_page')
+                    ->appends(['tab' => 'activity']),
+            )->response()->getData(true)),
         ]);
     }
 }

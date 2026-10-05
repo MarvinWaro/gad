@@ -25,7 +25,14 @@ Badge permissions (`badges.*`, Administrators only) are in `docs/badges.md`.
 A staff account's **office** is one region, or the Central Office for all
 regions (Settings → Users → Office), and it decides whose reports the account
 sees. Administrators have no office to pick: they always cover every region
-(since 2026-10-07; Settings → Users saves them as Central Office). HEI accounts never hold an office; their region comes through their HEI
+(since 2026-10-07; Settings → Users saves them as Central Office). CHED Focal
+and CHED Employee accounts always belong to exactly one regional office
+(`Role::REGIONAL_SLUGS`, `Role::needsRegion`, since 2026-10-05): the form offers
+no "Central Office" or empty office for them, and the server refuses both, so
+they see, and are told about, their own region's reports only. Other staff
+roles (such as GAD Focal Person) may still be Central Office. An account's
+office shows under its name in the sidebar and account menu, as a pill in the
+Users list, and as a scope line on the Monitoring pages. HEI accounts never hold an office; their region comes through their HEI
 and its cluster. `Role::HEI_SLUGS` lists the HEI roles: an account holding only
 those gets the HEI home and header, and every other account gets the staff
 interface.
@@ -78,6 +85,17 @@ User and role management live under Settings and use the `users.*` and
 more roles, and define custom roles from the permissions registered by the
 application. Permission definitions remain code-owned so the interface cannot
 invent abilities that have no protected route or behavior.
+
+**Temporary passwords.** An account created in Settings → Users starts with the
+temporary password (`auth.temporary_password`, from `AUTH_TEMPORARY_PASSWORD`;
+"password" unless set), which the form and the "User created" toast name for
+the admin to pass on. A password an admin types for someone else in Edit user
+is temporary too; one they type for their own account is not. Until its holder
+chooses their own (`/password/change`, `TemporaryPasswordController`), the
+account opens nothing else (`EnsurePasswordIsChanged`): the new password must
+meet the password rules and differ from the temporary one. A forgotten-password
+reset also replaces it. The flag is `users.must_change_password`, set only by
+`User::giveTemporaryPassword()`.
 
 The Administrator role is system locked. The application also prevents users
 from deleting their own account, deleting an assigned role, or removing the

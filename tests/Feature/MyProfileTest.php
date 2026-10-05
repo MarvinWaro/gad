@@ -49,6 +49,27 @@ test('my profile shows my own activity, without links to pages I cannot open', f
             ->where('activity.data.0.subject.url', null)));
 });
 
+test('my activity comes in numbered pages that keep the Activity tab open', function () {
+    $recorder = app(ActivityRecorder::class);
+    $oldest = $recorder->record(ActivityAction::Login, ActivityModule::Authentication, actor: $this->member);
+    foreach (range(1, 15) as $index) {
+        $recorder->record(ActivityAction::Login, ActivityModule::Authentication, actor: $this->member);
+    }
+
+    $this->actingAs($this->member)->get(route('my-profile'))
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+            ->has('activity.data', 15)
+            ->where('activity.meta.total', 16)
+            ->where('activity.meta.last_page', 2)
+            ->where('activity.links.next', fn (string $next) => str_contains($next, 'activity_page=2') && str_contains($next, 'tab=activity'))));
+
+    $this->get(route('my-profile', ['tab' => 'activity', 'activity_page' => 2]))
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+            ->has('activity.data', 1)
+            ->where('activity.data.0.id', $oldest->id)
+            ->where('activity.meta.current_page', 2)));
+});
+
 test('my own account links to Settings → Profile from my activity', function () {
     app(ActivityRecorder::class)->record(ActivityAction::Updated, ActivityModule::Account, $this->member, actor: $this->member);
 

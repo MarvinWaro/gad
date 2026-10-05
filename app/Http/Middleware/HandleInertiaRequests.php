@@ -49,6 +49,12 @@ class HandleInertiaRequests extends Middleware
                 'heiOnly' => fn (): bool => $user?->isHeiOnly() ?? false,
                 // GAD Quest: everyone with the permission but administrators.
                 'playsQuests' => fn (): bool => $user?->playsQuests() ?? false,
+                // Where the account belongs, under its name: its institution
+                // or its CHED office.
+                'affiliation' => fn (): ?string => $user?->affiliation(),
+                // A staff account's regional office; null for the Central
+                // Office and HEI accounts.
+                'officeRegion' => fn (): ?string => $user?->officeRegion?->name,
             ],
             // The bell's count. The browser asks for it again every 30 seconds.
             'inbox' => fn (): ?array => $user !== null ? app(NotificationInbox::class)->summary($user) : null,

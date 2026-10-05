@@ -176,7 +176,7 @@ test('an HEI account needs its institution, and a CHED account has none', functi
     expect(User::query()->where('email', 'new-account@example.test')->exists())->toBeFalse();
 
     // A CHED account is placed by its office, so an institution sent with it is dropped.
-    $this->post(route('settings.users.store'), $payload([$chedRole->id], ['survey_hei_id' => $hei->id]))
+    $this->post(route('settings.users.store'), $payload([$chedRole->id], ['survey_hei_id' => $hei->id, 'survey_region_id' => $hei->cluster->survey_region_id]))
         ->assertSessionHasNoErrors();
     $staff = User::query()->where('email', 'new-account@example.test')->sole();
     expect($staff->survey_hei_id)->toBeNull();

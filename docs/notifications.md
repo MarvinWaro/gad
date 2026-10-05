@@ -33,6 +33,11 @@ each one marks it read or unread, or deletes it after asking.
 |                                   | You earned a badge by sharing GAD work        | The earner, from the system: "You earned the … badge. See it on your profile." It opens their Badges tab.                                                    |
 | People                            | Someone started following you                 | The person followed. It opens the follower's profile. Unfollowing takes the notice away, read or not.                                                        |
 
+Reports and GAD surveys reach only the reviewers of their own region, plus
+the Central Office: a CHED Focal of Region IX never hears of a Region XII
+submission. CHED Focal and CHED Employee accounts always have one regional
+office (`docs/admin-rbac.md`), so only Administrators hear of every region.
+
 Nobody is told about their own actions, except a badge they earn: the
 system gives it, so the notice names no one and speaks to them ("You
 earned …"; `NotificationKind::showsActor()`). Pending and deactivated

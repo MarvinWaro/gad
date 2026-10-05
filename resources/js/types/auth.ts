@@ -18,6 +18,10 @@ export type Auth = {
     heiOnly: boolean;
     /** Plays GAD Quest: everyone with the permission but administrators. */
     playsQuests: boolean;
+    /** Where the account belongs: its institution or CHED office. */
+    affiliation: string | null;
+    /** A staff account's regional office; null for the Central Office and HEIs. */
+    officeRegion: string | null;
 };
 
 export type Passkey = {

@@ -168,7 +168,8 @@ test('the Surveys page adds insights: totals, each law, who answered and where f
     $this->actingAs(analyst())->get(route('admin.surveys.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->has('surveys')
+            ->has('surveys.data')
+            ->where('surveys.per_page', 10)
             ->missing('insights')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->where('insights.kpis.responses.value', 4)

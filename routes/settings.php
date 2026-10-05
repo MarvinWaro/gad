@@ -12,6 +12,7 @@ use App\Http\Controllers\Settings\SecurityController;
 use App\Http\Controllers\Settings\SiteRatingManagementController;
 use App\Http\Controllers\Settings\StudentCountController;
 use App\Http\Controllers\Settings\SurveyDirectoryController;
+use App\Http\Controllers\Settings\TemporaryPasswordController;
 use App\Http\Controllers\Settings\UserManagementController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,12 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('throttle:10,1')
         ->name('profile.avatar.update');
     Route::delete('settings/profile/avatar', [ProfileAvatarController::class, 'destroy'])->name('profile.avatar.destroy');
+
+    // An account on a temporary password chooses its own here first.
+    Route::get('password/change', [TemporaryPasswordController::class, 'edit'])->name('password.change');
+    Route::put('password/change', [TemporaryPasswordController::class, 'update'])
+        ->middleware('throttle:6,1')
+        ->name('password.change.update');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

@@ -7,6 +7,7 @@ import {
     Filter,
     FilterBar,
     NoOfficeNotice,
+    OfficeScope,
     PlaceFilters,
     placeFilterCount,
     SearchFilter,
@@ -96,6 +97,7 @@ export default function Records({
                 </header>
 
                 {staff && !hasOffice && <NoOfficeNotice noun="reports" />}
+                {staff && <OfficeScope noun="Reports" />}
 
                 <div className="@container overflow-hidden rounded-xl border bg-card">
                     <FilterBar

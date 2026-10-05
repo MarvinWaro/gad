@@ -42,7 +42,8 @@ class SurveyDirectoryController extends Controller
     public function regions(Request $request): Response
     {
         return Inertia::render('settings/regions', [
-            'regions' => SurveyRegion::query()->withCount('heis')->orderBy('name')->get(),
+            // A page holds every CHED region today (17); the count stays shown.
+            'regions' => SurveyRegion::query()->withCount('heis')->orderBy('name')->paginate(20)->withQueryString(),
             'permissions' => $this->permissions($request),
         ]);
     }
@@ -102,8 +103,8 @@ class SurveyDirectoryController extends Controller
             'respondentGroups' => SurveyRespondentGroup::query()
                 ->ordered()
                 ->with('followUpQuestions.activeOptions')
-                ->get()
-                ->map(fn (SurveyRespondentGroup $group): array => [
+                ->paginate(10)->withQueryString()
+                ->through(fn (SurveyRespondentGroup $group): array => [
                     'id' => $group->id,
                     'value' => $group->value,
                     'label' => $group->label,

@@ -95,6 +95,11 @@ $viewer->assignRole('survey-viewer');
 // to load. They sit below anything a test posts.
 $member = User::factory()->create(['name' => 'Browser Test Member', 'email' => 'browser-member@example.test', 'password' => 'browser-password', 'survey_hei_id' => $hei->id]);
 $member->assignRole('hei');
+// An account an administrator just created: it still has the temporary password.
+$newcomer = User::factory()->create(['name' => 'Fictional Newcomer', 'email' => 'browser-newcomer@example.test', 'survey_hei_id' => $hei->id])
+    ->giveTemporaryPassword();
+$newcomer->save();
+$newcomer->assignRole('hei');
 foreach (range(1, 11) as $daysAgo) {
     $postedAt = now()->subDays(30 + $daysAgo);
     Post::query()->forceCreate([

@@ -20,7 +20,7 @@ icon on each row of Settings → Users.
   show to the Central Office only.
 - Everyone, HEI accounts included, sees their own entries (the ones they
   made) on My Profile → Activity (`MyProfileController`), without the
-  permission.
+  permission, 15 a page in numbered pages (`?tab=activity&activity_page=2`).
 - An entry's "View" link appears only when the viewer may open that page
   (`ActivitySubjects::url` checks the permission or policy); a change to your
   own account links to Settings → Profile.

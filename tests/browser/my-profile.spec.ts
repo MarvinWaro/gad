@@ -13,6 +13,12 @@ test('My Profile shows my activity and keeps account settings available', async 
     page,
 }) => {
     await logIn(page, 'browser-admin@example.test');
+    // The sidebar names the account's office under its name.
+    await expect(
+        page.locator(
+            '[data-test="sidebar-menu-button"] [data-test="user-affiliation"]',
+        ),
+    ).toHaveText('CHED Regional Office XII');
     await page.locator('[data-test="sidebar-menu-button"]').click();
     await page.getByRole('menuitem', { name: 'My Profile' }).click();
 
@@ -35,6 +41,10 @@ test('My Profile shows my activity and keeps account settings available', async 
     await expect(activity.getByRole('article').first()).toContainText(
         'Logged in',
     );
+    // Numbered pages, with the count always shown.
+    await expect(
+        page.getByRole('navigation', { name: 'Pagination' }),
+    ).toContainText(/Showing 1–\d+ of \d+ entries/);
 
     // The Badges tab holds every badge, and says how to earn the rest.
     await page

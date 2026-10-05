@@ -85,7 +85,9 @@ test('editing an account logs what changed, roles included, but never the passwo
         ->and($log->subject_label)->toBe('New Name')
         ->and($log->changes['name'])->toBe(['Old Name', 'New Name'])
         ->and($log->changes['roles'])->toBe(['HEI User', 'HEI Focal, HEI User'])
-        ->and($log->changes['password'])->toBe([null, 'Changed'])
+        // Set for someone else, it is theirs to replace.
+        ->and($log->changes['password'])->toBe([null, 'Changed, to replace at next sign-in'])
+        ->and($log->changes)->not->toHaveKey('must_change_password')
         ->and(json_encode($log->changes))->not->toContain('a-new-password-123');
 });
 

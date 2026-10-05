@@ -22,7 +22,7 @@ import { show as profileOf } from '@/routes/people';
 import { edit } from '@/routes/profile';
 import { index as quests } from '@/routes/quests';
 import type { Auth, Post, ScrollPage } from '@/types';
-import type { ActivityEntry } from '@/types/activity';
+import type { ActivityPage } from '@/types/activity';
 import type { Achievement, BadgeToEarn } from '@/types/badges';
 import type { PersonProfile } from '@/types/people';
 
@@ -51,7 +51,7 @@ type ProfileProps = {
     /** Deferred. */
     posts?: ScrollPage<Post>;
     /** Your own profile only. Deferred. */
-    activity?: ScrollPage<ActivityEntry>;
+    activity?: ActivityPage;
 };
 
 /** Where this person posts: CHED staff in the staff feed, HEIs on their home. */

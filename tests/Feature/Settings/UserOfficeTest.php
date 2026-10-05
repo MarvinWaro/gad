@@ -174,3 +174,52 @@ test('admins given a regional office before become Central Office', function () 
         ->and($regional->fresh()->survey_region_id)->toBeNull()
         ->and($focal->fresh()->survey_region_id)->toBe($this->xii->id);
 });
+
+test('CHED Focal and CHED Employee accounts always belong to one regional office', function () {
+    $admin = officeAdmin();
+    $this->actingAs($admin);
+
+    foreach (['ched-focal', 'ched-employee'] as $slug) {
+        $role = Role::query()->where('slug', $slug)->sole();
+
+        $this->post(route('settings.users.store'), officeUserPayload([$role->id], ['national_access' => true]))
+            ->assertSessionHasErrors(['national_access' => 'CHED Focal and CHED Employee accounts belong to one region. Only Administrators cover every region.']);
+        $this->post(route('settings.users.store'), officeUserPayload([$role->id], ['national_access' => false, 'survey_region_id' => null]))
+            ->assertSessionHasErrors(['survey_region_id' => 'Choose the regional office this CHED account belongs to.']);
+        $this->post(route('settings.users.store'), officeUserPayload([$role->id], ['email' => "{$slug}@example.test", 'survey_region_id' => $this->xi->id]))
+            ->assertSessionHasNoErrors();
+
+        $account = User::query()->where('email', "{$slug}@example.test")->sole();
+        expect($account->survey_region_id)->toBe($this->xi->id)->and($account->national_access)->toBeFalse();
+
+        // Moving one to the Central Office later is refused too.
+        $this->put(route('settings.users.update', $account), officeUserPayload([$role->id], [
+            'email' => $account->email, 'password' => '', 'password_confirmation' => '', 'national_access' => true,
+        ]))->assertSessionHasErrors('national_access');
+        expect($account->fresh()->national_access)->toBeFalse();
+    }
+
+    // Other staff roles may still be Central Office, and an Administrator always is.
+    $this->post(route('settings.users.store'), officeUserPayload([$this->focalRole->id], ['email' => 'content@example.test', 'national_access' => true]))
+        ->assertSessionHasNoErrors();
+    $adminRole = Role::query()->where('slug', 'admin')->sole();
+    $chedFocal = Role::query()->where('slug', 'ched-focal')->sole();
+    $this->post(route('settings.users.store'), officeUserPayload([$adminRole->id, $chedFocal->id], ['email' => 'both-roles@example.test']))
+        ->assertSessionHasNoErrors();
+    expect(User::query()->where('email', 'both-roles@example.test')->sole()->national_access)->toBeTrue();
+});
+
+test('every page tells the account where it belongs', function () {
+    $focal = User::factory()->regionalOffice($this->xii)->create();
+    $focal->assignRole('ched-focal');
+
+    $this->actingAs($focal)->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('auth.affiliation', 'CHED Regional Office XII')
+            ->where('auth.officeRegion', 'Regional Office XII'));
+
+    $this->actingAs(officeAdmin())->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('auth.affiliation', 'CHED Central Office')
+            ->where('auth.officeRegion', null));
+});

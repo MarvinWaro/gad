@@ -6,6 +6,7 @@ import {
     EmptyList,
     FilterBar,
     NoOfficeNotice,
+    OfficeScope,
     PlaceFilters,
     placeFilterCount,
     SearchFilter,
@@ -74,6 +75,7 @@ export default function ChecklistResponses({
                 </header>
 
                 {!hasOffice && <NoOfficeNotice noun="answers" />}
+                <OfficeScope noun="Answers" />
 
                 <div className="@container overflow-hidden rounded-xl border bg-card">
                     <FilterBar

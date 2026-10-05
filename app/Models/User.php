@@ -39,6 +39,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property UserStatus $status
  * @property Carbon|null $email_verified_at
  * @property string $password
+ * @property bool $must_change_password Set with giveTemporaryPassword().
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
@@ -79,6 +80,7 @@ class User extends Authenticatable implements PasskeyUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'must_change_password' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
             'status' => UserStatus::class,
             'survey_region_id' => 'integer',
@@ -270,6 +272,19 @@ class User extends Authenticatable implements PasskeyUser
     public function isActive(): bool
     {
         return $this->status === UserStatus::Active;
+    }
+
+    /**
+     * Give the account a password someone else knows: the shared temporary
+     * one (`auth.temporary_password`) or one an administrator typed. Its
+     * holder must choose their own the next time they sign in. Not saved.
+     */
+    public function giveTemporaryPassword(?string $password = null): static
+    {
+        return $this->forceFill([
+            'password' => $password ?? config('auth.temporary_password'),
+            'must_change_password' => true,
+        ]);
     }
 
     /** @return BelongsToMany<Role, $this> */

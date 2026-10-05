@@ -174,6 +174,8 @@ class UserManagementController extends Controller
                 'delete' => $request->user()->can('users.delete'),
                 'activity' => $request->user()->can('activity-logs.view'),
             ],
+            // What a new account signs in with, to pass on to its holder.
+            'temporaryPassword' => $request->user()->can('users.create') ? config('auth.temporary_password') : null,
         ]);
     }
 
@@ -186,19 +188,17 @@ class UserManagementController extends Controller
         $this->ensureOfficeIsAssignable($request->user(), $office);
 
         $user = DB::transaction(function () use ($validated, $slugs, $office): User {
-            $user = User::query()->create([
+            // It starts with the temporary password, which its holder must
+            // change the first time they sign in.
+            $user = (new User)->fill([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'password' => $validated['password'],
                 'survey_hei_id' => $this->heiFrom($slugs, $validated),
                 'status' => UserStatus::Active,
-                'email_verified_at' => now(),
-            ]);
+            ])->giveTemporaryPassword();
 
-            // The office is not mass assignable, so a form elsewhere cannot grant it.
-            if ($office !== null) {
-                $user->forceFill($office)->save();
-            }
+            // Neither is mass assignable, so a form elsewhere cannot set them.
+            $user->forceFill(['email_verified_at' => now(), ...($office ?? [])])->save();
 
             $user->roles()->sync($validated['role_ids']);
 
@@ -211,7 +211,7 @@ class UserManagementController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('User created.'),
+            'message' => __('User created. Their temporary password is “:password”.', ['password' => config('auth.temporary_password')]),
         ]);
 
         return to_route('settings.users.index');
@@ -227,20 +227,23 @@ class UserManagementController extends Controller
         $office = $this->officeFrom($slugs, $validated);
         $this->ensureOfficeIsAssignable($request->user(), $office);
         $rolesBefore = $user->roles()->pluck('name')->all();
+        // A password set for someone else is theirs to replace at their next
+        // sign-in; a manager editing their own account keeps what they typed.
+        $temporary = ! empty($validated['password']) && ! $user->is($request->user());
 
-        DB::transaction(function () use ($user, $validated, $slugs, $office): void {
+        DB::transaction(function () use ($user, $validated, $slugs, $office, $temporary): void {
             // Contact details are left as the account holder set them.
-            $attributes = [
+            $user->fill([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'survey_hei_id' => $this->heiFrom($slugs, $validated),
-            ];
+            ]);
 
-            if (! empty($validated['password'])) {
-                $attributes['password'] = $validated['password'];
+            if ($temporary) {
+                $user->giveTemporaryPassword($validated['password']);
+            } elseif (! empty($validated['password'])) {
+                $user->password = $validated['password'];
             }
-
-            $user->fill($attributes);
 
             if ($office !== null) {
                 $user->forceFill($office);
@@ -250,13 +253,13 @@ class UserManagementController extends Controller
             $user->roles()->sync($validated['role_ids']);
         });
 
-        $changes = $activity->changesOf($user);
+        $changes = $activity->changesOf($user, except: ['must_change_password']);
         $roles = $activity->listChange($rolesBefore, Role::query()->whereKey($validated['role_ids'])->pluck('name')->all());
         if ($roles !== null) {
             $changes['roles'] = $roles;
         }
         if (! empty($validated['password'])) {
-            $changes['password'] = [null, 'Changed'];
+            $changes['password'] = [null, $temporary ? 'Changed, to replace at next sign-in' : 'Changed'];
         }
         $activity->record(ActivityAction::Updated, ActivityModule::Users, $user, $changes);
 

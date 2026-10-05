@@ -107,13 +107,15 @@ test('a later page continues the same ordering', function () {
             ->where('heis.data.0.name', 'Institution 21'));
 });
 
-test('the other directory pages are not paged', function () {
+test('the regions page is paged too, with every CHED region on its first page', function () {
     $this->seed(SurveyDirectorySeeder::class);
 
     $this->actingAs($this->admin)->get(route('settings.regions.index'))
         // Each region with its institutions' count; clusters stay out of sight.
         ->assertInertia(fn (Assert $page) => $page
-            ->has('regions', 1)
-            ->where('regions.0.heis_count', 0)
-            ->missing('regions.0.clusters_count'));
+            ->has('regions.data', 1)
+            ->where('regions.data.0.heis_count', 0)
+            ->missing('regions.data.0.clusters_count')
+            ->where('regions.per_page', 20)
+            ->where('regions.total', 1));
 });

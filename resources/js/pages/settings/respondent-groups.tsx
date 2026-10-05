@@ -15,6 +15,7 @@ import Heading from '@/components/heading';
 import { IconAction } from '@/components/icon-action';
 import InputError from '@/components/input-error';
 import { OptionLines } from '@/components/option-lines';
+import { Pagination, type Paginated } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -62,7 +63,7 @@ export default function RespondentGroups({
     respondentGroups,
     permissions,
 }: {
-    respondentGroups: RespondentGroup[];
+    respondentGroups: Paginated<RespondentGroup>;
     permissions: Permissions;
 }) {
     return (
@@ -78,7 +79,7 @@ export default function RespondentGroups({
                     {permissions.create && <RespondentGroupDialog />}
                 </div>
                 <div className="overflow-hidden rounded-xl border bg-card">
-                    {respondentGroups.length === 0 ? (
+                    {respondentGroups.data.length === 0 ? (
                         <div className="flex min-h-56 flex-col items-center justify-center p-8 text-center">
                             <ContactRound className="size-7 text-muted-foreground" />
                             <h2 className="mt-3 font-medium">
@@ -90,10 +91,17 @@ export default function RespondentGroups({
                             </p>
                         </div>
                     ) : (
-                        <RespondentGroupTable
-                            groups={respondentGroups}
-                            permissions={permissions}
-                        />
+                        <>
+                            <RespondentGroupTable
+                                groups={respondentGroups.data}
+                                permissions={permissions}
+                            />
+                            <Pagination
+                                page={respondentGroups}
+                                label="groups"
+                                persistent
+                            />
+                        </>
                     )}
                 </div>
                 <p className="text-xs text-muted-foreground">

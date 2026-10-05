@@ -10,6 +10,7 @@ import {
 import { FormEvent, useState } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { Pagination, type Paginated } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { ConfirmPopover } from '@/components/confirm-popover';
 import { Button } from '@/components/ui/button';
@@ -52,7 +53,7 @@ export default function Roles({
     filters,
     permissions,
 }: {
-    roles: Role[];
+    roles: Paginated<Role>;
     permissionGroups: PermissionGroup[];
     filters: { search: string };
     permissions: PagePermissions;
@@ -107,7 +108,7 @@ export default function Roles({
                 </form>
 
                 <div className="overflow-hidden rounded-xl border bg-card">
-                    {roles.length === 0 ? (
+                    {roles.data.length === 0 ? (
                         <div className="flex min-h-64 flex-col items-center justify-center p-8 text-center">
                             <span className="flex size-12 items-center justify-center rounded-full bg-muted">
                                 <Shield className="size-5 text-muted-foreground" />
@@ -120,101 +121,108 @@ export default function Roles({
                             </p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[820px] text-left text-sm">
-                                <caption className="sr-only">
-                                    Roles and their permission counts
-                                </caption>
-                                <thead className="border-b bg-muted/50 text-xs text-muted-foreground">
-                                    <tr>
-                                        <th className="px-5 py-3 font-medium">
-                                            Role
-                                        </th>
-                                        <th className="px-5 py-3 font-medium">
-                                            Description
-                                        </th>
-                                        <th className="px-5 py-3 font-medium">
-                                            Users
-                                        </th>
-                                        <th className="px-5 py-3 font-medium">
-                                            Permissions
-                                        </th>
-                                        {(permissions.update ||
-                                            permissions.delete) && (
-                                            <th className="px-5 py-3 text-right font-medium">
-                                                Actions
+                        <>
+                            <div className="overflow-x-auto">
+                                <table className="w-full min-w-[820px] text-left text-sm">
+                                    <caption className="sr-only">
+                                        Roles and their permission counts
+                                    </caption>
+                                    <thead className="border-b bg-muted/50 text-xs text-muted-foreground">
+                                        <tr>
+                                            <th className="px-5 py-3 font-medium">
+                                                Role
                                             </th>
-                                        )}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y">
-                                    {roles.map((role) => (
-                                        <tr key={role.id}>
-                                            <td className="px-5 py-4">
-                                                <div className="flex items-center gap-2 font-medium">
-                                                    {role.is_locked ||
-                                                    !role.can_manage ? (
-                                                        <LockKeyhole className="size-4 text-primary" />
-                                                    ) : (
-                                                        <Shield className="size-4 text-muted-foreground" />
-                                                    )}
-                                                    {role.name}
-                                                </div>
-                                            </td>
-                                            <td className="max-w-sm px-5 py-4 text-muted-foreground">
-                                                {role.description ??
-                                                    'No description'}
-                                            </td>
-                                            <td className="px-5 py-4">
-                                                <Badge variant="secondary">
-                                                    {role.users_count}{' '}
-                                                    {role.users_count === 1
-                                                        ? 'user'
-                                                        : 'users'}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-5 py-4">
-                                                <Badge variant="outline">
-                                                    {role.is_locked
-                                                        ? 'All permissions'
-                                                        : `${role.permissions_count} permissions`}
-                                                </Badge>
-                                            </td>
+                                            <th className="px-5 py-3 font-medium">
+                                                Description
+                                            </th>
+                                            <th className="px-5 py-3 font-medium">
+                                                Users
+                                            </th>
+                                            <th className="px-5 py-3 font-medium">
+                                                Permissions
+                                            </th>
                                             {(permissions.update ||
                                                 permissions.delete) && (
-                                                <td className="px-5 py-4">
-                                                    {role.is_locked ? (
-                                                        <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                                            <LockKeyhole className="size-3.5" />
-                                                            {role.is_locked
-                                                                ? 'System locked'
-                                                                : 'Restricted'}
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex justify-end gap-1">
-                                                            {permissions.update && (
-                                                                <RoleDialog
-                                                                    mode="edit"
-                                                                    role={role}
-                                                                    permissionGroups={
-                                                                        permissionGroups
-                                                                    }
-                                                                />
-                                                            )}
-                                                            {permissions.delete && (
-                                                                <DeleteRoleDialog
-                                                                    role={role}
-                                                                />
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </td>
+                                                <th className="px-5 py-3 text-right font-medium">
+                                                    Actions
+                                                </th>
                                             )}
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody className="divide-y">
+                                        {roles.data.map((role) => (
+                                            <tr key={role.id}>
+                                                <td className="px-5 py-4">
+                                                    <div className="flex items-center gap-2 font-medium">
+                                                        {role.is_locked ||
+                                                        !role.can_manage ? (
+                                                            <LockKeyhole className="size-4 text-primary" />
+                                                        ) : (
+                                                            <Shield className="size-4 text-muted-foreground" />
+                                                        )}
+                                                        {role.name}
+                                                    </div>
+                                                </td>
+                                                <td className="max-w-sm px-5 py-4 text-muted-foreground">
+                                                    {role.description ??
+                                                        'No description'}
+                                                </td>
+                                                <td className="px-5 py-4">
+                                                    <Badge variant="secondary">
+                                                        {role.users_count}{' '}
+                                                        {role.users_count === 1
+                                                            ? 'user'
+                                                            : 'users'}
+                                                    </Badge>
+                                                </td>
+                                                <td className="px-5 py-4">
+                                                    <Badge variant="outline">
+                                                        {role.is_locked
+                                                            ? 'All permissions'
+                                                            : `${role.permissions_count} permissions`}
+                                                    </Badge>
+                                                </td>
+                                                {(permissions.update ||
+                                                    permissions.delete) && (
+                                                    <td className="px-5 py-4">
+                                                        {role.is_locked ? (
+                                                            <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+                                                                <LockKeyhole className="size-3.5" />
+                                                                {role.is_locked
+                                                                    ? 'System locked'
+                                                                    : 'Restricted'}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex justify-end gap-1">
+                                                                {permissions.update && (
+                                                                    <RoleDialog
+                                                                        mode="edit"
+                                                                        role={
+                                                                            role
+                                                                        }
+                                                                        permissionGroups={
+                                                                            permissionGroups
+                                                                        }
+                                                                    />
+                                                                )}
+                                                                {permissions.delete && (
+                                                                    <DeleteRoleDialog
+                                                                        role={
+                                                                            role
+                                                                        }
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <Pagination page={roles} label="roles" persistent />
+                        </>
                     )}
                 </div>
             </div>

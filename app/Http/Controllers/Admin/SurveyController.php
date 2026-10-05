@@ -31,8 +31,11 @@ class SurveyController extends Controller
         $surveys = Survey::query()
             ->with(['versions' => fn ($query) => $query->withCount('responses')])
             ->latest()
-            ->get()
-            ->map(fn (Survey $survey): array => [
+            // The id breaks ties, so no survey repeats or goes missing
+            // between pages.
+            ->latest('id')
+            ->paginate(10)->withQueryString()
+            ->through(fn (Survey $survey): array => [
                 'id' => $survey->id,
                 'code' => $survey->code,
                 'slug' => $survey->slug,

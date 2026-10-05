@@ -50,6 +50,7 @@ class UpdateManagedUserRequest extends FormRequest
     {
         return [
             ...$this->registrationDetailsMessages(),
+            ...$this->officeMessages(),
             'survey_hei_id.required' => __('Choose the institution this HEI account belongs to.'),
         ];
     }

@@ -2,6 +2,8 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     Check,
     History,
+    KeyRound,
+    MapPin,
     Pencil,
     Plus,
     Search,
@@ -108,6 +110,9 @@ type UserForm = {
 
 const NATIONAL_OFFICE = 'national';
 
+/** CHED roles that always belong to one region (`Role::REGIONAL_SLUGS`). */
+const REGIONAL_ROLES = ['ched-focal', 'ched-employee'];
+
 function officeValue(office: ManagedUser['office'] | undefined): string {
     if (office?.national) return NATIONAL_OFFICE;
 
@@ -156,6 +161,7 @@ export default function Users({
     roleOptions,
     places,
     permissions,
+    temporaryPassword,
 }: {
     users: PaginatedUsers;
     roles: AssignableRole[];
@@ -168,6 +174,8 @@ export default function Users({
     roleOptions: Pick<Role, 'name' | 'slug'>[];
     places: Places;
     permissions: PagePermissions;
+    /** What a new account signs in with first; for those who create accounts. */
+    temporaryPassword: string | null;
 }) {
     const [search, setSearch] = useState(filters.search);
     const totalUsers =
@@ -233,6 +241,7 @@ export default function Users({
                             heis={heis}
                             heiRegions={heiRegions}
                             offices={offices}
+                            temporaryPassword={temporaryPassword}
                         />
                     )}
                 </div>
@@ -439,11 +448,19 @@ export default function Users({
                                                     ))}
                                                 </div>
                                                 {officeLabel(user.office) && (
-                                                    <p className="mt-1.5 text-xs text-muted-foreground">
-                                                        Office:{' '}
-                                                        {officeLabel(
-                                                            user.office,
-                                                        )}
+                                                    <p className="mt-1.5">
+                                                        <span className="inline-flex items-center gap-1 rounded-[6px] bg-brand-soft px-1.5 py-0.5 text-xs font-medium text-brand">
+                                                            <MapPin
+                                                                aria-hidden="true"
+                                                                className="size-3"
+                                                            />
+                                                            <span className="sr-only">
+                                                                Office:{' '}
+                                                            </span>
+                                                            {officeLabel(
+                                                                user.office,
+                                                            )}
+                                                        </span>
                                                     </p>
                                                 )}
                                                 <p className="mt-1.5 text-xs whitespace-nowrap text-muted-foreground">
@@ -625,6 +642,7 @@ function UserDialog({
     heiRegions,
     offices,
     user,
+    temporaryPassword,
 }: {
     mode: 'create' | 'edit';
     roles: AssignableRole[];
@@ -632,6 +650,7 @@ function UserDialog({
     heiRegions: Region[];
     offices: Offices;
     user?: ManagedUser;
+    temporaryPassword?: string | null;
 }) {
     const [open, setOpen] = useState(false);
     const fieldId = `${mode}-${user?.id ?? 'new'}`;
@@ -663,6 +682,13 @@ function UserDialog({
     const administrator = roles.some(
         (role) => role.slug === 'admin' && chosen(role),
     );
+    // CHED Focal and CHED Employee belong to one regional office: they see,
+    // and are told about, that region's reports only.
+    const regional =
+        !administrator &&
+        roles.some(
+            (role) => REGIONAL_ROLES.includes(role.slug) && chosen(role),
+        );
     const regionHeis = heis.filter(
         (hei) => String(hei.region_id) === form.data.region,
     );
@@ -670,7 +696,7 @@ function UserDialog({
     const errors: Partial<Record<string, string>> = form.errors;
     const officeError = errors.survey_region_id ?? errors.national_access;
     const officeOptions = [
-        ...(offices.national
+        ...(offices.national && !regional
             ? [
                   {
                       value: NATIONAL_OFFICE,
@@ -868,9 +894,12 @@ function UserDialog({
                                 onChange={(value) =>
                                     form.setData('office', value)
                                 }
-                                placeholder="No office"
+                                placeholder={
+                                    regional ? 'Choose a region' : 'No office'
+                                }
                                 options={officeOptions}
-                                allowEmpty
+                                allowEmpty={!regional}
+                                aria-required={regional}
                                 aria-describedby={`${fieldId}-office-help`}
                                 aria-invalid={Boolean(officeError)}
                                 className="rounded-[6px] data-[size=default]:h-11"
@@ -879,53 +908,92 @@ function UserDialog({
                                 id={`${fieldId}-office-help`}
                                 className="text-xs text-muted-foreground"
                             >
-                                Staff see monitoring reports from their office's
-                                region. The Central Office sees every region.
+                                {regional
+                                    ? 'CHED Focal and CHED Employee accounts belong to one regional office: they see, and are told about, that region’s reports only. Only Administrators cover every region.'
+                                    : "Staff see monitoring reports from their office's region. The Central Office sees every region."}
                             </p>
                             <InputError message={officeError} />
                         </div>
                     )}
-                    <div className="grid gap-2 sm:grid-cols-2">
-                        <div className="grid gap-2">
-                            <Label htmlFor={`${fieldId}-password`}>
-                                {mode === 'create'
-                                    ? 'Password'
-                                    : 'New password (optional)'}
-                            </Label>
-                            <Input
-                                id={`${fieldId}-password`}
-                                type="password"
-                                value={form.data.password}
-                                onChange={(event) =>
-                                    form.setData('password', event.target.value)
-                                }
-                                required={mode === 'create'}
-                                autoComplete="new-password"
+                    {mode === 'create' ? (
+                        // New accounts start with the temporary password and
+                        // choose their own at first sign-in.
+                        <p
+                            data-test="temporary-password-note"
+                            className="flex gap-2.5 rounded-lg bg-muted px-3 py-2.5 text-sm text-muted-foreground"
+                        >
+                            <KeyRound
+                                aria-hidden
+                                className="mt-0.5 size-4 shrink-0"
                             />
-                            <InputError message={form.errors.password} />
-                        </div>
+                            <span>
+                                They sign in with the temporary password{' '}
+                                <span className="font-medium text-foreground">
+                                    {temporaryPassword}
+                                </span>
+                                , then choose their own the first time.
+                            </span>
+                        </p>
+                    ) : (
                         <div className="grid gap-2">
-                            <Label htmlFor={`${fieldId}-password-confirmation`}>
-                                Confirm password
-                            </Label>
-                            <Input
-                                id={`${fieldId}-password-confirmation`}
-                                type="password"
-                                value={form.data.password_confirmation}
-                                onChange={(event) =>
-                                    form.setData(
-                                        'password_confirmation',
-                                        event.target.value,
-                                    )
-                                }
-                                required={
-                                    mode === 'create' ||
-                                    form.data.password.length > 0
-                                }
-                                autoComplete="new-password"
-                            />
+                            <div className="grid gap-2 sm:grid-cols-2">
+                                <div className="grid gap-2">
+                                    <Label htmlFor={`${fieldId}-password`}>
+                                        New password (optional)
+                                    </Label>
+                                    <Input
+                                        id={`${fieldId}-password`}
+                                        type="password"
+                                        value={form.data.password}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'password',
+                                                event.target.value,
+                                            )
+                                        }
+                                        aria-describedby={
+                                            user?.is_current_user
+                                                ? undefined
+                                                : `${fieldId}-password-help`
+                                        }
+                                        autoComplete="new-password"
+                                    />
+                                    <InputError
+                                        message={form.errors.password}
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label
+                                        htmlFor={`${fieldId}-password-confirmation`}
+                                    >
+                                        Confirm password
+                                    </Label>
+                                    <Input
+                                        id={`${fieldId}-password-confirmation`}
+                                        type="password"
+                                        value={form.data.password_confirmation}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'password_confirmation',
+                                                event.target.value,
+                                            )
+                                        }
+                                        required={form.data.password.length > 0}
+                                        autoComplete="new-password"
+                                    />
+                                </div>
+                            </div>
+                            {!user?.is_current_user && (
+                                <p
+                                    id={`${fieldId}-password-help`}
+                                    className="text-xs text-muted-foreground"
+                                >
+                                    They&rsquo;ll choose their own at their next
+                                    sign-in.
+                                </p>
+                            )}
                         </div>
-                    </div>
+                    )}
                     <DialogFooter>
                         <Button
                             type="button"

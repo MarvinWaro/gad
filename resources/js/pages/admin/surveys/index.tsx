@@ -15,6 +15,7 @@ import { ConfirmPopover } from '@/components/confirm-popover';
 import type { ConfirmVisit } from '@/components/confirm-popover';
 import { IconAction } from '@/components/icon-action';
 import InputError from '@/components/input-error';
+import { Pagination, type Paginated } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,7 +73,7 @@ export default function SurveyIndex({
     insights,
     insightFilters,
 }: {
-    surveys: Survey[];
+    surveys: Paginated<Survey>;
     permissions: Permissions;
     /** Deferred: the figures arrive just after the page. */
     insights?: SurveyInsights;
@@ -107,7 +108,7 @@ export default function SurveyIndex({
                         <CardTitle>Survey library</CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
-                        {surveys.length === 0 ? (
+                        {surveys.data.length === 0 ? (
                             <div className="flex min-h-64 flex-col items-center justify-center p-8 text-center">
                                 <ClipboardList className="size-8 text-muted-foreground" />
                                 <h2 className="mt-4 font-medium">
@@ -120,188 +121,197 @@ export default function SurveyIndex({
                                 </p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full min-w-[850px] text-left text-sm">
-                                    <thead className="border-b bg-muted/50 text-xs text-muted-foreground">
-                                        <tr>
-                                            <th className="px-5 py-3">
-                                                Survey
-                                            </th>
-                                            <th className="px-5 py-3">
-                                                Status
-                                            </th>
-                                            <th className="px-5 py-3">
-                                                Versions
-                                            </th>
-                                            <th className="px-5 py-3">
-                                                Responses
-                                            </th>
-                                            <th className="px-5 py-3 text-right">
-                                                Actions
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
-                                        {surveys.map((survey) => (
-                                            <tr key={survey.id}>
-                                                <td className="px-5 py-4">
-                                                    <p className="font-medium">
-                                                        {survey.title}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {survey.law_title}
-                                                    </p>
-                                                </td>
-                                                <td className="px-5 py-4">
-                                                    <Badge
-                                                        variant="secondary"
-                                                        className={
-                                                            publicationBadges[
-                                                                survey
-                                                                    .publication_status
-                                                            ]
-                                                        }
-                                                    >
-                                                        {
-                                                            survey.publication_status
-                                                        }
-                                                    </Badge>
-                                                </td>
-                                                <td className="px-5 py-4 text-xs">
-                                                    <p>
-                                                        Editing draft v
-                                                        {survey.draft_version ??
-                                                            '—'}
-                                                    </p>
-                                                    <p className="mt-0.5 text-muted-foreground">
-                                                        {survey.published_version
-                                                            ? `Live: v${survey.published_version}`
-                                                            : 'Nothing live yet'}
-                                                    </p>
-                                                </td>
-                                                <td className="px-5 py-4">
-                                                    {survey.responses_count}
-                                                </td>
-                                                <td className="px-5 py-4">
-                                                    <div className="flex justify-end gap-1">
-                                                        <IconAction
-                                                            asChild
-                                                            label={`${permissions.update ? 'Edit' : 'View'} the draft for ${survey.title}`}
+                            <>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full min-w-[850px] text-left text-sm">
+                                        <thead className="border-b bg-muted/50 text-xs text-muted-foreground">
+                                            <tr>
+                                                <th className="px-5 py-3">
+                                                    Survey
+                                                </th>
+                                                <th className="px-5 py-3">
+                                                    Status
+                                                </th>
+                                                <th className="px-5 py-3">
+                                                    Versions
+                                                </th>
+                                                <th className="px-5 py-3">
+                                                    Responses
+                                                </th>
+                                                <th className="px-5 py-3 text-right">
+                                                    Actions
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                            {surveys.data.map((survey) => (
+                                                <tr key={survey.id}>
+                                                    <td className="px-5 py-4">
+                                                        <p className="font-medium">
+                                                            {survey.title}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {survey.law_title}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className={
+                                                                publicationBadges[
+                                                                    survey
+                                                                        .publication_status
+                                                                ]
+                                                            }
                                                         >
-                                                            <Link
-                                                                href={`/admin/surveys/${survey.id}/edit`}
-                                                            >
-                                                                {permissions.update ? (
-                                                                    <FilePenLine />
-                                                                ) : (
-                                                                    <FileText />
-                                                                )}
-                                                            </Link>
-                                                        </IconAction>
-                                                        {survey.public_url && (
+                                                            {
+                                                                survey.publication_status
+                                                            }
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="px-5 py-4 text-xs">
+                                                        <p>
+                                                            Editing draft v
+                                                            {survey.draft_version ??
+                                                                '—'}
+                                                        </p>
+                                                        <p className="mt-0.5 text-muted-foreground">
+                                                            {survey.published_version
+                                                                ? `Live: v${survey.published_version}`
+                                                                : 'Nothing live yet'}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        {survey.responses_count}
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        <div className="flex justify-end gap-1">
                                                             <IconAction
                                                                 asChild
-                                                                label="Open the live public page"
-                                                            >
-                                                                <a
-                                                                    href={
-                                                                        survey.public_url
-                                                                    }
-                                                                    target="_blank"
-                                                                    rel="noreferrer"
-                                                                >
-                                                                    <ExternalLink />
-                                                                </a>
-                                                            </IconAction>
-                                                        )}
-                                                        {/* Counts only, so everyone here may read it. */}
-                                                        <IconAction
-                                                            asChild
-                                                            label={`See the summary of ${survey.title}'s answers`}
-                                                        >
-                                                            <Link
-                                                                href={summary.url(
-                                                                    survey.id,
-                                                                )}
-                                                            >
-                                                                <ChartBar />
-                                                            </Link>
-                                                        </IconAction>
-                                                        {permissions.responses && (
-                                                            <IconAction
-                                                                asChild
-                                                                label={`View ${survey.responses_count} collected ${survey.responses_count === 1 ? 'response' : 'responses'}`}
+                                                                label={`${permissions.update ? 'Edit' : 'View'} the draft for ${survey.title}`}
                                                             >
                                                                 <Link
-                                                                    href={`/admin/surveys/${survey.id}/responses`}
+                                                                    href={`/admin/surveys/${survey.id}/edit`}
                                                                 >
-                                                                    <Eye />
+                                                                    {permissions.update ? (
+                                                                        <FilePenLine />
+                                                                    ) : (
+                                                                        <FileText />
+                                                                    )}
                                                                 </Link>
                                                             </IconAction>
-                                                        )}
-                                                        {permissions.publish &&
-                                                            (survey.publication_status ===
-                                                            'Archived' ? (
-                                                                // Restoring reopens it, so it needs no warning.
+                                                            {survey.public_url && (
                                                                 <IconAction
-                                                                    label="Restore this survey so the public can reach it"
-                                                                    onClick={() =>
-                                                                        toggleArchive(
-                                                                            survey,
-                                                                        )
-                                                                    }
+                                                                    asChild
+                                                                    label="Open the live public page"
                                                                 >
-                                                                    <Archive />
+                                                                    <a
+                                                                        href={
+                                                                            survey.public_url
+                                                                        }
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                    >
+                                                                        <ExternalLink />
+                                                                    </a>
                                                                 </IconAction>
-                                                            ) : (
-                                                                <ConfirmPopover
-                                                                    title={`Archive ${survey.title}?`}
-                                                                    description="It closes to the public straight away. Responses already collected are kept, and you can restore it anytime."
-                                                                    confirmLabel="Archive"
-                                                                    onConfirm={(
-                                                                        visit,
-                                                                    ) =>
-                                                                        toggleArchive(
-                                                                            survey,
-                                                                            visit,
-                                                                        )
-                                                                    }
+                                                            )}
+                                                            {/* Counts only, so everyone here may read it. */}
+                                                            <IconAction
+                                                                asChild
+                                                                label={`See the summary of ${survey.title}'s answers`}
+                                                            >
+                                                                <Link
+                                                                    href={summary.url(
+                                                                        survey.id,
+                                                                    )}
                                                                 >
-                                                                    <IconAction label="Archive this survey and close it to the public">
+                                                                    <ChartBar />
+                                                                </Link>
+                                                            </IconAction>
+                                                            {permissions.responses && (
+                                                                <IconAction
+                                                                    asChild
+                                                                    label={`View ${survey.responses_count} collected ${survey.responses_count === 1 ? 'response' : 'responses'}`}
+                                                                >
+                                                                    <Link
+                                                                        href={`/admin/surveys/${survey.id}/responses`}
+                                                                    >
+                                                                        <Eye />
+                                                                    </Link>
+                                                                </IconAction>
+                                                            )}
+                                                            {permissions.publish &&
+                                                                (survey.publication_status ===
+                                                                'Archived' ? (
+                                                                    // Restoring reopens it, so it needs no warning.
+                                                                    <IconAction
+                                                                        label="Restore this survey so the public can reach it"
+                                                                        onClick={() =>
+                                                                            toggleArchive(
+                                                                                survey,
+                                                                            )
+                                                                        }
+                                                                    >
                                                                         <Archive />
                                                                     </IconAction>
-                                                                </ConfirmPopover>
-                                                            ))}
-                                                        {permissions.delete &&
-                                                            !survey.published_version && (
-                                                                <ConfirmPopover
-                                                                    title={`Delete ${survey.title}?`}
-                                                                    description="It has never been published, so this cannot be undone."
-                                                                    confirmLabel="Delete"
-                                                                    onConfirm={(
-                                                                        visit,
-                                                                    ) =>
-                                                                        router.delete(
-                                                                            `/admin/surveys/${survey.id}`,
+                                                                ) : (
+                                                                    <ConfirmPopover
+                                                                        title={`Archive ${survey.title}?`}
+                                                                        description="It closes to the public straight away. Responses already collected are kept, and you can restore it anytime."
+                                                                        confirmLabel="Archive"
+                                                                        onConfirm={(
                                                                             visit,
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <IconAction
-                                                                        label="Delete this draft permanently"
-                                                                        className="text-muted-foreground hover:text-destructive"
+                                                                        ) =>
+                                                                            toggleArchive(
+                                                                                survey,
+                                                                                visit,
+                                                                            )
+                                                                        }
                                                                     >
-                                                                        <Trash2 />
-                                                                    </IconAction>
-                                                                </ConfirmPopover>
-                                                            )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                                        <IconAction label="Archive this survey and close it to the public">
+                                                                            <Archive />
+                                                                        </IconAction>
+                                                                    </ConfirmPopover>
+                                                                ))}
+                                                            {permissions.delete &&
+                                                                !survey.published_version && (
+                                                                    <ConfirmPopover
+                                                                        title={`Delete ${survey.title}?`}
+                                                                        description="It has never been published, so this cannot be undone."
+                                                                        confirmLabel="Delete"
+                                                                        onConfirm={(
+                                                                            visit,
+                                                                        ) =>
+                                                                            router.delete(
+                                                                                `/admin/surveys/${survey.id}`,
+                                                                                visit,
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <IconAction
+                                                                            label="Delete this draft permanently"
+                                                                            className="text-muted-foreground hover:text-destructive"
+                                                                        >
+                                                                            <Trash2 />
+                                                                        </IconAction>
+                                                                    </ConfirmPopover>
+                                                                )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {/* Only the library turns; the insights stay. */}
+                                <Pagination
+                                    page={surveys}
+                                    label="surveys"
+                                    persistent
+                                    only={['surveys']}
+                                />
+                            </>
                         )}
                     </CardContent>
                 </Card>
