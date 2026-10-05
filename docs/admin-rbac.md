@@ -129,6 +129,12 @@ php artisan migrate --seed
 php artisan storage:link
 ```
 
+The typed routes Wayfinder writes (`resources/js/actions`, `routes` and
+`wayfinder`) are kept in git. DigitalOcean App Platform builds the assets
+before it installs PHP, so the build uses those files as committed
+(`vite.config.ts` skips Wayfinder when `php` is missing). Every local build
+regenerates them: commit them along with any route or controller change.
+
 `php artisan migrate:fresh --seed` recreates the tables and includes the
 administrator, survey drafts, Region XII directory, and the 129 HEIs supplied
 from the CHED list. In the local environment it also adds one demo account per
