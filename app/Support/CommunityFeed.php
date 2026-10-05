@@ -11,6 +11,7 @@ use App\Models\PostComment;
 use App\Models\PostImage;
 use App\Models\PostReaction;
 use App\Models\PostSdg;
+use App\Models\SurveyRegion;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\Paginator;
@@ -76,18 +77,37 @@ class CommunityFeed
     }
 
     /**
-     * Every post the viewer's feed may show: all of them, or, in the
-     * Following scope, those of the people they follow. Scoping the feed by
-     * region belongs here too, so the feed and its counts agree.
+     * Every post the viewer's feed may show: all of them, those of their own
+     * region, or those of the people they follow. Here, so the feed and its
+     * new-posts count agree.
      *
      * @return Builder<Post>
      */
     private static function visibleTo(User $viewer, FeedScope $scope = FeedScope::All): Builder
     {
-        return Post::query()->when($scope === FeedScope::Following, fn (Builder $query) => $query->whereIn(
-            'user_id',
-            DB::table('follows')->select('followed_id')->where('follower_id', $viewer->id),
-        ));
+        $regionId = $viewer->regionId();
+
+        return match ($scope) {
+            FeedScope::All => Post::query(),
+            FeedScope::Region => $regionId !== null ? Post::query()->inRegion($regionId) : Post::query()->whereRaw('1 = 0'),
+            FeedScope::Following => Post::query()->whereIn(
+                'user_id',
+                DB::table('follows')->select('followed_id')->where('follower_id', $viewer->id),
+            ),
+        };
+    }
+
+    /**
+     * The reader's region, for the feed's "My region" tab; null for the
+     * Central Office, which has none.
+     *
+     * @return array{id: int, name: string}|null
+     */
+    public static function regionOf(User $viewer): ?array
+    {
+        $region = SurveyRegion::query()->select(['id', 'name'])->find($viewer->regionId());
+
+        return $region !== null ? ['id' => $region->id, 'name' => $region->name] : null;
     }
 
     /**

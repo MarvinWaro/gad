@@ -42,7 +42,7 @@ export function useNewPosts(
     const query = new URLSearchParams({
         after: top.id,
         at: top.created_at,
-        ...(scope === 'following' ? { feed: scope } : {}),
+        ...(scope !== 'all' ? { feed: scope } : {}),
     }).toString();
 
     /** Load the feed's first page again, from the top if asked. */

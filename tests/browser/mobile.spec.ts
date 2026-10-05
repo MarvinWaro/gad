@@ -161,6 +161,7 @@ test('the HEI pages fit a 360px phone', async ({ browser }) => {
 
     // The Following feed, the search, and someone's profile from it.
     await checkPage(page, '/dashboard?feed=following');
+    await checkPage(page, '/dashboard?feed=region');
     await checkPage(page, '/search?q=browser');
     const person = await page
         .locator('a[href*="/people/"]')
@@ -217,4 +218,5 @@ test('the staff pages fit a 360px phone', async ({ browser }) => {
         .getAttribute('href');
     await checkPage(page, edit!);
     await checkPage(page, edit!.replace('/edit', '/responses'));
+    await checkPage(page, edit!.replace('/edit', '/summary'));
 });

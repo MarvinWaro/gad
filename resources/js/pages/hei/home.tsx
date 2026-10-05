@@ -25,7 +25,7 @@ import type {
     Post,
     ScrollPage,
 } from '@/types';
-import type { FeedScope } from '@/types/people';
+import type { FeedRegion, FeedScope } from '@/types/people';
 import type { QuestCard } from '@/types/quests';
 
 type Props = {
@@ -35,6 +35,8 @@ type Props = {
     upcoming: CalendarEvent[];
     /** Everyone's posts, or the people they follow. */
     feed: FeedScope;
+    /** Their region, for the My region tab. */
+    feedRegion: FeedRegion;
     /** Deferred: arrives just after the page. */
     posts?: ScrollPage<Post>;
     quickLinks: QuickLink[];
@@ -67,6 +69,7 @@ export default function HeiHome({
     calendar,
     upcoming,
     feed,
+    feedRegion,
     posts,
     quickLinks,
     people,
@@ -126,7 +129,11 @@ export default function HeiHome({
                                     hei?.display_name ?? auth.user.name
                                 }
                             />
-                            <FeedTabs scope={feed} href={dashboard.url()} />
+                            <FeedTabs
+                                scope={feed}
+                                href={dashboard.url()}
+                                region={feedRegion}
+                            />
                             <Feed key={feed} posts={posts} scope={feed} />
                         </section>
                     </div>

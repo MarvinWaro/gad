@@ -28,6 +28,17 @@ class DashboardFilterRequest extends FormRequest
             return ['feed' => FeedScope::rules()];
         }
 
+        return self::staffRules();
+    }
+
+    /**
+     * The period, place, ownership and law filters, shared with the Surveys
+     * page's insights (SurveyStatistics).
+     *
+     * @return array<string, array<mixed>>
+     */
+    public static function staffRules(): array
+    {
         return [
             ...Arr::only(PlaceFilters::rules(), ['academic_year', 'region', 'hei']),
             'view' => ['nullable', Rule::in(ReportingPeriod::VIEWS)],

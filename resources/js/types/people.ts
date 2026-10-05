@@ -24,5 +24,8 @@ export type PersonProfile = Person & {
 /** What following or unfollowing answers (`FollowController`). */
 export type FollowState = { following: boolean; followers_count: number };
 
-/** `App\Enums\FeedScope`: everyone's posts, or the people followed. */
-export type FeedScope = 'all' | 'following';
+/** `App\Enums\FeedScope`: everyone's posts, the reader's region, or the people followed. */
+export type FeedScope = 'all' | 'region' | 'following';
+
+/** The reader's region, for the feed's My region tab; null for the Central Office. */
+export type FeedRegion = { id: number; name: string } | null;

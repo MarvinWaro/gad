@@ -1,6 +1,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     Archive,
+    ChartBar,
     ClipboardList,
     ExternalLink,
     Eye,
@@ -27,7 +28,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SurveyInsightsSection } from '@/components/surveys/survey-insights';
 import { useReloadOnBack } from '@/hooks/use-reload-on-back';
+import { summary } from '@/routes/admin/surveys';
+import type {
+    SurveyInsightFilters,
+    SurveyInsights,
+} from '@/types/survey-insights';
 
 type Survey = {
     id: number;
@@ -62,9 +69,14 @@ type Permissions = {
 export default function SurveyIndex({
     surveys,
     permissions,
+    insights,
+    insightFilters,
 }: {
     surveys: Survey[];
     permissions: Permissions;
+    /** Deferred: the figures arrive just after the page. */
+    insights?: SurveyInsights;
+    insightFilters: SurveyInsightFilters;
 }) {
     // Publishing happens in the builder; Back must not show the old status.
     useReloadOnBack();
@@ -86,6 +98,10 @@ export default function SurveyIndex({
                     </div>
                     {permissions.create && <CreateSurveyDialog />}
                 </div>
+                <SurveyInsightsSection
+                    insights={insights}
+                    filters={insightFilters}
+                />
                 <Card className="gap-0 py-0">
                     <CardHeader className="border-b py-5">
                         <CardTitle>Survey library</CardTitle>
@@ -198,6 +214,19 @@ export default function SurveyIndex({
                                                                 </a>
                                                             </IconAction>
                                                         )}
+                                                        {/* Counts only, so everyone here may read it. */}
+                                                        <IconAction
+                                                            asChild
+                                                            label={`See the summary of ${survey.title}'s answers`}
+                                                        >
+                                                            <Link
+                                                                href={summary.url(
+                                                                    survey.id,
+                                                                )}
+                                                            >
+                                                                <ChartBar />
+                                                            </Link>
+                                                        </IconAction>
                                                         {permissions.responses && (
                                                             <IconAction
                                                                 asChild

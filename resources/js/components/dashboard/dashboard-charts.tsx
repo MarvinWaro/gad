@@ -47,7 +47,7 @@ function DataTooltip({
     );
 }
 
-type ActivityMetric = 'responses' | 'posts';
+export type ActivityMetric = 'responses' | 'posts';
 
 const metrics: Record<
     ActivityMetric,
@@ -67,18 +67,27 @@ const metrics: Record<
 
 /**
  * Survey responses or posts shared over the period, one at a time, with a
- * table view of the same points.
+ * table view of the same points. The Surveys page shows responses alone.
  */
 export function ActivityChart({
     trend,
     totals,
     range,
+    shown = ['responses', 'posts'],
+    title = 'Participation over time',
+    description = 'Small actions. A more connected GAD network.',
 }: {
-    trend: DashboardProps['trend'];
-    totals: Record<ActivityMetric, number>;
+    trend: ({ label: string; title: string } & Partial<
+        Record<ActivityMetric, number>
+    >)[];
+    totals: Partial<Record<ActivityMetric, number>>;
     range: string;
+    /** The metrics to switch between; the switch hides for one. */
+    shown?: ActivityMetric[];
+    title?: string;
+    description?: string;
 }) {
-    const [metric, setMetric] = useState<ActivityMetric>('responses');
+    const [metric, setMetric] = useState<ActivityMetric>(shown[0]);
     const [table, setTable] = useState(false);
     const { label, color, dot } = metrics[metric];
     return (
@@ -89,10 +98,10 @@ export function ActivityChart({
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h2 id="activity-title" className="text-lg font-medium">
-                        Participation over time
+                        {title}
                     </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Small actions. A more connected GAD network.
+                        {description}
                     </p>
                 </div>
                 <Button
@@ -106,21 +115,23 @@ export function ActivityChart({
                 </Button>
             </div>
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-                <SegmentedSwitch
-                    label="Activity metric"
-                    value={metric}
-                    onChange={setMetric}
-                    options={(['responses', 'posts'] as const).map((value) => ({
-                        value,
-                        label: metrics[value].label,
-                    }))}
-                />
+                {shown.length > 1 && (
+                    <SegmentedSwitch
+                        label="Activity metric"
+                        value={metric}
+                        onChange={setMetric}
+                        options={shown.map((value) => ({
+                            value,
+                            label: metrics[value].label,
+                        }))}
+                    />
+                )}
                 <span className="text-xs text-muted-foreground">{range}</span>
             </div>
             <div
                 className="mt-5 h-56"
                 role="group"
-                aria-label={`${label}: ${formatCount(totals[metric])} in the selected period`}
+                aria-label={`${label}: ${formatCount(totals[metric] ?? 0)} in the selected period`}
             >
                 {table ? (
                     <div className="h-full overflow-auto rounded-lg border">
@@ -154,7 +165,7 @@ export function ActivityChart({
                                             {row.title}
                                         </th>
                                         <td className="px-4 py-2 text-right">
-                                            {formatCount(row[metric])}
+                                            {formatCount(row[metric] ?? 0)}
                                         </td>
                                     </tr>
                                 ))}
@@ -235,7 +246,7 @@ export function ActivityChart({
                 </span>
                 <span>
                     <span className="font-medium text-foreground tabular-nums">
-                        {formatCount(totals[metric])}
+                        {formatCount(totals[metric] ?? 0)}
                     </span>{' '}
                     in this period
                 </span>

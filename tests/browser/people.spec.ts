@@ -128,6 +128,28 @@ test('finding a colleague by search and following them', async ({
     await expect(
         feed.filter({ hasText: 'Fictional Monitoring Member' }),
     ).toHaveCount(0);
+
+    // My region holds the posts of their own region, in the middle tab.
+    const tabs = page.getByRole('navigation', { name: 'Feed' });
+    await expect(tabs.getByRole('link')).toHaveText([
+        'All posts',
+        /^My region/,
+        'Following',
+    ]);
+    await tabs.getByRole('link', { name: /^My region/ }).click();
+    await expect(page).toHaveURL(/feed=region/);
+    // Its HEIs' posts, and its CHED office's.
+    await expect(feed.first()).toContainText(
+        /Browser Test HEI|CHED Regional Office XII/,
+    );
+});
+
+test('the Central Office has no My region tab', async ({ page }) => {
+    await logIn(page, 'browser-national@example.test');
+    await page.goto('/community');
+    await expect(
+        page.getByRole('navigation', { name: 'Feed' }).getByRole('link'),
+    ).toHaveText(['All posts', 'Following']);
 });
 
 test("the person followed is told, and opens the follower's profile", async ({

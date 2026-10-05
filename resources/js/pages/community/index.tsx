@@ -4,15 +4,18 @@ import { FeedTabs } from '@/components/hei/feed-tabs';
 import { PostComposer } from '@/components/hei/post-composer';
 import Heading from '@/components/heading';
 import type { Post, ScrollPage } from '@/types';
-import type { FeedScope } from '@/types/people';
+import type { FeedRegion, FeedScope } from '@/types/people';
 
 /** The Gender Mainstreaming feed for CHED staff, inside the staff shell. */
 export default function Community({
     feed,
+    feedRegion,
     posts,
 }: {
     /** Everyone's posts, or the people the reader follows. */
     feed: FeedScope;
+    /** Their office's region, for the My region tab; null for the Central Office. */
+    feedRegion: FeedRegion;
     /** Deferred: arrives just after the page. */
     posts?: ScrollPage<Post>;
 }) {
@@ -36,7 +39,7 @@ export default function Community({
                     official
                     placeholder="Share an announcement from CHED Regional Office XII…"
                 />
-                <FeedTabs scope={feed} href="/community" />
+                <FeedTabs scope={feed} href="/community" region={feedRegion} />
                 <Feed
                     key={feed}
                     posts={posts}

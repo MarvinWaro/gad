@@ -98,12 +98,17 @@ export function Feed({
 function LoadedFeed({
     posts,
     scope = 'all',
-    emptyTitle = scope === 'following'
-        ? 'No posts from people you follow'
-        : 'The feed is quiet',
-    emptyMessage = scope === 'following'
-        ? 'Follow people to see their posts here. Find them with the search at the top, or open a profile from a name on a post.'
-        : 'No posts yet. Share your first GAD activity above: a seminar, a campaign, or a new policy on campus.',
+    emptyTitle = {
+        all: 'The feed is quiet',
+        region: 'No posts from your region yet',
+        following: 'No posts from people you follow',
+    }[scope],
+    emptyMessage = {
+        all: 'No posts yet. Share your first GAD activity above: a seminar, a campaign, or a new policy on campus.',
+        region: 'Posts from the HEIs and the CHED office of your region appear here. Share your GAD activity above to start.',
+        following:
+            'Follow people to see their posts here. Find them with the search at the top, or open a profile from a name on a post.',
+    }[scope],
     emptyAction,
     watchForNew = true,
 }: FeedProps) {

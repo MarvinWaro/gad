@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Download, Eye, Search, Trash2 } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { ConfirmPopover } from '@/components/confirm-popover';
+import { SurveyTabs } from '@/components/surveys/survey-tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -79,6 +80,7 @@ export default function Responses({
                         )}
                     </div>
                 </div>
+                <SurveyTabs surveyId={survey.id} current="responses" />
                 <Card className="gap-0 py-0">
                     <CardHeader className="flex-row items-center justify-between border-b py-5">
                         <CardTitle>{responses.total} responses</CardTitle>

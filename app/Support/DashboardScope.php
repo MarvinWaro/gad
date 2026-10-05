@@ -21,7 +21,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class DashboardScope
 {
-    /** Where a post belongs, for posts joined as p, h (HEI), c (cluster) and u (author). */
+    /**
+     * Where a post belongs, for posts joined as p, h (HEI), c (cluster) and u
+     * (author). The same rule as Post::scopeInRegion().
+     */
     private const POST_REGION = 'coalesce(c.survey_region_id, case when p.survey_hei_id is null then u.survey_region_id end)';
 
     private function __construct(
@@ -98,16 +101,31 @@ final class DashboardScope
     /** Survey tallies in view, as t, between two Philippine dates. */
     public function tallies(ReportingPeriod $period): QueryBuilder
     {
-        return DB::table('survey_response_tallies as t')
-            ->whereBetween('t.date', [$period->startsOn->toDateString(), $period->endsOn->toDateString()])
+        return $this->placeTallies('survey_response_tallies', 't', $period);
+    }
+
+    /**
+     * Answer tallies in view, as a, between two Philippine dates: the same
+     * places, period and survey as tallies() (App\Models\SurveyAnswerTally).
+     */
+    public function answerTallies(ReportingPeriod $period): QueryBuilder
+    {
+        return $this->placeTallies('survey_answer_tallies', 'a', $period);
+    }
+
+    /** A tally table's rows in view, under an alias. */
+    private function placeTallies(string $table, string $alias, ReportingPeriod $period): QueryBuilder
+    {
+        return DB::table("{$table} as {$alias}")
+            ->whereBetween("{$alias}.date", [$period->startsOn->toDateString(), $period->endsOn->toDateString()])
             ->when(! $this->hasOffice, fn (QueryBuilder $query) => $query->whereRaw('1 = 0'))
-            ->when($this->regionId, fn (QueryBuilder $query) => $query->where('t.survey_region_id', $this->regionId))
-            ->when($this->heiId, fn (QueryBuilder $query) => $query->where('t.survey_hei_id', $this->heiId))
+            ->when($this->regionId, fn (QueryBuilder $query) => $query->where("{$alias}.survey_region_id", $this->regionId))
+            ->when($this->heiId, fn (QueryBuilder $query) => $query->where("{$alias}.survey_hei_id", $this->heiId))
             ->when($this->ownership, fn (QueryBuilder $query) => $query->whereExists(fn (QueryBuilder $query) => $query
                 ->from('survey_heis as oh')
-                ->whereColumn('oh.id', 't.survey_hei_id')
+                ->whereColumn('oh.id', "{$alias}.survey_hei_id")
                 ->where('oh.ownership', $this->ownership)))
-            ->when($this->surveyId, fn (QueryBuilder $query) => $query->where('t.survey_id', $this->surveyId));
+            ->when($this->surveyId, fn (QueryBuilder $query) => $query->where("{$alias}.survey_id", $this->surveyId));
     }
 
     /**

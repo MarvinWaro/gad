@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\GadEventController;
 use App\Http\Controllers\Admin\SiteFeedbackController as AdminSiteFeedbackController;
 use App\Http\Controllers\Admin\SurveyController;
 use App\Http\Controllers\Admin\SurveyResponseController;
+use App\Http\Controllers\Admin\SurveySummaryController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
@@ -212,6 +213,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('surveys/{survey}/publish', [SurveyController::class, 'publish'])->middleware('can:surveys.publish')->name('surveys.publish');
         Route::patch('surveys/{survey}/archive', [SurveyController::class, 'archive'])->middleware('can:surveys.publish')->name('surveys.archive');
         Route::delete('surveys/{survey}', [SurveyController::class, 'destroy'])->middleware('can:surveys.delete')->name('surveys.destroy');
+        Route::get('surveys/{survey}/summary', SurveySummaryController::class)->middleware('can:surveys.view')->name('surveys.summary');
         Route::get('surveys/{survey}/responses', [SurveyResponseController::class, 'index'])->middleware('can:survey-responses.view')->name('surveys.responses.index');
         Route::get('surveys/{survey}/responses/export', [SurveyResponseController::class, 'export'])->middleware('can:survey-responses.export')->name('surveys.responses.export');
         Route::get('surveys/{survey}/responses/{surveyResponse}', [SurveyResponseController::class, 'show'])->middleware('can:survey-responses.view')->name('surveys.responses.show');

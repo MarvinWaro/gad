@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\ActivityAction;
 use App\Enums\ActivityModule;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SurveyInsightsRequest;
 use App\Models\Survey;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\SurveyVersion;
+use App\Models\User;
 use App\Services\ActivityRecorder;
+use App\Services\SurveyStatistics;
 use App\Support\SurveyDefinitions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,8 +23,11 @@ use Inertia\Response;
 
 class SurveyController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(SurveyInsightsRequest $request, SurveyStatistics $statistics): Response
     {
+        /** @var User $user */
+        $user = $request->user();
+
         $surveys = Survey::query()
             ->with(['versions' => fn ($query) => $query->withCount('responses')])
             ->latest()
@@ -46,6 +52,10 @@ class SurveyController extends Controller
 
         return Inertia::render('admin/surveys/index', [
             'surveys' => $surveys,
+            // Counted from the tallies just after the page appears; the
+            // filters come at once, so they stay put while figures load.
+            'insights' => Inertia::defer(fn (): array => $statistics->overview($user, $request->validated())),
+            'insightFilters' => $statistics->overviewFilters($user, $request->validated()),
             'permissions' => [
                 'create' => $request->user()->can('surveys.create'),
                 'update' => $request->user()->can('surveys.update'),

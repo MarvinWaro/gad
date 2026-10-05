@@ -45,6 +45,7 @@ class DashboardController extends Controller
             'quest' => fn (): ?array => QuestPlayState::spotlight($user),
             // Loaded just after the page appears, which shows skeletons meanwhile.
             'feed' => FeedScope::of($request)->value,
+            'feedRegion' => CommunityFeed::regionOf($user),
             'posts' => Inertia::scroll(fn () => CommunityFeed::page($user, scope: FeedScope::of($request)))->defer(),
             // The institution's reporting, which its focal persons do. Only
             // implemented modules receive links.

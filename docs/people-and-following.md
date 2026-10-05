@@ -18,7 +18,9 @@ Every signed-in account has a profile others can open, can follow anyone, and ca
 
 - **Follow and unfollow:** Follow, then "Following", whose menu holds "Unfollow", so a stray tap never unfollows. Nobody follows themselves; only active accounts follow or are followed. Anyone may stop following, even someone who can no longer sign in.
 - **What it does:**
-    - The feed gets **All posts · Following** tabs (`?feed=following`), on the HEI home and in Gender Mainstreaming for staff. Following shows only the posts of the people you follow, and the new-posts check counts only theirs. All posts stays every region's.
+    - The feed gets **All posts · My region · Following** tabs (`?feed=region`, `?feed=following`; `App\Enums\FeedScope`), on the HEI home and in Gender Mainstreaming for staff. All posts stays every region's.
+    - **My region** (added 2026-10-05) shows the posts of the reader's region (`User::regionId()`): its HEIs' posts and its CHED office's (`Post::scopeInRegion`, the dashboard's rule). Central Office accounts have no region, so they get no My region tab, and `?feed=region` shows them everything.
+    - **Following** shows only the posts of the people you follow. Each tab's new-posts check counts only its own posts.
     - The person followed is told ("started following you"). Unfollowing removes that notice, so following again and again sends no pile of notices. Both are logged (module People: Followed, Unfollowed).
 - **Lists:** "N followers · N following" on a profile open the people, the latest first, 20 at a time.
 
@@ -54,7 +56,7 @@ The header's field (from 768px in the top header and from 1024px in the sidebar 
 | `DELETE /people/{id}/follow`                                 | The same.                                                                      |
 | `GET /search/people?q=`                                      | JSON, the best 8, `PersonResource`. Throttled to 90 a minute.                  |
 | `GET /search?q=`                                             | The results page, 20 at a time.                                                |
-| `GET /dashboard?feed=following`, `/community?feed=following` | The Following feed.                                                            |
+| `GET /dashboard?feed=region\|following`, `/community?feed=…` | The My region and Following feeds.                                             |
 
 `PersonResource` carries `id`, `name`, `avatar`, `affiliation`, `following` (you follow them), `follows_you` and `is_you`; `PersonProfileResource` adds the counts, `deactivated` and `can_follow`. People are addressed by their integer id for now (`docs/national-and-api-readiness.md`).
 

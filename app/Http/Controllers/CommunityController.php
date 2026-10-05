@@ -20,6 +20,7 @@ class CommunityController extends Controller
 
         return Inertia::render('community/index', [
             'feed' => $scope->value,
+            'feedRegion' => CommunityFeed::regionOf($user),
             // Loaded just after the page appears, which shows skeletons meanwhile.
             'posts' => Inertia::scroll(fn () => CommunityFeed::page($user, scope: $scope))->defer(),
         ]);

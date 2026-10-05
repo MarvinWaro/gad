@@ -149,6 +149,34 @@ foreach ([['ra-7877', 'female'], ['ra-7877', 'male'], ['ra-9710', 'female']] as 
     ]);
 }
 
+// Five RA 9262 answers from AY 2025-2026, away from every period another
+// spec reads, so a survey's Summary has enough to show its answers
+// (tests/browser/survey-insights.spec.ts): four from women, one from a man.
+foreach (['female', 'female', 'female', 'female', 'male'] as $index => $sex) {
+    $answeredAt = now()->setDate(2026, 2, 10 + $index)->setTime(9, 0);
+    SurveyResponse::query()->forceCreate([
+        'survey_version_id' => Survey::query()->where('slug', 'ra-9262')->firstOrFail()->publishedVersion()?->id,
+        'public_reference' => Str::random(20),
+        'age' => 22,
+        'sex' => $sex,
+        'gender_identity' => 'heterosexual',
+        'respondent_group' => 'student',
+        'survey_region_id' => $region->id,
+        'survey_cluster_id' => $cluster->id,
+        'survey_hei_id' => $hei->id,
+        'answers' => [
+            'experiences' => $sex === 'male' ? ['stalking'] : ['battery', 'stalking'],
+            'perpetrators' => $sex === 'male' ? ['stalking' => ['former-boyfriend']] : ['battery' => ['teacher'], 'stalking' => ['former-boyfriend']],
+            'other_relative_details' => [],
+            'answering_for' => 'self',
+        ],
+        'consent_at' => $answeredAt,
+        'expires_at' => now()->addYear(),
+        'created_at' => $answeredAt,
+        'updated_at' => $answeredAt,
+    ]);
+}
+
 // Region XII's enrollment and graduates for AY 2025-2026, as if imported in
 // Settings → Enrollment & graduates. They add up to the totals the homepage
 // and dashboard specs read: 95,737 men and 132,086 women enrolled; 11,800

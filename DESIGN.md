@@ -365,7 +365,7 @@ Never put a font that isn't actually loaded first in the stack. The browser sile
 
     - **Freshness:** the count arrives with every page and is checked every 30 seconds while the tab is in view (at once on coming back), until live updates (Reverb) replace it. New arrivals are announced to screen readers.
 - **Gender Mainstreaming** is the name of the posts feed, as in the old PHLGADIS ("View More Gender Mainstreaming Efforts"): the staff nav item, tab title and breadcrumb say "Gender Mainstreaming" (the address stays `/community`, for CHED staff with `posts.view`). The feed opens with a calm editorial heading, no banner: "HEI Gender Mainstreaming Efforts" with the old HEI page's line "Promoting gender equality and inclusivity in our school community", word for word; the staff page has its own line instead, which tells moderators (`posts.moderate`) how to remove posts.
-- **Feed tabs** (`feed-tabs.tsx`): "All posts · Following" under the composer on the HEI home and `/community`, as underlined links (`?feed=following`, `aria-current`) like Enrollment | Graduates. Following has its own empty state: "No posts from people you follow", and how to find people.
+- **Feed tabs** (`feed-tabs.tsx`): "All posts · My region · Following" under the composer on the HEI home and `/community`, as underlined links (`?feed=`, `aria-current`) like Enrollment | Graduates. My region names the region in its title and for screen readers, and is left out for the Central Office. Each tab has its own empty state ("No posts from your region yet", "No posts from people you follow").
 - **Follow button** (`components/people/follow-button.tsx`): a primary "Follow" with a person-plus icon, then an outline "Following" with a check and a chevron. Its menu holds "Unfollow {name}", so a stray tap never unfollows. Each button's name includes the person's (screen readers only), and it shows a spinner while it asks.
 - **Search results** (`pages/search/index.tsx`, `/search?q=`): the Notifications page's centred column. A heading and line, then a field with a Search button. Then a "People" card of rows on hairlines: a 48px photo, the name as a link, the affiliation, "Follows you", and `FollowButton` (or "You"). More load as you scroll, ending with "That’s everyone". The empty state says "No one found for “…”", with a hint.
 - **Feed loading** (`feed.tsx`, `use-new-posts.ts`; the HEI home and `/community`):
@@ -415,6 +415,19 @@ Never put a font that isn't actually loaded first in the stack. The browser sile
     - **Settings:** no Clusters page. Regions lists each region's HEI count. Add/Edit HEI asks only for the region; an institution keeps its cluster while its region stays the same, and otherwise goes beside its region's others (`SurveyCluster::defaultIdFor`) or into the holding cluster.
     - **Lists, exports and records** show the HEI and its region, never a cluster.
 
+- **Survey insights** (`components/surveys/survey-insights.tsx`, above the Survey library on `/admin/surveys`; what each figure counts is in `docs/survey-analytics.md`): the dashboard's grammar.
+    - **Top:** an h2 and a line on anonymity, the scope line (a `brand` dot, the place and period), then `DashboardFilterBar` at the page's own address.
+    - **Tiles:** four on hairlines: Responses, Participating HEIs, Female respondents and Live surveys.
+    - **Charts:** "Responses over time" (`ActivityChart`, responses alone, so no switch), "Whose voices are we hearing?" (`RespondentsChart`), then "Responses by law" and "Where responses come from" side by side as `RankedBars`. Each row is a name (a law links to its Summary), the figure at 500 with its share muted, and a `--chart-bar` bar under it.
+    - **Loading:** skeletons while the figures load.
+- **Survey Summary** (`pages/admin/surveys/summary.tsx`, `components/surveys/answer-card.tsx`): the staff frame.
+    - **Top:** a back link, then "{code} summary" and the law, then **Summary | Responses** as underlined links (`SurveyTabs`, also on the Responses page).
+    - **Filters and tiles:** the scope line, filters (the period, places, Sex, Respondent group), then three `StatTile`s.
+    - **Answers:** one card per question, then "About the respondents" two a row from 1024px. Each card:
+        - **Rows:** each answer, its count at 500 and share muted, an 8px `--chart-bar` bar, and "n female · n male" in 12px muted text.
+        - **Experiences:** a "Who was responsible" `<details>` with 6px bars for each perpetrator.
+        - **"View data":** a ghost button (`aria-pressed`) that swaps in a scrollable, focusable table.
+    - **Too few responses:** below five in view, a `muted` notice with a shield icon replaces the answers.
 - **Survey follow-up questions** (`.survey-conditional` in `public.css`): a question that appears because of an answer sits on a full-width `muted` tint right under that answer. Gender identity follows Sex (Female or Male only). Student or employee details follow the respondent group, according to the group's follow-up setting in Settings → Respondent groups. Changing the answer above clears the follow-up. Short choose-one lists are radio buttons (`RadioField`, ink `accent-color`), and longer ones are selects. Check-all-that-apply options are pills (`ChoiceChip`). The survey's controls live in `components/survey/fields.tsx`. Follow-up edits have no draft: saving them changes every open survey at once, and the editor says so.
 
 ## Dark mode

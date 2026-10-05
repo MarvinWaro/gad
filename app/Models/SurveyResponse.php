@@ -42,13 +42,16 @@ class SurveyResponse extends Model
     use HasUlids;
 
     /**
-     * Keep the statistics' tallies in step. Bulk deletes, such as the
-     * retention prune, fire no events, so pruned responses stay counted.
+     * Keep the statistics' tallies, of responses and of answers, in step.
+     * Bulk deletes, such as the retention prune, fire no events, so pruned
+     * responses stay counted.
      */
     protected static function booted(): void
     {
         static::created(SurveyResponseTally::add(...));
+        static::created(SurveyAnswerTally::add(...));
         static::deleted(SurveyResponseTally::remove(...));
+        static::deleted(SurveyAnswerTally::remove(...));
     }
 
     protected function casts(): array
