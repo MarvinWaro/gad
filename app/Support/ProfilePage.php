@@ -35,6 +35,8 @@ class ProfilePage
             'person' => PersonProfileResource::make($person)->resolve($request),
             'achievements' => fn (): array => Achievements::for($person),
             'toEarn' => fn (): array => $own ? Achievements::toEarn($person) : [],
+            // The GAD Quest levels the "Still to earn" card names.
+            'questLevels' => fn (): array => $own ? Achievements::questLevels() : [],
             'posts' => Inertia::scroll(fn () => CommunityFeed::page($viewer, author: $person))->defer(),
         ];
     }

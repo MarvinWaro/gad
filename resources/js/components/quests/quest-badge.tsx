@@ -4,24 +4,31 @@ import type { QuestBadge, QuestLevel } from '@/types/quests';
 
 /**
  * A GAD Quest level's medal, in the one style every badge shares: plain for
- * finishing, violet for 80% or higher, gold for a perfect score.
- * Decorative: the level's name goes with it.
+ * finishing, violet for 80% or higher, gold for a perfect score; or the
+ * level's picture from Settings → Badges. Decorative: the level's name goes
+ * with it.
  */
 export function LevelMark({
     level,
+    image = null,
     className,
 }: {
     level: QuestLevel;
+    image?: string | null;
     className?: string;
 }) {
-    return <Medal kind={level} className={className} />;
+    return <Medal kind={level} image={image} className={className} />;
 }
 
 /** What a quest badge stands for, as the result screen tells it. */
 export function BadgeDetails({ badge }: { badge: QuestBadge }) {
     return (
         <div className="flex gap-3">
-            <LevelMark level={badge.level} className="size-10" />
+            <LevelMark
+                level={badge.level}
+                image={badge.image}
+                className="size-10"
+            />
             <div className="min-w-0 text-sm">
                 <p className="font-medium">
                     {badge.level_label}

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\BadgeRule;
+use App\Enums\QuestLevel;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,12 +16,13 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * A badge for a profile's achievements: earned by its rule (the system
- * badges, for sharing GAD work), or, with no rule, awarded by hand. GAD Quest
- * badges are not rows here; they come from the quests themselves
- * (docs/badges.md).
+ * badges, for sharing GAD work), or, with no rule, awarded by hand. A GAD
+ * Quest level's row only names and pictures that level: who holds it comes
+ * from the quests themselves, one badge per quest (docs/badges.md).
  *
  * @property string $id
  * @property BadgeRule|null $rule
+ * @property QuestLevel|null $quest_level
  * @property int|null $survey_region_id Null: national.
  * @property string $name
  * @property string $description
@@ -31,7 +33,7 @@ use Illuminate\Support\Facades\Storage;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
-#[Fillable(['rule', 'survey_region_id', 'name', 'description', 'image_path', 'is_active', 'created_by'])]
+#[Fillable(['rule', 'quest_level', 'survey_region_id', 'name', 'description', 'image_path', 'is_active', 'created_by'])]
 class Badge extends Model
 {
     use HasUlids;
@@ -40,6 +42,7 @@ class Badge extends Model
     {
         return [
             'rule' => BadgeRule::class,
+            'quest_level' => QuestLevel::class,
             'is_active' => 'boolean',
         ];
     }
@@ -52,18 +55,28 @@ class Badge extends Model
             : null);
     }
 
-    /** Earned by its rule, so it is never awarded by hand or deleted. */
+    /**
+     * Earned by its rule or in GAD Quest, so it is never awarded by hand or
+     * deleted.
+     */
     public function isSystem(): bool
     {
-        return $this->rule !== null;
+        return $this->rule !== null || $this->quest_level !== null;
+    }
+
+    /** A GAD Quest level comes with every finished quest, so it stays on. */
+    public function canBeSwitchedOff(): bool
+    {
+        return $this->quest_level === null;
     }
 
     /**
-     * The medal drawn when it has no picture: its rule's, or the custom one.
+     * The medal drawn when it has no picture: its rule's, its GAD Quest
+     * level's, or the custom one.
      */
     public function medal(): string
     {
-        return $this->rule !== null ? $this->rule->value : 'custom';
+        return $this->rule?->value ?? $this->quest_level?->value ?? 'custom';
     }
 
     /** @return BelongsTo<SurveyRegion, $this> */
@@ -85,21 +98,26 @@ class Badge extends Model
     }
 
     /**
-     * Earned badges first, in the order people reach them, then the custom
-     * ones by name.
+     * Earned badges first, in the order people reach them, then the GAD
+     * Quest levels from Participant up, then the custom ones by name.
      *
      * @param  Builder<Badge>  $query
      */
     public function scopeInListOrder(Builder $query): void
     {
-        $rules = BadgeRule::cases();
+        $order = [
+            ...array_map(fn (BadgeRule $rule): array => ['rule', $rule->value], BadgeRule::cases()),
+            ...array_map(fn (QuestLevel $level): array => ['quest_level', $level->value], QuestLevel::cases()),
+        ];
+        $cases = [];
         $bindings = [];
-        foreach ($rules as $position => $rule) {
-            array_push($bindings, $rule->value, $position);
+        foreach ($order as $position => [$column, $value]) {
+            $cases[] = "when {$column} = ? then ?";
+            array_push($bindings, $value, $position);
         }
 
         $query
-            ->orderByRaw('case '.str_repeat('when rule = ? then ? ', count($rules)).'else ? end', [...$bindings, count($rules)])
+            ->orderByRaw('case '.implode(' ', $cases).' else ? end', [...$bindings, count($order)])
             ->orderBy('name');
     }
 }

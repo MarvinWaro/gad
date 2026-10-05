@@ -42,6 +42,7 @@ export function QuestCard({ quest }: { quest: QuestCardData }) {
                     <p className="flex items-center gap-2 text-sm">
                         <LevelMark
                             level={quest.best.level}
+                            image={quest.best.image}
                             className="size-8"
                         />
                         <span>

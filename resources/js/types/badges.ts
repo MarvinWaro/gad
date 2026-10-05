@@ -1,4 +1,5 @@
 import type { PaginationMeta } from '@/components/pagination';
+import type { QuestLevel } from '@/types/quests';
 
 /**
  * The medal drawn for a badge without a picture: a GAD Quest level, a
@@ -33,6 +34,8 @@ export type BadgeRow = {
     id: string;
     /** Earned by this rule; null for a badge awarded by hand. */
     rule: string | null;
+    /** A GAD Quest level's own row; null for every other badge. */
+    quest_level: QuestLevel | null;
     criterion: string | null;
     name: string;
     description: string;
@@ -41,7 +44,8 @@ export type BadgeRow = {
     is_active: boolean;
     region: { id: number; name: string } | null;
     holders?: number;
-    can: { update: boolean; delete: boolean; award: boolean };
+    /** `switch`: whether it can be switched off; GAD Quest levels stay on. */
+    can: { update: boolean; switch: boolean; delete: boolean; award: boolean };
 };
 
 /** `BadgeAwardResource`: someone holding a badge. */
@@ -55,6 +59,13 @@ export type BadgeHolder = {
 
 export type BadgePage = { data: BadgeRow[]; meta: PaginationMeta };
 export type BadgeHolderPage = { data: BadgeHolder[]; meta: PaginationMeta };
+
+/** `Achievements::questLevels`: a GAD Quest level's badge, by its name in Settings → Badges. */
+export type QuestLevelBadge = {
+    level: QuestLevel;
+    name: string;
+    image: string | null;
+};
 
 /** `Achievements::toEarn`: a badge for sharing GAD work not earned yet. */
 export type BadgeToEarn = {

@@ -17,8 +17,9 @@ use Illuminate\Validation\ValidationException;
 /**
  * Settings → Badges: writing badges, their pictures, switching them on or
  * off, and awarding custom badges by hand. A system badge keeps its rule
- * and stays national: its name, description and picture can change, but it
- * is never deleted or awarded by hand.
+ * (or GAD Quest level) and stays national: its name, description and
+ * picture can change, but it is never deleted or awarded by hand. A GAD
+ * Quest level is never switched off either.
  *
  * @phpstan-type BadgeInput array{name: string, description: string, is_active: bool}
  */
@@ -58,6 +59,7 @@ final class ManageBadge
 
         $badge->update([
             ...$input,
+            'is_active' => $badge->canBeSwitchedOff() ? $input['is_active'] : true,
             'image_path' => $path,
             // A system badge stays national.
             'survey_region_id' => $badge->isSystem() ? null : $regionId,
@@ -80,6 +82,12 @@ final class ManageBadge
     /** Switched off, nobody earns it or is awarded it; those who hold it keep it. */
     public function setActive(Badge $badge, bool $active): void
     {
+        if (! $badge->canBeSwitchedOff()) {
+            throw ValidationException::withMessages([
+                'badge' => __('GAD Quest badges come with every finished quest, so they stay on.'),
+            ]);
+        }
+
         $badge->update(['is_active' => $active]);
         $this->activity->recordSave(ActivityModule::Badges, $badge);
     }
@@ -89,7 +97,9 @@ final class ManageBadge
     {
         if ($badge->isSystem()) {
             throw ValidationException::withMessages([
-                'badge' => __('Badges earned by sharing GAD work cannot be deleted. Switch it off instead.'),
+                'badge' => $badge->quest_level !== null
+                    ? __('GAD Quest badges come with every finished quest, so they cannot be deleted.')
+                    : __('Badges earned by sharing GAD work cannot be deleted. Switch it off instead.'),
             ]);
         }
 
@@ -103,6 +113,7 @@ final class ManageBadge
     public function award(Badge $badge, User $awarder, User $recipient, ?string $note): BadgeAward
     {
         $problem = match (true) {
+            $badge->quest_level !== null => __('This badge is earned by finishing a GAD Quest, not awarded by hand.'),
             $badge->isSystem() => __('This badge is earned by sharing GAD work, not awarded by hand.'),
             ! $badge->is_active => __('Switch this badge on before awarding it.'),
             ! $recipient->isActive() => __(':name cannot sign in, so they cannot be awarded a badge.', ['name' => $recipient->name]),

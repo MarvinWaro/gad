@@ -6,13 +6,18 @@ export type QuestStatus = 'draft' | 'open' | 'closed';
 /** `App\Enums\QuestLevel`: the badge a finished quest earns. */
 export type QuestLevel = 'participant' | 'advocate' | 'champion';
 
-/** A badge: the best finished attempt at one quest. */
+/**
+ * A badge: the best finished attempt at one quest, named and pictured as its
+ * level's badge is in Settings → Badges.
+ */
 export type QuestBadge = {
     quest_id: string;
     title: string;
     level: QuestLevel;
     level_label: string;
     meaning: string;
+    /** The level's uploaded picture, shown instead of the medal. */
+    image: string | null;
     score: number;
     total: number;
     earned_at: string | null;
@@ -118,6 +123,7 @@ export type QuestParticipant = {
     best: number | null;
     level: QuestLevel | null;
     level_label: string | null;
+    image: string | null;
     attempts: number;
     last_played: string | null;
 };

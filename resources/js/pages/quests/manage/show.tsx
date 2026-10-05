@@ -327,6 +327,7 @@ export default function QuestResults({
                                             <p className="flex items-center gap-2 text-sm">
                                                 <LevelMark
                                                     level={participant.level}
+                                                    image={participant.image}
                                                     className="size-7"
                                                 />
                                                 <span className="tabular-nums">

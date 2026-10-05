@@ -54,7 +54,7 @@ export default function Badges({
                         <Heading
                             variant="small"
                             title="Badges"
-                            description="Badges show on people's profiles, beside their GAD Quest badges. Some are earned by sharing GAD work; the rest you award by hand, for things worth marking."
+                            description="Badges show on people's profiles. Some are earned by sharing GAD work or finishing a GAD Quest; the rest you award by hand, for things worth marking."
                         />
                     </div>
                     {permissions.create && (
@@ -192,23 +192,25 @@ function BadgeItem({
                 <div className="flex shrink-0 items-center gap-1 pl-18 sm:pl-0">
                     {badge.can.update && (
                         <>
-                            <Switch
-                                checked={badge.is_active}
-                                disabled={busy}
-                                aria-label={`Give out ${badge.name}`}
-                                onCheckedChange={(active) =>
-                                    router.patch(
-                                        status.url(badge.id),
-                                        { is_active: active },
-                                        {
-                                            preserveScroll: true,
-                                            onStart: () => setBusy(true),
-                                            onFinish: () => setBusy(false),
-                                        },
-                                    )
-                                }
-                                className="mr-2"
-                            />
+                            {badge.can.switch && (
+                                <Switch
+                                    checked={badge.is_active}
+                                    disabled={busy}
+                                    aria-label={`Give out ${badge.name}`}
+                                    onCheckedChange={(active) =>
+                                        router.patch(
+                                            status.url(badge.id),
+                                            { is_active: active },
+                                            {
+                                                preserveScroll: true,
+                                                onStart: () => setBusy(true),
+                                                onFinish: () => setBusy(false),
+                                            },
+                                        )
+                                    }
+                                    className="mr-2"
+                                />
+                            )}
                             <BadgeDialog
                                 badge={badge}
                                 regions={regions}

@@ -4,9 +4,10 @@ namespace App\Enums;
 
 /**
  * The badge a finished quest earns. Only the highest level reached is shown,
- * so a perfect score gives one Champion badge rather than three. The codes
- * are stored and sent to the browser and the API as they are; never reuse
- * one.
+ * so a perfect score gives one Champion badge rather than three. Each level's
+ * name, description and picture are its row in `badges`, edited in Settings →
+ * Badges (App\Support\QuestBadges). The codes are stored and sent to the
+ * browser and the API as they are; never reuse one.
  */
 enum QuestLevel: string
 {
@@ -26,22 +27,38 @@ enum QuestLevel: string
         };
     }
 
-    public function label(): string
+    /**
+     * The level as SQL, for counting in the database: fromScore() over two
+     * numeric expressions, such as column names. Never pass it user input.
+     */
+    public static function sql(string $correct, string $total): string
+    {
+        return sprintf(
+            "case when %2\$s > 0 and %1\$s >= %2\$s then '%3\$s' when %2\$s > 0 and %1\$s >= %2\$s * %4\$F then '%5\$s' else '%6\$s' end",
+            $correct,
+            $total,
+            self::Champion->value,
+            self::ADVOCATE_SHARE,
+            self::Advocate->value,
+            self::Participant->value,
+        );
+    }
+
+    /** How it is earned, as Settings → Badges says it. */
+    public function criterion(): string
     {
         return match ($this) {
-            self::Participant => 'Participant',
-            self::Advocate => 'Advocate',
-            self::Champion => 'Champion',
+            self::Participant => 'Finishing a GAD Quest',
+            self::Advocate => sprintf('Scoring %d%% or more in a GAD Quest', self::ADVOCATE_SHARE * 100),
+            self::Champion => 'Every answer right in a GAD Quest',
         };
     }
 
-    /** What the badge was given for. */
-    public function meaning(): string
+    /** Whether it is a higher badge than another: a replay that levels up. */
+    public function isAbove(self $other): bool
     {
-        return match ($this) {
-            self::Participant => 'Finished the quest',
-            self::Advocate => 'Scored 80% or higher',
-            self::Champion => 'Answered every question correctly',
-        };
+        $order = self::cases();
+
+        return array_search($this, $order, true) > array_search($other, $order, true);
     }
 }

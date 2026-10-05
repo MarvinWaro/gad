@@ -23,7 +23,7 @@ import { edit } from '@/routes/profile';
 import { index as quests } from '@/routes/quests';
 import type { Auth, Post, ScrollPage } from '@/types';
 import type { ActivityPage } from '@/types/activity';
-import type { Achievement, BadgeToEarn } from '@/types/badges';
+import type { Achievement, BadgeToEarn, QuestLevelBadge } from '@/types/badges';
 import type { PersonProfile } from '@/types/people';
 
 /** Badges in the highlights row, before "+N". */
@@ -48,6 +48,8 @@ type ProfileProps = {
     achievements: Achievement[];
     /** Your own profile: the badges for sharing GAD work not earned yet. */
     toEarn: BadgeToEarn[];
+    /** Your own profile: the GAD Quest levels, Participant first. */
+    questLevels: QuestLevelBadge[];
     /** Deferred. */
     posts?: ScrollPage<Post>;
     /** Your own profile only. Deferred. */
@@ -97,6 +99,7 @@ function ProfileView({
     person,
     achievements,
     toEarn,
+    questLevels,
     posts,
     activity,
 }: ProfileProps) {
@@ -455,6 +458,7 @@ function ProfileView({
                                     name={person.name}
                                     badges={achievements}
                                     toEarn={toEarn}
+                                    questLevels={questLevels}
                                     canPlay={own && auth.playsQuests}
                                 />
                             </TabsContent>
@@ -571,14 +575,18 @@ function BadgesTab({
     name,
     badges,
     toEarn,
+    questLevels,
     canPlay,
 }: {
     own: boolean;
     name: string;
     badges: Achievement[];
     toEarn: BadgeToEarn[];
+    questLevels: QuestLevelBadge[];
     canPlay: boolean;
 }) {
+    const champion = questLevels.find((level) => level.level === 'champion');
+
     return (
         <div className="space-y-10">
             <section aria-labelledby="profile-badges">
@@ -638,6 +646,7 @@ function BadgesTab({
                             <li className="flex items-start gap-3 rounded-xl border bg-card p-3">
                                 <Medal
                                     kind="champion"
+                                    image={champion?.image}
                                     className="size-12 opacity-50"
                                 />
                                 <div className="min-w-0 text-sm">
@@ -645,8 +654,15 @@ function BadgesTab({
                                         GAD Quest badges
                                     </p>
                                     <p className="mt-0.5 text-muted-foreground">
-                                        Finish a GAD Quest to earn Participant,
-                                        Advocate or Champion.
+                                        Finish a GAD Quest to earn{' '}
+                                        {new Intl.ListFormat('en', {
+                                            type: 'disjunction',
+                                        }).format(
+                                            questLevels.map(
+                                                (level) => level.name,
+                                            ),
+                                        )}
+                                        .
                                     </p>
                                     <Link
                                         href={quests()}

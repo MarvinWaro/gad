@@ -69,16 +69,19 @@ test('the list shows the system badges first, then the office\'s own', function 
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/badges')
-            ->has('badges.data', 5)
+            ->has('badges.data', 8)
             ->where('badges.data.0.rule', 'community-spark')
             ->where('badges.data.3.rule', 'agenda-builder')
             ->where('badges.data.0.can.update', false)
             ->where('badges.data.0.can.delete', false)
-            ->where('badges.data.4.name', 'Women\'s Month Speaker')
-            ->where('badges.data.4.can', ['update' => true, 'delete' => true, 'award' => true]));
+            // The GAD Quest levels come after the earned badges.
+            ->where('badges.data.4.quest_level', 'participant')
+            ->where('badges.data.6.quest_level', 'champion')
+            ->where('badges.data.7.name', 'Women\'s Month Speaker')
+            ->where('badges.data.7.can', ['update' => true, 'switch' => true, 'delete' => true, 'award' => true]));
 
     $this->actingAs($this->central)->get(route('settings.badges.index'))
-        ->assertInertia(fn (Assert $page) => $page->has('badges.data', 6)->where('badges.data.0.can.update', true));
+        ->assertInertia(fn (Assert $page) => $page->has('badges.data', 9)->where('badges.data.0.can.update', true));
 });
 
 test('a badge is created with a picture, which can be replaced and removed', function () {
@@ -131,7 +134,7 @@ test('SVG and oversized pictures are refused', function () {
         ->post(route('settings.badges.store'), [...$payload, 'image' => UploadedFile::fake()->image('big.png', 2000, 2000)->size(900)])
         ->assertSessionHasErrors(['image' => 'Choose a picture under 512 KB.']);
 
-    expect(Badge::query()->whereNull('rule')->count())->toBe(0);
+    expect(Badge::query()->whereNull('rule')->whereNull('quest_level')->count())->toBe(0);
 });
 
 test('system badges are the Central Office\'s to edit, are never deleted, and keep their rule', function () {

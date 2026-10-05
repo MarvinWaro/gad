@@ -466,7 +466,11 @@ function Result({
             >
                 <div className="flex flex-col items-center px-6 pt-8 pb-6 text-center sm:px-8">
                     {best && (
-                        <LevelMark level={best.level} className="size-20" />
+                        <LevelMark
+                            level={best.level}
+                            image={best.image}
+                            className="size-20"
+                        />
                     )}
                     <p className="mt-4 text-sm text-muted-foreground">
                         {quest.title}

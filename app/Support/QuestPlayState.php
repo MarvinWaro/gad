@@ -46,12 +46,14 @@ class QuestPlayState
      */
     public static function page(User $user, int $perPage = 12): LengthAwarePaginator
     {
+        $badges = QuestBadges::load();
+
         return self::withPlayer(self::visibleTo($user), $user)
             ->orderByRaw('case when status = ? then 0 else 1 end', [QuestStatus::Open->value])
             ->orderByDesc('published_at')
             ->paginate($perPage)
             ->withQueryString()
-            ->through(fn (Quest $quest): array => self::card($quest));
+            ->through(fn (Quest $quest): array => self::card($quest, $badges));
     }
 
     /**
@@ -70,7 +72,7 @@ class QuestPlayState
             ->orderByDesc('published_at')
             ->first();
 
-        return $quest !== null ? self::card($quest) : null;
+        return $quest !== null ? self::card($quest, QuestBadges::load()) : null;
     }
 
     /**
@@ -79,7 +81,7 @@ class QuestPlayState
      *
      * @return array<string, mixed>
      */
-    public static function card(Quest $quest): array
+    public static function card(Quest $quest, QuestBadges $badges): array
     {
         /** @var Collection<int, QuestAttempt> $attempts */
         $attempts = $quest->attempts;
@@ -98,7 +100,7 @@ class QuestPlayState
                 $attempts->isNotEmpty() => 'finished',
                 default => 'new',
             },
-            'best' => self::best($attempts, $total, $quest),
+            'best' => self::best($attempts, $total, $quest, $badges),
         ];
     }
 
@@ -128,7 +130,7 @@ class QuestPlayState
                 'allow_retakes' => $quest->allow_retakes,
             ],
             'attempt' => $current !== null ? self::attempt($current, $questions) : null,
-            'best' => self::best($attempts, $questions->count(), $quest),
+            'best' => self::best($attempts, $questions->count(), $quest, QuestBadges::load()),
             'can' => [
                 'start' => $open && ! $unfinished && ($attempts->isEmpty() || $quest->allow_retakes),
                 'answer' => $open && $unfinished,
@@ -160,31 +162,34 @@ class QuestPlayState
      * @param  Collection<int, QuestAttempt>  $attempts
      * @return array<string, mixed>|null
      */
-    private static function best(Collection $attempts, int $total, Quest $quest): ?array
+    private static function best(Collection $attempts, int $total, Quest $quest, QuestBadges $badges): ?array
     {
         $best = $attempts
             ->filter(fn (QuestAttempt $attempt): bool => $attempt->isFinished())
             ->sortBy([['score', 'desc'], ['finished_at', 'asc']])
             ->first();
 
-        return $best !== null ? self::badge($quest, (int) $best->score, $total, $best) : null;
+        return $best !== null ? self::badge($quest, (int) $best->score, $total, $best, $badges) : null;
     }
 
     /**
-     * A badge as players and profiles show it.
+     * A badge as players and profiles show it, named and pictured as its
+     * level's badge is in Settings → Badges.
      *
      * @return array<string, mixed>
      */
-    public static function badge(Quest $quest, int $score, int $total, QuestAttempt $attempt): array
+    public static function badge(Quest $quest, int $score, int $total, QuestAttempt $attempt, QuestBadges $badges): array
     {
         $level = QuestLevel::fromScore($score, $total);
+        $badge = $badges->of($level);
 
         return [
             'quest_id' => $quest->id,
             'title' => $quest->title,
             'level' => $level->value,
-            'level_label' => $level->label(),
-            'meaning' => $level->meaning(),
+            'level_label' => $badge->name,
+            'meaning' => $badge->description,
+            'image' => $badge->image,
             'score' => $score,
             'total' => $total,
             'earned_at' => $attempt->finished_at?->toIso8601ZuluString(),
