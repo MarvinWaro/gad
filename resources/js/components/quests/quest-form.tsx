@@ -1,5 +1,5 @@
 import { Link, useForm } from '@inertiajs/react';
-import { Lock, Plus, X } from 'lucide-react';
+import { Check, Lock, Plus, X } from 'lucide-react';
 import type { FormEvent } from 'react';
 import {
     Field,
@@ -21,12 +21,17 @@ export type QuestLimits = {
     max_choices: number;
 };
 
+/** A question as the form holds it: no choice is correct until one is marked. */
+type QuestionDraft = Omit<QuestQuestionInput, 'correct'> & {
+    correct: number | null;
+};
+
 type QuestFormData = {
     title: string;
     description: string;
     /** The Central Office's pick; empty for every region. */
     region: string;
-    questions: QuestQuestionInput[];
+    questions: QuestionDraft[];
 };
 
 /** Choices a new question starts with. */
@@ -34,12 +39,12 @@ const STARTING_CHOICES = 4;
 
 const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-function blankQuestion(): QuestQuestionInput {
+function blankQuestion(): QuestionDraft {
     return {
         prompt: '',
         explanation: '',
         choices: Array.from({ length: STARTING_CHOICES }, () => ''),
-        correct: 0,
+        correct: null,
     };
 }
 
@@ -70,10 +75,7 @@ export function QuestForm({
     });
     const errors = form.errors as Record<string, string | undefined>;
 
-    function changeQuestion(
-        index: number,
-        change: Partial<QuestQuestionInput>,
-    ) {
+    function changeQuestion(index: number, change: Partial<QuestionDraft>) {
         form.setData(
             'questions',
             form.data.questions.map((question, position) =>
@@ -84,9 +86,10 @@ export function QuestForm({
 
     function removeChoice(index: number, choice: number) {
         const question = form.data.questions[index];
+        // Removing the marked choice leaves none marked, never another one.
         const correct =
-            question.correct === choice
-                ? 0
+            question.correct === null || question.correct === choice
+                ? null
                 : question.correct > choice
                   ? question.correct - 1
                   : question.correct;
@@ -255,10 +258,10 @@ function QuestionFields({
     onRemoveChoice,
 }: {
     index: number;
-    question: QuestQuestionInput;
+    question: QuestionDraft;
     limits: QuestLimits;
     errors: Record<string, string | undefined>;
-    onChange: (change: Partial<QuestQuestionInput>) => void;
+    onChange: (change: Partial<QuestionDraft>) => void;
     onRemoveChoice: (choice: number) => void;
 }) {
     const id = `question-${index}`;
@@ -314,8 +317,9 @@ function QuestionFields({
                     id={`${id}-choices-hint`}
                     className="text-sm text-muted-foreground"
                 >
-                    Mark the correct one. Players see the choices in a shuffled
-                    order.
+                    Click the circle beside the correct choice. Players see the
+                    choices shuffled, so don’t refer to letters, such as “Both A
+                    and B”.
                 </p>
                 <ul className="space-y-2">
                     {question.choices.map((choice, position) => (
@@ -341,7 +345,11 @@ function QuestionFields({
                                 {letters[position]}
                             </span>
                             <input
-                                className={fieldClass}
+                                className={cn(
+                                    fieldClass,
+                                    question.correct === position &&
+                                        'border-emerald-600 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-950/60',
+                                )}
                                 value={choice}
                                 onChange={(event) =>
                                     onChange({
@@ -376,6 +384,23 @@ function QuestionFields({
                         </li>
                     ))}
                 </ul>
+                <p
+                    className={cn(
+                        'flex items-center gap-1.5 text-sm',
+                        question.correct === null
+                            ? 'text-muted-foreground'
+                            : 'font-medium text-emerald-700 dark:text-emerald-400',
+                    )}
+                >
+                    {question.correct === null ? (
+                        'Mark the correct answer.'
+                    ) : (
+                        <>
+                            <Check aria-hidden className="size-4 shrink-0" />
+                            Correct answer: {letters[question.correct]}
+                        </>
+                    )}
+                </p>
                 {question.choices.length < limits.max_choices && (
                     <Button
                         type="button"

@@ -143,8 +143,9 @@ environment writes under its own folder (`SPACES_ROOT`, `APP_ENV` by default).
 The settings are listed in `.env.example`.
 
 `php artisan migrate:fresh --seed` recreates the tables and includes the
-administrator, survey drafts, Region XII directory, and the 129 HEIs supplied
-from the CHED list. In the local environment it also adds one demo account per
+administrator, survey drafts, Region XII directory, the 129 HEIs supplied
+from the CHED list, and a starter GAD Quest draft for every region ("GAD
+Laws: The Basics"). In the local environment it also adds one demo account per
 role, with the administrator's password: `ched-focal@phlgadis.test` and
 `ched-employee@phlgadis.test` in the Region XII office, and
 `hei-focal@phlgadis.test` and `hei@phlgadis.test` at a Region XII HEI

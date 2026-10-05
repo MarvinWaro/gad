@@ -86,8 +86,20 @@ test('a CHED Focal writes a quest of five questions and opens it', async ({
         await question
             .getByLabel('Question', { exact: true })
             .fill(`Browser question ${number}?`);
+        // No choice is marked correct until the author picks one.
+        await expect(
+            question.getByText('Mark the correct answer.'),
+        ).toBeVisible();
+        if (number === 1) {
+            // Removing the marked choice unmarks it, rather than marking A.
+            await question.getByLabel('Choice D is correct').check();
+            await expect(question.getByText('Correct answer: D')).toBeVisible();
+        }
         // Two choices are enough for a true-or-false question.
         await question.getByRole('button', { name: 'Remove choice D' }).click();
+        await expect(
+            question.getByText('Mark the correct answer.'),
+        ).toBeVisible();
         await question.getByRole('button', { name: 'Remove choice C' }).click();
         await question
             .getByLabel(`Choice A of question ${number}`)
@@ -95,13 +107,30 @@ test('a CHED Focal writes a quest of five questions and opens it', async ({
         await question
             .getByLabel(`Choice B of question ${number}`)
             .fill('False');
-        if (number === 2) {
-            await question.getByLabel('Choice B is correct').check();
+        // Question 5 stays unmarked until the save asks for it.
+        if (number < 5) {
+            await question
+                .getByLabel(`Choice ${number === 2 ? 'B' : 'A'} is correct`)
+                .check();
         }
         await question
             .getByLabel('Why this is the answer')
             .fill(`Browser explanation ${number}.`);
     }
+    await expect(
+        page
+            .getByRole('group', { name: 'Question 2' })
+            .getByText('Correct answer: B'),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Save as draft' }).click();
+    const fifth = page.getByRole('group', { name: 'Question 5' });
+    await expect(
+        fifth.getByText('Mark the correct choice for question 5.'),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/\/quests\/manage\/create$/);
+    await fifth.getByLabel('Choice A is correct').check();
+    await expect(fifth.getByText('Correct answer: A')).toBeVisible();
 
     await page.getByRole('button', { name: 'Save as draft' }).click();
     await expect(page).toHaveURL(/\/quests\/manage\/[0-9A-Z]{26}$/i);
