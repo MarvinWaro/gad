@@ -71,17 +71,20 @@ test('staff top navigation: one row like Facebook, icon tabs, the Monitoring men
     await nav.getByRole('link', { name: 'Gender Mainstreaming' }).hover();
     await expect(page.getByRole('tooltip')).toHaveText('Gender Mainstreaming');
 
-    // The search finds nothing yet, and says so.
-    const comingSoon = page
-        .getByText('Search is coming soon.')
-        .filter({ visible: true });
-    const search = page.getByRole('searchbox', { name: 'Search PHLGADIS' });
-    await search.fill('Notre Dame');
-    await expect(comingSoon).toBeVisible();
-    await search.press('Enter');
-    await expect(page).toHaveURL(/\/admin\/monitoring\/training$/);
+    // The search finds people as they type; Escape puts the list away.
+    const search = page.getByRole('combobox', { name: 'Search PHLGADIS' });
+    await search.click();
+    await expect(
+        page.getByText('Search people by name or institution.'),
+    ).toBeVisible();
+    await search.fill('monitoring');
+    const people = page.getByRole('listbox', { name: 'People' });
+    await expect(
+        people.getByRole('option', { name: /Fictional Monitoring Member/ }),
+    ).toBeVisible();
     await search.press('Escape');
-    await expect(comingSoon).toHaveCount(0);
+    await expect(people).toHaveCount(0);
+    await expect(page).toHaveURL(/\/admin\/monitoring\/training$/);
 
     await menu.click();
     await expect(page.getByRole('menuitem')).toHaveText([
@@ -140,9 +143,13 @@ test('staff top navigation: one row like Facebook, icon tabs, the Monitoring men
     await page.setViewportSize({ width: 375, height: 800 });
     await page.getByRole('button', { name: 'Search PHLGADIS' }).click();
     await expect(
-        page.getByRole('searchbox', { name: 'Search PHLGADIS' }),
+        page.getByRole('combobox', { name: 'Search PHLGADIS' }),
     ).toBeFocused();
-    await expect(comingSoon).toBeVisible();
+    await expect(
+        page
+            .getByText('Search people by name or institution.')
+            .filter({ visible: true }),
+    ).toBeVisible();
     await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Open navigation menu' }).click();
     const sheet = page.getByRole('dialog', { name: 'Navigation menu' });

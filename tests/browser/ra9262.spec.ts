@@ -183,6 +183,9 @@ test('RA 9262 submission appears in admin responses and CSV', async ({
     expect(responsesUrl).toBeTruthy();
     await responsesLink.click();
     await expect(page.getByText(reference, { exact: true })).toBeVisible();
+    await expect(
+        page.getByRole('navigation', { name: 'Pagination' }),
+    ).toContainText(/of \d+ responses/);
     const csv = await page.request.get(`${responsesUrl}/export`);
     expect(csv.ok()).toBeTruthy();
     expect(await csv.text()).toContain('physical-violence: Aunt');

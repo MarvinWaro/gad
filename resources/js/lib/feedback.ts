@@ -3,6 +3,23 @@ import type { FeedbackAnswers, FeedbackQuestions } from '@/types/feedback';
 /** The fields of the last step: who sent it and from where. */
 const detailFields = ['email', 'name', 'region_id', 'hei_id', 'website'];
 
+/** Faces are presentation only; the same 1-to-5 scores are submitted. */
+export function feedbackScaleOptions(
+    scale: Pick<FeedbackQuestions['scales'][number], 'key' | 'low' | 'high'>,
+): { value: number; label: string; emoji: string }[] {
+    const middle =
+        scale.key === 'agreement'
+            ? ['Disagree', 'Neutral', 'Agree']
+            : ['Difficult', 'Neither difficult nor easy', 'Easy'];
+    const labels = [scale.low, ...middle, scale.high];
+
+    return ['😞', '🙁', '😐', '🙂', '😄'].map((emoji, index) => ({
+        value: index + 1,
+        label: labels[index],
+        emoji,
+    }));
+}
+
 /**
  * The form's steps, as the old Google Form's pages: the feedback itself,
  * then one step per 1-to-5 scale, then the sender's optional details.

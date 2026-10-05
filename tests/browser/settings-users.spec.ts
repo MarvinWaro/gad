@@ -17,6 +17,11 @@ test('the user form asks where an account belongs by its roles', async ({
     // Contact details are the account holder's to add on their Profile.
     await expect(dialog.getByLabel(/Mobile number/)).toHaveCount(0);
     await expect(dialog.getByLabel(/^Sex/)).toHaveCount(0);
+    // New accounts start with the temporary password; no password to type.
+    await expect(dialog.getByLabel('Password', { exact: true })).toHaveCount(0);
+    await expect(
+        dialog.locator('[data-test="temporary-password-note"]'),
+    ).toContainText('temporary password password');
     // Nothing to place until a role says what kind of account it is.
     await expect(dialog.getByLabel('Institution')).toHaveCount(0);
     await expect(dialog.getByLabel('Office')).toHaveCount(0);
@@ -34,6 +39,12 @@ test('the user form asks where an account belongs by its roles', async ({
     await dialog.getByRole('checkbox', { name: 'CHED Employee' }).click();
     await expect(
         dialog.getByRole('combobox', { name: 'Office' }),
+    ).toBeVisible();
+    // A CHED Employee belongs to one region; only Administrators cover all.
+    await expect(
+        dialog.getByText(
+            /^CHED Focal and CHED Employee accounts belong to one regional office/,
+        ),
     ).toBeVisible();
     for (const theme of ['light', 'dark'] as const) {
         await page.evaluate(
@@ -60,8 +71,6 @@ test('the user form asks where an account belongs by its roles', async ({
     await expect(dialog.getByLabel('Office')).toHaveCount(0);
 
     // An HEI account can't be saved without its institution.
-    await dialog.getByLabel('Password', { exact: true }).fill('password-1234');
-    await dialog.getByLabel('Confirm password').fill('password-1234');
     await dialog.getByRole('button', { name: 'Create user' }).click();
     await expect(
         dialog.getByText('Choose the institution this HEI account belongs to.'),

@@ -114,4 +114,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Temporary Password
+    |--------------------------------------------------------------------------
+    |
+    | Accounts created in Settings → Users start with this password, and their
+    | holders must choose their own the first time they sign in.
+    |
+    */
+
+    'temporary_password' => env('AUTH_TEMPORARY_PASSWORD', 'password'),
+
 ];

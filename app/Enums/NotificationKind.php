@@ -25,6 +25,9 @@ enum NotificationKind: string
     case EventCreated = 'event_created';
     case SurveyResponses = 'survey_responses';
     case SiteFeedback = 'site_feedback';
+    case BadgeAwarded = 'badge_awarded';
+    case BadgeEarned = 'badge_earned';
+    case UserFollowed = 'user_followed';
 
     /** Its name in the Type filter. */
     public function label(): string
@@ -46,6 +49,9 @@ enum NotificationKind: string
             self::EventCreated => 'New GAD events',
             self::SurveyResponses => 'New survey responses',
             self::SiteFeedback => 'New website feedback',
+            self::BadgeAwarded => 'Badges awarded to you',
+            self::BadgeEarned => 'Badges you earned',
+            self::UserFollowed => 'New followers',
         };
     }
 
@@ -60,6 +66,8 @@ enum NotificationKind: string
             self::EventCreated => ActivityModule::Events,
             self::SurveyResponses => ActivityModule::SurveyResponses,
             self::SiteFeedback => ActivityModule::SiteFeedback,
+            self::BadgeAwarded, self::BadgeEarned => ActivityModule::Badges,
+            self::UserFollowed => ActivityModule::People,
         };
     }
 
@@ -68,7 +76,7 @@ enum NotificationKind: string
     {
         return match ($this) {
             self::ReportSubmitted, self::ReportReviewed, self::GadSurveySubmitted,
-            self::AccountApproved => 'positive',
+            self::AccountApproved, self::BadgeAwarded, self::BadgeEarned => 'positive',
             self::ReportReturned, self::AccountPending => 'warning',
             self::PostRemoved, self::CommentRemoved => 'danger',
             default => 'info',
@@ -99,7 +107,19 @@ enum NotificationKind: string
             self::EventCreated => 'added a GAD event: :subject',
             self::SurveyResponses => $count === 1 ? '1 new response to :subject' : ':count new responses to :subject',
             self::SiteFeedback => $count === 1 ? '1 new website feedback response' : ':count new website feedback responses',
+            self::BadgeAwarded => 'awarded you the :subject badge',
+            self::BadgeEarned => 'You earned the :subject badge. See it on your profile.',
+            self::UserFollowed => 'started following you',
         };
+    }
+
+    /**
+     * Whether it names who acted. A badge someone earns is the system's
+     * doing, so it speaks to them instead ("You earned …").
+     */
+    public function showsActor(): bool
+    {
+        return $this !== self::BadgeEarned;
     }
 
     /**

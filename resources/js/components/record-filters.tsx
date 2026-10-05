@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { FileText, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -303,6 +303,38 @@ export function NoOfficeNotice({ noun }: { noun: string }) {
             Your account has no office yet, so no {noun} are shown. A user
             manager can set your office in Settings → Users.
         </div>
+    );
+}
+
+/**
+ * Whose records a staff list holds, by the account's office, in the
+ * dashboard's scope-line style: one regional office, or every region for the
+ * Central Office. Nothing for an account with no office, which
+ * NoOfficeNotice covers.
+ */
+export function OfficeScope({ noun }: { noun: string }) {
+    const { auth } = usePage().props;
+    const national = auth.user.national_access === true;
+
+    if (!national && !auth.officeRegion) {
+        return null;
+    }
+
+    return (
+        <p
+            data-test="office-scope"
+            className="flex flex-wrap items-center gap-x-2 text-sm"
+        >
+            <span className="size-2 rounded-full bg-brand" aria-hidden="true" />
+            <span className="font-medium">
+                {national ? 'Every region' : auth.officeRegion}
+            </span>
+            <span className="text-muted-foreground">
+                {national
+                    ? `· ${noun} from all regions, as the Central Office`
+                    : `· ${noun} from your office’s region only`}
+            </span>
+        </p>
     );
 }
 

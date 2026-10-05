@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { PersonAvatar } from '@/components/person-avatar';
+import { PersonLink } from '@/components/people/person-link';
 import { cn } from '@/lib/utils';
 import type { InstitutionPeopleSummary } from '@/types';
 
@@ -52,9 +53,10 @@ export function InstitutionPeople({
                                         className="size-9"
                                     />
                                     <div className="min-w-0 flex-1">
-                                        <p className="truncate text-sm font-medium">
-                                            {person.name}
-                                        </p>
+                                        <PersonLink
+                                            person={person}
+                                            className="block truncate text-sm font-medium"
+                                        />
                                         <p className="text-xs text-muted-foreground">
                                             <span className="font-medium text-brand">
                                                 GAD Focal Person
@@ -83,9 +85,10 @@ export function InstitutionPeople({
                                         name={person.name}
                                         src={person.avatar}
                                     />
-                                    <span className="min-w-0 flex-1 truncate">
-                                        {person.name}
-                                    </span>
+                                    <PersonLink
+                                        person={person}
+                                        className="min-w-0 flex-1 truncate"
+                                    />
                                 </li>
                             ))}
                         </ul>

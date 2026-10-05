@@ -6,6 +6,7 @@ import type { ConfirmVisit } from '@/components/confirm-popover';
 import Heading from '@/components/heading';
 import { IconAction } from '@/components/icon-action';
 import InputError from '@/components/input-error';
+import { Pagination, type Paginated } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -71,7 +72,7 @@ export default function Regions({
     regions,
     permissions,
 }: {
-    regions: Region[];
+    regions: Paginated<Region>;
     permissions: Permissions;
 }) {
     return (
@@ -87,7 +88,7 @@ export default function Regions({
                     {permissions.create && <RegionDialog />}
                 </div>
                 <div className="overflow-hidden rounded-xl border bg-card">
-                    {regions.length === 0 ? (
+                    {regions.data.length === 0 ? (
                         <div className="flex min-h-56 flex-col items-center justify-center p-8 text-center">
                             <Map className="size-7 text-muted-foreground" />
                             <h2 className="mt-3 font-medium">
@@ -99,106 +100,115 @@ export default function Regions({
                             </p>
                         </div>
                     ) : (
-                        <table className="w-full text-left text-sm">
-                            <thead className="border-b bg-muted/50 text-xs">
-                                <tr>
-                                    <th className="px-5 py-3">Name</th>
-                                    <th className="px-5 py-3">HEIs</th>
-                                    <th className="px-5 py-3 text-right">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y">
-                                {regions.map((region) => (
-                                    <tr key={region.id}>
-                                        <td className="px-5 py-4">
-                                            <span className="font-medium">
-                                                {region.name}
-                                            </span>
-                                            {!region.is_active && (
-                                                <Badge
-                                                    variant="outline"
-                                                    className="ml-2 align-middle text-muted-foreground"
-                                                >
-                                                    Inactive
-                                                </Badge>
-                                            )}
-                                        </td>
-                                        <td className="px-5 py-4 text-muted-foreground tabular-nums">
-                                            {region.heis_count}
-                                        </td>
-                                        <td className="px-5 py-4">
-                                            <div className="flex justify-end gap-1">
-                                                {permissions.update && (
-                                                    <OfficeDialog
-                                                        region={region}
-                                                    />
+                        <>
+                            <table className="w-full text-left text-sm">
+                                <thead className="border-b bg-muted/50 text-xs">
+                                    <tr>
+                                        <th className="px-5 py-3">Name</th>
+                                        <th className="px-5 py-3">HEIs</th>
+                                        <th className="px-5 py-3 text-right">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y">
+                                    {regions.data.map((region) => (
+                                        <tr key={region.id}>
+                                            <td className="px-5 py-4">
+                                                <span className="font-medium">
+                                                    {region.name}
+                                                </span>
+                                                {!region.is_active && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="ml-2 align-middle text-muted-foreground"
+                                                    >
+                                                        Inactive
+                                                    </Badge>
                                                 )}
-                                                {permissions.update &&
-                                                    (region.is_active ? (
-                                                        <ConfirmPopover
-                                                            title={`Deactivate ${region.name}?`}
-                                                            description="It will be hidden from the public surveys. Its institutions and responses are kept, and you can activate it again anytime."
-                                                            confirmLabel="Deactivate"
-                                                            onConfirm={(
-                                                                visit,
-                                                            ) =>
-                                                                toggleActive(
-                                                                    region,
+                                            </td>
+                                            <td className="px-5 py-4 text-muted-foreground tabular-nums">
+                                                {region.heis_count}
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex justify-end gap-1">
+                                                    {permissions.update && (
+                                                        <OfficeDialog
+                                                            region={region}
+                                                        />
+                                                    )}
+                                                    {permissions.update &&
+                                                        (region.is_active ? (
+                                                            <ConfirmPopover
+                                                                title={`Deactivate ${region.name}?`}
+                                                                description="It will be hidden from the public surveys. Its institutions and responses are kept, and you can activate it again anytime."
+                                                                confirmLabel="Deactivate"
+                                                                onConfirm={(
                                                                     visit,
-                                                                )
-                                                            }
-                                                        >
+                                                                ) =>
+                                                                    toggleActive(
+                                                                        region,
+                                                                        visit,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                >
+                                                                    Deactivate
+                                                                </Button>
+                                                            </ConfirmPopover>
+                                                        ) : (
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
+                                                                onClick={() =>
+                                                                    toggleActive(
+                                                                        region,
+                                                                    )
+                                                                }
                                                             >
-                                                                Deactivate
+                                                                Activate
                                                             </Button>
-                                                        </ConfirmPopover>
-                                                    ) : (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() =>
-                                                                toggleActive(
-                                                                    region,
+                                                        ))}
+                                                    {permissions.delete && (
+                                                        <ConfirmPopover
+                                                            title={`Delete ${region.name}?`}
+                                                            description="Regions with institutions cannot be deleted. Deactivate them instead."
+                                                            confirmLabel="Delete"
+                                                            onConfirm={(
+                                                                visit,
+                                                            ) =>
+                                                                router.delete(
+                                                                    `/settings/survey-directories/regions/${region.id}`,
+                                                                    {
+                                                                        preserveScroll: true,
+                                                                        ...visit,
+                                                                    },
                                                                 )
                                                             }
                                                         >
-                                                            Activate
-                                                        </Button>
-                                                    ))}
-                                                {permissions.delete && (
-                                                    <ConfirmPopover
-                                                        title={`Delete ${region.name}?`}
-                                                        description="Regions with institutions cannot be deleted. Deactivate them instead."
-                                                        confirmLabel="Delete"
-                                                        onConfirm={(visit) =>
-                                                            router.delete(
-                                                                `/settings/survey-directories/regions/${region.id}`,
-                                                                {
-                                                                    preserveScroll: true,
-                                                                    ...visit,
-                                                                },
-                                                            )
-                                                        }
-                                                    >
-                                                        <IconAction
-                                                            label="Delete this region"
-                                                            className="text-muted-foreground hover:text-destructive"
-                                                        >
-                                                            <Trash2 />
-                                                        </IconAction>
-                                                    </ConfirmPopover>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                                            <IconAction
+                                                                label="Delete this region"
+                                                                className="text-muted-foreground hover:text-destructive"
+                                                            >
+                                                                <Trash2 />
+                                                            </IconAction>
+                                                        </ConfirmPopover>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <Pagination
+                                page={regions}
+                                label="regions"
+                                persistent
+                            />
+                        </>
                     )}
                 </div>
             </div>

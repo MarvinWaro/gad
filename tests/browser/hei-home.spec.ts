@@ -59,10 +59,14 @@ for (const width of [1440, 1280]) {
             left.getByRole('button', { name: 'Copy link for RA 7877' }),
         ).toBeVisible();
         await expect(left.getByText('RA 11313', { exact: true })).toBeVisible();
-        // The GAD Quest card and the footer close the column.
+        // The GAD Quest card (Beta) offers the newest open quest: the
+        // fixture from tests/browser/server.php, or one gad-quest.spec.ts
+        // opened. The footer closes the column.
+        const quest = left.getByRole('region', { name: 'GAD Quest' });
+        await expect(quest).toContainText('Beta');
         await expect(
-            left.getByRole('region', { name: 'GAD Quest' }),
-        ).toContainText('Coming soon');
+            quest.getByRole('link', { name: /^Play: / }),
+        ).toHaveAttribute('href', /\/quests\/[0-9A-Z]{26}$/i);
         const footer = left.getByRole('navigation', { name: 'About PHLGADIS' });
         await expect(footer.getByRole('link', { name: 'FAQ' })).toHaveAttribute(
             'href',

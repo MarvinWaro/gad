@@ -1,10 +1,8 @@
-import { InfiniteScroll } from '@inertiajs/react';
-import { CircleCheck, History } from 'lucide-react';
-import { useRef } from 'react';
+import { History } from 'lucide-react';
 import { ActivityItem } from '@/components/activity/activity-entry';
+import { Pagination } from '@/components/pagination';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { ScrollPage } from '@/types';
-import type { ActivityEntry } from '@/types/activity';
+import type { ActivityPage } from '@/types/activity';
 
 /** An entry's outline while it loads: photo, then a card of three lines. */
 function EntrySkeleton() {
@@ -22,16 +20,10 @@ function EntrySkeleton() {
 
 /**
  * A person's own activity, newest first, for their profile. It arrives just
- * after the page (a deferred prop) and loads older entries as they scroll.
- * The page's prop is named `activity`.
+ * after the page (a deferred prop) and comes in numbered pages; turning a
+ * page reloads only the list. The page's prop is named `activity`.
  */
-export function ActivityTimeline({
-    activity,
-}: {
-    activity?: ScrollPage<ActivityEntry>;
-}) {
-    const list = useRef<HTMLOListElement>(null);
-
+export function ActivityTimeline({ activity }: { activity?: ActivityPage }) {
     if (!activity) {
         return (
             <div aria-busy="true">
@@ -60,25 +52,8 @@ export function ActivityTimeline({
     }
 
     return (
-        <InfiniteScroll
-            data="activity"
-            preserveUrl
-            buffer={600}
-            itemsElement={list}
-            next={({ loading, hasMore }) =>
-                loading ? (
-                    <EntrySkeleton />
-                ) : (
-                    !hasMore && (
-                        <p className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
-                            <CircleCheck aria-hidden className="size-4" />
-                            You’re all caught up
-                        </p>
-                    )
-                )
-            }
-        >
-            <ol ref={list} aria-label="Your activity, newest first">
+        <>
+            <ol aria-label="Your activity, newest first">
                 {activity.data.map((entry, index) => (
                     <ActivityItem
                         key={entry.id}
@@ -87,6 +62,13 @@ export function ActivityTimeline({
                     />
                 ))}
             </ol>
-        </InfiniteScroll>
+            <Pagination
+                page={activity.meta}
+                label="entries"
+                persistent
+                only={['activity']}
+                className="rounded-xl border bg-card"
+            />
+        </>
     );
 }

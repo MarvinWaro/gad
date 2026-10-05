@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ChecklistType;
+use App\Enums\FeedScope;
 use App\Http\Requests\DashboardFilterRequest;
 use App\Models\MonitoringReport;
 use App\Models\Survey;
@@ -13,6 +14,7 @@ use App\Support\CommunityFeed;
 use App\Support\EventCalendar;
 use App\Support\InstitutionName;
 use App\Support\InstitutionPeople;
+use App\Support\QuestPlayState;
 use App\Support\SurveyDefinitions;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -39,8 +41,12 @@ class DashboardController extends Controller
             'upcoming' => fn (): array => EventCalendar::upcoming(),
             // "People at your institution": colleagues, its GAD Focal Persons first.
             'people' => fn (): array => InstitutionPeople::for($user),
+            // The GAD Quest card: the newest quest open to them, and how far they got.
+            'quest' => fn (): ?array => QuestPlayState::spotlight($user),
             // Loaded just after the page appears, which shows skeletons meanwhile.
-            'posts' => Inertia::scroll(fn () => CommunityFeed::page($user))->defer(),
+            'feed' => FeedScope::of($request)->value,
+            'feedRegion' => CommunityFeed::regionOf($user),
+            'posts' => Inertia::scroll(fn () => CommunityFeed::page($user, scope: FeedScope::of($request)))->defer(),
             // The institution's reporting, which its focal persons do. Only
             // implemented modules receive links.
             'quickLinks' => $user->can('viewRecords', MonitoringReport::class) ? [

@@ -12,7 +12,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     $this->seed(RbacSeeder::class);
-    $this->admin = User::factory()->create();
+    $this->admin = User::factory()->nationalOffice()->create();
     $this->admin->assignRole('admin');
 });
 
@@ -64,7 +64,7 @@ test('the last active administrator cannot be deactivated', function () {
     // Every permission, but not the admin role itself.
     $operatorRole = Role::query()->create(['name' => 'Operator', 'slug' => 'operator']);
     $operatorRole->permissions()->sync(Permission::query()->pluck('id'));
-    $operator = User::factory()->create();
+    $operator = User::factory()->nationalOffice()->create();
     $operator->assignRole($operatorRole);
 
     $this->actingAs($operator)
@@ -116,8 +116,8 @@ test('the user list filters by status and counts each status', function () {
             ->where('users.data.0.status', 'pending')
             ->where('users.data.0.hei.name', $hei->name)
             ->where('statusCounts', ['pending' => 1, 'active' => 1, 'inactive' => 1])
-            // A manager with no office yet is offered no institutions.
-            ->has('heis', 0));
+            // The Central Office is offered every institution.
+            ->has('heis', 1));
 });
 
 test('pending registrations are listed first', function () {
@@ -176,7 +176,7 @@ test('an HEI account needs its institution, and a CHED account has none', functi
     expect(User::query()->where('email', 'new-account@example.test')->exists())->toBeFalse();
 
     // A CHED account is placed by its office, so an institution sent with it is dropped.
-    $this->post(route('settings.users.store'), $payload([$chedRole->id], ['survey_hei_id' => $hei->id]))
+    $this->post(route('settings.users.store'), $payload([$chedRole->id], ['survey_hei_id' => $hei->id, 'survey_region_id' => $hei->cluster->survey_region_id]))
         ->assertSessionHasNoErrors();
     $staff = User::query()->where('email', 'new-account@example.test')->sole();
     expect($staff->survey_hei_id)->toBeNull();

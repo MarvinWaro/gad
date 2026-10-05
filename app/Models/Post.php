@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\PostFeeling;
 use App\Support\HomepageStories;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -145,5 +146,21 @@ class Post extends Model
     public function achieveItems(): HasMany
     {
         return $this->hasMany(PostAchieveItem::class);
+    }
+
+    /**
+     * Posts belonging to a region: an HEI's through its cluster, a CHED
+     * post through its author's regional office. A Central Office post
+     * belongs to no region. The same rule as DashboardScope::POST_REGION.
+     *
+     * @param  Builder<Post>  $query
+     */
+    public function scopeInRegion(Builder $query, int $regionId): void
+    {
+        $query->where(fn (Builder $query) => $query
+            ->whereHas('hei.cluster', fn (Builder $query) => $query->where('survey_region_id', $regionId))
+            ->orWhere(fn (Builder $query) => $query
+                ->whereNull('survey_hei_id')
+                ->whereHas('author', fn (Builder $query) => $query->where('survey_region_id', $regionId))));
     }
 }

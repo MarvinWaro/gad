@@ -266,6 +266,10 @@ test('HEI fills in, signs and submits a report; CHED returns it, then reviews th
 
     // CHED's list filters as soon as a filter changes; no Apply button.
     await admin.goto('/admin/monitoring');
+    // The list says whose reports it holds: the office's own region.
+    await expect(admin.locator('[data-test="office-scope"]')).toContainText(
+        'Regional Office XII',
+    );
     const reports = admin.getByRole('main').getByRole('listitem');
     await expect(reports).toHaveCount(1);
     await expect(

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\FeedScope;
 use App\Models\SurveyHei;
 use App\Support\PlaceFilters;
 use App\Support\ReportingPeriod;
@@ -21,11 +22,23 @@ class DashboardFilterRequest extends FormRequest
     public function rules(): array
     {
         // HEI accounts get the HEI home instead, whose calendar reads its own
-        // "2026-10" month; EventCalendar falls back from anything else.
+        // "2026-10" month (EventCalendar falls back from anything else), and
+        // whose feed shows everyone's posts or the people they follow.
         if ($this->user()?->isHeiOnly()) {
-            return [];
+            return ['feed' => FeedScope::rules()];
         }
 
+        return self::staffRules();
+    }
+
+    /**
+     * The period, place, ownership and law filters, shared with the Surveys
+     * page's insights (SurveyStatistics).
+     *
+     * @return array<string, array<mixed>>
+     */
+    public static function staffRules(): array
+    {
         return [
             ...Arr::only(PlaceFilters::rules(), ['academic_year', 'region', 'hei']),
             'view' => ['nullable', Rule::in(ReportingPeriod::VIEWS)],

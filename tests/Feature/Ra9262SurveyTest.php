@@ -16,7 +16,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 beforeEach(function () {
     $this->seed([RbacSeeder::class, SurveySeeder::class]);
     $this->withoutMiddleware(ThrottleRequests::class);
-    $this->admin = User::factory()->create();
+    $this->admin = User::factory()->nationalOffice()->create();
     $this->admin->assignRole('admin');
     $this->survey = Survey::query()->where('slug', 'ra-9262')->sole();
     $this->region = SurveyRegion::query()->sole();

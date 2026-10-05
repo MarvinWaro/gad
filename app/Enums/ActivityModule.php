@@ -27,6 +27,9 @@ enum ActivityModule: string
     case SiteRatings = 'site-ratings';
     case SiteFeedback = 'site-feedback';
     case StudentCounts = 'student-counts';
+    case Quests = 'quests';
+    case Badges = 'badges';
+    case People = 'people';
 
     public function label(): string
     {
@@ -50,6 +53,9 @@ enum ActivityModule: string
             self::SiteRatings => 'Site ratings',
             self::SiteFeedback => 'Website feedback',
             self::StudentCounts => 'Enrollment and graduates',
+            self::Quests => 'GAD Quest',
+            self::Badges => 'Badges',
+            self::People => 'People',
         };
     }
 }

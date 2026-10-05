@@ -7,7 +7,9 @@ use App\Enums\ActivityModule;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\HeiFilterRequest;
 use App\Jobs\SyncHeidaDirectory;
+use App\Models\Badge;
 use App\Models\Post;
+use App\Models\Quest;
 use App\Models\StudentCount;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
@@ -40,7 +42,8 @@ class SurveyDirectoryController extends Controller
     public function regions(Request $request): Response
     {
         return Inertia::render('settings/regions', [
-            'regions' => SurveyRegion::query()->withCount('heis')->orderBy('name')->get(),
+            // A page holds every CHED region today (17); the count stays shown.
+            'regions' => SurveyRegion::query()->withCount('heis')->orderBy('name')->paginate(20)->withQueryString(),
             'permissions' => $this->permissions($request),
         ]);
     }
@@ -100,8 +103,8 @@ class SurveyDirectoryController extends Controller
             'respondentGroups' => SurveyRespondentGroup::query()
                 ->ordered()
                 ->with('followUpQuestions.activeOptions')
-                ->get()
-                ->map(fn (SurveyRespondentGroup $group): array => [
+                ->paginate(10)->withQueryString()
+                ->through(fn (SurveyRespondentGroup $group): array => [
                     'id' => $group->id,
                     'value' => $group->value,
                     'label' => $group->label,
@@ -352,6 +355,14 @@ class SurveyDirectoryController extends Controller
 
         if ($record instanceof SurveyRegion && StudentCount::query()->where('survey_region_id', $record->id)->exists()) {
             return $this->refuse(__('Regions with enrollment or graduate figures cannot be deleted. Deactivate it instead.'));
+        }
+
+        if ($record instanceof SurveyRegion && Quest::query()->where('survey_region_id', $record->id)->exists()) {
+            return $this->refuse(__('Regions with GAD quests cannot be deleted. Deactivate it instead.'));
+        }
+
+        if ($record instanceof SurveyRegion && Badge::query()->where('survey_region_id', $record->id)->exists()) {
+            return $this->refuse(__('Regions with their own badges cannot be deleted. Deactivate it instead.'));
         }
 
         $name = $record instanceof SurveyRespondentGroup ? $record->label : $record->getAttribute('name');

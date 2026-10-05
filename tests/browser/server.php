@@ -2,6 +2,8 @@
 
 // This server always creates its own database. Never reuse a development server
 // or load cached application configuration for browser tests.
+use App\Actions\Quests\ManageQuest;
+use App\Actions\Quests\SaveQuest;
 use App\Enums\ActivityAction;
 use App\Enums\ActivityModule;
 use App\Enums\StudentCountKind;
@@ -93,6 +95,11 @@ $viewer->assignRole('survey-viewer');
 // to load. They sit below anything a test posts.
 $member = User::factory()->create(['name' => 'Browser Test Member', 'email' => 'browser-member@example.test', 'password' => 'browser-password', 'survey_hei_id' => $hei->id]);
 $member->assignRole('hei');
+// An account an administrator just created: it still has the temporary password.
+$newcomer = User::factory()->create(['name' => 'Fictional Newcomer', 'email' => 'browser-newcomer@example.test', 'survey_hei_id' => $hei->id])
+    ->giveTemporaryPassword();
+$newcomer->save();
+$newcomer->assignRole('hei');
 foreach (range(1, 11) as $daysAgo) {
     $postedAt = now()->subDays(30 + $daysAgo);
     Post::query()->forceCreate([
@@ -147,6 +154,34 @@ foreach ([['ra-7877', 'female'], ['ra-7877', 'male'], ['ra-9710', 'female']] as 
     ]);
 }
 
+// Five RA 9262 answers from AY 2025-2026, away from every period another
+// spec reads, so a survey's Summary has enough to show its answers
+// (tests/browser/survey-insights.spec.ts): four from women, one from a man.
+foreach (['female', 'female', 'female', 'female', 'male'] as $index => $sex) {
+    $answeredAt = now()->setDate(2026, 2, 10 + $index)->setTime(9, 0);
+    SurveyResponse::query()->forceCreate([
+        'survey_version_id' => Survey::query()->where('slug', 'ra-9262')->firstOrFail()->publishedVersion()?->id,
+        'public_reference' => Str::random(20),
+        'age' => 22,
+        'sex' => $sex,
+        'gender_identity' => 'heterosexual',
+        'respondent_group' => 'student',
+        'survey_region_id' => $region->id,
+        'survey_cluster_id' => $cluster->id,
+        'survey_hei_id' => $hei->id,
+        'answers' => [
+            'experiences' => $sex === 'male' ? ['stalking'] : ['battery', 'stalking'],
+            'perpetrators' => $sex === 'male' ? ['stalking' => ['former-boyfriend']] : ['battery' => ['teacher'], 'stalking' => ['former-boyfriend']],
+            'other_relative_details' => [],
+            'answering_for' => 'self',
+        ],
+        'consent_at' => $answeredAt,
+        'expires_at' => now()->addYear(),
+        'created_at' => $answeredAt,
+        'updated_at' => $answeredAt,
+    ]);
+}
+
 // Region XII's enrollment and graduates for AY 2025-2026, as if imported in
 // Settings → Enrollment & graduates. They add up to the totals the homepage
 // and dashboard specs read: 95,737 men and 132,086 women enrolled; 11,800
@@ -185,6 +220,25 @@ foreach ([
         ]);
     }
 }
+
+// GAD Quest: a CHED Focal of Region XII and the open quest they wrote, with
+// placeholder questions (the first choice is right), and an HEI account
+// that plays it in gad-quest.spec.ts.
+$questFocal = User::factory()->regionalOffice($region)->create(['name' => 'Fictional Quest Focal', 'email' => 'browser-quest-focal@example.test', 'password' => 'browser-password']);
+$questFocal->assignRole('ched-focal');
+$questPlayer = User::factory()->create(['name' => 'Fictional Quest Player', 'email' => 'browser-quest-player@example.test', 'password' => 'browser-password', 'survey_hei_id' => $hei->id, 'sex' => 'female']);
+$questPlayer->assignRole('hei');
+$fixtureQuest = app(SaveQuest::class)->create($questFocal, $region->id, [
+    'title' => 'Fixture GAD Quest',
+    'description' => 'Five placeholder questions for the browser tests.',
+    'questions' => array_map(fn (int $number): array => [
+        'prompt' => "Fixture question {$number}?",
+        'explanation' => "Fixture explanation {$number}.",
+        'choices' => ["Right answer {$number}", "Wrong answer {$number}", "Other answer {$number}"],
+        'correct' => 0,
+    ], range(1, 5)),
+]);
+app(ManageQuest::class)->open($fixtureQuest);
 
 // Six more regions with an HEI each, so a Central Office account's dashboard
 // lists more regions than its "Every campus counts" card shows. They are

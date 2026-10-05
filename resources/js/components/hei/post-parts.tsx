@@ -14,6 +14,7 @@ import {
     ReactionsSummary,
 } from '@/components/hei/post-reactions';
 import { SourceAvatar } from '@/components/hei/source-avatar';
+import { PersonLink } from '@/components/people/person-link';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -81,7 +82,10 @@ export function PostByline({
                     )}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                    {post.author.name}
+                    <PersonLink
+                        person={post.author}
+                        className="hover:text-foreground"
+                    />
                     {post.author.deactivated && (
                         <>
                             <span aria-hidden> · </span>

@@ -50,12 +50,19 @@ class UserManagementController extends Controller
                 });
             })
             ->when($role !== '', fn ($query) => $query->whereHas('roles', fn ($query) => $query->where('slug', $role)))
+            // A regional office lists its own region's accounts (staff by
+            // office, HEI accounts through their HEI) and those placed nowhere.
+            ->when(! $actor->national_access, fn ($query) => $query
+                ->where('national_access', false)
+                ->where(fn ($query) => $query
+                    ->placedIn($actor->survey_region_id)
+                    ->orWhere(fn ($query) => $query->whereNull('survey_region_id')->whereNull('survey_hei_id'))))
             ->placedIn(
                 isset($validated['region']) ? (int) $validated['region'] : null,
                 isset($validated['hei']) ? (int) $validated['hei'] : null,
             );
         $users = $filtered()
-            ->with(['roles:id,name,slug', 'hei:id,name', 'officeRegion:id,name'])
+            ->with(['roles:id,name,slug', 'hei:id,name,survey_cluster_id', 'hei.cluster:id,survey_region_id', 'officeRegion:id,name'])
             ->when($status !== null, fn ($query) => $query->where('status', $status))
             // Registrations awaiting approval are the admin's to-do list.
             ->orderByRaw('case when status = ? then 0 else 1 end', [UserStatus::Pending->value])
@@ -167,6 +174,8 @@ class UserManagementController extends Controller
                 'delete' => $request->user()->can('users.delete'),
                 'activity' => $request->user()->can('activity-logs.view'),
             ],
+            // What a new account signs in with, to pass on to its holder.
+            'temporaryPassword' => $request->user()->can('users.create') ? config('auth.temporary_password') : null,
         ]);
     }
 
@@ -179,19 +188,17 @@ class UserManagementController extends Controller
         $this->ensureOfficeIsAssignable($request->user(), $office);
 
         $user = DB::transaction(function () use ($validated, $slugs, $office): User {
-            $user = User::query()->create([
+            // It starts with the temporary password, which its holder must
+            // change the first time they sign in.
+            $user = (new User)->fill([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'password' => $validated['password'],
                 'survey_hei_id' => $this->heiFrom($slugs, $validated),
                 'status' => UserStatus::Active,
-                'email_verified_at' => now(),
-            ]);
+            ])->giveTemporaryPassword();
 
-            // The office is not mass assignable, so a form elsewhere cannot grant it.
-            if ($office !== null) {
-                $user->forceFill($office)->save();
-            }
+            // Neither is mass assignable, so a form elsewhere cannot set them.
+            $user->forceFill(['email_verified_at' => now(), ...($office ?? [])])->save();
 
             $user->roles()->sync($validated['role_ids']);
 
@@ -204,7 +211,7 @@ class UserManagementController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('User created.'),
+            'message' => __('User created. Their temporary password is “:password”.', ['password' => config('auth.temporary_password')]),
         ]);
 
         return to_route('settings.users.index');
@@ -220,20 +227,23 @@ class UserManagementController extends Controller
         $office = $this->officeFrom($slugs, $validated);
         $this->ensureOfficeIsAssignable($request->user(), $office);
         $rolesBefore = $user->roles()->pluck('name')->all();
+        // A password set for someone else is theirs to replace at their next
+        // sign-in; a manager editing their own account keeps what they typed.
+        $temporary = ! empty($validated['password']) && ! $user->is($request->user());
 
-        DB::transaction(function () use ($user, $validated, $slugs, $office): void {
+        DB::transaction(function () use ($user, $validated, $slugs, $office, $temporary): void {
             // Contact details are left as the account holder set them.
-            $attributes = [
+            $user->fill([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'survey_hei_id' => $this->heiFrom($slugs, $validated),
-            ];
+            ]);
 
-            if (! empty($validated['password'])) {
-                $attributes['password'] = $validated['password'];
+            if ($temporary) {
+                $user->giveTemporaryPassword($validated['password']);
+            } elseif (! empty($validated['password'])) {
+                $user->password = $validated['password'];
             }
-
-            $user->fill($attributes);
 
             if ($office !== null) {
                 $user->forceFill($office);
@@ -243,13 +253,13 @@ class UserManagementController extends Controller
             $user->roles()->sync($validated['role_ids']);
         });
 
-        $changes = $activity->changesOf($user);
+        $changes = $activity->changesOf($user, except: ['must_change_password']);
         $roles = $activity->listChange($rolesBefore, Role::query()->whereKey($validated['role_ids'])->pluck('name')->all());
         if ($roles !== null) {
             $changes['roles'] = $roles;
         }
         if (! empty($validated['password'])) {
-            $changes['password'] = [null, 'Changed'];
+            $changes['password'] = [null, $temporary ? 'Changed, to replace at next sign-in' : 'Changed'];
         }
         $activity->record(ActivityAction::Updated, ActivityModule::Users, $user, $changes);
 
@@ -443,13 +453,19 @@ class UserManagementController extends Controller
     }
 
     /**
-     * Central Office staff manage everyone. Others manage accounts in their
-     * own regional office and accounts with no office, such as HEI users.
+     * Central Office staff manage everyone. Others manage accounts of their
+     * own region (staff by their office, HEI accounts through their HEI) and
+     * accounts placed nowhere yet.
      */
     private function reachesOffice(User $actor, User $target): bool
     {
-        return $actor->national_access || (! $target->national_access
-            && ($target->survey_region_id === null || $target->survey_region_id === $actor->survey_region_id));
+        if ($actor->national_access) {
+            return true;
+        }
+
+        $region = $target->regionId();
+
+        return ! $target->national_access && ($region === null || $region === $actor->survey_region_id);
     }
 
     /**
@@ -470,6 +486,8 @@ class UserManagementController extends Controller
     /**
      * The office a create or update sets, or null to keep the current one.
      * HEI-only accounts never hold one: their region comes through the HEI.
+     * Administrators run the whole system, so they always cover every
+     * region, whatever office the form sends.
      *
      * @param  list<string>  $slugs
      * @param  array<string, mixed>  $validated
@@ -479,6 +497,10 @@ class UserManagementController extends Controller
     {
         if (Role::onlyHei($slugs)) {
             return ['national_access' => false, 'survey_region_id' => null];
+        }
+
+        if (in_array('admin', $slugs, true)) {
+            return ['national_access' => true, 'survey_region_id' => null];
         }
 
         if (! array_key_exists('national_access', $validated) && ! array_key_exists('survey_region_id', $validated)) {

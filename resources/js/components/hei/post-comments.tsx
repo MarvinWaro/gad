@@ -6,6 +6,7 @@ import { ConfirmPopover } from '@/components/confirm-popover';
 import { toast } from '@/lib/toast';
 import InputError from '@/components/input-error';
 import { PersonAvatar } from '@/components/person-avatar';
+import { PersonLink } from '@/components/people/person-link';
 import { formatFull, formatRelative } from '@/lib/relative-time';
 import { cn } from '@/lib/utils';
 import type { PostComment } from '@/types';
@@ -182,7 +183,7 @@ function CommentItem({
             <div className="min-w-0 flex-1">
                 <div className="inline-block max-w-full rounded-[14px] bg-foreground/5 px-3 py-2">
                     <p className="flex flex-wrap items-center gap-x-1.5 text-sm font-medium">
-                        {comment.author.name}
+                        <PersonLink person={comment.author} />
                         {comment.is_post_author && (
                             <span className="rounded-full bg-brand-soft px-1.5 text-xs font-normal text-brand">
                                 Author

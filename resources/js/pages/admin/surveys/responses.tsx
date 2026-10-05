@@ -2,6 +2,8 @@ import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Download, Eye, Search, Trash2 } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { ConfirmPopover } from '@/components/confirm-popover';
+import { Pagination, type Paginated } from '@/components/pagination';
+import { SurveyTabs } from '@/components/surveys/survey-tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,11 +22,6 @@ type Row = {
     submitted_at: string;
     expires_at: string;
 };
-type Paginated = {
-    data: Row[];
-    links: { url: string | null; label: string; active: boolean }[];
-    total: number;
-};
 
 export default function Responses({
     survey,
@@ -33,7 +30,7 @@ export default function Responses({
     permissions,
 }: {
     survey: { id: number; code: string; title: string };
-    responses: Paginated;
+    responses: Paginated<Row>;
     filters: Record<string, string>;
     permissions: { export: boolean; delete: boolean };
 }) {
@@ -79,6 +76,7 @@ export default function Responses({
                         )}
                     </div>
                 </div>
+                <SurveyTabs surveyId={survey.id} current="responses" />
                 <Card className="gap-0 py-0">
                     <CardHeader className="flex-row items-center justify-between border-b py-5">
                         <CardTitle>{responses.total} responses</CardTitle>
@@ -211,6 +209,13 @@ export default function Responses({
                                     </tbody>
                                 </table>
                             </div>
+                        )}
+                        {responses.data.length > 0 && (
+                            <Pagination
+                                page={responses}
+                                label="responses"
+                                persistent
+                            />
                         )}
                     </CardContent>
                 </Card>

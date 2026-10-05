@@ -83,6 +83,44 @@ class Notifier
         $this->send(NotificationKind::PostTagged, $entry, $post->tags()->pluck('users.id')->all());
     }
 
+    /** A badge awarded by hand: the person who now holds it. */
+    public function badgeAwarded(User $recipient, ?ActivityLog $entry): void
+    {
+        $this->send(NotificationKind::BadgeAwarded, $entry, [$recipient->id]);
+    }
+
+    /**
+     * A badge someone earned by sharing GAD work. The system gave it, so the
+     * earner is told, though the entry names them as the one who acted.
+     */
+    public function badgeEarned(User $earner, ?ActivityLog $entry): void
+    {
+        if ($entry === null || ! $earner->isActive()) {
+            return;
+        }
+
+        $this->guarded(fn () => $this->insert(NotificationKind::BadgeEarned, $entry, [$earner->id]));
+    }
+
+    /** Someone followed a person: that person. */
+    public function userFollowed(User $followed, ?ActivityLog $entry): void
+    {
+        $this->send(NotificationKind::UserFollowed, $entry, [$followed->id]);
+    }
+
+    /** A follow taken back takes its notice with it, read or not. */
+    public function followWithdrawn(User $follower, User $followed): void
+    {
+        $this->guarded(fn () => Notification::query()
+            ->where('kind', NotificationKind::UserFollowed)
+            ->where('user_id', $followed->id)
+            ->whereHas('activity', fn (Builder $query) => $query
+                ->where('user_id', $follower->id)
+                ->where('subject_type', $followed->getMorphClass())
+                ->where('subject_id', (string) $followed->id))
+            ->delete());
+    }
+
     /** A post removed by a moderator; removing your own tells no one. */
     public function postRemoved(Post $post, ?ActivityLog $entry): void
     {

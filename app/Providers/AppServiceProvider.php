@@ -41,9 +41,34 @@ class AppServiceProvider extends ServiceProvider
                 : null,
         );
 
-        // The website feedback form counts on its own, so answering the law
-        // surveys or rating the site never uses up a visitor's feedback.
-        RateLimiter::for('feedback', fn (Request $request): Limit => Limit::perHour(5)->by('feedback|'.$request->ip()));
+        // The public forms each count on their own, per visitor, with a far
+        // higher ceiling for one network: at an event, a whole venue shares
+        // one Wi-Fi address and must not lock itself out after five answers.
+        RateLimiter::for('survey-answers', fn (Request $request): array => self::publicForm($request, 'survey', 10, 300));
+        RateLimiter::for('ratings', fn (Request $request): array => self::publicForm($request, 'rating', 5, 300));
+        RateLimiter::for('feedback', fn (Request $request): array => self::publicForm($request, 'feedback', 5, 100));
+        // Signing up and password resets (ThrottleAccountForms): a venue may
+        // register many people at once from one address.
+        RateLimiter::for('account-forms', fn (Request $request): array => self::publicForm($request, 'account', 10, 300));
+    }
+
+    /**
+     * A public form's limits an hour: `$perVisitor` for one browser (its
+     * session, or its address when it sends no session cookie) and
+     * `$perNetwork` for everyone behind one address.
+     *
+     * @return list<Limit>
+     */
+    private static function publicForm(Request $request, string $form, int $perVisitor, int $perNetwork): array
+    {
+        $visitor = $request->hasCookie((string) config('session.cookie')) && $request->hasSession()
+            ? 'session|'.$request->session()->getId()
+            : 'ip|'.$request->ip();
+
+        return [
+            Limit::perHour($perVisitor)->by("{$form}|{$visitor}"),
+            Limit::perHour($perNetwork)->by("{$form}|network|{$request->ip()}"),
+        ];
     }
 
     /**

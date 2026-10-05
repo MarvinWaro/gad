@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { BetaTag } from '@/components/beta-tag';
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -34,6 +35,7 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                             >
                                 {item.icon && <item.icon />}
                                 <span>{item.title}</span>
+                                {item.beta && <BetaTag className="ml-auto" />}
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

@@ -33,8 +33,8 @@ class RoleManagementController extends Controller
                 ->orWhere('description', 'like', "%{$search}%"))
             ->orderByRaw("CASE WHEN slug = 'admin' THEN 0 ELSE 1 END")
             ->orderBy('name')
-            ->get()
-            ->map(fn (Role $role): array => [
+            ->paginate(10)->withQueryString()
+            ->through(fn (Role $role): array => [
                 'id' => $role->id,
                 'name' => $role->name,
                 'slug' => $role->slug,

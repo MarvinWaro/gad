@@ -2,6 +2,7 @@ import { Heart, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent, PointerEvent, RefObject } from 'react';
 import { PersonAvatar } from '@/components/person-avatar';
+import { PersonLink } from '@/components/people/person-link';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -657,9 +658,10 @@ function ReactorRow({ person }: { person: Reactor }) {
                 </span>
             </span>
             <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium">
-                    {person.name}
-                </span>
+                <PersonLink
+                    person={person}
+                    className="block truncate text-sm font-medium"
+                />
                 <span className="block truncate text-xs text-muted-foreground">
                     {person.hei ?? CHED_LABEL}
                 </span>

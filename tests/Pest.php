@@ -1,8 +1,15 @@
 <?php
 
+use App\Actions\Quests\ManageQuest;
+use App\Actions\Quests\PlayQuest;
+use App\Actions\Quests\SaveQuest;
+use App\Enums\QuestStatus;
+use App\Models\Quest;
+use App\Models\QuestAttempt;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -136,4 +143,63 @@ function exifJpeg(int $width, int $height, int $orientation, bool $bigEndian = t
     file_put_contents($path, "\xFF\xD8\xFF\xE1".pack('n', strlen($exif) + 2).$exif.substr($jpeg, 2));
 
     return $path;
+}
+
+/**
+ * A quest's five questions as staff write them, with placeholder wording.
+ * The first choice of each question is the correct one.
+ *
+ * @param  array<string, mixed>  $overrides
+ * @return array{title: string, description: string|null, questions: list<array{prompt: string, explanation: string, choices: list<string>, correct: int}>}
+ */
+function questPayload(array $overrides = []): array
+{
+    return [
+        'title' => 'Placeholder quest',
+        'description' => 'Five placeholder questions.',
+        'questions' => array_map(fn (int $number): array => [
+            'prompt' => "Placeholder question {$number}?",
+            'explanation' => "Placeholder explanation {$number}.",
+            'choices' => ["Right answer {$number}", "Wrong answer {$number}", "Other wrong answer {$number}"],
+            'correct' => 0,
+        ], range(1, 5)),
+        ...$overrides,
+    ];
+}
+
+/**
+ * A quest for a region (or every region), written and opened as its staff
+ * would.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function createQuest(?SurveyRegion $region, QuestStatus $status = QuestStatus::Open, ?User $author = null, array $overrides = []): Quest
+{
+    $quest = app(SaveQuest::class)->create($author ?? User::factory()->create(), $region?->id, questPayload($overrides));
+
+    if ($status !== QuestStatus::Draft) {
+        app(ManageQuest::class)->open($quest);
+    }
+    if ($status === QuestStatus::Closed) {
+        app(ManageQuest::class)->close($quest);
+    }
+
+    return $quest->refresh();
+}
+
+/**
+ * Plays a quest to the end: the first `$correct` questions right, the rest
+ * wrong.
+ */
+function playQuest(Quest $quest, User $player, int $correct): QuestAttempt
+{
+    $game = app(PlayQuest::class);
+    $attempt = $game->start($quest, $player);
+
+    foreach ($quest->questions()->with('choices')->get()->values() as $index => $question) {
+        $choice = $question->choices->first(fn ($choice): bool => $choice->is_correct === ($index < $correct));
+        $game->answer($quest, $player, $question->id, $attempt->keyFor($choice->id));
+    }
+
+    return $attempt->refresh();
 }

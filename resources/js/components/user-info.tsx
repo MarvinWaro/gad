@@ -1,7 +1,13 @@
+import { usePage } from '@inertiajs/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import type { User } from '@/types';
 
+/**
+ * The signed-in account in the sidebar and the account menu: photo, name,
+ * where it belongs (its institution or CHED office, such as "CHED Regional
+ * Office XII"), and the email in the menu.
+ */
 export function UserInfo({
     user,
     showEmail = false,
@@ -10,6 +16,7 @@ export function UserInfo({
     showEmail?: boolean;
 }) {
     const getInitials = useInitials();
+    const { affiliation } = usePage().props.auth;
 
     return (
         <>
@@ -28,6 +35,14 @@ export function UserInfo({
                 {showEmail && (
                     <span className="truncate text-xs text-muted-foreground">
                         {user.email}
+                    </span>
+                )}
+                {affiliation && (
+                    <span
+                        data-test="user-affiliation"
+                        className="truncate text-xs text-muted-foreground"
+                    >
+                        {affiliation}
                     </span>
                 )}
             </div>

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Settings\AcademicYearController;
 use App\Http\Controllers\Settings\ActivityLogController;
+use App\Http\Controllers\Settings\BadgeController;
 use App\Http\Controllers\Settings\ProfileAvatarController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\RegionOfficeController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Settings\SecurityController;
 use App\Http\Controllers\Settings\SiteRatingManagementController;
 use App\Http\Controllers\Settings\StudentCountController;
 use App\Http\Controllers\Settings\SurveyDirectoryController;
+use App\Http\Controllers\Settings\TemporaryPasswordController;
 use App\Http\Controllers\Settings\UserManagementController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +26,12 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('throttle:10,1')
         ->name('profile.avatar.update');
     Route::delete('settings/profile/avatar', [ProfileAvatarController::class, 'destroy'])->name('profile.avatar.destroy');
+
+    // An account on a temporary password chooses its own here first.
+    Route::get('password/change', [TemporaryPasswordController::class, 'edit'])->name('password.change');
+    Route::put('password/change', [TemporaryPasswordController::class, 'update'])
+        ->middleware('throttle:6,1')
+        ->name('password.change.update');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -122,6 +130,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware(['can:student-counts.import', 'throttle:20,1'])->name('settings.student-counts.import');
     Route::delete('settings/student-counts', [StudentCountController::class, 'destroy'])
         ->middleware('can:student-counts.delete')->name('settings.student-counts.destroy');
+
+    // Badges (docs/badges.md). The Form Requests check the badge's place.
+    Route::get('settings/badges', [BadgeController::class, 'index'])
+        ->middleware('can:badges.view')->name('settings.badges.index');
+    Route::post('settings/badges', [BadgeController::class, 'store'])
+        ->middleware('can:badges.create')->name('settings.badges.store');
+    Route::whereUlid('badge')->group(function () {
+        Route::get('settings/badges/{badge}', [BadgeController::class, 'show'])
+            ->middleware('can:badges.view')->name('settings.badges.show');
+        // A form with a picture: sent as POST with _method=PUT.
+        Route::put('settings/badges/{badge}', [BadgeController::class, 'update'])
+            ->middleware('can:badges.update')->name('settings.badges.update');
+        Route::patch('settings/badges/{badge}/status', [BadgeController::class, 'status'])
+            ->middleware('can:badges.update')->name('settings.badges.status');
+        Route::delete('settings/badges/{badge}', [BadgeController::class, 'destroy'])
+            ->middleware('can:delete,badge')->name('settings.badges.destroy');
+        Route::get('settings/badges/{badge}/people', [BadgeController::class, 'people'])
+            ->middleware(['can:award,badge', 'throttle:60,1'])->name('settings.badges.people');
+        Route::post('settings/badges/{badge}/awards', [BadgeController::class, 'award'])
+            ->middleware('can:badges.award')->name('settings.badges.awards.store');
+        Route::delete('settings/badges/{badge}/awards/{award}', [BadgeController::class, 'revoke'])
+            ->middleware('can:award,badge')->scopeBindings()->name('settings.badges.awards.destroy');
+    });
 });
 
 Route::get('.well-known/passkey-endpoints', function () {

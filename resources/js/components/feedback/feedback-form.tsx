@@ -9,6 +9,7 @@ import { Field, PublicSelect } from '@/components/survey/fields';
 import { Button } from '@/components/ui/button';
 import {
     emptyAnswers,
+    feedbackScaleOptions,
     feedbackStepOf,
     feedbackSteps,
     firstStepIssues,
@@ -21,11 +22,6 @@ import type {
     FeedbackTypeOption,
 } from '@/types/feedback';
 import type { DirectoryOption } from '@/types/monitoring';
-
-const scaleOptions = [1, 2, 3, 4, 5].map((value) => ({
-    value,
-    label: String(value),
-}));
 
 /**
  * The website feedback form in short steps, like the old Google Form's
@@ -314,9 +310,7 @@ export function FeedbackForm({
                                 key={item.key}
                                 id={item.key}
                                 label={item.label}
-                                options={scaleOptions}
-                                low={scale.low}
-                                high={scale.high}
+                                options={feedbackScaleOptions(scale)}
                                 value={form.data[item.key]}
                                 onChange={(value) =>
                                     form.setData(item.key, value)

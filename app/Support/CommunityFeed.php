@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\FeedScope;
 use App\Enums\PostReactionType;
 use App\Enums\UserStatus;
 use App\Models\Post;
@@ -10,10 +11,12 @@ use App\Models\PostComment;
 use App\Models\PostImage;
 use App\Models\PostReaction;
 use App\Models\PostSdg;
+use App\Models\SurveyRegion;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Builds the community feed as the viewer sees it: newest first, with their
@@ -31,13 +34,14 @@ class CommunityFeed
     public const REACTORS_SHOWN = 10;
 
     /**
-     * A page of the feed, or of one author's posts for their profile.
+     * A page of the feed, or of one author's posts for their profile. The
+     * Following scope keeps to the people the viewer follows.
      *
      * @return Paginator<int, array<string, mixed>>
      */
-    public static function page(User $viewer, ?User $author = null): Paginator
+    public static function page(User $viewer, ?User $author = null, FeedScope $scope = FeedScope::All): Paginator
     {
-        return self::query($viewer)
+        return self::query($viewer, $scope)
             ->when($author, fn (Builder $query, User $author) => $query->where('user_id', $author->id))
             ->latest()
             ->latest('id')
@@ -61,9 +65,9 @@ class CommunityFeed
      * them. Compared by posting time rather than by ULID, so posts carried
      * over with their original dates never count as new.
      */
-    public static function newerCount(User $viewer, CarbonInterface $postedAt, string $postId): int
+    public static function newerCount(User $viewer, CarbonInterface $postedAt, string $postId, FeedScope $scope = FeedScope::All): int
     {
-        return self::visibleTo($viewer)
+        return self::visibleTo($viewer, $scope)
             ->where(fn (Builder $query) => $query
                 ->where('created_at', '>', $postedAt)
                 ->orWhere(fn (Builder $sameSecond) => $sameSecond
@@ -73,14 +77,37 @@ class CommunityFeed
     }
 
     /**
-     * Every post the viewer's feed may show: all of them for now. Scoping the
-     * feed by region belongs here, so the feed and its counts agree.
+     * Every post the viewer's feed may show: all of them, those of their own
+     * region, or those of the people they follow. Here, so the feed and its
+     * new-posts count agree.
      *
      * @return Builder<Post>
      */
-    private static function visibleTo(User $viewer): Builder
+    private static function visibleTo(User $viewer, FeedScope $scope = FeedScope::All): Builder
     {
-        return Post::query();
+        $regionId = $viewer->regionId();
+
+        return match ($scope) {
+            FeedScope::All => Post::query(),
+            FeedScope::Region => $regionId !== null ? Post::query()->inRegion($regionId) : Post::query()->whereRaw('1 = 0'),
+            FeedScope::Following => Post::query()->whereIn(
+                'user_id',
+                DB::table('follows')->select('followed_id')->where('follower_id', $viewer->id),
+            ),
+        };
+    }
+
+    /**
+     * The reader's region, for the feed's "My region" tab; null for the
+     * Central Office, which has none.
+     *
+     * @return array{id: int, name: string}|null
+     */
+    public static function regionOf(User $viewer): ?array
+    {
+        $region = SurveyRegion::query()->select(['id', 'name'])->find($viewer->regionId());
+
+        return $region !== null ? ['id' => $region->id, 'name' => $region->name] : null;
     }
 
     /**
@@ -152,9 +179,9 @@ class CommunityFeed
     }
 
     /** @return Builder<Post> */
-    private static function query(User $viewer): Builder
+    private static function query(User $viewer, FeedScope $scope = FeedScope::All): Builder
     {
-        return self::withReactions(self::visibleTo($viewer), $viewer)
+        return self::withReactions(self::visibleTo($viewer, $scope), $viewer)
             ->with([
                 'author:id,name,status,avatar_path',
                 'hei:id,name',

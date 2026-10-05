@@ -123,4 +123,17 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | First Administrator
+    |--------------------------------------------------------------------------
+    |
+    | The password AdminUserSeeder gives the first administrator when it
+    | creates the account. Production refuses to seed without one, so a
+    | server never starts with a password anyone can read in the code.
+    |
+    */
+
+    'admin_password' => env('ADMIN_PASSWORD'),
+
 ];

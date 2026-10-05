@@ -32,12 +32,15 @@ export function Pagination({
     page,
     label = 'results',
     persistent = false,
+    only,
     className,
 }: {
     page: PaginationMeta;
     label?: string;
     /** Keep the bar on a single page, where it still gives the count. */
     persistent?: boolean;
+    /** Reload just these props, keeping the rest of the page as it is. */
+    only?: string[];
     className?: string;
 }) {
     if (page.last_page <= 1 && !persistent) {
@@ -60,7 +63,7 @@ export function Pagination({
                 Showing {page.from ?? 0}–{page.to ?? 0} of {page.total} {label}
             </p>
             <div className="flex flex-wrap items-center gap-1">
-                <PageLink link={previous} label="Previous page">
+                <PageLink link={previous} label="Previous page" only={only}>
                     <ChevronLeft />
                 </PageLink>
                 {numbered.map((link, index) => (
@@ -68,11 +71,12 @@ export function Pagination({
                         key={`${link.label}-${index}`}
                         link={link}
                         label={`Page ${link.label}`}
+                        only={only}
                     >
                         {link.label}
                     </PageLink>
                 ))}
-                <PageLink link={next} label="Next page">
+                <PageLink link={next} label="Next page" only={only}>
                     <ChevronRight />
                 </PageLink>
             </div>
@@ -83,10 +87,12 @@ export function Pagination({
 function PageLink({
     link,
     label,
+    only,
     children,
 }: {
     link?: PaginationLink;
     label: string;
+    only?: string[];
     children: React.ReactNode;
 }) {
     if (!link) {
@@ -107,7 +113,13 @@ function PageLink({
             variant={link.active ? 'secondary' : 'ghost'}
             aria-current={link.active ? 'page' : undefined}
         >
-            <Link href={link.url} preserveScroll aria-label={label}>
+            <Link
+                href={link.url}
+                only={only}
+                preserveState={only !== undefined}
+                preserveScroll
+                aria-label={label}
+            >
                 {children}
             </Link>
         </Button>

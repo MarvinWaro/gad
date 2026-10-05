@@ -4,14 +4,14 @@
 
 **Where things live**
 
-| Piece             | File                                                                                      |
-| ----------------- | ----------------------------------------------------------------------------------------- |
-| Controller (thin) | `DashboardController`                                                                     |
-| Filters           | `DashboardFilterRequest`                                                                  |
-| Figures           | `App\Services\DashboardStatistics`, with `GoalStatistics` for the SDGs and A.C.H.I.E.V.E. |
-| Places in view    | `App\Support\DashboardScope`                                                              |
-| Periods           | `App\Support\ReportingPeriod`                                                             |
-| Page              | `resources/js/pages/dashboard.tsx` and `components/dashboard/`                            |
+| Piece             | File                                                                                                                                                                                                |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Controller (thin) | `DashboardController`                                                                                                                                                                               |
+| Filters           | `DashboardFilterRequest`                                                                                                                                                                            |
+| Figures           | `App\Services\DashboardStatistics`, with `GoalStatistics` for the SDGs and A.C.H.I.E.V.E., and `SurveyStatistics` for the survey figures (shared with the Surveys page, `docs/survey-analytics.md`) |
+| Places in view    | `App\Support\DashboardScope`                                                                                                                                                                        |
+| Periods           | `App\Support\ReportingPeriod`                                                                                                                                                                       |
+| Page              | `resources/js/pages/dashboard.tsx` and `components/dashboard/`                                                                                                                                      |
 
 ## What is in view
 

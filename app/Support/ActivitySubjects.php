@@ -3,12 +3,14 @@
 namespace App\Support;
 
 use App\Models\AcademicYear;
+use App\Models\Badge;
 use App\Models\CarouselSlide;
 use App\Models\ChecklistResponse;
 use App\Models\GadEvent;
 use App\Models\MonitoringReport;
 use App\Models\Post;
 use App\Models\PostComment;
+use App\Models\Quest;
 use App\Models\Role;
 use App\Models\SiteFeedback;
 use App\Models\SiteRating;
@@ -52,6 +54,8 @@ class ActivitySubjects
         'gad-survey-answer' => ChecklistResponse::class,
         'site-rating' => SiteRating::class,
         'site-feedback' => SiteFeedback::class,
+        'quest' => Quest::class,
+        'badge' => Badge::class,
     ];
 
     /** The kind of record, as the entry's sentence names it. */
@@ -78,13 +82,13 @@ class ActivitySubjects
     public static function label(Model $subject): string
     {
         return match (true) {
-            $subject instanceof User, $subject instanceof Role,
+            $subject instanceof User, $subject instanceof Role, $subject instanceof Badge,
             $subject instanceof SurveyRegion, $subject instanceof SurveyCluster => (string) $subject->getAttribute('name'),
             $subject instanceof SurveyHei => InstitutionName::display($subject->name),
             $subject instanceof AcademicYear => $subject->label,
             $subject instanceof SurveyRespondentGroup => (string) $subject->getAttribute('label'),
             $subject instanceof Survey, $subject instanceof GadEvent,
-            $subject instanceof CarouselSlide => (string) $subject->getAttribute('title'),
+            $subject instanceof CarouselSlide, $subject instanceof Quest => (string) $subject->getAttribute('title'),
             $subject instanceof SurveyResponse => (string) ($subject->getAttribute('public_reference') ?? $subject->getKey()),
             $subject instanceof Post, $subject instanceof PostComment => self::excerpt($subject->getAttribute('body')),
             $subject instanceof MonitoringReport => sprintf(
@@ -110,6 +114,8 @@ class ActivitySubjects
             $subject instanceof SurveyRegion => new ActivityPlace((int) $subject->getKey()),
             $subject instanceof SurveyCluster => new ActivityPlace((int) $subject->getAttribute('survey_region_id'), (int) $subject->getKey()),
             $subject instanceof SurveyHei => ActivityPlace::ofHei((int) $subject->getKey()),
+            // A quest or badge for every region belongs to no one place.
+            $subject instanceof Quest, $subject instanceof Badge => $subject->survey_region_id !== null ? new ActivityPlace($subject->survey_region_id) : null,
             $subject instanceof Post => ActivityPlace::ofHei($subject->getAttribute('survey_hei_id')),
             $subject instanceof PostComment => $subject->post !== null ? self::place($subject->post) : null,
             $subject instanceof MonitoringReport, $subject instanceof ChecklistResponse,
@@ -131,7 +137,12 @@ class ActivitySubjects
     {
         return match (true) {
             $subject instanceof User && $subject->is($viewer) => route('profile.edit'),
-            $subject instanceof User => $viewer->can('users.view') ? route('settings.users.index', ['search' => $subject->email]) : null,
+            $subject instanceof User => match (true) {
+                $viewer->can('users.view') => route('settings.users.index', ['search' => $subject->email]),
+                // Anyone else opens their profile, while they can sign in.
+                $subject->isActive() => route('people.show', $subject),
+                default => null,
+            },
             $subject instanceof Role => $viewer->can('roles.view') ? route('settings.roles.index') : null,
             $subject instanceof AcademicYear => $viewer->can('academic-years.view') ? route('settings.academic-years.index') : null,
             ! $viewer->can('survey-directories.view') && ($subject instanceof SurveyRegion || $subject instanceof SurveyCluster
@@ -154,6 +165,13 @@ class ActivitySubjects
             },
             $subject instanceof SiteRating => $viewer->can('site-ratings.view') ? route('settings.ratings.index') : null,
             $subject instanceof SiteFeedback => $viewer->can('feedback.view') ? route('admin.feedback.index') : null,
+            // Whoever holds it sees it on their profile.
+            $subject instanceof Badge => $viewer->can('badges.view') ? route('settings.badges.show', $subject) : route('my-profile', ['tab' => 'badges']),
+            $subject instanceof Quest => match (true) {
+                $viewer->can('results', $subject) => route('quests.manage.show', $subject),
+                $viewer->can('play', $subject) => route('quests.show', $subject),
+                default => null,
+            },
             default => null,
         };
     }

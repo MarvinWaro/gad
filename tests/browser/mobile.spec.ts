@@ -133,7 +133,7 @@ test('the public pages fit a 360px phone', async ({ browser }) => {
 });
 
 test('the HEI pages fit a 360px phone', async ({ browser }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(240_000);
     const page = await phone(browser, 'browser-monitoring@example.test');
     for (const path of [
         '/dashboard',
@@ -147,9 +147,27 @@ test('the HEI pages fit a 360px phone', async ({ browser }) => {
         '/settings/profile',
         '/settings/security',
         '/settings/appearance',
+        '/quests',
     ]) {
         await checkPage(page, path);
     }
+
+    // The game, opened from the quest list.
+    const quest = await page
+        .locator('a[href*="/quests/"]')
+        .first()
+        .getAttribute('href');
+    await checkPage(page, quest!);
+
+    // The Following feed, the search, and someone's profile from it.
+    await checkPage(page, '/dashboard?feed=following');
+    await checkPage(page, '/dashboard?feed=region');
+    await checkPage(page, '/search?q=browser');
+    const person = await page
+        .locator('a[href*="/people/"]')
+        .first()
+        .getAttribute('href');
+    await checkPage(page, person!);
 });
 
 test('the staff pages fit a 360px phone', async ({ browser }) => {
@@ -173,11 +191,24 @@ test('the staff pages fit a 360px phone', async ({ browser }) => {
         '/settings/activity-logs',
         '/settings/ratings',
         '/settings/student-counts',
+        '/settings/badges',
+        '/quests/manage',
+        '/quests/manage/create',
         '/notifications',
         '/profile',
+        '/community?feed=following',
+        '/search?q=browser',
     ]) {
         await checkPage(page, path);
     }
+
+    // A quest's results, opened from the list.
+    await page.goto('/quests/manage');
+    const results = await page
+        .locator('a[href*="/quests/manage/"]:not([href$="/create"])')
+        .first()
+        .getAttribute('href');
+    await checkPage(page, results!);
 
     // The survey builder, opened from the list.
     await page.goto('/admin/surveys');
@@ -187,4 +218,5 @@ test('the staff pages fit a 360px phone', async ({ browser }) => {
         .getAttribute('href');
     await checkPage(page, edit!);
     await checkPage(page, edit!.replace('/edit', '/responses'));
+    await checkPage(page, edit!.replace('/edit', '/summary'));
 });

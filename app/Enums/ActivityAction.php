@@ -41,6 +41,12 @@ enum ActivityAction: string
     case TwoFactorDisabled = 'two_factor_disabled';
     case PasskeyAdded = 'passkey_added';
     case PasskeyRemoved = 'passkey_removed';
+    case Closed = 'closed';
+    case Completed = 'completed';
+    case Earned = 'earned';
+    case Awarded = 'awarded';
+    case Followed = 'followed';
+    case Unfollowed = 'unfollowed';
 
     /** The entry's badge. */
     public function label(): string
@@ -79,6 +85,12 @@ enum ActivityAction: string
             self::TwoFactorDisabled => 'Two-factor off',
             self::PasskeyAdded => 'Passkey added',
             self::PasskeyRemoved => 'Passkey removed',
+            self::Closed => 'Closed',
+            self::Completed => 'Completed',
+            self::Earned => 'Earned',
+            self::Awarded => 'Awarded',
+            self::Followed => 'Followed',
+            self::Unfollowed => 'Unfollowed',
         };
     }
 
@@ -122,6 +134,12 @@ enum ActivityAction: string
             self::TwoFactorDisabled => 'Turned off two-factor authentication',
             self::PasskeyAdded => 'Added a passkey',
             self::PasskeyRemoved => 'Removed a passkey',
+            self::Closed => 'Closed :noun :subject',
+            self::Completed => 'Completed :noun :subject',
+            self::Earned => 'Earned :noun :subject',
+            self::Awarded => 'Awarded :noun :subject',
+            self::Followed => 'Followed :subject',
+            self::Unfollowed => 'Stopped following :subject',
         };
     }
 
@@ -134,11 +152,12 @@ enum ActivityAction: string
     {
         return match ($this) {
             self::Login, self::Registered, self::Created, self::Activated, self::Approved,
-            self::Published, self::Submitted, self::Reviewed => 'positive',
-            self::Deactivated, self::MarkedPending, self::Archived, self::Reopened, self::Returned,
+            self::Published, self::Submitted, self::Reviewed, self::Completed,
+            self::Earned, self::Awarded => 'positive',
+            self::Deactivated, self::MarkedPending, self::Archived, self::Reopened, self::Returned, self::Closed,
             self::Unreacted, self::TwoFactorDisabled, self::PasskeyRemoved => 'warning',
             self::Deleted, self::LoginFailed => 'danger',
-            self::Logout, self::Exported, self::Downloaded => 'neutral',
+            self::Logout, self::Exported, self::Downloaded, self::Unfollowed => 'neutral',
             default => 'info',
         };
     }

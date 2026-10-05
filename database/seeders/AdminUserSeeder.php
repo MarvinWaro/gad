@@ -16,10 +16,11 @@ class AdminUserSeeder extends Seeder
         }
 
         // The model hashes passwords. Re-seeding must not reset a changed password.
-        $admin = User::query()->firstOrCreate(
-            ['email' => 'admin@gmail.com'],
-            ['name' => 'Administrator', 'password' => '12345678'],
-        );
+        $admin = $existing ?? User::query()->create([
+            'email' => 'admin@gmail.com',
+            'name' => 'Administrator',
+            'password' => $this->password(),
+        ]);
 
         // The first administrator works for the Central Office, so they can
         // place every other staff account in its office.
@@ -28,5 +29,24 @@ class AdminUserSeeder extends Seeder
         }
 
         $admin->assignRole('admin');
+    }
+
+    /**
+     * ADMIN_PASSWORD from .env. Only a local or test database falls back to
+     * the shared development password.
+     */
+    private function password(): string
+    {
+        $password = config('app.admin_password');
+
+        if (is_string($password) && $password !== '') {
+            return $password;
+        }
+
+        if (app()->isProduction()) {
+            throw new RuntimeException('Set ADMIN_PASSWORD in .env before seeding: the first administrator needs a password of its own.');
+        }
+
+        return '12345678';
     }
 }

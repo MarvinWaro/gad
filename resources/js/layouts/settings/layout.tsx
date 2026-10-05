@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    Award,
     CalendarRange,
     ChartColumnBig,
     ContactRound,
@@ -74,7 +75,8 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
         isCurrentOrParentUrl('/settings/academic-years') ||
         isCurrentOrParentUrl('/settings/activity-logs') ||
         isCurrentOrParentUrl('/settings/ratings') ||
-        isCurrentOrParentUrl('/settings/student-counts');
+        isCurrentOrParentUrl('/settings/student-counts') ||
+        isCurrentOrParentUrl('/settings/badges');
     const isAppearancePage = isCurrentOrParentUrl('/settings/appearance');
     const configurationNavItems: NavItem[] = [
         ...(auth.permissions.includes('academic-years.view')
@@ -127,6 +129,12 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
               },
           ]
         : [];
+    // What people earn for their GAD work, shown on their profiles.
+    const communityNavItems: NavItem[] = auth.permissions.includes(
+        'badges.view',
+    )
+        ? [{ title: 'Badges', href: '/settings/badges', icon: Award }]
+        : [];
     // What the public site collects: the homepage's Rate PHLGADIS answers.
     const publicSiteNavItems: NavItem[] = auth.permissions.includes(
         'site-ratings.view',
@@ -170,6 +178,13 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                             <SettingsNavGroup
                                 label="Statistics"
                                 items={statisticsNavItems}
+                                isCurrentOrParentUrl={isCurrentOrParentUrl}
+                            />
+                        )}
+                        {communityNavItems.length > 0 && (
+                            <SettingsNavGroup
+                                label="Community"
+                                items={communityNavItems}
                                 isCurrentOrParentUrl={isCurrentOrParentUrl}
                             />
                         )}

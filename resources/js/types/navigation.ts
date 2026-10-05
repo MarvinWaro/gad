@@ -11,6 +11,8 @@ export type NavItem = {
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon | null;
     isActive?: boolean;
+    /** A first version being tried out: shows a "Beta" tag. */
+    beta?: boolean;
 };
 
 /** Navigation items under one label, as the sidebar groups them. */

@@ -60,6 +60,16 @@ class RbacSeeder extends Seeder
             ['name' => 'View enrollment and graduates', 'slug' => 'student-counts.view', 'group' => 'Enrollment and graduates'],
             ['name' => 'Import enrollment and graduates', 'slug' => 'student-counts.import', 'group' => 'Enrollment and graduates'],
             ['name' => 'Delete enrollment and graduates', 'slug' => 'student-counts.delete', 'group' => 'Enrollment and graduates'],
+            ['name' => 'Play GAD Quest', 'slug' => 'quests.play', 'group' => 'GAD Quest'],
+            ['name' => 'View GAD quests and their results', 'slug' => 'quests.view', 'group' => 'GAD Quest'],
+            ['name' => 'Create GAD quests', 'slug' => 'quests.create', 'group' => 'GAD Quest'],
+            ['name' => 'Edit, open and close GAD quests', 'slug' => 'quests.update', 'group' => 'GAD Quest'],
+            ['name' => 'Delete GAD quests', 'slug' => 'quests.delete', 'group' => 'GAD Quest'],
+            ['name' => 'View badges and who holds them', 'slug' => 'badges.view', 'group' => 'Badges'],
+            ['name' => 'Create badges', 'slug' => 'badges.create', 'group' => 'Badges'],
+            ['name' => 'Edit badges and switch them on or off', 'slug' => 'badges.update', 'group' => 'Badges'],
+            ['name' => 'Delete badges', 'slug' => 'badges.delete', 'group' => 'Badges'],
+            ['name' => 'Award badges by hand', 'slug' => 'badges.award', 'group' => 'Badges'],
         ])->mapWithKeys(function (array $attributes): array {
             $permission = Permission::query()->updateOrCreate(
                 ['slug' => $attributes['slug']],
@@ -84,30 +94,34 @@ class RbacSeeder extends Seeder
                     'events.view', 'events.create', 'events.update',
                     'site-ratings.view',
                     'monitoring.view', 'monitoring.review',
+                    'quests.play',
                 ],
             ],
             // CHED staff. Each account's office (a region, or the Central
             // Office) decides whose reports it sees.
             'ched-focal' => [
                 'name' => 'CHED Focal',
-                'description' => 'Reviews the monitoring reports of HEIs in their office\'s region, sees their GAD surveys, and posts in Gender Mainstreaming.',
-                'permissions' => ['monitoring.view', 'monitoring.review', 'posts.view'],
+                'description' => 'Reviews the monitoring reports of HEIs in their office\'s region, sees their GAD surveys, posts in Gender Mainstreaming, writes GAD quests for their region, and views the law surveys and their summaries without changing them.',
+                'permissions' => [
+                    'monitoring.view', 'monitoring.review', 'posts.view', 'surveys.view',
+                    'quests.play', 'quests.view', 'quests.create', 'quests.update', 'quests.delete',
+                ],
             ],
             'ched-employee' => [
                 'name' => 'CHED Employee',
                 'description' => 'Views the monitoring reports and GAD surveys of their office\'s region and posts in Gender Mainstreaming.',
-                'permissions' => ['monitoring.view', 'posts.view'],
+                'permissions' => ['monitoring.view', 'posts.view', 'quests.play'],
             ],
             // An HEI's own people (Role::HEI_SLUGS), placed through their HEI.
             'hei' => [
                 'name' => 'HEI User',
                 'description' => 'Registered HEI account. Dashboard only.',
-                'permissions' => [],
+                'permissions' => ['quests.play'],
             ],
             'hei-focal' => [
                 'name' => 'HEI Focal',
                 'description' => 'The HEI\'s GAD focal person: everything an HEI user has, plus the monitoring report and the GAD surveys.',
-                'permissions' => ['monitoring.submit'],
+                'permissions' => ['monitoring.submit', 'quests.play'],
             ],
         ])->mapWithKeys(function (array $attributes, string $slug) use ($permissions): array {
             $role = Role::query()->updateOrCreate(

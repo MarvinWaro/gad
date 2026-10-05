@@ -9,7 +9,7 @@ export type AppNotification = {
     id: string;
     kind: { code: string; label: string; tone: ActivityTone };
     module: { code: string; label: string };
-    /** Null when no one acted, as with survey answers. */
+    /** Null when no one acted (survey answers) or the system did (an earned badge). */
     actor: { id: number | null; name: string; avatar: string | null } | null;
     /** What it says after the actor's name; `subject` is set in bold. */
     sentence: { before: string; subject: string | null; after: string };

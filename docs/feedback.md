@@ -24,6 +24,8 @@ Only the type and the feedback are required, as on the old form.
 
 **The step names** ("Agreement", "Ease of use") are this system's, not the old form's.
 
+**Scale presentation:** the five scores appear as native emoji faces (😞 🙁 😐 🙂 😄), from unhappy to happy, in both the form and staff's Details. Each face has a descriptive name for the question: Strongly Disagree / Disagree / Neutral / Agree / Strongly Agree, or Very Difficult / Difficult / Neither difficult nor easy / Easy / Very Easy. Hover and the selected-answer line show the words. Only the presentation changes: stored scores stay 1–5, averages and counts remain numeric, and CSV answers keep their existing wording. The four-choice reading and layout questions keep their original words.
+
 **One definition.** The questions live in `App\Support\FeedbackQuestions`, and the types in `App\Enums\FeedbackType` (codes `comment`, `question`, `bug`, `feature`). The public page, the admin page, validation (`StoreSiteFeedbackRequest`) and the export all read them.
 
 ## What is stored

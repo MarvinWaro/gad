@@ -8,12 +8,12 @@ use App\Models\Role;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 /**
  * An account a user manager creates. Where it belongs follows its roles: an
- * HEI role needs the institution, a CHED role takes an office. Contact
- * details are the account holder's to add on their Profile.
+ * HEI role needs the institution, a CHED role takes an office. It starts with
+ * the temporary password (User::giveTemporaryPassword), and contact details
+ * are the account holder's to add on their Profile.
  */
 class StoreManagedUserRequest extends FormRequest
 {
@@ -30,7 +30,6 @@ class StoreManagedUserRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
-            'password' => ['required', 'confirmed', Password::defaults()],
             'survey_hei_id' => $this->heiRules(
                 fn (): bool => Role::includesHei(Role::slugsOf($this->input('role_ids'))),
                 activeOnly: false,
@@ -46,6 +45,7 @@ class StoreManagedUserRequest extends FormRequest
     {
         return [
             ...$this->registrationDetailsMessages(),
+            ...$this->officeMessages(),
             'survey_hei_id.required' => __('Choose the institution this HEI account belongs to.'),
         ];
     }

@@ -174,10 +174,12 @@ test('the groups have their own settings page, separate from the directories', f
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/respondent-groups')
-            ->has('respondentGroups', 3)
-            ->where('respondentGroups.0.value', 'student')
-            ->where('respondentGroups.0.label', 'Student')
-            ->where('respondentGroups.0.is_active', true));
+            ->has('respondentGroups.data', 3)
+            ->where('respondentGroups.data.0.value', 'student')
+            ->where('respondentGroups.data.0.label', 'Student')
+            ->where('respondentGroups.data.0.is_active', true)
+            ->where('respondentGroups.total', 3)
+            ->where('respondentGroups.last_page', 1));
 });
 
 test('only directory managers can change the groups', function () {

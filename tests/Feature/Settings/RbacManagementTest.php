@@ -12,7 +12,8 @@ beforeEach(function () {
 
 function managedUserWithRole(string $role): User
 {
-    $user = User::factory()->create();
+    // Administrators work for the Central Office, as the seeded one does.
+    $user = ($role === 'admin' ? User::factory()->nationalOffice() : User::factory())->create();
     $user->assignRole($role);
 
     return $user;
@@ -37,7 +38,11 @@ test('management settings require the matching permissions', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/roles')
             ->has('permissionGroups')
-            ->where('permissions.create', true));
+            ->where('permissions.create', true)
+            // Paged, with the administrator role first.
+            ->where('roles.data.0.slug', 'admin')
+            ->where('roles.per_page', 10)
+            ->where('roles.total', Role::query()->count()));
 
     $this->actingAs($focal)
         ->get(route('settings.users.index'))

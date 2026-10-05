@@ -82,6 +82,16 @@ class UserFactory extends Factory
     }
 
     /**
+     * The account still has the temporary password an administrator gave it.
+     */
+    public function mustChangePassword(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'must_change_password' => true,
+        ]);
+    }
+
+    /**
      * Indicate that the model's email address should be unverified.
      */
     public function unverified(): static

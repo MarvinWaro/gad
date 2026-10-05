@@ -2,6 +2,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { EventCalendar } from '@/components/hei/event-calendar';
 import { Feed } from '@/components/hei/feed';
 import { FeedBanner } from '@/components/hei/feed-banner';
+import { FeedTabs } from '@/components/hei/feed-tabs';
 import { HomeRail } from '@/components/hei/home-rail';
 import { InstitutionPeople } from '@/components/hei/institution-people';
 import { NextEventCard } from '@/components/hei/next-event-card';
@@ -12,7 +13,7 @@ import { SurveyPanel } from '@/components/hei/survey-panel';
 import { UpcomingEvents } from '@/components/hei/upcoming-events';
 import { WelcomeBand } from '@/components/hei/welcome-band';
 import { useStickyRail } from '@/hooks/use-sticky-rail';
-import { home } from '@/routes';
+import { dashboard, home } from '@/routes';
 import { create as feedback } from '@/routes/feedback';
 import { faq } from '@/routes/help';
 import type {
@@ -24,16 +25,24 @@ import type {
     Post,
     ScrollPage,
 } from '@/types';
+import type { FeedRegion, FeedScope } from '@/types/people';
+import type { QuestCard } from '@/types/quests';
 
 type Props = {
     hei: HeiRef | null;
     surveys: HeiSurvey[];
     calendar: CalendarMonth;
     upcoming: CalendarEvent[];
+    /** Everyone's posts, or the people they follow. */
+    feed: FeedScope;
+    /** Their region, for the My region tab. */
+    feedRegion: FeedRegion;
     /** Deferred: arrives just after the page. */
     posts?: ScrollPage<Post>;
     quickLinks: QuickLink[];
     people: InstitutionPeopleSummary;
+    /** The GAD Quest card's quest: the newest open to them. */
+    quest: QuestCard | null;
 };
 
 /** Where to find help: the FAQ, the feedback form and the rating card. */
@@ -59,9 +68,12 @@ export default function HeiHome({
     surveys,
     calendar,
     upcoming,
+    feed,
+    feedRegion,
     posts,
     quickLinks,
     people,
+    quest,
 }: Props) {
     const { auth } = usePage().props;
     const [nextEvent, ...laterEvents] = upcoming;
@@ -86,7 +98,7 @@ export default function HeiHome({
                         aria-label="Your institution, law surveys and resources"
                         className="hidden min-w-0 xl:sticky xl:block xl:self-start"
                     >
-                        <HomeRail hei={hei} surveys={surveys} />
+                        <HomeRail hei={hei} surveys={surveys} quest={quest} />
                     </aside>
 
                     <div className="min-w-0 space-y-10">
@@ -117,7 +129,12 @@ export default function HeiHome({
                                     hei?.display_name ?? auth.user.name
                                 }
                             />
-                            <Feed posts={posts} />
+                            <FeedTabs
+                                scope={feed}
+                                href={dashboard.url()}
+                                region={feedRegion}
+                            />
+                            <Feed key={feed} posts={posts} scope={feed} />
                         </section>
                     </div>
 

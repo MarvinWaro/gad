@@ -13,6 +13,12 @@ test('My Profile shows my activity and keeps account settings available', async 
     page,
 }) => {
     await logIn(page, 'browser-admin@example.test');
+    // The sidebar names the account's office under its name.
+    await expect(
+        page.locator(
+            '[data-test="sidebar-menu-button"] [data-test="user-affiliation"]',
+        ),
+    ).toHaveText('CHED Regional Office XII');
     await page.locator('[data-test="sidebar-menu-button"]').click();
     await page.getByRole('menuitem', { name: 'My Profile' }).click();
 
@@ -22,9 +28,11 @@ test('My Profile shows my activity and keeps account settings available', async 
         'aria-selected',
         'true',
     );
+    // Your own profile: the follower counts, and no Follow button.
     await expect(
-        page.getByRole('button', { name: 'Follow · coming soon' }),
-    ).toBeDisabled();
+        page.getByRole('button', { name: '0 followers' }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Follow/ })).toHaveCount(0);
 
     await page.getByRole('tab', { name: 'Activity' }).click();
     const activity = page.getByRole('list', {
@@ -33,6 +41,23 @@ test('My Profile shows my activity and keeps account settings available', async 
     await expect(activity.getByRole('article').first()).toContainText(
         'Logged in',
     );
+    // Numbered pages, with the count always shown.
+    await expect(
+        page.getByRole('navigation', { name: 'Pagination' }),
+    ).toContainText(/Showing 1–\d+ of \d+ entries/);
+
+    // The Badges tab holds every badge, and says how to earn the rest.
+    await page
+        .getByRole('region', { name: 'Achievements Beta' })
+        .getByRole('button', { name: /^(See all badges|How to earn badges)$/ })
+        .click();
+    await expect(page.getByRole('tab', { name: /^Badges/ })).toHaveAttribute(
+        'aria-selected',
+        'true',
+    );
+    await expect(
+        page.getByRole('region', { name: 'Still to earn' }),
+    ).toContainText('different days');
 
     await page.getByRole('tab', { name: 'About' }).click();
     await expect(
@@ -89,12 +114,14 @@ test('My Profile shows my activity and keeps account settings available', async 
             0,
         );
         expect(photoBox!.y).toBeLessThan(cover!.y + cover!.height);
-        const notice = await page
-            .locator('[data-test="profile-notice"]')
+        const achievements = await page
+            .getByRole('region', { name: 'Achievements Beta' })
             .boundingBox();
-        expect(notice).not.toBeNull();
-        expect(notice!.x).toBeGreaterThan(cover!.x);
-        expect(notice!.x + notice!.width).toBeLessThan(cover!.x + cover!.width);
+        expect(achievements).not.toBeNull();
+        expect(achievements!.x).toBeGreaterThan(cover!.x);
+        expect(achievements!.x + achievements!.width).toBeLessThan(
+            cover!.x + cover!.width,
+        );
     }
     await page.getByRole('button', { name: 'Toggle dark mode' }).click();
     await expect(page.locator('html')).toHaveClass(/dark/);
