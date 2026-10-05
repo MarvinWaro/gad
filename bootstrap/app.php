@@ -22,6 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // The host's load balancer ends HTTPS and forwards plain HTTP; trust
+        // its forwarded headers so links, assets and redirects stay https.
+        $middleware->trustProxies(at: '*');
+
         // Each `throttle:N,M` route keeps its own count (ThrottleEachRoute).
         $middleware->alias(['throttle' => ThrottleEachRoute::class]);
 
