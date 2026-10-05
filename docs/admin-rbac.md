@@ -135,6 +135,13 @@ before it installs PHP, so the build uses those files as committed
 (`vite.config.ts` skips Wayfinder when `php` is missing). Every local build
 regenerates them: commit them along with any route or controller change.
 
+Uploads (profile and post photos, carousel slides, badges, signed monitoring
+files) go to a DigitalOcean Spaces bucket when `FILESYSTEM_UPLOADS=spaces`,
+because App Platform empties its own disk on every deploy. Photos are public;
+monitoring files stay private and are only handed out by the app. Each
+environment writes under its own folder (`SPACES_ROOT`, `APP_ENV` by default).
+The settings are listed in `.env.example`.
+
 `php artisan migrate:fresh --seed` recreates the tables and includes the
 administrator, survey drafts, Region XII directory, and the 129 HEIs supplied
 from the CHED list. In the local environment it also adds one demo account per

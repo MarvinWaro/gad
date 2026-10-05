@@ -1,5 +1,25 @@
 <?php
 
+/*
+| Uploads (photos, carousel slides, badges and signed monitoring files) stay
+| on this machine unless FILESYSTEM_UPLOADS=spaces sends them to a
+| DigitalOcean Spaces bucket. App Platform empties its own disk on every
+| deploy, so production keeps them in Spaces. Each environment writes under
+| its own folder (SPACES_ROOT, the environment's name by default), so local
+| tests never mix with live files.
+*/
+$spaces = env('FILESYSTEM_UPLOADS', 'local') === 'spaces';
+$bucket = [
+    'driver' => 's3',
+    'key' => env('SPACES_KEY'),
+    'secret' => env('SPACES_SECRET'),
+    'region' => env('SPACES_REGION', 'sgp1'),
+    'bucket' => env('SPACES_BUCKET'),
+    'endpoint' => env('SPACES_ENDPOINT', 'https://sgp1.digitaloceanspaces.com'),
+    'use_path_style_endpoint' => false,
+];
+$folder = trim((string) env('SPACES_ROOT', env('APP_ENV', 'production')), '/');
+
 return [
 
     /*
@@ -30,7 +50,13 @@ return [
 
     'disks' => [
 
-        'monitoring' => [
+        // Private either way: files are only handed out by MonitoringController.
+        'monitoring' => $spaces ? [
+            ...$bucket,
+            'root' => $folder.'/monitoring-files',
+            'throw' => true,
+            'visibility' => 'private',
+        ] : [
             'driver' => 'local',
             'root' => storage_path('app/private/monitoring-files'),
             'throw' => true,
@@ -45,7 +71,15 @@ return [
             'report' => false,
         ],
 
-        'public' => [
+        'public' => $spaces ? [
+            ...$bucket,
+            'root' => $folder.'/public',
+            // The bucket's origin, or its CDN endpoint once that is on.
+            'url' => env('SPACES_URL'),
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ] : [
             'driver' => 'local',
             'root' => storage_path('app/public'),
             'url' => rtrim((string) env('APP_URL', 'http://localhost'), '/').'/storage',
