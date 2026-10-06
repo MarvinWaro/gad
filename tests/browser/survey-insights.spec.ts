@@ -150,20 +150,25 @@ test('a CHED Focal reads the surveys without changing them', async ({
     await expect(
         page.getByRole('heading', { name: 'Survey insights' }),
     ).toBeVisible();
-    // Nothing that changes a survey, and no single responses.
+    // Nothing that changes a survey; single responses of its own region only.
     await expect(page.getByRole('button', { name: 'New survey' })).toHaveCount(
         0,
     );
     const row = page.getByRole('row').filter({ hasText: 'RA 9262' });
-    await expect(row.locator('a[href$="/responses"]')).toHaveCount(0);
+    await expect(row.locator('a[href$="/responses"]')).toHaveCount(1);
     await expect(row.getByRole('button')).toHaveCount(0);
 
     await row.locator('a[href$="/summary"]').click();
     await expect(page).toHaveURL(/\/summary$/);
-    await expect(
-        page.getByRole('navigation', { name: 'Survey results' }),
-    ).toHaveCount(0);
+    const results = page.getByRole('navigation', { name: 'Survey results' });
+    await expect(results).toBeVisible();
     await checkBothThemes(page, testInfo, 'survey-summary-focal');
+
+    // The responses read only: no export, no delete.
+    await results.getByRole('link', { name: 'Responses' }).click();
+    await expect(page).toHaveURL(/\/responses$/);
+    await expect(page.getByRole('link', { name: 'Export CSV' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Delete / })).toHaveCount(0);
 
     await page.goto('/admin/surveys');
     await page

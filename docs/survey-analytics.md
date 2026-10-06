@@ -17,7 +17,7 @@ For everyone who can open Surveys (`surveys.view`): administrators, GAD Focal Pe
 
 ## Summary (one survey)
 
-For everyone who can open Surveys (`surveys.view`), CHED Focals included, since it holds counts only. Single responses stay with `survey-responses.view` (administrators), and only they get the Summary | Responses tabs. It reads like Google Forms' summary: every question with each answer's count, its share of the respondents in view, a bar, and how many were female and male.
+For everyone who can open Surveys (`surveys.view`), since it holds counts only. Single responses need `survey-responses.view`, and only accounts holding it get the Summary | Responses tabs: administrators, for every region, and since 2026-10-14 each CHED Focal, for its own region's responses only (`SurveyResponse::scopeReachableBy`). Export and delete stay with administrators. It reads like Google Forms' summary: every question with each answer's count, its share of the respondents in view, a bar, and how many were female and male.
 
 - **Answers:**
     - **Experiences:** each one, ending with "I have not experienced any of the above". Each folds out "Who was responsible": the perpetrators chosen for it.
@@ -32,6 +32,8 @@ For everyone who can open Surveys (`surveys.view`), CHED Focals included, since 
 ### Anonymity
 
 **Answers show only when at least 5 responses are in view** (`SurveyStatistics::MIN_RESPONSES`). Below that, the totals still show, and a notice asks to widen the filters. Narrowing to one HEI, one sex or one group can never single out a respondent's answers.
+
+**Responses naming no region** (where a questionnaire lets respondents skip it) belong to no region. They count only in the overall figures, where "Where responses come from" lists them as "Not given", never in a region's. Only the Central Office reads them one by one or is told of them.
 
 ## Where the figures come from
 

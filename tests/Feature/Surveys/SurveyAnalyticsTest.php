@@ -159,6 +159,22 @@ test('a regional office counts only its own region, and HEI accounts cannot open
     $this->actingAs($member)->get(route('admin.surveys.summary', $this->survey))->assertForbidden();
 });
 
+test('responses naming no region count only in the overall figures, marked as such', function () {
+    foreach (range(1, 5) as $index) {
+        analyticsResponse($this->hei);
+    }
+    analyticsResponse($this->hei, ['survey_region_id' => null, 'survey_cluster_id' => null, 'survey_hei_id' => null]);
+
+    $this->actingAs(analyst($this->hei->cluster->region))->get(route('admin.surveys.summary', $this->survey))
+        ->assertInertia(fn (Assert $page) => $page->where('totals.responses', 5));
+
+    $this->actingAs(analyst())->get(route('admin.surveys.summary', $this->survey))
+        ->assertInertia(fn (Assert $page) => $page->where('totals.responses', 6));
+    $this->get(route('admin.surveys.index'))
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+            ->where('insights.places.rows', fn ($rows) => collect($rows)->firstWhere('id', null) === ['id' => null, 'name' => 'Not given', 'responses' => 1])));
+});
+
 test('the Surveys page adds insights: totals, each law, who answered and where from', function () {
     foreach (range(1, 3) as $index) {
         analyticsResponse($this->hei);

@@ -3,16 +3,25 @@
 namespace App\Http\Requests\Admin;
 
 use App\Models\GadEvent;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * A GAD event as staff enter it. A regional office's event is always for its
+ * own region; the Central Office picks a region, or none for every region.
+ */
 class SaveGadEventRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can($this->isMethod('post') ? 'events.create' : 'events.update') === true;
+        $event = $this->route('event');
+
+        return $event instanceof GadEvent
+            ? $this->user()?->can('update', $event) ?? false
+            : $this->user()?->can('create', GadEvent::class) ?? false;
     }
 
     /** @return array<string, ValidationRule|array<mixed>|string> */
@@ -21,6 +30,9 @@ class SaveGadEventRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:160'],
             'category' => ['required', 'string', Rule::in(GadEvent::CATEGORIES)],
+            'region' => $this->writer()->national_access
+                ? ['nullable', 'integer', 'exists:survey_regions,id']
+                : ['nullable'],
             'is_all_day' => ['required', 'boolean'],
             'starts_at' => ['required', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
@@ -55,6 +67,7 @@ class SaveGadEventRequest extends FormRequest
         }
 
         return [
+            'survey_region_id' => $this->regionId(),
             'title' => $validated['title'],
             'category' => $validated['category'],
             'is_all_day' => (bool) $validated['is_all_day'],
@@ -63,5 +76,25 @@ class SaveGadEventRequest extends FormRequest
             'location' => $validated['location'] ?? null,
             'description' => $validated['description'] ?? null,
         ];
+    }
+
+    /** The event's region: a regional office's own; the Central Office's pick, or none for every region. */
+    public function regionId(): ?int
+    {
+        $user = $this->writer();
+
+        if (! $user->national_access) {
+            return $user->survey_region_id;
+        }
+
+        $region = $this->validated('region');
+
+        return $region !== null ? (int) $region : null;
+    }
+
+    private function writer(): User
+    {
+        /** @var User */
+        return $this->user();
     }
 }

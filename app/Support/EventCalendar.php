@@ -3,12 +3,14 @@
 namespace App\Support;
 
 use App\Models\GadEvent;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Month and upcoming views of regional GAD events, in Philippine wall-clock
- * time (see GadEvent::TIMEZONE).
+ * Month and upcoming views of the GAD events a viewer sees
+ * (GadEvent::scopeVisibleTo), in Philippine wall-clock time (see
+ * GadEvent::TIMEZONE).
  */
 class EventCalendar
 {
@@ -17,7 +19,7 @@ class EventCalendar
      *
      * @return array{month: string, today: string, events: array<int, array<string, mixed>>}
      */
-    public static function month(?string $month): array
+    public static function month(User $viewer, ?string $month): array
     {
         $today = GadEvent::localNow();
         $start = self::resolveMonth($month, $today);
@@ -27,6 +29,7 @@ class EventCalendar
             'month' => $start->format('Y-m'),
             'today' => $today->toDateString(),
             'events' => GadEvent::query()
+                ->visibleTo($viewer)
                 ->between($start, $end)
                 ->orderBy('starts_at')
                 ->get()
@@ -40,11 +43,12 @@ class EventCalendar
      *
      * @return array<int, array<string, mixed>>
      */
-    public static function upcoming(int $limit = 5): array
+    public static function upcoming(User $viewer, int $limit = 5): array
     {
         $now = GadEvent::localNow();
 
         return GadEvent::query()
+            ->visibleTo($viewer)
             ->where(fn (Builder $query) => $query
                 ->where('starts_at', '>=', $now->startOfDay())
                 ->orWhere('ends_at', '>=', $now))
@@ -61,11 +65,12 @@ class EventCalendar
      *
      * @return array<int, array<string, mixed>>
      */
-    public static function after(?string $month, int $limit = 6): array
+    public static function after(User $viewer, ?string $month, int $limit = 6): array
     {
         $end = self::resolveMonth($month, GadEvent::localNow())->endOfMonth();
 
         return GadEvent::query()
+            ->visibleTo($viewer)
             ->where('starts_at', '>', $end)
             ->orderBy('starts_at')
             ->limit($limit)

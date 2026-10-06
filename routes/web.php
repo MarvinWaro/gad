@@ -25,6 +25,7 @@ use App\Http\Controllers\PublicSurveyController;
 use App\Http\Controllers\SiteFeedbackController;
 use App\Http\Controllers\SiteRatingController;
 use App\Models\CarouselSlide;
+use App\Models\GadEvent;
 use App\Models\SiteSetting;
 use App\Models\Survey;
 use App\Support\HomepageStories;
@@ -178,9 +179,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('events', [GadEventController::class, 'index'])->middleware('can:events.view')->name('events.index');
-        Route::post('events', [GadEventController::class, 'store'])->middleware('can:events.create')->name('events.store');
-        Route::put('events/{event}', [GadEventController::class, 'update'])->middleware('can:events.update')->name('events.update');
-        Route::delete('events/{event}', [GadEventController::class, 'destroy'])->middleware('can:events.delete')->name('events.destroy');
+        // GadEventPolicy: staff change their own region's events.
+        Route::post('events', [GadEventController::class, 'store'])->middleware('can:create,'.GadEvent::class)->name('events.store');
+        Route::put('events/{event}', [GadEventController::class, 'update'])->middleware('can:update,event')->name('events.update');
+        Route::delete('events/{event}', [GadEventController::class, 'destroy'])->middleware('can:delete,event')->name('events.destroy');
 
         Route::get('carousels', [CarouselSlideController::class, 'index'])
             ->middleware('can:carousel.view')

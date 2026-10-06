@@ -82,14 +82,23 @@ final class QuestBadgeHolders
         $badges = (clone $held)->whereIn('user_id', $ids)->orderByDesc('earned_at')->get(['user_id', 'quest_id']);
         $titles = Quest::query()->whereKey($badges->pluck('quest_id')->unique())->pluck('title', 'id');
 
-        return $page->through(fn (stdClass $row): array => [
-            'user' => $users[$row->user_id],
-            'quests' => $badges->where('user_id', $row->user_id)
-                ->map(fn (stdClass $badge): string => (string) $titles[$badge->quest_id])
-                ->values()
-                ->all(),
-            'earned_at' => CarbonImmutable::parse((string) $row->earned_at, 'UTC')->toIso8601ZuluString(),
-        ]);
+        // An account removed since the page was counted drops out of it.
+        $holders = collect($page->items())
+            ->map(function (stdClass $row) use ($users, $badges, $titles): ?array {
+                $user = $users->get($row->user_id);
+
+                return $user === null ? null : [
+                    'user' => $user,
+                    'quests' => array_values($badges->where('user_id', $row->user_id)
+                        ->map(fn (stdClass $badge): string => (string) $titles[$badge->quest_id])
+                        ->all()),
+                    'earned_at' => CarbonImmutable::parse((string) $row->earned_at, 'UTC')->toIso8601ZuluString(),
+                ];
+            })
+            ->filter()
+            ->values();
+
+        return $page->setCollection($holders);
     }
 
     /**

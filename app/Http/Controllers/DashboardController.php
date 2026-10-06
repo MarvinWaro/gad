@@ -37,8 +37,8 @@ class DashboardController extends Controller
                 'display_name' => InstitutionName::display($user->hei->name),
             ] : null,
             'surveys' => fn (): array => $this->surveys($user->survey_hei_id),
-            'calendar' => fn (): array => EventCalendar::month($request->string('month')->toString() ?: null),
-            'upcoming' => fn (): array => EventCalendar::upcoming(),
+            'calendar' => fn (): array => EventCalendar::month($user, $request->string('month')->toString() ?: null),
+            'upcoming' => fn (): array => EventCalendar::upcoming($user),
             // "People at your institution": colleagues, its GAD Focal Persons first.
             'people' => fn (): array => InstitutionPeople::for($user),
             // The GAD Quest card: the newest quest open to them, and how far they got.

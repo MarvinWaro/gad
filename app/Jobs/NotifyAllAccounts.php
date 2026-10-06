@@ -9,9 +9,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
 /**
- * Tells every active account about one thing, such as a new GAD event. At
- * national scale that is tens of thousands of notices, so it runs in the
- * background.
+ * Tells every active account about one thing, such as a new GAD event (only
+ * its region's accounts and the Central Office when the entry names a
+ * region; Notifier::everyone). At national scale that is tens of thousands
+ * of notices, so it runs in the background.
  */
 class NotifyAllAccounts implements ShouldQueue
 {

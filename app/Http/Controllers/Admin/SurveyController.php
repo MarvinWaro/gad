@@ -29,7 +29,8 @@ class SurveyController extends Controller
         $user = $request->user();
 
         $surveys = Survey::query()
-            ->with(['versions' => fn ($query) => $query->withCount('responses')])
+            // Responses the viewer's office reaches, as the Responses page lists them.
+            ->with(['versions' => fn ($query) => $query->withCount(['responses' => fn ($query) => $query->reachableBy($user)])])
             ->latest()
             // The id breaks ties, so no survey repeats or goes missing
             // between pages.

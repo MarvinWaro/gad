@@ -176,7 +176,7 @@ class Notifier
         $this->send(NotificationKind::AccountApproved, $entry, [$account->id]);
     }
 
-    /** A new GAD event: everyone, in the background. */
+    /** A new GAD event: everyone who sees it (its region's, or every region's), in the background. */
     public function eventCreated(?ActivityLog $entry): void
     {
         if ($entry !== null) {
@@ -185,26 +185,32 @@ class Notifier
     }
 
     /**
-     * Tell every active account but the actor, for NotifyAllAccounts. Unlike
-     * the rest it throws, so the queue can try again; a retry never tells
-     * anyone twice.
+     * Tell every active account but the actor, for NotifyAllAccounts: when
+     * the entry names a region, only the accounts placed there (HEI accounts
+     * through their HEI, staff by their office) and the Central Office.
+     * Unlike the rest it throws, so the queue can try again; a retry never
+     * tells anyone twice.
      */
     public function everyone(NotificationKind $kind, ActivityLog $entry): void
     {
         User::query()
             ->active()
             ->when($entry->user_id !== null, fn (Builder $query) => $query->whereKeyNot($entry->user_id))
+            ->when($entry->survey_region_id !== null, fn (Builder $query) => $query->where(fn (Builder $query) => $query
+                ->placedIn($entry->survey_region_id)
+                ->orWhere('national_access', true)))
             ->select('id')
             ->chunkById(self::CHUNK * 2, fn ($users) => $this->insert($kind, $entry, $users->pluck('id')->all()));
     }
 
     /**
      * An anonymous survey answer: staff who read the surveys' answers or
-     * their Summary, such as a CHED Focal, for the answer's region (all of
-     * them when it names none), and the focal persons of the HEI the
-     * respondent chose, whose home counts its answers. It counts up an
-     * unread notice about the same survey, or starts one. Nothing about the
-     * respondent is kept, only how many answered.
+     * their Summary, such as a CHED Focal, for the answer's region (the
+     * Central Office alone when it names none, as only the overall figures
+     * count it), and the focal persons of the HEI the respondent chose, whose
+     * home counts its answers. It counts up an unread notice about the same
+     * survey, or starts one. Nothing about the respondent is kept, only how
+     * many answered.
      */
     public function surveyResponseReceived(SurveyResponse $response): void
     {
@@ -215,7 +221,7 @@ class Notifier
                 ->where(fn (Builder $query) => $query
                     ->where(fn (Builder $query) => $query
                         ->withPermission('survey-responses.view', 'surveys.view')
-                        ->when($response->survey_region_id !== null, fn (Builder $query) => $query->reaching($response->survey_region_id)))
+                        ->reaching($response->survey_region_id))
                     ->when($response->survey_hei_id !== null, fn (Builder $query) => $query->orWhere(fn (Builder $query) => $query
                         ->withPermission('monitoring.submit')
                         ->where('survey_hei_id', $response->survey_hei_id))))

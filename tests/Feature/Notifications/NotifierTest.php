@@ -296,6 +296,30 @@ test('the announcement tells every active account but the creator, once even whe
     expect(Notification::query()->count())->toBe(0);
 });
 
+test('a region\'s event is announced to that region\'s accounts and the Central Office only', function () {
+    $creator = noticeStaff('admin');
+    $member = noticeMember($this->hei);
+    $regionalStaff = noticeStaff('ched-employee', $this->region);
+    $central = noticeStaff('ched-employee');
+    $elsewhere = noticeStaff('ched-employee', $this->otherRegion);
+
+    $this->actingAs($creator)->post(route('admin.events.store'), [
+        'title' => 'Regional GAD Focal Persons Training',
+        'category' => 'training',
+        'region' => $this->region->id,
+        'is_all_day' => false,
+        'starts_at' => '2026-10-02T09:00',
+    ])->assertSessionHasNoErrors();
+
+    $entry = ActivityLog::query()->where('subject_type', 'event')->sole();
+    (new NotifyAllAccounts(NotificationKind::EventCreated, $entry->id))->handle(app(Notifier::class));
+
+    expect(noticesOf($member))->toBe(['event_created'])
+        ->and(noticesOf($regionalStaff))->toBe(['event_created'])
+        ->and(noticesOf($central))->toBe(['event_created'])
+        ->and(noticesOf($elsewhere))->toBe([]);
+});
+
 test('survey answers count up one notice per survey until it is read', function () {
     $this->seed(SurveySeeder::class);
     $survey = Survey::query()->where('slug', 'ra-7877')->sole();
@@ -333,13 +357,16 @@ test('survey answers count up one notice per survey until it is read', function 
         ->assertJsonPath('data.0.sentence', ['before' => '2 new responses to', 'subject' => $survey->title, 'after' => ''])
         ->assertJsonPath('data.0.url', route('admin.surveys.responses.index', $survey));
 
-    // Read, the next answer starts a new notice; one naming no region reaches every manager.
+    // Read, the next answer starts a new notice; one naming no region counts
+    // only in the overall figures, so it reaches the Central Office alone.
     $notice->update(['read_at' => now()]);
+    $notifier->surveyResponseReceived($answer($this->region->id));
     $notifier->surveyResponseReceived($answer(null));
 
     expect($manager->notifications()->count())->toBe(2)
-        ->and($elsewhere->notifications()->sole()->count)->toBe(1)
-        ->and($central->notifications()->sole()->count)->toBe(3);
+        ->and($manager->notifications()->whereNull('read_at')->sole()->count)->toBe(1)
+        ->and(noticesOf($elsewhere))->toBe([])
+        ->and($central->notifications()->sole()->count)->toBe(4);
 });
 
 test('survey answers also reach the region\'s CHED Focals and the focal persons of the HEI chosen', function () {
@@ -377,10 +404,10 @@ test('survey answers also reach the region\'s CHED Focals and the focal persons 
         ->and(noticesOf($heiMember))->toBe([])
         ->and(noticesOf($neighbourFocal))->toBe([]);
 
-    // Each opens what they may read: the Summary, or their HEI's home and its counts.
+    // Each opens what they may read: their region's responses, or their HEI's home and its counts.
     $this->actingAs($chedFocal)->getJson(route('notifications.recent'))
         ->assertJsonPath('data.0.sentence', ['before' => '3 new responses to', 'subject' => $survey->title, 'after' => ''])
-        ->assertJsonPath('data.0.url', route('admin.surveys.summary', $survey));
+        ->assertJsonPath('data.0.url', route('admin.surveys.responses.index', $survey));
     $this->actingAs($heiFocal)->getJson(route('notifications.recent'))
         ->assertJsonPath('data.0.sentence', ['before' => '2 new responses to', 'subject' => $survey->title, 'after' => ''])
         ->assertJsonPath('data.0.url', route('dashboard'));

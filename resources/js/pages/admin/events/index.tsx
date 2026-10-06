@@ -39,8 +39,15 @@ import {
     parseWallClock,
 } from '@/lib/event-dates';
 import type { CalendarEvent, EventCategory } from '@/types';
+import type { DirectoryOption } from '@/types/monitoring';
 
-type AdminEvent = CalendarEvent & { created_by: string | null };
+type AdminEvent = CalendarEvent & {
+    created_by: string | null;
+    /** Null: for every region. */
+    region: DirectoryOption | null;
+    /** Staff change their own region's events; every region's are the Central Office's. */
+    can: { update: boolean; delete: boolean };
+};
 
 type PaginationLink = { url: string | null; label: string; active: boolean };
 
@@ -55,9 +62,14 @@ type PaginatedEvents = {
 
 type Permissions = { create: boolean; update: boolean; delete: boolean };
 
+/** Where an event can be for: any region from the Central Office, otherwise the office's own. */
+type Places = { regions: DirectoryOption[]; nationalAccess: boolean };
+
 type EventForm = {
     title: string;
     category: EventCategory;
+    /** The Central Office's pick; empty for every region. */
+    region: string;
     is_all_day: boolean;
     starts_at: string;
     ends_at: string;
@@ -76,14 +88,17 @@ export default function EventsIndex({
     events,
     categories,
     filters,
+    regions,
+    nationalAccess,
     permissions,
 }: {
     events: PaginatedEvents;
     categories: EventCategory[];
     filters: { search: string };
     permissions: Permissions;
-}) {
+} & Places) {
     const [search, setSearch] = useState(filters.search);
+    const places = { regions, nationalAccess };
 
     function submitSearch(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -102,13 +117,18 @@ export default function EventsIndex({
                     <div>
                         <h1 className="text-2xl font-medium">GAD events</h1>
                         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                            Regional trainings, campaigns, meetings, and
-                            deadlines. HEI users see these on their home
-                            calendar. Times are Philippine time.
+                            Trainings, campaigns, meetings, and deadlines. HEI
+                            users of the event&apos;s region, or of every
+                            region, see them on their home calendar. Times are
+                            Philippine time.
                         </p>
                     </div>
                     {permissions.create && (
-                        <EventDialog mode="create" categories={categories} />
+                        <EventDialog
+                            mode="create"
+                            categories={categories}
+                            {...places}
+                        />
                     )}
                 </div>
 
@@ -159,12 +179,12 @@ export default function EventsIndex({
                                 <p className="mt-1 max-w-sm text-sm text-muted-foreground">
                                     {filters.search
                                         ? 'Try a different search term.'
-                                        : 'Add the first regional event. It appears on every HEI home calendar right away.'}
+                                        : 'Add the first event. It appears on the HEI home calendars of its region right away.'}
                                 </p>
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="w-full min-w-[760px] text-left text-sm">
+                                <table className="w-full min-w-[880px] text-left text-sm">
                                     <caption className="sr-only">
                                         GAD events, newest first
                                     </caption>
@@ -178,6 +198,9 @@ export default function EventsIndex({
                                             </th>
                                             <th className="px-5 py-3 font-medium">
                                                 Category
+                                            </th>
+                                            <th className="px-5 py-3 font-medium">
+                                                For
                                             </th>
                                             <th className="px-5 py-3 font-medium">
                                                 Added by
@@ -227,6 +250,10 @@ export default function EventsIndex({
                                                         className="text-sm text-foreground"
                                                     />
                                                 </td>
+                                                <td className="px-5 py-4">
+                                                    {event.region?.name ??
+                                                        'All regions'}
+                                                </td>
                                                 <td className="px-5 py-4 text-muted-foreground">
                                                     {event.created_by ?? '—'}
                                                 </td>
@@ -234,7 +261,8 @@ export default function EventsIndex({
                                                     permissions.delete) && (
                                                     <td className="px-5 py-4">
                                                         <div className="flex justify-end gap-1">
-                                                            {permissions.update && (
+                                                            {event.can
+                                                                .update && (
                                                                 <EventDialog
                                                                     mode="edit"
                                                                     event={
@@ -243,9 +271,11 @@ export default function EventsIndex({
                                                                     categories={
                                                                         categories
                                                                     }
+                                                                    {...places}
                                                                 />
                                                             )}
-                                                            {permissions.delete && (
+                                                            {event.can
+                                                                .delete && (
                                                                 <DeleteEventDialog
                                                                     event={
                                                                         event
@@ -315,16 +345,19 @@ function EventDialog({
     mode,
     categories,
     event,
+    regions,
+    nationalAccess,
 }: {
     mode: 'create' | 'edit';
     categories: EventCategory[];
     event?: AdminEvent;
-}) {
+} & Places) {
     const [open, setOpen] = useState(false);
     const id = `${mode}-${event?.id ?? 'new'}`;
     const form = useForm<EventForm>({
         title: event?.title ?? '',
         category: event?.category ?? 'training',
+        region: event?.region ? String(event.region.id) : '',
         is_all_day: event?.is_all_day ?? false,
         starts_at: toInputValue(
             event?.starts_at ?? null,
@@ -392,8 +425,8 @@ function EventDialog({
                         {mode === 'create' ? 'Add event' : 'Edit event'}
                     </DialogTitle>
                     <DialogDescription>
-                        Enter Philippine time. HEI users see the event on their
-                        calendar as soon as it is saved.
+                        Enter Philippine time. HEI users of its region see the
+                        event on their calendar as soon as it is saved.
                     </DialogDescription>
                 </DialogHeader>
                 <form className="grid gap-5" onSubmit={submit}>
@@ -410,6 +443,37 @@ function EventDialog({
                         />
                         <InputError message={form.errors.title} />
                     </div>
+                    {nationalAccess ? (
+                        <div className="grid gap-2">
+                            <Label htmlFor={`${id}-region`}>For</Label>
+                            <FormSelect
+                                id={`${id}-region`}
+                                value={form.data.region}
+                                onChange={(region) =>
+                                    form.setData('region', region)
+                                }
+                                placeholder="All regions"
+                                allowEmpty
+                                emptyLabel="All regions"
+                                options={regions.map((region) => ({
+                                    value: String(region.id),
+                                    label: region.name,
+                                }))}
+                                className="rounded-[6px] data-[size=default]:h-11"
+                            />
+                            <InputError message={form.errors.region} />
+                        </div>
+                    ) : (
+                        regions[0] && (
+                            <p className="text-sm text-muted-foreground">
+                                For HEIs of{' '}
+                                <span className="font-medium text-foreground">
+                                    {regions[0].name}
+                                </span>
+                                .
+                            </p>
+                        )
+                    )}
                     <div className="grid gap-5 sm:grid-cols-2">
                         <div className="grid gap-2">
                             <Label htmlFor={`${id}-category`}>Category</Label>
@@ -542,7 +606,7 @@ function DeleteEventDialog({ event }: { event: AdminEvent }) {
     return (
         <ConfirmPopover
             title="Delete this event?"
-            description={`“${event.title}” will be removed from every HEI calendar.`}
+            description={`“${event.title}” will be removed from HEI calendars.`}
             confirmLabel="Delete event"
             onConfirm={(visit) =>
                 router.delete(`/admin/events/${event.id}`, {
