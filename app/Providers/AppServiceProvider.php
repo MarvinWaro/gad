@@ -82,13 +82,11 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
+        // Any 8 characters for now, so HEIs register at events without
+        // trouble. Afterwards production goes back to also requiring
+        // ->letters()->numbers()->uncompromised().
         Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
+            ? Password::min(8)
             : null,
         );
     }
