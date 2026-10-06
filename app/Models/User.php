@@ -353,4 +353,25 @@ class User extends Authenticatable implements PasskeyUser
             ->values()
             ->all();
     }
+
+    /**
+     * What the account may hand out through roles, and so whose accounts it
+     * may manage: its own permissions, except that only the Central Office
+     * hands out user and role management, so a regional manager never makes
+     * another manager. A monitoring reviewer also names the HEI focal persons
+     * who submit to them.
+     *
+     * @return array<int, string>
+     */
+    public function grantablePermissionSlugs(): array
+    {
+        $own = $this->permissionSlugs();
+        $grantable = $this->national_access ? $own : array_diff($own, Permission::MANAGEMENT);
+
+        if (in_array('monitoring.review', $own, true)) {
+            $grantable[] = 'monitoring.submit';
+        }
+
+        return array_values(array_unique($grantable));
+    }
 }

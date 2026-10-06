@@ -29,19 +29,18 @@ enum QuestLevel: string
 
     /**
      * The level as SQL, for counting in the database: fromScore() over two
-     * numeric expressions, such as column names. Never pass it user input.
+     * numeric expressions, such as column names. It takes literal strings
+     * only, as raw SQL does, so user input never reaches it.
+     *
+     * @param  literal-string  $correct
+     * @param  literal-string  $total
+     * @return literal-string
      */
     public static function sql(string $correct, string $total): string
     {
-        return sprintf(
-            "case when %2\$s > 0 and %1\$s >= %2\$s then '%3\$s' when %2\$s > 0 and %1\$s >= %2\$s * %4\$F then '%5\$s' else '%6\$s' end",
-            $correct,
-            $total,
-            self::Champion->value,
-            self::ADVOCATE_SHARE,
-            self::Advocate->value,
-            self::Participant->value,
-        );
+        return "case when {$total} > 0 and {$correct} >= {$total} then '".self::Champion->value."'"
+            ." when {$total} > 0 and {$correct} >= {$total} * ".self::ADVOCATE_SHARE." then '".self::Advocate->value."'"
+            ." else '".self::Participant->value."' end";
     }
 
     /** How it is earned, as Settings → Badges says it. */

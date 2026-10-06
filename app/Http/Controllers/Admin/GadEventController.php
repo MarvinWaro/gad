@@ -7,8 +7,10 @@ use App\Enums\ActivityModule;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SaveGadEventRequest;
 use App\Models\GadEvent;
+use App\Models\User;
 use App\Services\ActivityRecorder;
 use App\Services\Notifier;
+use App\Support\PlaceFilters;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,10 +20,15 @@ class GadEventController extends Controller
 {
     public function index(Request $request): Response
     {
+        /** @var User $user */
+        $user = $request->user();
         $search = trim((string) $request->query('search', ''));
 
         $events = GadEvent::query()
-            ->with('creator:id,name')
+            // A regional office lists its own region's events and those for
+            // every region; the Central Office lists them all.
+            ->visibleTo($user)
+            ->with(['creator:id,name', 'region:id,name'])
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                 ->where('title', 'like', "%{$search}%")
                 ->orWhere('location', 'like', "%{$search}%")))
@@ -31,16 +38,25 @@ class GadEventController extends Controller
             ->through(fn (GadEvent $event): array => [
                 ...$event->toCalendarArray(),
                 'created_by' => $event->creator?->name,
+                'region' => $event->region?->only(['id', 'name']),
+                'can' => [
+                    'update' => $user->can('update', $event),
+                    'delete' => $user->can('delete', $event),
+                ],
             ]);
 
         return Inertia::render('admin/events/index', [
             'events' => $events,
             'categories' => GadEvent::CATEGORIES,
             'filters' => ['search' => $search],
+            // Where an event can be for: any region from the Central Office,
+            // otherwise the office's own.
+            'regions' => PlaceFilters::options($user, [])['regions'],
+            'nationalAccess' => (bool) $user->national_access,
             'permissions' => [
-                'create' => $request->user()->can('events.create'),
-                'update' => $request->user()->can('events.update'),
-                'delete' => $request->user()->can('events.delete'),
+                'create' => $user->can('create', GadEvent::class),
+                'update' => $user->can('events.update'),
+                'delete' => $user->can('events.delete'),
             ],
         ]);
     }

@@ -7,7 +7,7 @@ import { index as responses } from '@/routes/admin/surveys/responses';
  * Summary | Responses on a survey's pages, as underlined links like
  * Enrollment | Graduates: its answers as charts, or the responses one by one.
  * Accounts that may not read single responses (`survey-responses.view`),
- * such as CHED Focals, have the Summary alone, so no tabs.
+ * such as GAD Focal Persons, have the Summary alone, so no tabs.
  */
 export function SurveyTabs({
     surveyId,

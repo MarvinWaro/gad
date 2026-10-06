@@ -57,11 +57,21 @@ test('the Central Office switches any region, and the closing time must be ahead
 });
 
 test('only user managers switch registration', function () {
-    foreach ([registrationManager($this->region, role: 'ched-focal'), registrationManager($this->region, role: 'hei')] as $user) {
+    foreach ([registrationManager($this->region, role: 'ched-employee'), registrationManager($this->region, role: 'hei')] as $user) {
         $this->actingAs($user)->put(route('settings.regions.registration', $this->region), ['open' => true])->assertForbidden();
     }
 
     expect($this->region->fresh()->instant_registration)->toBeFalse();
+});
+
+test('a region\'s CHED Focal switches registration for that region only', function () {
+    $this->actingAs(registrationManager($this->region, role: 'ched-focal'));
+
+    $this->put(route('settings.regions.registration', $this->region), ['open' => true])->assertSessionHasNoErrors();
+    $this->put(route('settings.regions.registration', $this->elsewhere), ['open' => true])->assertForbidden();
+
+    expect($this->region->fresh()->instant_registration)->toBeTrue()
+        ->and($this->elsewhere->fresh()->instant_registration)->toBeFalse();
 });
 
 test('the users page shows registration for the regions the manager covers', function () {

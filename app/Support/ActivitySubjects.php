@@ -114,8 +114,8 @@ class ActivitySubjects
             $subject instanceof SurveyRegion => new ActivityPlace((int) $subject->getKey()),
             $subject instanceof SurveyCluster => new ActivityPlace((int) $subject->getAttribute('survey_region_id'), (int) $subject->getKey()),
             $subject instanceof SurveyHei => ActivityPlace::ofHei((int) $subject->getKey()),
-            // A quest or badge for every region belongs to no one place.
-            $subject instanceof Quest, $subject instanceof Badge => $subject->survey_region_id !== null ? new ActivityPlace($subject->survey_region_id) : null,
+            // A quest, badge or event for every region belongs to no one place.
+            $subject instanceof Quest, $subject instanceof Badge, $subject instanceof GadEvent => $subject->survey_region_id !== null ? new ActivityPlace($subject->survey_region_id) : null,
             $subject instanceof Post => ActivityPlace::ofHei($subject->getAttribute('survey_hei_id')),
             $subject instanceof PostComment => $subject->post !== null ? self::place($subject->post) : null,
             $subject instanceof MonitoringReport, $subject instanceof ChecklistResponse,

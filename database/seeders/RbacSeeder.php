@@ -101,10 +101,14 @@ class RbacSeeder extends Seeder
             // Office) decides whose reports it sees.
             'ched-focal' => [
                 'name' => 'CHED Focal',
-                'description' => 'Reviews the monitoring reports of HEIs in their office\'s region, sees their GAD surveys, posts in Gender Mainstreaming, writes GAD quests for their region, and views the law surveys and their summaries without changing them.',
+                'description' => 'Reviews the monitoring reports of HEIs in their office\'s region, sees their GAD surveys, posts in Gender Mainstreaming, writes GAD quests for their region, views the law surveys, their summaries and their region\'s individual responses without changing them, and creates, approves, edits and deactivates their region\'s HEI and CHED Employee accounts.',
                 'permissions' => [
                     'monitoring.view', 'monitoring.review', 'posts.view', 'surveys.view',
+                    // Their own region's responses only (SurveyResponse::scopeReachableBy).
+                    'survey-responses.view',
                     'quests.play', 'quests.view', 'quests.create', 'quests.update', 'quests.delete',
+                    // Their own region's accounts only (User::grantablePermissionSlugs).
+                    'users.view', 'users.create', 'users.update',
                 ],
             ],
             'ched-employee' => [

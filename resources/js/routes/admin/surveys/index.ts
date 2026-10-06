@@ -80,7 +80,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::store
- * @see app/Http/Controllers/Admin/SurveyController.php:72
+ * @see app/Http/Controllers/Admin/SurveyController.php:73
  * @route '/admin/surveys'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -95,7 +95,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::store
- * @see app/Http/Controllers/Admin/SurveyController.php:72
+ * @see app/Http/Controllers/Admin/SurveyController.php:73
  * @route '/admin/surveys'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -104,7 +104,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::store
- * @see app/Http/Controllers/Admin/SurveyController.php:72
+ * @see app/Http/Controllers/Admin/SurveyController.php:73
  * @route '/admin/surveys'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -114,7 +114,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Admin\SurveyController::store
- * @see app/Http/Controllers/Admin/SurveyController.php:72
+ * @see app/Http/Controllers/Admin/SurveyController.php:73
  * @route '/admin/surveys'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -124,7 +124,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Admin\SurveyController::store
- * @see app/Http/Controllers/Admin/SurveyController.php:72
+ * @see app/Http/Controllers/Admin/SurveyController.php:73
  * @route '/admin/surveys'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -135,7 +135,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::edit
- * @see app/Http/Controllers/Admin/SurveyController.php:105
+ * @see app/Http/Controllers/Admin/SurveyController.php:106
  * @route '/admin/surveys/{survey}/edit'
  */
 export const edit = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -150,7 +150,7 @@ edit.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::edit
- * @see app/Http/Controllers/Admin/SurveyController.php:105
+ * @see app/Http/Controllers/Admin/SurveyController.php:106
  * @route '/admin/surveys/{survey}/edit'
  */
 edit.url = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -183,7 +183,7 @@ edit.url = (args: { survey: number | { id: number } } | [survey: number | { id: 
 
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::edit
- * @see app/Http/Controllers/Admin/SurveyController.php:105
+ * @see app/Http/Controllers/Admin/SurveyController.php:106
  * @route '/admin/surveys/{survey}/edit'
  */
 edit.get = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -192,7 +192,7 @@ edit.get = (args: { survey: number | { id: number } } | [survey: number | { id: 
 })
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::edit
- * @see app/Http/Controllers/Admin/SurveyController.php:105
+ * @see app/Http/Controllers/Admin/SurveyController.php:106
  * @route '/admin/surveys/{survey}/edit'
  */
 edit.head = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -202,7 +202,7 @@ edit.head = (args: { survey: number | { id: number } } | [survey: number | { id:
 
     /**
 * @see \App\Http\Controllers\Admin\SurveyController::edit
- * @see app/Http/Controllers/Admin/SurveyController.php:105
+ * @see app/Http/Controllers/Admin/SurveyController.php:106
  * @route '/admin/surveys/{survey}/edit'
  */
     const editForm = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -212,7 +212,7 @@ edit.head = (args: { survey: number | { id: number } } | [survey: number | { id:
 
             /**
 * @see \App\Http\Controllers\Admin\SurveyController::edit
- * @see app/Http/Controllers/Admin/SurveyController.php:105
+ * @see app/Http/Controllers/Admin/SurveyController.php:106
  * @route '/admin/surveys/{survey}/edit'
  */
         editForm.get = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -221,7 +221,7 @@ edit.head = (args: { survey: number | { id: number } } | [survey: number | { id:
         })
             /**
 * @see \App\Http\Controllers\Admin\SurveyController::edit
- * @see app/Http/Controllers/Admin/SurveyController.php:105
+ * @see app/Http/Controllers/Admin/SurveyController.php:106
  * @route '/admin/surveys/{survey}/edit'
  */
         editForm.head = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -237,7 +237,7 @@ edit.head = (args: { survey: number | { id: number } } | [survey: number | { id:
     edit.form = editForm
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::update
- * @see app/Http/Controllers/Admin/SurveyController.php:148
+ * @see app/Http/Controllers/Admin/SurveyController.php:149
  * @route '/admin/surveys/{survey}'
  */
 export const update = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -252,7 +252,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::update
- * @see app/Http/Controllers/Admin/SurveyController.php:148
+ * @see app/Http/Controllers/Admin/SurveyController.php:149
  * @route '/admin/surveys/{survey}'
  */
 update.url = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -285,7 +285,7 @@ update.url = (args: { survey: number | { id: number } } | [survey: number | { id
 
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::update
- * @see app/Http/Controllers/Admin/SurveyController.php:148
+ * @see app/Http/Controllers/Admin/SurveyController.php:149
  * @route '/admin/surveys/{survey}'
  */
 update.put = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -295,7 +295,7 @@ update.put = (args: { survey: number | { id: number } } | [survey: number | { id
 
     /**
 * @see \App\Http\Controllers\Admin\SurveyController::update
- * @see app/Http/Controllers/Admin/SurveyController.php:148
+ * @see app/Http/Controllers/Admin/SurveyController.php:149
  * @route '/admin/surveys/{survey}'
  */
     const updateForm = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -310,7 +310,7 @@ update.put = (args: { survey: number | { id: number } } | [survey: number | { id
 
             /**
 * @see \App\Http\Controllers\Admin\SurveyController::update
- * @see app/Http/Controllers/Admin/SurveyController.php:148
+ * @see app/Http/Controllers/Admin/SurveyController.php:149
  * @route '/admin/surveys/{survey}'
  */
         updateForm.put = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -326,7 +326,7 @@ update.put = (args: { survey: number | { id: number } } | [survey: number | { id
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::publish
- * @see app/Http/Controllers/Admin/SurveyController.php:216
+ * @see app/Http/Controllers/Admin/SurveyController.php:217
  * @route '/admin/surveys/{survey}/publish'
  */
 export const publish = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -341,7 +341,7 @@ publish.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::publish
- * @see app/Http/Controllers/Admin/SurveyController.php:216
+ * @see app/Http/Controllers/Admin/SurveyController.php:217
  * @route '/admin/surveys/{survey}/publish'
  */
 publish.url = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -374,7 +374,7 @@ publish.url = (args: { survey: number | { id: number } } | [survey: number | { i
 
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::publish
- * @see app/Http/Controllers/Admin/SurveyController.php:216
+ * @see app/Http/Controllers/Admin/SurveyController.php:217
  * @route '/admin/surveys/{survey}/publish'
  */
 publish.post = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -384,7 +384,7 @@ publish.post = (args: { survey: number | { id: number } } | [survey: number | { 
 
     /**
 * @see \App\Http\Controllers\Admin\SurveyController::publish
- * @see app/Http/Controllers/Admin/SurveyController.php:216
+ * @see app/Http/Controllers/Admin/SurveyController.php:217
  * @route '/admin/surveys/{survey}/publish'
  */
     const publishForm = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -394,7 +394,7 @@ publish.post = (args: { survey: number | { id: number } } | [survey: number | { 
 
             /**
 * @see \App\Http\Controllers\Admin\SurveyController::publish
- * @see app/Http/Controllers/Admin/SurveyController.php:216
+ * @see app/Http/Controllers/Admin/SurveyController.php:217
  * @route '/admin/surveys/{survey}/publish'
  */
         publishForm.post = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -405,7 +405,7 @@ publish.post = (args: { survey: number | { id: number } } | [survey: number | { 
     publish.form = publishForm
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::archive
- * @see app/Http/Controllers/Admin/SurveyController.php:259
+ * @see app/Http/Controllers/Admin/SurveyController.php:260
  * @route '/admin/surveys/{survey}/archive'
  */
 export const archive = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -420,7 +420,7 @@ archive.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::archive
- * @see app/Http/Controllers/Admin/SurveyController.php:259
+ * @see app/Http/Controllers/Admin/SurveyController.php:260
  * @route '/admin/surveys/{survey}/archive'
  */
 archive.url = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -453,7 +453,7 @@ archive.url = (args: { survey: number | { id: number } } | [survey: number | { i
 
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::archive
- * @see app/Http/Controllers/Admin/SurveyController.php:259
+ * @see app/Http/Controllers/Admin/SurveyController.php:260
  * @route '/admin/surveys/{survey}/archive'
  */
 archive.patch = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -463,7 +463,7 @@ archive.patch = (args: { survey: number | { id: number } } | [survey: number | {
 
     /**
 * @see \App\Http\Controllers\Admin\SurveyController::archive
- * @see app/Http/Controllers/Admin/SurveyController.php:259
+ * @see app/Http/Controllers/Admin/SurveyController.php:260
  * @route '/admin/surveys/{survey}/archive'
  */
     const archiveForm = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -478,7 +478,7 @@ archive.patch = (args: { survey: number | { id: number } } | [survey: number | {
 
             /**
 * @see \App\Http\Controllers\Admin\SurveyController::archive
- * @see app/Http/Controllers/Admin/SurveyController.php:259
+ * @see app/Http/Controllers/Admin/SurveyController.php:260
  * @route '/admin/surveys/{survey}/archive'
  */
         archiveForm.patch = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -494,7 +494,7 @@ archive.patch = (args: { survey: number | { id: number } } | [survey: number | {
     archive.form = archiveForm
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::destroy
- * @see app/Http/Controllers/Admin/SurveyController.php:275
+ * @see app/Http/Controllers/Admin/SurveyController.php:276
  * @route '/admin/surveys/{survey}'
  */
 export const destroy = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -509,7 +509,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::destroy
- * @see app/Http/Controllers/Admin/SurveyController.php:275
+ * @see app/Http/Controllers/Admin/SurveyController.php:276
  * @route '/admin/surveys/{survey}'
  */
 destroy.url = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -542,7 +542,7 @@ destroy.url = (args: { survey: number | { id: number } } | [survey: number | { i
 
 /**
 * @see \App\Http\Controllers\Admin\SurveyController::destroy
- * @see app/Http/Controllers/Admin/SurveyController.php:275
+ * @see app/Http/Controllers/Admin/SurveyController.php:276
  * @route '/admin/surveys/{survey}'
  */
 destroy.delete = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -552,7 +552,7 @@ destroy.delete = (args: { survey: number | { id: number } } | [survey: number | 
 
     /**
 * @see \App\Http\Controllers\Admin\SurveyController::destroy
- * @see app/Http/Controllers/Admin/SurveyController.php:275
+ * @see app/Http/Controllers/Admin/SurveyController.php:276
  * @route '/admin/surveys/{survey}'
  */
     const destroyForm = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -567,7 +567,7 @@ destroy.delete = (args: { survey: number | { id: number } } | [survey: number | 
 
             /**
 * @see \App\Http\Controllers\Admin\SurveyController::destroy
- * @see app/Http/Controllers/Admin/SurveyController.php:275
+ * @see app/Http/Controllers/Admin/SurveyController.php:276
  * @route '/admin/surveys/{survey}'
  */
         destroyForm.delete = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Support\EventCalendar;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,10 +14,12 @@ class EventController extends Controller
     public function index(Request $request): Response
     {
         $month = $request->string('month')->toString() ?: null;
+        /** @var User $user */
+        $user = $request->user();
 
         return Inertia::render('hei/events', [
-            'calendar' => fn (): array => EventCalendar::month($month),
-            'after' => fn (): array => EventCalendar::after($month),
+            'calendar' => fn (): array => EventCalendar::month($user, $month),
+            'after' => fn (): array => EventCalendar::after($user, $month),
         ]);
     }
 }

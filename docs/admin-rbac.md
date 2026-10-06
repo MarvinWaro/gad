@@ -9,14 +9,14 @@ only see actions they can perform.
 `RbacSeeder` defines the roles below. Administrators can change their
 permissions in Settings → Roles & permissions.
 
-| Role (slug)                           | Interface | Place        | What it can do                                                                                                                                                                                                                         |
-| ------------------------------------- | --------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Administrator (`admin`)               | Staff     | Every region | Everything, including users, roles and settings; runs GAD quests but does not play them                                                                                                                                                |
-| CHED Focal (`ched-focal`)             | Staff     | Office       | View and review its region's monitoring reports, see its GAD surveys; post in Gender Mainstreaming; write, run and play GAD quests; view the law surveys read-only (library, insights and Summary for its region; no single responses) |
-| CHED Employee (`ched-employee`)       | Staff     | Office       | View its region's monitoring reports and GAD surveys; post in Gender Mainstreaming; play GAD quests                                                                                                                                    |
-| GAD Focal Person (`gad-focal-person`) | Staff     | Office       | Create and update carousel slides, survey drafts and events; review reports; play GAD quests                                                                                                                                           |
-| HEI Focal (`hei-focal`)               | HEI       | Its HEI      | Everything an HEI user has, plus the HEI's monitoring report and GAD surveys                                                                                                                                                           |
-| HEI User (`hei`)                      | HEI       | Its HEI      | The HEI home, events, Gender Mainstreaming and GAD Quest (`quests.play` only)                                                                                                                                                          |
+| Role (slug)                           | Interface | Place        | What it can do                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------------- | --------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Administrator (`admin`)               | Staff     | Every region | Everything, including users, roles and settings; runs GAD quests but does not play them                                                                                                                                                                                                                                                                                                                      |
+| CHED Focal (`ched-focal`)             | Staff     | Office       | View and review its region's monitoring reports, see its GAD surveys; post in Gender Mainstreaming; write, run and play GAD quests; view the law surveys read-only (library, insights, Summary and single responses for its region; no export or delete); create, approve, edit and deactivate its region's HEI User, HEI Focal and CHED Employee accounts, and switch its region's on-the-spot registration |
+| CHED Employee (`ched-employee`)       | Staff     | Office       | View its region's monitoring reports and GAD surveys; post in Gender Mainstreaming; play GAD quests                                                                                                                                                                                                                                                                                                          |
+| GAD Focal Person (`gad-focal-person`) | Staff     | Office       | Create and update carousel slides, survey drafts and events; review reports; play GAD quests                                                                                                                                                                                                                                                                                                                 |
+| HEI Focal (`hei-focal`)               | HEI       | Its HEI      | Everything an HEI user has, plus the HEI's monitoring report and GAD surveys                                                                                                                                                                                                                                                                                                                                 |
+| HEI User (`hei`)                      | HEI       | Its HEI      | The HEI home, events, Gender Mainstreaming and GAD Quest (`quests.play` only)                                                                                                                                                                                                                                                                                                                                |
 
 GAD Quest's permissions and its one exception (Administrators hold `quests.play`
 so they can manage every account, but never play) are in `docs/gad-quest.md`.
@@ -53,7 +53,21 @@ it changes, the same way the monitoring lists do:
 - The status tabs count within the active filters and the search.
 
 New public registrations receive the `hei` role after the RBAC seed has been
-run. An administrator makes an HEI's GAD focal person an HEI Focal. The default seed creates `admin@gmail.com` with the initial password
+run. An administrator, or the region's CHED Focal, makes an HEI's GAD focal
+person an HEI Focal.
+
+**Regional user managers.** A CHED Focal manages its own region's accounts
+(`users.view`, `users.create`, `users.update`; since 2026-10-13): it approves
+registrations from the region's HEIs, adds and edits HEI Users, HEI Focals and
+CHED Employees, and deactivates them. Deleting accounts and making CHED Focals
+or Administrators stay with the Administrator. What a manager may hand out is
+defined once, in `User::grantablePermissionSlugs()`: its own permissions,
+except that only the Central Office hands out user and role management
+(`Permission::MANAGEMENT`), plus `monitoring.submit` for whoever holds
+`monitoring.review`. A regional manager places HEI accounts only at its own
+region's institutions; the server refuses any other.
+
+The default seed creates `admin@gmail.com` with the initial password
 `12345678` and assigns that account the `admin` role. Change the password after
 the first login. Existing accounts without roles receive `hei`; no existing
 account is promoted to Administrator just because it was created first.
@@ -67,7 +81,8 @@ away:
   `instant_registration_until`, stored in UTC and entered in Philippine time).
   Other regions keep approval.
 - Anyone with `users.update` can switch the regions their office covers: the
-  Central Office any region, a regional office its own.
+  Central Office any region, a regional office (such as its CHED Focal) its
+  own.
 - While it is open, a registrant whose HEI is in that region is created
   active and goes straight to the HEI home. It closes when switched off or at
   the time set, whichever comes first.

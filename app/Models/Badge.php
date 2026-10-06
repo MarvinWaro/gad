@@ -76,7 +76,7 @@ class Badge extends Model
      */
     public function medal(): string
     {
-        return $this->rule?->value ?? $this->quest_level?->value ?? 'custom';
+        return $this->rule->value ?? $this->quest_level->value ?? 'custom';
     }
 
     /** @return BelongsTo<SurveyRegion, $this> */

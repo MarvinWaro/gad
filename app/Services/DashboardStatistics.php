@@ -47,6 +47,8 @@ class DashboardStatistics
             ...Cache::remember($key, self::CACHE_SECONDS, fn (): array => $this->figures($scope, $period)),
             ...$this->surveys->filterState($user, $scope, $period, $filters),
             'hasOffice' => $user->hasOffice(),
+            // Who sees an event follows the viewer, not the cached scope.
+            'events' => EventCalendar::upcoming($user, 4),
         ];
     }
 
@@ -81,7 +83,6 @@ class DashboardStatistics
                     AchieveItem::cases(),
                 )),
             ],
-            'events' => EventCalendar::upcoming(4),
         ];
     }
 

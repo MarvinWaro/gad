@@ -61,7 +61,8 @@ export default function Responses({
                             </h1>
                             <p className="text-sm text-muted-foreground">
                                 Individual responses are restricted to
-                                authorized administrators.
+                                authorized staff: a regional office sees its own
+                                region&apos;s.
                             </p>
                         </div>
                         {permissions.export && (

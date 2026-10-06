@@ -52,6 +52,8 @@ $environment = [
     'SESSION_DOMAIN' => 'null', 'SESSION_SECURE_COOKIE' => 'false',
     'CACHE_STORE' => 'array', 'QUEUE_CONNECTION' => 'sync', 'MAIL_MAILER' => 'array',
     'BCRYPT_ROUNDS' => '4',
+    // Uploads stay in this run's folder, never a Spaces bucket a developer's .env names.
+    'FILESYSTEM_UPLOADS' => 'local',
     // Read by router.php: the public disk's root for this run.
     'BROWSER_UPLOADS' => $uploads,
 ];
@@ -65,6 +67,9 @@ $kernel = $app->make(Kernel::class);
 $kernel->bootstrap();
 if (config('database.default') !== 'sqlite' || config('database.connections.sqlite.database') !== $database) {
     throw new RuntimeException('Browser database isolation failed.');
+}
+if (config('filesystems.disks.public.driver') !== 'local' || config('filesystems.disks.monitoring.driver') !== 'local') {
+    throw new RuntimeException('Browser uploads isolation failed.');
 }
 $kernel->call('migrate', ['--force' => true]);
 $kernel->call('db:seed', ['--class' => RbacSeeder::class, '--force' => true]);

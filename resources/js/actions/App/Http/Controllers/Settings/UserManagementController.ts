@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Settings\UserManagementController::update
- * @see app/Http/Controllers/Settings/UserManagementController.php:220
+ * @see app/Http/Controllers/Settings/UserManagementController.php:222
  * @route '/settings/users/{user}'
  */
 export const update = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -149,7 +149,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\UserManagementController::update
- * @see app/Http/Controllers/Settings/UserManagementController.php:220
+ * @see app/Http/Controllers/Settings/UserManagementController.php:222
  * @route '/settings/users/{user}'
  */
 update.url = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -182,7 +182,7 @@ update.url = (args: { user: number | { id: number } } | [user: number | { id: nu
 
 /**
 * @see \App\Http\Controllers\Settings\UserManagementController::update
- * @see app/Http/Controllers/Settings/UserManagementController.php:220
+ * @see app/Http/Controllers/Settings/UserManagementController.php:222
  * @route '/settings/users/{user}'
  */
 update.put = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -192,7 +192,7 @@ update.put = (args: { user: number | { id: number } } | [user: number | { id: nu
 
     /**
 * @see \App\Http\Controllers\Settings\UserManagementController::update
- * @see app/Http/Controllers/Settings/UserManagementController.php:220
+ * @see app/Http/Controllers/Settings/UserManagementController.php:222
  * @route '/settings/users/{user}'
  */
     const updateForm = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -207,7 +207,7 @@ update.put = (args: { user: number | { id: number } } | [user: number | { id: nu
 
             /**
 * @see \App\Http\Controllers\Settings\UserManagementController::update
- * @see app/Http/Controllers/Settings/UserManagementController.php:220
+ * @see app/Http/Controllers/Settings/UserManagementController.php:222
  * @route '/settings/users/{user}'
  */
         updateForm.put = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -223,7 +223,7 @@ update.put = (args: { user: number | { id: number } } | [user: number | { id: nu
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Settings\UserManagementController::updateStatus
- * @see app/Http/Controllers/Settings/UserManagementController.php:274
+ * @see app/Http/Controllers/Settings/UserManagementController.php:278
  * @route '/settings/users/{user}/status'
  */
 export const updateStatus = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -238,7 +238,7 @@ updateStatus.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\UserManagementController::updateStatus
- * @see app/Http/Controllers/Settings/UserManagementController.php:274
+ * @see app/Http/Controllers/Settings/UserManagementController.php:278
  * @route '/settings/users/{user}/status'
  */
 updateStatus.url = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -271,7 +271,7 @@ updateStatus.url = (args: { user: number | { id: number } } | [user: number | { 
 
 /**
 * @see \App\Http\Controllers\Settings\UserManagementController::updateStatus
- * @see app/Http/Controllers/Settings/UserManagementController.php:274
+ * @see app/Http/Controllers/Settings/UserManagementController.php:278
  * @route '/settings/users/{user}/status'
  */
 updateStatus.patch = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -281,7 +281,7 @@ updateStatus.patch = (args: { user: number | { id: number } } | [user: number | 
 
     /**
 * @see \App\Http\Controllers\Settings\UserManagementController::updateStatus
- * @see app/Http/Controllers/Settings/UserManagementController.php:274
+ * @see app/Http/Controllers/Settings/UserManagementController.php:278
  * @route '/settings/users/{user}/status'
  */
     const updateStatusForm = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -296,7 +296,7 @@ updateStatus.patch = (args: { user: number | { id: number } } | [user: number | 
 
             /**
 * @see \App\Http\Controllers\Settings\UserManagementController::updateStatus
- * @see app/Http/Controllers/Settings/UserManagementController.php:274
+ * @see app/Http/Controllers/Settings/UserManagementController.php:278
  * @route '/settings/users/{user}/status'
  */
         updateStatusForm.patch = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -312,7 +312,7 @@ updateStatus.patch = (args: { user: number | { id: number } } | [user: number | 
     updateStatus.form = updateStatusForm
 /**
 * @see \App\Http\Controllers\Settings\UserManagementController::destroy
- * @see app/Http/Controllers/Settings/UserManagementController.php:324
+ * @see app/Http/Controllers/Settings/UserManagementController.php:328
  * @route '/settings/users/{user}'
  */
 export const destroy = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -327,7 +327,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\UserManagementController::destroy
- * @see app/Http/Controllers/Settings/UserManagementController.php:324
+ * @see app/Http/Controllers/Settings/UserManagementController.php:328
  * @route '/settings/users/{user}'
  */
 destroy.url = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -360,7 +360,7 @@ destroy.url = (args: { user: number | { id: number } } | [user: number | { id: n
 
 /**
 * @see \App\Http\Controllers\Settings\UserManagementController::destroy
- * @see app/Http/Controllers/Settings/UserManagementController.php:324
+ * @see app/Http/Controllers/Settings/UserManagementController.php:328
  * @route '/settings/users/{user}'
  */
 destroy.delete = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -370,7 +370,7 @@ destroy.delete = (args: { user: number | { id: number } } | [user: number | { id
 
     /**
 * @see \App\Http\Controllers\Settings\UserManagementController::destroy
- * @see app/Http/Controllers/Settings/UserManagementController.php:324
+ * @see app/Http/Controllers/Settings/UserManagementController.php:328
  * @route '/settings/users/{user}'
  */
     const destroyForm = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -385,7 +385,7 @@ destroy.delete = (args: { user: number | { id: number } } | [user: number | { id
 
             /**
 * @see \App\Http\Controllers\Settings\UserManagementController::destroy
- * @see app/Http/Controllers/Settings/UserManagementController.php:324
+ * @see app/Http/Controllers/Settings/UserManagementController.php:328
  * @route '/settings/users/{user}'
  */
         destroyForm.delete = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -11,9 +11,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
- * A regional GAD event that CHED staff publish for HEIs to follow.
+ * A GAD event that CHED staff publish for HEIs to follow: for one region's
+ * HEIs, or every region's.
  *
  * @property int $id
+ * @property int|null $survey_region_id Null: for every region.
  * @property string $title
  * @property string|null $description
  * @property string|null $location
@@ -23,7 +25,7 @@ use Illuminate\Support\Carbon;
  * @property bool $is_all_day
  * @property int|null $created_by
  */
-#[Fillable(['title', 'description', 'location', 'category', 'starts_at', 'ends_at', 'is_all_day', 'created_by'])]
+#[Fillable(['survey_region_id', 'title', 'description', 'location', 'category', 'starts_at', 'ends_at', 'is_all_day', 'created_by'])]
 class GadEvent extends Model
 {
     public const CATEGORIES = ['training', 'campaign', 'deadline', 'meeting', 'other'];
@@ -53,6 +55,32 @@ class GadEvent extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /** @return BelongsTo<SurveyRegion, $this> */
+    public function region(): BelongsTo
+    {
+        return $this->belongsTo(SurveyRegion::class, 'survey_region_id');
+    }
+
+    /**
+     * Events an account sees: every one for the Central Office; otherwise
+     * those for every region and its own region's (an HEI account's through
+     * its HEI, staff by their office).
+     *
+     * @param  Builder<GadEvent>  $query
+     */
+    public function scopeVisibleTo(Builder $query, User $user): void
+    {
+        if ($user->national_access) {
+            return;
+        }
+
+        $regionId = $user->regionId();
+
+        $query->where(fn (Builder $query) => $query
+            ->whereNull('survey_region_id')
+            ->when($regionId !== null, fn (Builder $query) => $query->orWhere('survey_region_id', $regionId)));
     }
 
     /**

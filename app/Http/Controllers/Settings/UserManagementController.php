@@ -34,7 +34,7 @@ class UserManagementController extends Controller
         $search = trim((string) ($validated['search'] ?? ''));
         $status = UserStatus::tryFrom((string) ($validated['status'] ?? ''));
         $role = (string) ($validated['role'] ?? '');
-        $actorPermissions = $request->user()->permissionSlugs();
+        $actorPermissions = $request->user()->grantablePermissionSlugs();
         $canEdit = $request->user()->can('users.create') || $request->user()->can('users.update');
 
         $actor = $request->user();
@@ -186,14 +186,16 @@ class UserManagementController extends Controller
         $slugs = Role::slugsOf($validated['role_ids']);
         $office = $this->officeFrom($slugs, $validated);
         $this->ensureOfficeIsAssignable($request->user(), $office);
+        $heiId = $this->heiFrom($slugs, $validated);
+        $this->ensureInstitutionIsAssignable($request->user(), $heiId);
 
-        $user = DB::transaction(function () use ($validated, $slugs, $office): User {
+        $user = DB::transaction(function () use ($validated, $heiId, $office): User {
             // It starts with the temporary password, which its holder must
             // change the first time they sign in.
             $user = (new User)->fill([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'survey_hei_id' => $this->heiFrom($slugs, $validated),
+                'survey_hei_id' => $heiId,
                 'status' => UserStatus::Active,
             ])->giveTemporaryPassword();
 
@@ -226,17 +228,19 @@ class UserManagementController extends Controller
         $slugs = Role::slugsOf($validated['role_ids']);
         $office = $this->officeFrom($slugs, $validated);
         $this->ensureOfficeIsAssignable($request->user(), $office);
+        $heiId = $this->heiFrom($slugs, $validated);
+        $this->ensureInstitutionIsAssignable($request->user(), $heiId);
         $rolesBefore = $user->roles()->pluck('name')->all();
         // A password set for someone else is theirs to replace at their next
         // sign-in; a manager editing their own account keeps what they typed.
         $temporary = ! empty($validated['password']) && ! $user->is($request->user());
 
-        DB::transaction(function () use ($user, $validated, $slugs, $office, $temporary): void {
+        DB::transaction(function () use ($user, $validated, $heiId, $office, $temporary): void {
             // Contact details are left as the account holder set them.
             $user->fill([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'survey_hei_id' => $this->heiFrom($slugs, $validated),
+                'survey_hei_id' => $heiId,
             ]);
 
             if ($temporary) {
@@ -430,7 +434,7 @@ class UserManagementController extends Controller
             ->unique()
             ->all();
 
-        if (array_diff($selectedPermissions, $actor->permissionSlugs()) !== []) {
+        if (array_diff($selectedPermissions, $actor->grantablePermissionSlugs()) !== []) {
             throw ValidationException::withMessages([
                 'role_ids' => __('You cannot assign a role with permissions above your own access.'),
             ]);
@@ -439,7 +443,7 @@ class UserManagementController extends Controller
 
     private function ensureUserIsManageable(User $actor, User $target): void
     {
-        if (array_diff($target->permissionSlugs(), $actor->permissionSlugs()) !== []) {
+        if (array_diff($target->permissionSlugs(), $actor->grantablePermissionSlugs()) !== []) {
             throw ValidationException::withMessages([
                 'user' => __('You cannot manage a user with permissions above your own access.'),
             ]);
@@ -537,6 +541,28 @@ class UserManagementController extends Controller
         if ($office['survey_region_id'] !== null && ! $actor->reachesRegion($office['survey_region_id'])) {
             throw ValidationException::withMessages([
                 'survey_region_id' => __('You can only place accounts in your own regional office.'),
+            ]);
+        }
+    }
+
+    /**
+     * Regional staff place HEI accounts only at institutions in their own
+     * region; the Central Office places them anywhere.
+     */
+    private function ensureInstitutionIsAssignable(User $actor, ?int $heiId): void
+    {
+        if ($heiId === null || $actor->national_access) {
+            return;
+        }
+
+        $region = SurveyHei::query()
+            ->join('survey_clusters', 'survey_clusters.id', '=', 'survey_heis.survey_cluster_id')
+            ->whereKey($heiId)
+            ->value('survey_clusters.survey_region_id');
+
+        if (! $actor->reachesRegion($region === null ? null : (int) $region)) {
+            throw ValidationException::withMessages([
+                'survey_hei_id' => __('You can only place accounts at institutions in your own region.'),
             ]);
         }
     }
