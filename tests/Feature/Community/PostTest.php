@@ -124,6 +124,20 @@ test('posts are validated', function (array $payload, string $field) {
     'not a photo' => [['images' => [UploadedFile::fake()->create('report.pdf', 10, 'application/pdf')]], 'images.0'],
 ]);
 
+test('a photo the server turned away for its size says so plainly', function () {
+    $path = exifJpeg(1200, 800, 1);
+
+    $this->actingAs(communityMember())
+        ->post(route('posts.store'), [
+            'images' => [new UploadedFile($path, 'phone.jpg', 'image/jpeg', UPLOAD_ERR_INI_SIZE, true)],
+        ])
+        ->assertSessionHasErrors(['images.0' => 'A photo did not finish uploading. Try again, or choose a smaller photo.']);
+
+    expect(Post::query()->count())->toBe(0);
+
+    unlink($path);
+});
+
 test('a post holds up to ten photos, kept in order', function () {
     $this->actingAs(communityMember())
         ->post(route('posts.store'), [

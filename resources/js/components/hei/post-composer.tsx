@@ -32,6 +32,7 @@ import { Spinner } from '@/components/ui/spinner';
 import type { AchieveCode } from '@/data/achieve';
 import { POST_FEELINGS, taggedSummary } from '@/lib/post-feelings';
 import { MAX_ACHIEVE_ITEMS, MAX_SDGS, toggleWithin } from '@/lib/post-goals';
+import { shrinkPhoto } from '@/lib/shrink-photo';
 import { cn } from '@/lib/utils';
 import type { TaggedUser } from '@/types';
 
@@ -88,6 +89,7 @@ export function PostComposer({
     const [previews, setPreviews] = useState<string[]>([]);
     const [tagged, setTagged] = useState<TaggedUser[]>([]);
     const [fileError, setFileError] = useState<string | null>(null);
+    const [preparing, setPreparing] = useState(false);
     const form = useForm<ComposerForm>({
         body: '',
         images: [],
@@ -133,19 +135,33 @@ export function PostComposer({
     }
 
     function pickPhotos() {
-        fileInput.current?.click();
+        if (!preparing) {
+            fileInput.current?.click();
+        }
     }
 
-    function addFiles(event: ChangeEvent<HTMLInputElement>) {
+    async function addFiles(event: ChangeEvent<HTMLInputElement>) {
         const files = Array.from(event.target.files ?? []);
         event.target.value = '';
         const room = MAX_IMAGES - form.data.images.length;
-        const accepted = files
-            .filter(
-                (file) =>
-                    ACCEPTED.includes(file.type) && file.size <= MAX_BYTES,
-            )
+        const picked = files
+            .filter((file) => ACCEPTED.includes(file.type))
             .slice(0, Math.max(room, 0));
+        const accepted: File[] = [];
+
+        setPreparing(true);
+
+        // Phone photos are shrunk before they upload, one at a time so the
+        // phone holds a single full-size photo in memory.
+        for (const file of picked) {
+            const photo = await shrinkPhoto(file);
+
+            if (photo.size <= MAX_BYTES) {
+                accepted.push(photo);
+            }
+        }
+
+        setPreparing(false);
 
         if (files.length > accepted.length) {
             setFileError(
@@ -161,7 +177,10 @@ export function PostComposer({
             return;
         }
 
-        form.setData('images', [...form.data.images, ...accepted]);
+        form.setData((data) => ({
+            ...data,
+            images: [...data.images, ...accepted],
+        }));
         setPreviews((current) => [
             ...current,
             ...accepted.map((file) => URL.createObjectURL(file)),
@@ -621,8 +640,9 @@ export function PostComposer({
                                                 }
                                                 onClick={pickPhotos}
                                                 disabled={
+                                                    preparing ||
                                                     form.data.images.length >=
-                                                    MAX_IMAGES
+                                                        MAX_IMAGES
                                                 }
                                                 className={cn(
                                                     'rounded-full text-emerald-600 dark:text-emerald-400',
@@ -690,12 +710,20 @@ export function PostComposer({
                                     <Button
                                         type="submit"
                                         disabled={
-                                            !hasContent || form.processing
+                                            !hasContent ||
+                                            preparing ||
+                                            form.processing
                                         }
                                         className="h-10 w-full rounded-[10px]"
                                     >
-                                        {form.processing && <Spinner />}
-                                        {form.processing ? 'Posting…' : 'Post'}
+                                        {(preparing || form.processing) && (
+                                            <Spinner />
+                                        )}
+                                        {preparing
+                                            ? 'Preparing photos…'
+                                            : form.processing
+                                              ? 'Posting…'
+                                              : 'Post'}
                                     </Button>
                                 </div>
                             </form>

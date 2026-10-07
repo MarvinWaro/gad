@@ -47,6 +47,8 @@ class StorePostRequest extends FormRequest
         return [
             'body.required_without' => __('Write something or add a photo.'),
             'images.max' => __('You can add up to :max photos.'),
+            // PHP turned the file away before Laravel saw it, usually for its size.
+            'images.*.uploaded' => __('A photo did not finish uploading. Try again, or choose a smaller photo.'),
             'images.*.image' => __('Each file must be a photo.'),
             'images.*.mimes' => __('Photos must be JPG, PNG, or WebP.'),
             'images.*.max' => __('Each photo must be 5 MB or smaller.'),
