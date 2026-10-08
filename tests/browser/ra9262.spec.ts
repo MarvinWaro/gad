@@ -57,7 +57,12 @@ for (const width of [375, 768, 1280, 1536]) {
                 submissions.push(request.url());
         });
         await consent(page);
-        await expect(page.locator('input[type="email"]')).toHaveCount(0);
+        // One optional email field, for the person answering.
+        await expect(page.locator('input[type="email"]')).toHaveCount(1);
+        await expect(page.locator('#email')).not.toHaveAttribute(
+            'aria-required',
+            'true',
+        );
         await details(page, true);
         await expect(
             page.getByRole('heading', { name: 'Violence Experiences' }),

@@ -100,14 +100,18 @@ test('RA 9262 stores anonymous self and minor responses', function (string $answ
     $this->post(route('surveys.responses.store', $this->survey), [
         ...respondentFollowUps(),
         ...($this->payload)(), 'answering_for' => $answeringFor, 'age' => $age, 'guardian_consent' => $age < 18,
-        'email' => 'must-not-be-stored@example.com',
+        // A name is never asked, so it is never kept; the optional email is
+        // the person answering's, even for a minor.
+        'name' => 'Must Not Be Stored', 'email' => 'answering@example.com',
     ])->assertSessionHasNoErrors()->assertRedirect('/surveys/ra-9262');
     $response = SurveyResponse::query()->sole();
     expect($response->public_reference)->toStartWith('RA9262-')
         ->and($response->answers['answering_for'])->toBe($answeringFor)
         ->and($response->age)->toBe($age)
         ->and($response->guardian_confirmed_at !== null)->toBe($age < 18)
-        ->and($response->toJson())->not->toContain('must-not-be-stored');
+        ->and($response->email)->toBe('answering@example.com')
+        ->and($response->toJson())->not->toContain('Must Not Be Stored')
+        ->and($response->toJson())->not->toContain('answering@example.com');
 })->with([['self', 22], ['self', 17], ['minor-under-legal-care', 15]]);
 
 test('RA 9262 validates required and conditional answers', function (array $changes, string $error) {
@@ -136,6 +140,17 @@ test('none answers discard unrelated perpetrator details', function () {
     expect(SurveyResponse::query()->sole()->answers)->toBe([
         'experiences' => ['none'], 'perpetrators' => [], 'other_relative_details' => [], 'answering_for' => 'self',
     ]);
+});
+
+test('a minor in someone\'s care is never asked their sexual orientation', function () {
+    ($this->publish)();
+    $store = route('surveys.responses.store', $this->survey);
+
+    $this->post($store, [...($this->payload)(), 'answering_for' => 'minor-under-legal-care', 'age' => 15, 'guardian_consent' => true, 'sexual_orientation' => 'gay'])
+        ->assertSessionHasNoErrors();
+    $this->post($store, [...($this->payload)(), 'sexual_orientation' => 'lesbian'])->assertSessionHasNoErrors();
+
+    expect(SurveyResponse::query()->orderBy('id')->pluck('sexual_orientation')->all())->toBe([null, 'lesbian']);
 });
 
 test('minor proxy age is required even when the general age question is optional', function () {

@@ -15,7 +15,7 @@ class Ra9710SurveyDefinition
             // uneditable, and the server accepts no other value.
             if ($question['id'] === 'sex') {
                 $respondent['questions'][$index] = [
-                    'id' => 'sex', 'type' => 'single_select', 'label' => 'Sex', 'required' => true,
+                    'id' => 'sex', 'type' => 'single_select', 'label' => 'Sex assigned at birth', 'required' => true,
                     'default' => 'female', 'locked' => true,
                     'options' => [['value' => 'female', 'label' => 'Female']],
                 ];

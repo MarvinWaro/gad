@@ -39,11 +39,10 @@ export type Respondent = {
     whom: string;
     ageMin: number;
     ageMax: number;
-    /**
-     * Follow-ups that apply to this respondent, as on CHED's forms: gender
-     * identity once sex is Female or Male, and the chosen group's questions.
-     */
+    /** The same whatever the sex answer, Intersex included. */
     genderIdentities: Option[];
+    /** Optional, and never asked about a minor: empty when answering for one. */
+    sexualOrientations: Option[];
     groupFollowUps: FollowUpQuestion[];
     /** The chosen group asks the respondent to name it. */
     groupRequiresText: boolean;
@@ -137,6 +136,8 @@ export function initialAnswers(
         respondent_group: defaultAnswer(questionnaire, 'respondent_group'),
         respondent_group_other: '',
         gender_identity: '',
+        sexual_orientation: '',
+        email: '',
         group_answers: {},
         group_answer_details: {},
         region_id: '',
@@ -176,7 +177,10 @@ export function describeRespondent(
         ageMax: forMinor
             ? Math.min(17, questionnaire.age?.max ?? 120)
             : (questionnaire.age?.max ?? 120),
-        genderIdentities: respondentDetails.gender_identities[data.sex] ?? [],
+        genderIdentities: respondentDetails.gender_identities,
+        sexualOrientations: forMinor
+            ? []
+            : respondentDetails.sexual_orientations,
         groupFollowUps: group?.follow_ups ?? [],
         groupRequiresText: Boolean(group?.requires_text),
         heis: directories.heis.filter(

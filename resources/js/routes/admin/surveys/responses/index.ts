@@ -304,7 +304,7 @@ show.head = (args: { survey: number | { id: number }, surveyResponse: string | {
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Admin\SurveyResponseController::destroy
- * @see app/Http/Controllers/Admin/SurveyResponseController.php:108
+ * @see app/Http/Controllers/Admin/SurveyResponseController.php:109
  * @route '/admin/surveys/{survey}/responses/{surveyResponse}'
  */
 export const destroy = (args: { survey: number | { id: number }, surveyResponse: string | { id: string } } | [survey: number | { id: number }, surveyResponse: string | { id: string } ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -319,7 +319,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SurveyResponseController::destroy
- * @see app/Http/Controllers/Admin/SurveyResponseController.php:108
+ * @see app/Http/Controllers/Admin/SurveyResponseController.php:109
  * @route '/admin/surveys/{survey}/responses/{surveyResponse}'
  */
 destroy.url = (args: { survey: number | { id: number }, surveyResponse: string | { id: string } } | [survey: number | { id: number }, surveyResponse: string | { id: string } ], options?: RouteQueryOptions) => {
@@ -349,7 +349,7 @@ destroy.url = (args: { survey: number | { id: number }, surveyResponse: string |
 
 /**
 * @see \App\Http\Controllers\Admin\SurveyResponseController::destroy
- * @see app/Http/Controllers/Admin/SurveyResponseController.php:108
+ * @see app/Http/Controllers/Admin/SurveyResponseController.php:109
  * @route '/admin/surveys/{survey}/responses/{surveyResponse}'
  */
 destroy.delete = (args: { survey: number | { id: number }, surveyResponse: string | { id: string } } | [survey: number | { id: number }, surveyResponse: string | { id: string } ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -359,7 +359,7 @@ destroy.delete = (args: { survey: number | { id: number }, surveyResponse: strin
 
     /**
 * @see \App\Http\Controllers\Admin\SurveyResponseController::destroy
- * @see app/Http/Controllers/Admin/SurveyResponseController.php:108
+ * @see app/Http/Controllers/Admin/SurveyResponseController.php:109
  * @route '/admin/surveys/{survey}/responses/{surveyResponse}'
  */
     const destroyForm = (args: { survey: number | { id: number }, surveyResponse: string | { id: string } } | [survey: number | { id: number }, surveyResponse: string | { id: string } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -374,7 +374,7 @@ destroy.delete = (args: { survey: number | { id: number }, surveyResponse: strin
 
             /**
 * @see \App\Http\Controllers\Admin\SurveyResponseController::destroy
- * @see app/Http/Controllers/Admin/SurveyResponseController.php:108
+ * @see app/Http/Controllers/Admin/SurveyResponseController.php:109
  * @route '/admin/surveys/{survey}/responses/{surveyResponse}'
  */
         destroyForm.delete = (args: { survey: number | { id: number }, surveyResponse: string | { id: string } } | [survey: number | { id: number }, surveyResponse: string | { id: string } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

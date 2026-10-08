@@ -20,10 +20,11 @@ export type FollowUpQuestion = {
     required: boolean;
     options: Option[];
 };
-/** Gender identity choices, from App\Support\RespondentDetails. */
+/** Gender identity and sexual orientation choices, from App\Support\RespondentDetails. */
 export type RespondentDetails = {
-    /** Keyed by the sex answer that asks for them (female, male). */
-    gender_identities: Record<string, Option[]>;
+    /** The same whatever the sex answer. */
+    gender_identities: Option[];
+    sexual_orientations: Option[];
 };
 export type Question = {
     id: string;
@@ -78,8 +79,11 @@ export type SurveyAnswers = {
     sex: string;
     respondent_group: string;
     respondent_group_other: string;
-    /** Asked after a Female or Male answer for sex. */
     gender_identity: string;
+    /** Optional, and never asked about a minor. */
+    sexual_orientation: string;
+    /** Optional; for a minor, the email of the person answering. */
+    email: string;
     /** The chosen group's follow-up answers, by question key. */
     group_answers: Record<string, string>;
     /** What was typed for a choice that asks to specify, by question key. */

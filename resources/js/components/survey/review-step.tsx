@@ -22,6 +22,7 @@ export function ReviewStep({
     const {
         forMinor,
         genderIdentities,
+        sexualOrientations,
         groupFollowUps,
         groupRequiresText,
         detailLabel,
@@ -57,18 +58,26 @@ export function ReviewStep({
                 )}
                 <Review label={detailLabel('Age')} value={data.age} />
                 <Review
-                    label={detailLabel('Sex')}
+                    label={detailLabel('Sex assigned at birth')}
                     value={
                         sex?.options?.find((o) => o.value === data.sex)
                             ?.label ?? data.sex
                     }
                 />
-                {genderIdentities.length > 0 && (
+                <Review
+                    label={detailLabel('Gender identity')}
+                    value={
+                        genderIdentities.find(
+                            (o) => o.value === data.gender_identity,
+                        )?.label ?? ''
+                    }
+                />
+                {sexualOrientations.length > 0 && (
                     <Review
-                        label={detailLabel('Gender identity')}
+                        label="Sexual orientation"
                         value={
-                            genderIdentities.find(
-                                (o) => o.value === data.gender_identity,
+                            sexualOrientations.find(
+                                (o) => o.value === data.sexual_orientation,
                             )?.label ?? ''
                         }
                     />
@@ -118,6 +127,12 @@ export function ReviewStep({
                     ]
                         .filter(Boolean)
                         .join(', ')}
+                />
+                <Review
+                    label={
+                        forMinor ? 'Your email (the person answering)' : 'Email'
+                    }
+                    value={data.email.trim()}
                 />
                 <Review
                     label="Experiences"

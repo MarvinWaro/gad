@@ -44,7 +44,7 @@ export const faqs: FaqItem[] = [
     {
         id: 'survey-data',
         question: 'What data do the surveys collect?',
-        answer: 'Each survey states what it collects in its privacy notice, shown before you begin. No name or email is collected, and no IP address or browser details are stored with your response. After you submit, you receive a reference code that you can use to ask CHED Regional Office XII to access or delete your response.',
+        answer: 'Each survey states what it collects in its privacy notice, shown before you begin. No name is collected, giving an email is optional, and no IP address or browser details are stored with your response. After you submit, you receive a reference code that you can use to ask CHED Regional Office XII to access or delete your response.',
     },
     {
         id: 'ra-7877',

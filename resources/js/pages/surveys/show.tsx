@@ -130,8 +130,9 @@ function Confirmation({ reference }: { reference: string }) {
             </p>
             <code>{reference}</code>
             <p className="survey-confirmation-note">
-                No name, email address, IP address, or browser details were
-                stored with your response.
+                No name, IP address, or browser details were stored with your
+                response. If you gave an email, only authorised CHED staff can
+                see it.
             </p>
             <Button asChild>
                 <Link href="/">Return home</Link>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -19,6 +20,8 @@ use Illuminate\Support\Carbon;
  * @property string $respondent_group
  * @property string|null $respondent_group_other
  * @property string|null $gender_identity
+ * @property string|null $sexual_orientation Optional, and never asked about a minor.
+ * @property string|null $email Optional, encrypted at rest; for a minor, the person answering's.
  * @property int|null $survey_region_id Null when the questionnaire made the place optional.
  * @property int|null $survey_cluster_id
  * @property int|null $survey_hei_id
@@ -33,10 +36,13 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable([
     'survey_version_id', 'public_reference', 'age', 'sex', 'respondent_group',
-    'respondent_group_other', 'gender_identity',
+    'respondent_group_other', 'gender_identity', 'sexual_orientation', 'email',
     'survey_region_id', 'survey_cluster_id', 'survey_hei_id',
     'answers', 'consent_at', 'guardian_confirmed_at', 'expires_at',
 ])]
+// The email is read out on purpose, on a single response's page only, never
+// by serializing the model.
+#[Hidden(['email'])]
 class SurveyResponse extends Model
 {
     use HasUlids;
@@ -59,6 +65,7 @@ class SurveyResponse extends Model
         return [
             'answers' => 'array',
             'age' => 'integer',
+            'email' => 'encrypted',
             'consent_at' => 'datetime',
             'guardian_confirmed_at' => 'datetime',
             'expires_at' => 'datetime',

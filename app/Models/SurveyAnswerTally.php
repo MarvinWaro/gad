@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\DB;
  * - `answering_for`: RA 9262's "answering for yourself or a minor"
  * - `age_band`: the age, in bands (AGE_BANDS)
  * - `gender_identity`: asked after a Female or Male answer for sex
+ * - `sexual_orientation`: optional, and never asked about a minor
  *
  * A response adds itself when created and takes itself back when deleted one
  * by one. The retention prune deletes in bulk, which fires no model events,
@@ -110,12 +111,22 @@ class SurveyAnswerTally extends Model
 
         foreach (self::answersOf($response) as [$question, $answer, $detail]) {
             $row = [...$dimensions, 'question' => $question, 'answer' => mb_substr($answer, 0, 80), 'detail' => $detail !== null ? mb_substr($detail, 0, 80) : null];
-            $key = sha1(json_encode(array_values($row), JSON_THROW_ON_ERROR));
+            $key = self::keyFor($row);
             // One answer counts once, so one statement never touches a row twice.
             $rows[$key] = ['key' => $key, ...$row, 'responses' => 1];
         }
 
         return array_values($rows);
+    }
+
+    /**
+     * A row's key: a hash of its dimensions, question, answer and detail.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    public static function keyFor(array $row): string
+    {
+        return sha1(json_encode(array_values($row), JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -130,6 +141,10 @@ class SurveyAnswerTally extends Model
 
         if (is_string($response->gender_identity) && $response->gender_identity !== '') {
             $found[] = ['gender_identity', $response->gender_identity, null];
+        }
+
+        if (is_string($response->sexual_orientation) && $response->sexual_orientation !== '') {
+            $found[] = ['sexual_orientation', $response->sexual_orientation, null];
         }
 
         foreach (self::strings($answers['experiences'] ?? []) as $experience) {

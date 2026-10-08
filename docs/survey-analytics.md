@@ -23,15 +23,24 @@ For everyone who can open Surveys (`surveys.view`), since it holds counts only. 
     - **Experiences:** each one, ending with "I have not experienced any of the above". Each folds out "Who was responsible": the perpetrators chosen for it.
     - **Check-all-that-apply questions:** each choice.
     - **"Answering for"** (RA 9262 only).
-- **About the respondents:** sex, respondent group, age in bands (under 18, 18–24, 25–34, 35–44, 45–59, 60 and over) and gender identity.
-- **Filters:** the period and places, plus Sex and Respondent group.
+- **About the respondents:** sex at birth, respondent group, age in bands (under 18, 18–24, 25–34, 35–44, 45–59, 60 and over), gender identity and sexual orientation (`App\Support\RespondentDetails`, since 2026-10-16):
+    - **Gender identity** is who a person is. Every sex answer, Intersex and Prefer not to say included, gets the same list, whose choices never overlap: Cisgender Man, Cisgender Woman, Trans Man, Trans Woman, Non-binary / Gender Diverse, Another gender identity, Prefer not to say.
+    - **Sexual orientation** is whom a person is attracted to: optional, and never asked about a minor.
+    - **Moved by the migration:** "Heterosexual" identities became Cisgender Man or Woman by the sex given with them, and "Gender Variant" became Non-binary / Gender Diverse, tallies included.
+- **Filters:** the period and places, plus Sex at birth and Respondent group.
 - **"View data"** on every card swaps the bars for a table of the same figures.
 - **Labels** come from the survey's published questionnaire (or its newest draft). Answers it no longer offers keep a readable name.
 - **Not yet:** a respondent group's own follow-up answers (`survey_group_answers`).
 
 ### Anonymity
 
-**Answers show only when at least 5 responses are in view** (`SurveyStatistics::MIN_RESPONSES`). Below that, the totals still show, and a notice asks to widen the filters. Narrowing to one HEI, one sex or one group can never single out a respondent's answers.
+**Answers show only when at least 5 responses are in view** (`SurveyStatistics::MIN_RESPONSES`). Below that, a notice asks to widen the filters, and the totals read "Fewer than 5" rather than the count (filtered to Intersex, the count alone would tell how many). Narrowing to one HEI, one sex or one group can never single out a respondent's answers.
+
+**The groups most at risk are guarded within a view too:**
+
+- **Gender identity and sexual orientation** (`SurveyStatistics::protect()`): any count from 1 to 4 shows as "Not shown", with no share or bar, and neither card splits by sex. When only one count is withheld, the next smallest is too, so it cannot be worked out from the total.
+- **Intersex** (`foldSmallIntersex()`): a count from 1 to 4 joins "Prefer not to say" as "Intersex or prefer not to say", on the Summary and on the dashboard and Surveys insights.
+- **Known limit:** comparing many differently filtered views can still narrow figures down. Exact protection everywhere would need rounded counts.
 
 **Responses naming no region** (where a questionnaire lets respondents skip it) belong to no region. They count only in the overall figures, where "Where responses come from" lists them as "Not given", never in a region's. Only the Central Office reads them one by one or is told of them.
 
@@ -46,6 +55,7 @@ For everyone who can open Surveys (`surveys.view`), since it holds counts only. 
         - `answering_for`
         - `age_band`
         - `gender_identity`
+        - `sexual_orientation`
     - **Kept in step:** a response adds its answers when created and takes them back when deleted one by one. The retention prune deletes in bulk, which fires no events, so **charts never shrink when old responses expire.**
     - **Backfill:** the migration (`2026_10_09_000000_create_survey_answer_tallies_table.php`) counts the responses already kept.
 - **Where the code lives:**

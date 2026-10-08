@@ -16,9 +16,12 @@ type ResponseData = {
     hei: string;
     submitted_at: string;
     expires_at: string;
+    /** Optional; for a minor, the email of the person who answered. */
+    email: string | null;
     /**
      * Follow-ups the respondent was asked, heading => answer, in form order:
-     * gender identity, then the group's student or employee questions.
+     * gender identity, sexual orientation, then the group's student or
+     * employee questions.
      */
     details: Record<string, string>;
     answers: {
@@ -119,7 +122,7 @@ export default function ResponseShow({
                             )}
                             <Item label="Age" value={String(response.age)} />
                             <Item
-                                label="Sex"
+                                label="Sex at birth"
                                 value={
                                     response.answer_labels.sex[response.sex] ??
                                     response.sex
@@ -154,6 +157,15 @@ export default function ResponseShow({
                                 ))}
                             <Item label="Region" value={response.region} />
                             <Item label="HEI" value={response.hei} />
+                            <Item
+                                label={
+                                    response.answers.answering_for ===
+                                    'minor-under-legal-care'
+                                        ? 'Email (the person answering)'
+                                        : 'Email'
+                                }
+                                value={response.email ?? 'Not provided'}
+                            />
                         </CardContent>
                     </Card>
                     <Card className="lg:col-span-2">
@@ -242,7 +254,8 @@ function Item({ label, value }: { label: string; value: string }) {
     return (
         <div>
             <p className="text-xs text-muted-foreground">{label}</p>
-            <p>{value}</p>
+            {/* A long email has no spaces to wrap at. */}
+            <p className="break-words">{value}</p>
         </div>
     );
 }

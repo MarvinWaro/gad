@@ -126,9 +126,9 @@ test('a link to one answer opens it', async ({ page }) => {
     await page.goto('/help/faq#survey-data');
     await expect(page.locator('#survey-data')).toHaveJSProperty('open', true);
     await expect(page.locator('#bulletin')).toHaveJSProperty('open', false);
-    // Answered the way the new survey works: it never asks for an email.
+    // Answered the way the new survey works: an email is only optional.
     await expect(page.locator('#survey-data')).toContainText(
-        'No name or email is collected',
+        'No name is collected, giving an email is optional',
     );
     await expect(page.locator('#survey-data')).not.toContainText(
         'email that will be collected',

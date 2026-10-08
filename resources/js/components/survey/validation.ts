@@ -36,13 +36,9 @@ export function detailErrors(
         errors.age = `Enter an age between ${ageMin} and ${ageMax}.`;
     }
     if (isRequired('sex') && !data.sex) {
-        errors.sex = 'Choose an option for sex.';
+        errors.sex = 'Choose an option for sex assigned at birth.';
     }
-    if (
-        respondent.genderIdentities.length > 0 &&
-        isRequired('sex') &&
-        !data.gender_identity
-    ) {
+    if (isRequired('sex') && !data.gender_identity) {
         errors.gender_identity = `Choose the gender identity that best describes ${respondent.whom}.`;
     }
     if (isRequired('respondent_group') && !data.respondent_group) {

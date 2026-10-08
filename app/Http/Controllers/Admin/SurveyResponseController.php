@@ -73,7 +73,7 @@ class SurveyResponseController extends Controller
             }
             $selectionColumns = $this->selectionColumns($survey);
             $followUpColumns = $this->followUpColumns();
-            fputcsv($handle, ['Reference', 'Version', 'Submitted', 'Age', 'Sex', 'Respondent group', 'Gender identity', ...array_column($followUpColumns, 'heading'), 'Region', 'HEI', 'Experiences', 'Perpetrators', 'Expires', 'Specified perpetrator details', ...($survey->slug === 'ra-9262' ? ['Answering for'] : []), ...array_values($selectionColumns)]);
+            fputcsv($handle, ['Reference', 'Version', 'Submitted', 'Age', 'Sex at birth', 'Respondent group', 'Gender identity', 'Sexual orientation', ...array_column($followUpColumns, 'heading'), 'Region', 'HEI', 'Experiences', 'Perpetrators', 'Expires', 'Specified perpetrator details', ...($survey->slug === 'ra-9262' ? ['Answering for'] : []), ...array_values($selectionColumns)]);
             $this->query($request, $survey)->with(['version', 'region', 'hei', 'groupAnswers.option'])->latest()->each(function (SurveyResponse $response) use ($handle, $survey, $selectionColumns, $followUpColumns): void {
                 // Free text could read as a formula in a spreadsheet (CsvCell).
                 fputcsv($handle, array_map(fn (mixed $cell): mixed => is_string($cell) ? CsvCell::safe($cell) : $cell, [
@@ -85,6 +85,7 @@ class SurveyResponseController extends Controller
                     $response->respondent_group_other ?: $response->respondent_group,
                     // Blank where the question was not asked.
                     RespondentDetails::genderIdentity($response),
+                    RespondentDetails::sexualOrientation($response),
                     ...array_map(fn (array $column): string => RespondentFollowUps::answerText(
                         $response->groupAnswers->firstWhere('question_id', $column['question']->id),
                     ), $followUpColumns),
@@ -146,9 +147,13 @@ class SurveyResponseController extends Controller
             'expires_at' => $response->expires_at->toISOString(),
         ];
         if ($details) {
+            // The optional email shows on this page alone: never in the list,
+            // the export, the statistics, a notice or a log.
+            $data['email'] = $response->email;
             $data['answers'] = $response->answers;
             $data['answer_labels'] = $this->answerLabels($response);
-            // Gender identity and the group's follow-ups, readable, in form order.
+            // Gender identity, sexual orientation and the group's follow-ups,
+            // readable, in form order.
             $data['details'] = RespondentDetails::describe($response);
         }
 

@@ -40,7 +40,7 @@ export function SurveyDetailsSection({ form }: { form: DraftForm }) {
                     </Field>
                     <Field
                         label="Introduction"
-                        hint="Explains why the survey exists and that no name or email is collected."
+                        hint="Explains why the survey exists, that no name is collected, and that giving an email is optional."
                         error={form.errors.introduction}
                     >
                         <textarea

@@ -8,7 +8,8 @@ import type { AnswerOption, AnswerQuestion } from '@/types/survey-insights';
  * One question of a survey's Summary, like Google Forms' summary: each answer
  * with its count and share of the respondents in view, a bar, and how many
  * were female and male. An experience folds out who was responsible. "View
- * data" swaps the bars for a table of the same figures.
+ * data" swaps the bars for a table of the same figures. A protected question
+ * (gender identity, sexual orientation) leaves its small counts out.
  */
 export function AnswerCard({
     question,
@@ -37,6 +38,12 @@ export function AnswerCard({
                             ? 'Respondents could choose several; shares are of everyone who answered.'
                             : 'Shares are of everyone who answered.'}
                     </p>
+                    {question.protected && (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Small counts, and one more where needed, are not
+                            shown, so no one can be identified.
+                        </p>
+                    )}
                 </div>
                 <Button
                     type="button"
@@ -77,18 +84,27 @@ function AnswerRow({
     option: AnswerOption;
     respondents: number;
 }) {
-    const share = percentOf(option.count, respondents);
+    const share =
+        option.count === null ? null : percentOf(option.count, respondents);
 
     return (
         <li>
             <div className="flex items-baseline justify-between gap-3 text-sm">
                 <span className="min-w-0">{option.label}</span>
-                <span className="shrink-0 tabular-nums">
-                    <span className="font-medium">
-                        {formatCount(option.count)}
-                    </span>{' '}
-                    <span className="text-muted-foreground">· {share}%</span>
-                </span>
+                {share === null ? (
+                    <span className="shrink-0 text-muted-foreground">
+                        Not shown
+                    </span>
+                ) : (
+                    <span className="shrink-0 tabular-nums">
+                        <span className="font-medium">
+                            {formatCount(option.count ?? 0)}
+                        </span>{' '}
+                        <span className="text-muted-foreground">
+                            · {share}%
+                        </span>
+                    </span>
+                )}
             </div>
             <div
                 aria-hidden="true"
@@ -96,10 +112,10 @@ function AnswerRow({
             >
                 <div
                     className="h-full rounded-r-[4px] bg-chart-bar"
-                    style={{ width: `${share}%` }}
+                    style={{ width: `${share ?? 0}%` }}
                 />
             </div>
-            {option.female !== null && option.count > 0 && (
+            {option.female !== null && (option.count ?? 0) > 0 && (
                 <p className="mt-1 text-xs text-muted-foreground tabular-nums">
                     {formatCount(option.female)} female ·{' '}
                     {formatCount(option.male ?? 0)} male
@@ -132,7 +148,7 @@ function AnswerRow({
                                     <div
                                         className="h-full rounded-r-[4px] bg-chart-bar"
                                         style={{
-                                            width: `${percentOf(detail.count, option.count)}%`,
+                                            width: `${percentOf(detail.count, option.count ?? 0)}%`,
                                         }}
                                     />
                                 </div>
@@ -205,10 +221,14 @@ function AnswerTable({
                                 {option.label}
                             </th>
                             <td className="px-4 py-2 text-right">
-                                {formatCount(option.count)}
+                                {option.count === null
+                                    ? 'Not shown'
+                                    : formatCount(option.count)}
                             </td>
                             <td className="px-4 py-2 text-right">
-                                {percentOf(option.count, respondents)}%
+                                {option.count === null
+                                    ? '—'
+                                    : `${percentOf(option.count, respondents)}%`}
                             </td>
                             {split && (
                                 <>

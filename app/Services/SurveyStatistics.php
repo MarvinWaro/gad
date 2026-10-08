@@ -30,11 +30,14 @@ use stdClass;
  * Places follow DashboardScope: a regional office sees its own region, the
  * Central Office every region. Answers are only shown with at least
  * MIN_RESPONSES responses in view, so no one can be picked out of a small
- * group.
+ * group. Within them, the groups most at risk are guarded too: gender
+ * identity and sexual orientation counts under MIN_RESPONSES are withheld
+ * (protect()), and a small Intersex count joins "Prefer not to say"
+ * (foldSmallIntersex()).
  *
  * @phpstan-type Breakdown list<array{value: string, label: string, responses: int}>
- * @phpstan-type AnswerOption array{value: string, label: string, count: int, female: int|null, male: int|null, details: list<array{value: string, label: string, count: int}>}
- * @phpstan-type Question array{key: string, label: string, group: 'answers'|'respondents', kind: 'matrix'|'choices', options: list<AnswerOption>}
+ * @phpstan-type AnswerOption array{value: string, label: string, count: int|null, female: int|null, male: int|null, details: list<array{value: string, label: string, count: int}>}
+ * @phpstan-type Question array{key: string, label: string, group: 'answers'|'respondents', kind: 'matrix'|'choices', options: list<AnswerOption>, protected?: bool}
  */
 class SurveyStatistics
 {
@@ -49,6 +52,9 @@ class SurveyStatistics
 
     /** The sexes the forms offer, in their order. */
     private const SEXES = ['female', 'male', 'intersex', 'prefer-not-to-say'];
+
+    /** Respondent questions whose small counts could point to one person. */
+    private const PROTECTED_QUESTIONS = ['gender_identity', 'sexual_orientation'];
 
     /**
      * The Surveys page's insights: totals, the trend, each law, who answered
@@ -124,6 +130,9 @@ class SurveyStatistics
         $figures = Cache::remember($key, self::CACHE_SECONDS, function () use ($scope, $period, $narrow, $definition): array {
             $responses = (int) $narrow($scope->tallies($period), 't')->sum('t.responses');
             $suppressed = $responses < self::MIN_RESPONSES;
+            // A few responses are not counted out either: filtered to
+            // Intersex, say, the total alone would tell how many.
+            $withheld = $suppressed && $responses > 0;
             $bySex = $narrow($scope->tallies($period), 't')
                 ->groupBy('t.sex')
                 ->selectRaw('t.sex as sex, sum(t.responses) as responses')
@@ -133,10 +142,10 @@ class SurveyStatistics
                 'period' => $period->toArray(),
                 'scope' => ['label' => $scope->label(), 'national' => $scope->isNational()],
                 'totals' => [
-                    'responses' => $responses,
+                    'responses' => $withheld ? null : $responses,
                     'heis' => $narrow($scope->tallies($period), 't')->where('t.responses', '>', 0)->whereNotNull('t.survey_hei_id')->distinct()->count('t.survey_hei_id'),
-                    'female' => (int) ($bySex['female'] ?? 0),
-                    'male' => (int) ($bySex['male'] ?? 0),
+                    'female' => $withheld ? null : (int) ($bySex['female'] ?? 0),
+                    'male' => $withheld ? null : (int) ($bySex['male'] ?? 0),
                 ],
                 'suppressed' => $suppressed,
                 'questions' => $suppressed ? [] : $this->questions(
@@ -327,7 +336,7 @@ class SurveyStatistics
     {
         return [
             'groups' => $this->breakdown($scope->tallies($period), 'respondent_group', ...$this->groupOrder()),
-            'sexes' => $this->breakdown($scope->tallies($period), 'sex', self::SEXES, fn (string $value): string => Str::ucfirst(str_replace('-', ' ', $value))),
+            'sexes' => $this->foldSmallIntersex($this->breakdown($scope->tallies($period), 'sex', self::SEXES, fn (string $value): string => Str::ucfirst(str_replace('-', ' ', $value)))),
         ];
     }
 
@@ -444,10 +453,10 @@ class SurveyStatistics
         }
 
         // Who answered, from the response tallies and the answer tallies.
-        $bySex = $this->breakdown(clone $responses, 'sex', self::SEXES, fn (string $value): string => $this->sexOptions($definition)[$value] ?? Str::ucfirst(str_replace('-', ' ', $value)));
+        $bySex = $this->foldSmallIntersex($this->breakdown(clone $responses, 'sex', self::SEXES, fn (string $value): string => $this->sexOptions($definition)[$value] ?? Str::ucfirst(str_replace('-', ' ', $value))));
         $questions[] = [
             'key' => 'sex',
-            'label' => 'Sex',
+            'label' => 'Sex at birth',
             'group' => 'respondents',
             'kind' => 'choices',
             'options' => array_values(array_map(fn (array $row): array => [
@@ -460,9 +469,67 @@ class SurveyStatistics
         $questions[] = $this->question('age_band', 'Age', 'respondents', 'choices', [
             'under-18' => 'Under 18', '18-24' => '18–24', '25-34' => '25–34', '35-44' => '35–44', '45-59' => '45–59', '60-plus' => '60 and over', 'not-given' => 'Not given',
         ], $rows->get('age_band'));
-        $questions[] = $this->question('gender_identity', 'Gender identity', 'respondents', 'choices', $this->genderIdentityLabels(), $rows->get('gender_identity'));
+        $questions[] = $this->question('gender_identity', 'Gender identity', 'respondents', 'choices', array_map(self::english(...), RespondentDetails::GENDER_IDENTITIES), $rows->get('gender_identity'));
+        $questions[] = $this->question('sexual_orientation', 'Sexual orientation', 'respondents', 'choices', array_map(self::english(...), RespondentDetails::SEXUAL_ORIENTATIONS), $rows->get('sexual_orientation'));
 
-        return array_values(array_filter($questions, fn (array $question): bool => $question['options'] !== []));
+        return array_values(array_map(
+            fn (array $question): array => in_array($question['key'], self::PROTECTED_QUESTIONS, true) ? $this->protect($question) : $question,
+            array_filter($questions, fn (array $question): bool => $question['options'] !== []),
+        ));
+    }
+
+    /**
+     * A question with its small counts withheld: counts from 1 to
+     * MIN_RESPONSES - 1 are not given, nor is any option's split by sex.
+     * When only one count is withheld, the next smallest is too, so the
+     * withheld one cannot be worked out from the total.
+     *
+     * @param  Question  $question
+     * @return Question
+     */
+    private function protect(array $question): array
+    {
+        $answered = array_filter(array_map(fn (array $option): int => (int) $option['count'], $question['options']), fn (int $count): bool => $count > 0);
+        $small = array_keys(array_filter($answered, fn (int $count): bool => $count < self::MIN_RESPONSES));
+
+        if (count($small) === 1) {
+            $others = array_diff_key($answered, array_flip($small));
+            if ($others !== []) {
+                $small[] = (int) array_search(min($others), $others, true);
+            }
+        }
+
+        $withheld = array_flip($small);
+
+        return [...$question, 'protected' => true, 'options' => array_map(fn (array $option, int $index): array => [
+            ...$option,
+            'count' => isset($withheld[$index]) ? null : $option['count'],
+            'female' => null,
+            'male' => null,
+        ], $question['options'], array_keys($question['options']))];
+    }
+
+    /**
+     * Sex counts with a small Intersex count (1 to MIN_RESPONSES - 1) joined
+     * to "Prefer not to say", so no intersex respondent can be singled out.
+     *
+     * @param  Breakdown  $rows
+     * @return Breakdown
+     */
+    private function foldSmallIntersex(array $rows): array
+    {
+        $intersex = (int) (collect($rows)->firstWhere('value', 'intersex')['responses'] ?? 0);
+
+        if ($intersex < 1 || $intersex >= self::MIN_RESPONSES) {
+            return $rows;
+        }
+
+        return array_values(array_map(
+            fn (array $row): array => $row['value'] === 'prefer-not-to-say'
+                ? [...$row, 'label' => 'Intersex or prefer not to say', 'responses' => $row['responses'] + $intersex]
+                : $row,
+            array_filter($rows, fn (array $row): bool => $row['value'] !== 'intersex'),
+        ));
     }
 
     /**
@@ -626,22 +693,10 @@ class SurveyStatistics
         return array_combine(self::SEXES, array_map(fn (string $value): string => Str::ucfirst(str_replace('-', ' ', $value)), self::SEXES));
     }
 
-    /**
-     * Gender identities across both sexes, named in English (the forms add
-     * Filipino in brackets).
-     *
-     * @return array<string, string>
-     */
-    private function genderIdentityLabels(): array
+    /** A respondent choice in English: the forms add Filipino in brackets. */
+    private static function english(string $label): string
     {
-        $labels = [];
-        foreach (RespondentDetails::GENDER_IDENTITIES as $identities) {
-            foreach ($identities as $value => $label) {
-                $labels[$value] ??= trim((string) Str::before($label, ' ('));
-            }
-        }
-
-        return $labels;
+        return trim(Str::before($label, ' ('));
     }
 
     /**

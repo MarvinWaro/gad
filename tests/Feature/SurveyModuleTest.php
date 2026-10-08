@@ -247,7 +247,9 @@ test('anonymous responses validate conditional answers and store no direct ident
     expect($response->public_reference)->toStartWith('RA7877-')
         ->and($response->expires_at->isSameDay(now()->addDays(365)))->toBeTrue()
         ->and($response->answers['experiences'])->toBe(['catcalling'])
-        ->and(array_keys($response->getAttributes()))->not->toContain('email', 'name', 'ip_address', 'user_agent');
+        ->and(array_keys($response->getAttributes()))->not->toContain('name', 'ip_address', 'user_agent')
+        // An email is kept only when the respondent gives one.
+        ->and($response->email)->toBeNull();
 });
 
 test('respondents under eighteen require guardian confirmation', function () {
