@@ -14,6 +14,7 @@ use App\Http\Controllers\Settings\StudentCountController;
 use App\Http\Controllers\Settings\SurveyDirectoryController;
 use App\Http\Controllers\Settings\TemporaryPasswordController;
 use App\Http\Controllers\Settings\UserManagementController;
+use App\Models\SurveyRegion;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
 
@@ -91,10 +92,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('settings/respondent-groups', [SurveyDirectoryController::class, 'respondentGroups'])
         ->middleware('can:survey-directories.view')->name('settings.respondent-groups.index');
+    // Directory managers, and offices keeping their own letterhead (SurveyRegionPolicy).
     Route::get('settings/regions', [SurveyDirectoryController::class, 'regions'])
-        ->middleware('can:survey-directories.view')->name('settings.regions.index');
+        ->middleware('can:viewAny,'.SurveyRegion::class)->name('settings.regions.index');
     Route::put('settings/regions/{region}/office', [RegionOfficeController::class, 'update'])
-        ->middleware('can:survey-directories.update')->name('settings.regions.office');
+        ->middleware('can:updateOffice,region')->name('settings.regions.office');
     Route::get('settings/heis', [SurveyDirectoryController::class, 'heis'])
         ->middleware('can:survey-directories.view')->name('settings.heis.index');
     Route::put('settings/respondent-groups/{group}/follow-ups', [SurveyDirectoryController::class, 'updateFollowUps'])

@@ -41,6 +41,8 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            // The office running this site, for the footer and help pages.
+            'operator' => config('phlgadis.operator'),
             'auth' => [
                 'user' => $user,
                 'roles' => fn (): array => $user?->roles()->pluck('slug')->all() ?? [],

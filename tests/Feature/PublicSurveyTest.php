@@ -251,11 +251,14 @@ test('a region whose institutions are all deactivated drops out of the list too'
 
 test('when the HEI is optional an empty region stays available', function () {
     $survey = publishOptionalHeiRa7877();
-    SurveyRegion::query()->create(['name' => 'BARMM B', 'is_active' => true]);
+    SurveyRegion::query()->create(['name' => 'BARMM B', 'is_active' => true, 'office_email' => 'barmm-b@example.test']);
 
+    // Each region carries its own office's email, for asking to have an HEI added.
     $this->get(route('surveys.show', ['law' => 'ra-7877']))
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->has('directories.regions', 2));
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('directories.regions', 2)
+            ->where('directories.regions', fn ($regions) => collect($regions)->firstWhere('name', 'BARMM B')['email'] === 'barmm-b@example.test'));
 
     // And the respondent can submit having picked only that region.
     $barmm = SurveyRegion::query()->where('name', 'BARMM B')->sole();

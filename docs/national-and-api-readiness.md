@@ -6,25 +6,17 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 
 **Contacts and office names in UI copy.** These should come from the viewer's region, or the HEI's region, instead:
 
-- [ ] `resources/js/data/contact.ts`: the RO XII hotline and email. The footer and the FAQ contact panel read it.
-- [ ] `resources/js/components/survey/respondent-step.tsx`: hard-coded `mailto:chedro12@ched.gov.ph`. It doesn't use `contact.ts`. (Settings → Profile now names the account's own regional office from `survey_regions.office_email`.)
-- [ ] Footer "Powered by CHEDRO XII" (`components/public/site-layout.tsx`).
+- [x] The site's own contact (footer, FAQ contact panel, rating thank-you) comes from `config/phlgadis.php` since 2026-10-08: the office running the deployment, set by `PHLGADIS_OPERATOR_*` (shared as `operator`, read through `useOperator()`). `resources/js/data/contact.ts` is gone.
+- [x] `resources/js/components/survey/respondent-step.tsx`: the no-institutions note emails the chosen region's own office (`survey_regions.office_email`, sent with the survey's regions), or says to contact the regional office, as registration does (2026-10-08).
+- [x] Footer "Powered by …" names the configured operator (2026-10-08).
 - [x] Statistics heading "CHEDRO XII Higher Education GAD Statistical Data" (`components/home/statistics.tsx`): since 2026-10-03 the section has a Region select, and the line follows it ("{Region} Higher Education GAD Statistical Data", or "…, all regions").
-- [ ] "CHEDRO XII" or "CHED Regional Office XII" in:
-    - the survey confirmation (`pages/surveys/show.tsx`)
-    - the rating thank-you (`components/home/rate-widget.tsx`)
-    - the FAQ contact panel (`pages/help/faq.tsx`)
+- [x] The survey confirmation says "ask CHED" (2026-10-08); the rating thank-you and FAQ panel name the configured operator.
 
 **HEI area and community.**
 
-- [ ] `CHED_LABEL = 'CHED Regional Office XII'` (`lib/ched-label.ts`, one definition since 2026-09-29) labels staff posts, tags and reactors. It should come from the author's office, which staff accounts now carry (`users.survey_region_id`, or `national_access` for the Central Office).
+- [x] `CHED_LABEL` is gone (2026-10-08). Staff posts carry their author's office (`office` in `CommunityFeed`), and tagged people and reactors their `affiliation`, both from `User::chedOffice()` / `User::affiliation()`: "CHED {region}" or "CHED Central Office". The staff composer posts as `auth.affiliation`.
 - [x] "Region XII community": gone from the composer (2026-09-28), the share dialog, post-card and the HEI home feed heading (2026-09-29), which now name the feed "Gender Mainstreaming".
-- [ ] "CHED Regional Office XII" or "Region XII" in:
-    - `welcome-band.tsx`
-    - `upcoming-events.tsx`
-    - `next-event-card.tsx`
-    - `pages/hei/events.tsx`
-    - `pages/community/index.tsx` (the composer's CHED label and placeholder)
+- [x] `upcoming-events.tsx`, `next-event-card.tsx` and `pages/hei/events.tsx` say "CHED", since events may come from the region or the Central Office (2026-10-08); a deactivated account is told to contact its CHED regional office.
 
 **Data and sync.**
 
@@ -57,7 +49,7 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
         - directories
         - community moderation
         - site ratings
-- [ ] **Office details per region:** the letterhead is in data since 2026-09-29 (`survey_regions.office_city`, `office_address`, `office_email`, `office_website`, `office_phone`; Settings → Regions → Office details) and prints on monitoring reports. `resources/js/data/contact.ts` (the footer and FAQ hotline) still hard-codes Region XII and should read the viewer's office instead.
+- [ ] **Office details per region:** the letterhead is in data since 2026-09-29 (`survey_regions.office_city`, `office_address`, `office_email`, `office_website`, `office_phone`; Settings → Regions → Office details) and prints on monitoring reports. Since 2026-10-09 each region's CHED Focal keeps its own region's details (`region-offices.update`, `SurveyRegionPolicy`); the Central Office keeps every region's. The site's own footer and FAQ contact come from `config/phlgadis.php` (the deployment's operator) since 2026-10-08.
 - [ ] **Filters and exports:** every statistic and export takes a region and HEI filter. (Clusters are kept out of sight since 2026-10-03.)
 - [ ] **Philippine time:** dates show in Asia/Manila time throughout. The app timezone stays UTC for storage.
 

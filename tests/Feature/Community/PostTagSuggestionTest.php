@@ -30,8 +30,9 @@ test('suggestions list active accounts with their school, never the viewer', fun
         ->getJson(route('posts.tag-suggestions'))
         ->assertOk()
         ->assertExactJson([
-            ['id' => $colleague->id, 'name' => 'Ana Cruz', 'avatar' => null, 'hei' => InstitutionName::display($school->name)],
-            ['id' => $staff->id, 'name' => 'Ben Reyes', 'avatar' => null, 'hei' => null],
+            ['id' => $colleague->id, 'name' => 'Ana Cruz', 'avatar' => null, 'affiliation' => InstitutionName::display($school->name)],
+            // CHED staff are named by their office.
+            ['id' => $staff->id, 'name' => 'Ben Reyes', 'avatar' => null, 'affiliation' => 'CHED Central Office'],
         ]);
 });
 

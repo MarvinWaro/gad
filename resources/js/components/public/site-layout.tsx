@@ -12,7 +12,7 @@ import {
     SheetTitle,
     SheetTrigger,
 } from '@/components/ui/sheet';
-import { chedContact } from '@/data/contact';
+import { useOperator } from '@/hooks/use-operator';
 import { dashboard, login, register } from '@/routes';
 import { create as feedback } from '@/routes/feedback';
 import { faq } from '@/routes/help';
@@ -150,6 +150,8 @@ export function SiteHeader({
 }
 
 export function SiteFooter({ homeUrl }: { homeUrl?: string }) {
+    const operator = useOperator();
+
     return (
         <footer className="site-footer">
             <div className="public-container">
@@ -207,12 +209,10 @@ export function SiteFooter({ homeUrl }: { homeUrl?: string }) {
                     <div className="footer-contact">
                         <h3>Contact</h3>
                         <p>Hotline:</p>
-                        <a href={chedContact.hotline.href}>
-                            {chedContact.hotline.label}
-                        </a>
+                        <a href={operator.hotlineHref}>{operator.hotline}</a>
                         <p>Email:</p>
-                        <a href={`mailto:${chedContact.email}`}>
-                            {chedContact.email}
+                        <a href={`mailto:${operator.email}`}>
+                            {operator.email}
                         </a>
                         <p>We value your feedback:</p>
                         <Link href={feedbackHref}>Share feedback</Link>
@@ -220,8 +220,8 @@ export function SiteFooter({ homeUrl }: { homeUrl?: string }) {
                 </div>
                 <div className="footer-bottom">
                     <p>
-                        © {new Date().getFullYear()} Powered by CHEDRO XII. All
-                        rights reserved.
+                        © {new Date().getFullYear()} Powered by{' '}
+                        {operator.short_name}. All rights reserved.
                     </p>
                 </div>
             </div>

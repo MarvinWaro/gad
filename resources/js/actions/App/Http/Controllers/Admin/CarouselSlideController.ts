@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::index
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:20
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:21
  * @route '/admin/carousels'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::index
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:20
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:21
  * @route '/admin/carousels'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::index
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:20
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:21
  * @route '/admin/carousels'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::index
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:20
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:21
  * @route '/admin/carousels'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::index
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:20
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:21
  * @route '/admin/carousels'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::index
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:20
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:21
  * @route '/admin/carousels'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::index
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:20
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:21
  * @route '/admin/carousels'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::store
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:60
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:61
  * @route '/admin/carousels'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::store
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:60
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:61
  * @route '/admin/carousels'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::store
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:60
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:61
  * @route '/admin/carousels'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::store
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:60
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:61
  * @route '/admin/carousels'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::store
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:60
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:61
  * @route '/admin/carousels'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::update
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:79
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:80
  * @route '/admin/carousels/{carouselSlide}'
  */
 export const update = (args: { carouselSlide: number | { id: number } } | [carouselSlide: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -149,7 +149,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::update
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:79
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:80
  * @route '/admin/carousels/{carouselSlide}'
  */
 update.url = (args: { carouselSlide: number | { id: number } } | [carouselSlide: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -182,7 +182,7 @@ update.url = (args: { carouselSlide: number | { id: number } } | [carouselSlide:
 
 /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::update
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:79
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:80
  * @route '/admin/carousels/{carouselSlide}'
  */
 update.put = (args: { carouselSlide: number | { id: number } } | [carouselSlide: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -192,7 +192,7 @@ update.put = (args: { carouselSlide: number | { id: number } } | [carouselSlide:
 
     /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::update
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:79
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:80
  * @route '/admin/carousels/{carouselSlide}'
  */
     const updateForm = (args: { carouselSlide: number | { id: number } } | [carouselSlide: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -207,7 +207,7 @@ update.put = (args: { carouselSlide: number | { id: number } } | [carouselSlide:
 
             /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::update
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:79
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:80
  * @route '/admin/carousels/{carouselSlide}'
  */
         updateForm.put = (args: { carouselSlide: number | { id: number } } | [carouselSlide: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -223,7 +223,7 @@ update.put = (args: { carouselSlide: number | { id: number } } | [carouselSlide:
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::destroy
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:113
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:114
  * @route '/admin/carousels/{carouselSlide}'
  */
 export const destroy = (args: { carouselSlide: number | { id: number } } | [carouselSlide: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -238,7 +238,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::destroy
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:113
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:114
  * @route '/admin/carousels/{carouselSlide}'
  */
 destroy.url = (args: { carouselSlide: number | { id: number } } | [carouselSlide: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -271,7 +271,7 @@ destroy.url = (args: { carouselSlide: number | { id: number } } | [carouselSlide
 
 /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::destroy
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:113
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:114
  * @route '/admin/carousels/{carouselSlide}'
  */
 destroy.delete = (args: { carouselSlide: number | { id: number } } | [carouselSlide: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -281,7 +281,7 @@ destroy.delete = (args: { carouselSlide: number | { id: number } } | [carouselSl
 
     /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::destroy
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:113
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:114
  * @route '/admin/carousels/{carouselSlide}'
  */
     const destroyForm = (args: { carouselSlide: number | { id: number } } | [carouselSlide: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -296,7 +296,7 @@ destroy.delete = (args: { carouselSlide: number | { id: number } } | [carouselSl
 
             /**
 * @see \App\Http\Controllers\Admin\CarouselSlideController::destroy
- * @see app/Http/Controllers/Admin/CarouselSlideController.php:113
+ * @see app/Http/Controllers/Admin/CarouselSlideController.php:114
  * @route '/admin/carousels/{carouselSlide}'
  */
         destroyForm.delete = (args: { carouselSlide: number | { id: number } } | [carouselSlide: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

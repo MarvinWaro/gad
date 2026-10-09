@@ -11,6 +11,7 @@ use App\Models\SurveyRespondentGroup;
 use App\Models\SurveyResponse;
 use App\Services\ActivityRecorder;
 use App\Support\CsvCell;
+use App\Support\PageRange;
 use App\Support\RespondentDetails;
 use App\Support\RespondentFollowUps;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,12 +25,12 @@ class SurveyResponseController extends Controller
 {
     public function index(Request $request, Survey $survey): Response
     {
-        $responses = $this->query($request, $survey)
+        $responses = PageRange::within($this->query($request, $survey)
             ->with(['version:id,version', 'region:id,name', 'hei:id,name'])
             ->latest()
             ->paginate(20)
             ->withQueryString()
-            ->through(fn (SurveyResponse $response): array => $this->serialize($response, false));
+            ->through(fn (SurveyResponse $response): array => $this->serialize($response, false)));
 
         return Inertia::render('admin/surveys/responses', [
             'survey' => ['id' => $survey->id, 'code' => $survey->code, 'title' => $survey->title],
@@ -113,7 +114,10 @@ class SurveyResponseController extends Controller
         $surveyResponse->delete();
         $activity->record(ActivityAction::Deleted, ActivityModule::SurveyResponses, $surveyResponse, properties: ['survey' => $survey->title]);
 
-        return to_route('admin.surveys.responses.index', $survey);
+        Inertia::flash('toast', ['type' => 'deleted', 'message' => __('Response :reference deleted.', ['reference' => $surveyResponse->public_reference])]);
+
+        // From its own page, which is gone now, to the list itself.
+        return $this->backToList('admin.surveys.responses.index', $survey);
     }
 
     /** @return Builder<SurveyResponse> */

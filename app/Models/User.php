@@ -155,11 +155,16 @@ class User extends Authenticatable implements PasskeyUser
      */
     public function affiliation(): string
     {
-        return match (true) {
-            $this->hei !== null => InstitutionName::display($this->hei->name),
-            $this->officeRegion !== null => 'CHED '.$this->officeRegion->name,
-            default => 'CHED Central Office',
-        };
+        return $this->hei !== null ? InstitutionName::display($this->hei->name) : $this->chedOffice();
+    }
+
+    /**
+     * The CHED office a staff account speaks for: its regional office, or
+     * the Central Office. Load `officeRegion` first.
+     */
+    public function chedOffice(): string
+    {
+        return $this->officeRegion !== null ? 'CHED '.$this->officeRegion->name : 'CHED Central Office';
     }
 
     /**

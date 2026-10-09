@@ -27,7 +27,7 @@ class RegionOfficeController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __(':name office details saved.', ['name' => $region->name]),
+            'message' => __('Office details saved for :name.', ['name' => $region->name]),
         ]);
 
         return back();

@@ -53,6 +53,9 @@ return [
         // Private either way: files are only handed out by MonitoringController.
         'monitoring' => $spaces ? [
             ...$bucket,
+            // An unreachable bucket fails each try in seconds, so the HEI is
+            // asked to submit again rather than left waiting.
+            'http' => ['connect_timeout' => 5],
             'root' => $folder.'/monitoring-files',
             'throw' => true,
             'visibility' => 'private',

@@ -33,8 +33,8 @@ export function NextEventCard({
             >
                 <p className="text-lg leading-snug">No events scheduled yet</p>
                 <p className="mt-2 text-sm text-on-signature/75">
-                    Regional trainings, campaigns, and deadlines from CHED
-                    Regional Office XII will appear here.
+                    Regional trainings, campaigns, and deadlines from CHED will
+                    appear here.
                 </p>
             </section>
         );

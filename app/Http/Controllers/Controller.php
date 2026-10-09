@@ -17,4 +17,23 @@ abstract class Controller
 
         return back();
     }
+
+    /**
+     * Back to the list a change was made from, as it was: its filters,
+     * search, tab and page. A change made elsewhere, such as on the record's
+     * own page, lands on the list itself. Only the query comes from the
+     * browser; the address is the route's. A change made on a record's page
+     * that still exists uses back().
+     *
+     * @param  mixed  $parameters  The list route's own parameters; no query.
+     */
+    protected function backToList(string $route, mixed $parameters = []): RedirectResponse
+    {
+        $list = route($route, $parameters);
+        $from = parse_url((string) request()->headers->get('referer')) ?: [];
+        $query = $from['query'] ?? '';
+        $sameList = rtrim($from['path'] ?? '', '/') === rtrim((string) parse_url($list, PHP_URL_PATH), '/');
+
+        return redirect()->to($sameList && $query !== '' ? "{$list}?{$query}" : $list);
+    }
 }

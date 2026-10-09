@@ -12,7 +12,6 @@ import {
 import { PersonAvatar } from '@/components/person-avatar';
 import { achieveAgenda, achievePage, type AchieveCode } from '@/data/achieve';
 import { sdgsFor, sustainableGoals } from '@/data/sdgs';
-import { CHED_LABEL } from '@/lib/ched-label';
 import { POST_FEELINGS } from '@/lib/post-feelings';
 import { MAX_ACHIEVE_ITEMS, MAX_SDGS, sdgLabel } from '@/lib/post-goals';
 import { cn } from '@/lib/utils';
@@ -232,7 +231,7 @@ export function TagPeopleView({
                                                 {person.name}
                                             </span>
                                             <span className="block truncate text-xs text-muted-foreground">
-                                                {person.hei ?? CHED_LABEL}
+                                                {person.affiliation}
                                             </span>
                                         </span>
                                         <SelectionMark selected={isSelected} />

@@ -240,15 +240,25 @@ function RoleDialog({
     role?: Role;
 }) {
     const [open, setOpen] = useState(false);
-    const form = useForm<RoleForm>({
+    // The role as saved now: Edit starts from it each time it opens.
+    const saved = (): RoleForm => ({
         name: role?.name ?? '',
         description: role?.description ?? '',
         permission_ids: role?.permission_ids ?? [],
     });
+    const form = useForm<RoleForm>(saved());
     const totalPermissions = permissionGroups.reduce(
         (total, group) => total + group.permissions.length,
         0,
     );
+
+    function changeOpen(next: boolean) {
+        if (next && mode === 'edit') {
+            form.setData(saved());
+            form.clearErrors();
+        }
+        setOpen(next);
+    }
 
     function togglePermission(permissionId: number, checked: boolean) {
         form.setData(
@@ -279,7 +289,9 @@ function RoleDialog({
             preserveScroll: true,
             onSuccess: () => {
                 setOpen(false);
-                form.reset();
+                if (mode === 'create') {
+                    form.reset();
+                }
             },
         };
 
@@ -291,7 +303,7 @@ function RoleDialog({
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={changeOpen}>
             <DialogTrigger asChild>
                 {mode === 'create' ? (
                     <Button>

@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Services\ActivityRecorder;
 use App\Support\CountPhrase;
 use App\Support\InstitutionName;
+use App\Support\PageRange;
 use App\Support\RespondentFollowUps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -41,9 +42,23 @@ class SurveyDirectoryController extends Controller
 
     public function regions(Request $request): Response
     {
+        /** @var User $user */
+        $user = $request->user();
+
         return Inertia::render('settings/regions', [
             // A page holds every CHED region today (17); the count stays shown.
-            'regions' => SurveyRegion::query()->withCount('heis')->orderBy('name')->paginate(20)->withQueryString(),
+            // Without the directory, an office sees the regions it covers:
+            // a CHED Focal their own, to keep its office details up to date.
+            'regions' => PageRange::within(SurveyRegion::query()
+                ->when(! $user->can('survey-directories.view'), fn ($query) => $query->withinReachOf($user))
+                ->withCount('heis')
+                ->orderBy('name')
+                ->paginate(20)
+                ->withQueryString()
+                ->through(fn (SurveyRegion $region): array => [
+                    ...$region->only(['id', 'name', 'is_active', 'heis_count', ...SurveyRegion::OFFICE_FIELDS]),
+                    'can_edit_office' => $user->can('updateOffice', $region),
+                ])),
             'permissions' => $this->permissions($request),
         ]);
     }
@@ -60,7 +75,7 @@ class SurveyDirectoryController extends Controller
             // it is filtered and paged rather than rendered whole. Each is
             // shown with its region; the cluster linking them stays out of
             // sight.
-            'heis' => SurveyHei::query()->with('cluster:id,survey_region_id', 'cluster.region:id,name')
+            'heis' => PageRange::within(SurveyHei::query()->with('cluster:id,survey_region_id', 'cluster.region:id,name')
                 ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                     ->where('name', 'like', "%{$search}%")
                     ->orWhere('uii', 'like', "%{$search}%")))
@@ -76,7 +91,7 @@ class SurveyDirectoryController extends Controller
                     ...$hei->only(['id', 'uii', 'name', 'ownership', 'is_active']),
                     'portal_synced_at' => $hei->portal_synced_at?->toIso8601String(),
                     'region' => $hei->cluster->region->only(['id', 'name']),
-                ]),
+                ])),
             'filters' => [
                 'search' => $search,
                 'region' => (string) ($filters['region'] ?? ''),
@@ -100,7 +115,7 @@ class SurveyDirectoryController extends Controller
     public function respondentGroups(Request $request): Response
     {
         return Inertia::render('settings/respondent-groups', [
-            'respondentGroups' => SurveyRespondentGroup::query()
+            'respondentGroups' => PageRange::within(SurveyRespondentGroup::query()
                 ->ordered()
                 ->with('followUpQuestions.activeOptions')
                 ->paginate(10)->withQueryString()
@@ -112,7 +127,7 @@ class SurveyDirectoryController extends Controller
                     'is_active' => $group->is_active,
                     'sort_order' => $group->sort_order,
                     'follow_ups' => $group->followUps(),
-                ]),
+                ])),
             'permissions' => [
                 'create' => $request->user()->can('survey-directories.create'),
                 'update' => $request->user()->can('survey-directories.update'),

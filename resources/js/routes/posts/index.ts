@@ -60,7 +60,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\PostTagSuggestionController::__invoke
- * @see app/Http/Controllers/PostTagSuggestionController.php:21
+ * @see app/Http/Controllers/PostTagSuggestionController.php:20
  * @route '/posts/tag-suggestions'
  */
 export const tagSuggestions = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -75,7 +75,7 @@ tagSuggestions.definition = {
 
 /**
 * @see \App\Http\Controllers\PostTagSuggestionController::__invoke
- * @see app/Http/Controllers/PostTagSuggestionController.php:21
+ * @see app/Http/Controllers/PostTagSuggestionController.php:20
  * @route '/posts/tag-suggestions'
  */
 tagSuggestions.url = (options?: RouteQueryOptions) => {
@@ -84,7 +84,7 @@ tagSuggestions.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PostTagSuggestionController::__invoke
- * @see app/Http/Controllers/PostTagSuggestionController.php:21
+ * @see app/Http/Controllers/PostTagSuggestionController.php:20
  * @route '/posts/tag-suggestions'
  */
 tagSuggestions.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -93,7 +93,7 @@ tagSuggestions.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PostTagSuggestionController::__invoke
- * @see app/Http/Controllers/PostTagSuggestionController.php:21
+ * @see app/Http/Controllers/PostTagSuggestionController.php:20
  * @route '/posts/tag-suggestions'
  */
 tagSuggestions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -103,7 +103,7 @@ tagSuggestions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
 
     /**
 * @see \App\Http\Controllers\PostTagSuggestionController::__invoke
- * @see app/Http/Controllers/PostTagSuggestionController.php:21
+ * @see app/Http/Controllers/PostTagSuggestionController.php:20
  * @route '/posts/tag-suggestions'
  */
     const tagSuggestionsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -113,7 +113,7 @@ tagSuggestions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
 
             /**
 * @see \App\Http\Controllers\PostTagSuggestionController::__invoke
- * @see app/Http/Controllers/PostTagSuggestionController.php:21
+ * @see app/Http/Controllers/PostTagSuggestionController.php:20
  * @route '/posts/tag-suggestions'
  */
         tagSuggestionsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -122,7 +122,7 @@ tagSuggestions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
         })
             /**
 * @see \App\Http\Controllers\PostTagSuggestionController::__invoke
- * @see app/Http/Controllers/PostTagSuggestionController.php:21
+ * @see app/Http/Controllers/PostTagSuggestionController.php:20
  * @route '/posts/tag-suggestions'
  */
         tagSuggestionsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

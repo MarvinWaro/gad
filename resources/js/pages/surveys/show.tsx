@@ -125,8 +125,8 @@ function Confirmation({ reference }: { reference: string }) {
             </h1>
             <p>
                 Your anonymous response has been recorded. Keep this private
-                reference if you need to ask CHEDRO XII about accessing or
-                deleting the response.
+                reference if you need to ask CHED about accessing or deleting
+                the response.
             </p>
             <code>{reference}</code>
             <p className="survey-confirmation-note">

@@ -16,6 +16,7 @@ use App\Models\Badge;
 use App\Models\BadgeAward;
 use App\Models\User;
 use App\Support\InstitutionName;
+use App\Support\PageRange;
 use App\Support\PlaceFilters;
 use App\Support\QuestBadgeHolders;
 use Illuminate\Database\Eloquent\Builder;
@@ -43,7 +44,7 @@ class BadgeController extends Controller
         $user = $request->user();
         $search = $request->search();
 
-        $badges = Badge::query()
+        $badges = PageRange::within(Badge::query()
             // National badges for every office; a region's own for its office.
             ->when(! $user->national_access, fn (Builder $query) => $query->where(fn (Builder $query) => $query
                 ->whereNull('survey_region_id')
@@ -53,7 +54,7 @@ class BadgeController extends Controller
             ->withCount('awards as holders_count')
             ->inListOrder()
             ->paginate(20)
-            ->withQueryString();
+            ->withQueryString());
         QuestBadgeHolders::countInto($badges->getCollection());
 
         return Inertia::render('settings/badges', [
@@ -74,7 +75,7 @@ class BadgeController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name created.', ['name' => $badge->name])]);
 
-        return to_route('settings.badges.index');
+        return $this->backToList('settings.badges.index');
     }
 
     /** Who holds the badge, newest first; an office sees its own region's holders of a national badge. */
@@ -90,7 +91,7 @@ class BadgeController extends Controller
             'badge' => BadgeResource::make($badge)->resolve($request),
             'holders' => $badge->quest_level !== null
                 ? QuestBadgeHolderResource::collection(QuestBadgeHolders::page($badge->quest_level, $user, $search))
-                : BadgeAwardResource::collection($this->awardHolders($badge, $user, $search)),
+                : BadgeAwardResource::collection(PageRange::within($this->awardHolders($badge, $user, $search))),
             'filters' => ['search' => $search],
         ]);
     }
@@ -125,7 +126,7 @@ class BadgeController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name saved.', ['name' => $badge->name])]);
 
-        return back();
+        return $this->backToList('settings.badges.index');
     }
 
     public function status(BadgeStatusRequest $request, Badge $badge, ManageBadge $manager): RedirectResponse
@@ -136,7 +137,7 @@ class BadgeController extends Controller
             ? __(':name is on.', ['name' => $badge->name])
             : __(':name is off. Nobody receives it now; those who hold it keep it.', ['name' => $badge->name])]);
 
-        return back();
+        return $this->backToList('settings.badges.index');
     }
 
     public function destroy(Badge $badge, ManageBadge $manager): RedirectResponse
@@ -145,7 +146,7 @@ class BadgeController extends Controller
 
         Inertia::flash('toast', ['type' => 'deleted', 'message' => __(':name deleted.', ['name' => $badge->name])]);
 
-        return to_route('settings.badges.index');
+        return $this->backToList('settings.badges.index');
     }
 
     /**

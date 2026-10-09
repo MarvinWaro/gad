@@ -9,6 +9,7 @@ use App\Http\Requests\Admin\StoreCarouselSlideRequest;
 use App\Http\Requests\Admin\UpdateCarouselSlideRequest;
 use App\Models\CarouselSlide;
 use App\Services\ActivityRecorder;
+use App\Support\PageRange;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -21,7 +22,7 @@ class CarouselSlideController extends Controller
     {
         $search = trim((string) $request->query('search', ''));
 
-        $slides = CarouselSlide::query()
+        $slides = PageRange::within(CarouselSlide::query()
             ->with('creator:id,name')
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($query) use ($search): void {
@@ -44,7 +45,7 @@ class CarouselSlideController extends Controller
                 'sort_order' => $slide->sort_order,
                 'created_by' => $slide->creator?->name,
                 'updated_at' => $slide->updated_at?->toISOString(),
-            ]);
+            ]));
 
         return Inertia::render('admin/carousels/index', [
             'slides' => $slides,
@@ -73,7 +74,7 @@ class CarouselSlideController extends Controller
             'message' => __('Carousel slide created.'),
         ]);
 
-        return to_route('admin.carousels.index');
+        return $this->backToList('admin.carousels.index');
     }
 
     public function update(
@@ -107,7 +108,7 @@ class CarouselSlideController extends Controller
             'message' => __('Carousel slide updated.'),
         ]);
 
-        return to_route('admin.carousels.index');
+        return $this->backToList('admin.carousels.index');
     }
 
     public function destroy(CarouselSlide $carouselSlide, ActivityRecorder $activity): RedirectResponse
@@ -122,6 +123,6 @@ class CarouselSlideController extends Controller
             'message' => __('Carousel slide deleted.'),
         ]);
 
-        return to_route('admin.carousels.index');
+        return $this->backToList('admin.carousels.index');
     }
 }

@@ -347,7 +347,9 @@ function SlideDialog({
     slide?: CarouselSlide;
 }) {
     const [open, setOpen] = useState(false);
-    const form = useForm<SlideForm>({
+    // The slide as saved now: Edit starts from it each time it opens, with
+    // no picture chosen yet.
+    const saved = (): SlideForm => ({
         title: slide?.title ?? '',
         description: slide?.description ?? '',
         image: null,
@@ -356,6 +358,7 @@ function SlideDialog({
         sort_order: slide?.sort_order ?? 0,
         ...(mode === 'edit' ? { _method: 'put' as const } : {}),
     });
+    const form = useForm<SlideForm>(saved());
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -368,7 +371,9 @@ function SlideDialog({
                 preserveScroll: true,
                 onSuccess: () => {
                     setOpen(false);
-                    form.reset();
+                    if (mode === 'create') {
+                        form.reset();
+                    }
                 },
             },
         );
@@ -379,6 +384,7 @@ function SlideDialog({
             open={open}
             onOpenChange={(nextOpen) => {
                 setOpen(nextOpen);
+                if (nextOpen && mode === 'edit') form.setData(saved());
                 if (nextOpen) form.clearErrors();
             }}
         >

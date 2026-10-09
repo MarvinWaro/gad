@@ -654,23 +654,29 @@ function UserDialog({
 }) {
     const [open, setOpen] = useState(false);
     const fieldId = `${mode}-${user?.id ?? 'new'}`;
-    const currentHei = heis.find((hei) => hei.id === user?.hei?.id);
-    const form = useForm<UserForm>({
-        name: user?.name ?? '',
-        email: user?.email ?? '',
-        // An account's region is its institution's; with one region, it is
-        // chosen already.
-        region: currentHei
-            ? String(currentHei.region_id)
-            : heiRegions.length === 1
-              ? String(heiRegions[0].id)
-              : '',
-        survey_hei_id: user?.hei ? String(user.hei.id) : '',
-        password: '',
-        password_confirmation: '',
-        role_ids: user?.roles.map((role) => role.id) ?? [],
-        office: officeValue(user?.office),
-    });
+    // The account as saved now. Edit starts from it each time it opens, so
+    // the dialog never shows what a save or another admin has changed since.
+    const saved = (): UserForm => {
+        const currentHei = heis.find((hei) => hei.id === user?.hei?.id);
+
+        return {
+            name: user?.name ?? '',
+            email: user?.email ?? '',
+            // An account's region is its institution's; with one region, it
+            // is chosen already.
+            region: currentHei
+                ? String(currentHei.region_id)
+                : heiRegions.length === 1
+                  ? String(heiRegions[0].id)
+                  : '',
+            survey_hei_id: user?.hei ? String(user.hei.id) : '',
+            password: '',
+            password_confirmation: '',
+            role_ids: user?.roles.map((role) => role.id) ?? [],
+            office: officeValue(user?.office),
+        };
+    };
+    const form = useForm<UserForm>(saved());
     const chosen = (role: AssignableRole) =>
         form.data.role_ids.includes(role.id);
     // Where an account belongs follows its roles: HEI roles are placed by
@@ -710,6 +716,14 @@ function UserDialog({
         })),
     ];
 
+    function changeOpen(next: boolean) {
+        if (next && mode === 'edit') {
+            form.setData(saved());
+            form.clearErrors();
+        }
+        setOpen(next);
+    }
+
     function toggleRole(roleId: number, checked: boolean) {
         form.setData(
             'role_ids',
@@ -725,7 +739,11 @@ function UserDialog({
             preserveScroll: true,
             onSuccess: () => {
                 setOpen(false);
-                form.reset();
+                // A new account's form starts blank again; Edit reloads the
+                // saved account when it next opens.
+                if (mode === 'create') {
+                    form.reset();
+                }
             },
         };
 
@@ -753,7 +771,7 @@ function UserDialog({
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={changeOpen}>
             <DialogTrigger asChild>
                 {mode === 'create' ? (
                     <Button>
@@ -830,7 +848,8 @@ function UserDialog({
                         <InputError message={form.errors.role_ids} />
                     </fieldset>
                     {heiAccount && (
-                        <div className="grid gap-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:gap-2">
+                        // A row each, so long region and school names fit.
+                        <div className="grid gap-4">
                             <div className="grid content-start gap-2">
                                 <Label htmlFor={`${fieldId}-region`}>
                                     Region
@@ -850,6 +869,7 @@ function UserDialog({
                                         value: String(region.id),
                                         label: region.name,
                                     }))}
+                                    wrap
                                     className="rounded-[6px] data-[size=default]:h-11"
                                 />
                             </div>
@@ -864,6 +884,7 @@ function UserDialog({
                                         form.setData('survey_hei_id', value)
                                     }
                                     options={regionHeis}
+                                    wrap
                                     disabled={form.data.region === ''}
                                     placeholder={
                                         form.data.region === ''
@@ -898,6 +919,7 @@ function UserDialog({
                                     regional ? 'Choose a region' : 'No office'
                                 }
                                 options={officeOptions}
+                                wrap
                                 allowEmpty={!regional}
                                 aria-required={regional}
                                 aria-describedby={`${fieldId}-office-help`}

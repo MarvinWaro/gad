@@ -249,6 +249,9 @@ function letterhead(office: RegionOffice | null): Content {
 
 function footer(input: MonitoringPdfInput): DynamicContent {
     const office = input.office;
+    const onRecord = Boolean(
+        office?.address || office?.email || office?.website || office?.phone,
+    );
     const contact: Content[] = [];
 
     if (office?.address) {
@@ -267,8 +270,12 @@ function footer(input: MonitoringPdfInput): DynamicContent {
         web.splice(-1, 1, ' | ');
     }
 
-    web.push(link(CHED_WEBSITE, `https://${CHED_WEBSITE}`));
-    contact.push(iconLine(office?.email ? 'envelope' : null, web));
+    // CHED's own site joins the office's details; with none on record, the
+    // contact lines are left blank.
+    if (onRecord) {
+        web.push(link(CHED_WEBSITE, `https://${CHED_WEBSITE}`));
+        contact.push(iconLine(office?.email ? 'envelope' : null, web));
+    }
 
     if (office?.phone) {
         contact.push(iconLine('phone', [office.phone]));

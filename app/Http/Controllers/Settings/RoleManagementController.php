@@ -10,6 +10,7 @@ use App\Http\Requests\Settings\UpdateRoleRequest;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Services\ActivityRecorder;
+use App\Support\PageRange;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,7 @@ class RoleManagementController extends Controller
         $search = trim((string) $request->query('search', ''));
         $actorPermissions = $request->user()->permissionSlugs();
 
-        $roles = Role::query()
+        $roles = PageRange::within(Role::query()
             ->with('permissions:id,name,slug,group')
             ->withCount('users')
             ->when($search !== '', fn ($query) => $query
@@ -47,7 +48,7 @@ class RoleManagementController extends Controller
                     $role->permissions->pluck('slug')->all(),
                     $actorPermissions,
                 ) === [],
-            ]);
+            ]));
 
         $permissions = Permission::query()
             ->whereIn('slug', $actorPermissions)
@@ -98,7 +99,7 @@ class RoleManagementController extends Controller
             'message' => __('Role created.'),
         ]);
 
-        return to_route('settings.roles.index');
+        return $this->backToList('settings.roles.index');
     }
 
     public function update(UpdateRoleRequest $request, Role $role, ActivityRecorder $activity): RedirectResponse
@@ -129,7 +130,7 @@ class RoleManagementController extends Controller
             'message' => __('Role updated.'),
         ]);
 
-        return to_route('settings.roles.index');
+        return $this->backToList('settings.roles.index');
     }
 
     public function destroy(Request $request, Role $role, ActivityRecorder $activity): RedirectResponse
@@ -151,7 +152,7 @@ class RoleManagementController extends Controller
             'message' => __('Role deleted.'),
         ]);
 
-        return to_route('settings.roles.index');
+        return $this->backToList('settings.roles.index');
     }
 
     private function ensureRoleIsEditable(Role $role): void

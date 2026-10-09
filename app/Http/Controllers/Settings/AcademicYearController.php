@@ -9,6 +9,7 @@ use App\Http\Resources\AcademicYearResource;
 use App\Models\AcademicYear;
 use App\Models\ChecklistResponse;
 use App\Models\MonitoringReport;
+use App\Support\PageRange;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -26,14 +27,14 @@ class AcademicYearController extends Controller
             ->unique();
 
         return Inertia::render('settings/academic-years', [
-            'academicYears' => AcademicYear::query()
+            'academicYears' => PageRange::within(AcademicYear::query()
                 ->when($search !== '', fn ($query) => $query->where('label', 'like', '%'.$search.'%'))
                 ->orderByDesc('start_year')
                 ->paginate(15)->withQueryString()
                 ->through(fn (AcademicYear $year): array => [
                     ...AcademicYearResource::make($year)->resolve($request),
                     'has_records' => $usedLabels->contains($year->label),
-                ]),
+                ])),
             'permissions' => [
                 'create' => $request->user()->can('academic-years.create'),
                 'update' => $request->user()->can('academic-years.update'),

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::index
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:32
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:33
  * @route '/admin/feedback'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::index
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:32
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:33
  * @route '/admin/feedback'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::index
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:32
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:33
  * @route '/admin/feedback'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::index
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:32
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:33
  * @route '/admin/feedback'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::index
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:32
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:33
  * @route '/admin/feedback'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::index
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:32
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:33
  * @route '/admin/feedback'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::index
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:32
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:33
  * @route '/admin/feedback'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::exportMethod
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:61
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:62
  * @route '/admin/feedback/export'
  */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::exportMethod
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:61
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:62
  * @route '/admin/feedback/export'
  */
 exportMethod.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::exportMethod
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:61
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:62
  * @route '/admin/feedback/export'
  */
 exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::exportMethod
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:61
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:62
  * @route '/admin/feedback/export'
  */
 exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::exportMethod
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:61
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:62
  * @route '/admin/feedback/export'
  */
     const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::exportMethod
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:61
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:62
  * @route '/admin/feedback/export'
  */
         exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::exportMethod
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:61
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:62
  * @route '/admin/feedback/export'
  */
         exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     exportMethod.form = exportMethodForm
 /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::destroy
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:109
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:110
  * @route '/admin/feedback/{siteFeedback}'
  */
 export const destroy = (args: { siteFeedback: string | { id: string } } | [siteFeedback: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -172,7 +172,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::destroy
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:109
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:110
  * @route '/admin/feedback/{siteFeedback}'
  */
 destroy.url = (args: { siteFeedback: string | { id: string } } | [siteFeedback: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -205,7 +205,7 @@ destroy.url = (args: { siteFeedback: string | { id: string } } | [siteFeedback: 
 
 /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::destroy
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:109
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:110
  * @route '/admin/feedback/{siteFeedback}'
  */
 destroy.delete = (args: { siteFeedback: string | { id: string } } | [siteFeedback: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -215,7 +215,7 @@ destroy.delete = (args: { siteFeedback: string | { id: string } } | [siteFeedbac
 
     /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::destroy
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:109
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:110
  * @route '/admin/feedback/{siteFeedback}'
  */
     const destroyForm = (args: { siteFeedback: string | { id: string } } | [siteFeedback: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -230,7 +230,7 @@ destroy.delete = (args: { siteFeedback: string | { id: string } } | [siteFeedbac
 
             /**
 * @see \App\Http\Controllers\Admin\SiteFeedbackController::destroy
- * @see app/Http/Controllers/Admin/SiteFeedbackController.php:109
+ * @see app/Http/Controllers/Admin/SiteFeedbackController.php:110
  * @route '/admin/feedback/{siteFeedback}'
  */
         destroyForm.delete = (args: { siteFeedback: string | { id: string } } | [siteFeedback: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

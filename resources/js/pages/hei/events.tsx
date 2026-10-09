@@ -28,8 +28,7 @@ export default function HeiEvents({
                     </h1>
                     <p className="mt-2 max-w-prose text-sm text-muted-foreground">
                         Regional trainings, campaigns, meetings, and deadlines
-                        from CHED Regional Office XII. Times are Philippine
-                        time.
+                        from CHED. Times are Philippine time.
                     </p>
                 </header>
 

@@ -9,6 +9,7 @@ use App\Models\SiteRating;
 use App\Models\SiteSetting;
 use App\Services\ActivityRecorder;
 use App\Support\CsvCell;
+use App\Support\PageRange;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -43,7 +44,7 @@ class SiteRatingManagementController extends Controller
                     ->map(fn (int $stars): array => ['rating' => $stars, 'count' => $counts->get($stars, 0)])
                     ->all(),
             ],
-            'ratings' => $this->query($rating)
+            'ratings' => PageRange::within($this->query($rating)
                 ->latest()
                 ->paginate(20)
                 ->withQueryString()
@@ -52,7 +53,7 @@ class SiteRatingManagementController extends Controller
                     'rating' => $siteRating->rating,
                     'suggestion' => $siteRating->suggestion,
                     'submitted_at' => $siteRating->created_at?->toISOString(),
-                ]),
+                ])),
             'filters' => ['rating' => $rating],
             'buttonEnabled' => SiteSetting::ratingButtonEnabled(),
             'permissions' => [

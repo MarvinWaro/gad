@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserStatus;
 use App\Models\User;
-use App\Support\InstitutionName;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,8 +26,8 @@ class PostTagSuggestionController extends Controller
         $like = '%'.addcslashes($search, '%_\\').'%';
 
         $users = User::query()
-            ->select(['id', 'name', 'survey_hei_id', 'avatar_path'])
-            ->with('hei:id,name')
+            ->select(['id', 'name', 'survey_hei_id', 'survey_region_id', 'avatar_path'])
+            ->with(['hei:id,name', 'officeRegion:id,name'])
             ->where('status', UserStatus::Active)
             ->whereKeyNot($viewer->id)
             ->when($search !== '', fn (Builder $query) => $query->where(
@@ -48,7 +47,7 @@ class PostTagSuggestionController extends Controller
             'id' => $user->id,
             'name' => $user->name,
             'avatar' => $user->avatar,
-            'hei' => $user->hei ? InstitutionName::display($user->hei->name) : null,
+            'affiliation' => $user->affiliation(),
         ])->values());
     }
 }

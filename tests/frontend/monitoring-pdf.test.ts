@@ -120,6 +120,19 @@ function strings(node: unknown): string[] {
     return [];
 }
 
+/** The words a node prints: its text, without links, fonts or colours. */
+function words(node: unknown): string {
+    if (typeof node === 'string') return node;
+    if (Array.isArray(node)) return node.map(words).join('');
+    if (node && typeof node === 'object') {
+        const { text, columns, stack } = node as Record<string, unknown>;
+
+        return words(text ?? columns ?? stack ?? '');
+    }
+
+    return '';
+}
+
 function tableBody(document: ReturnType<typeof buildMonitoringDocument>) {
     const content = document.content as unknown[];
     const table = content[2] as { table: { body: unknown[][] } };
@@ -191,6 +204,58 @@ void test('the letterhead prints only the office details on record', () => {
     assert.ok(header(input().office).includes('Koronadal City'));
     assert.ok(header(input().office).includes('OFFICE OF THE PRESIDENT'));
     assert.ok(!header(null).includes('Koronadal City'));
+});
+
+void test('the footer prints only the office details on record, and is blank without any', () => {
+    const footer = (office: MonitoringPdfInput['office']) => {
+        const content = (
+            buildMonitoringDocument(input({ office })).footer as (
+                page: number,
+                pages: number,
+            ) => unknown
+        )(1, 1) as { stack: [unknown, { stack: unknown[] }, { text: string }] };
+        const [, contact, period] = content.stack;
+
+        return {
+            lines: contact.stack.map(words),
+            icons: strings(contact.stack),
+            period: period.text,
+        };
+    };
+    const none = {
+        name: 'Regional Office IX',
+        city: null,
+        address: null,
+        email: null,
+        website: null,
+        phone: null,
+    };
+
+    assert.deepEqual(footer(input().office).lines, [
+        'PRIME Government Center',
+        'chedro12@ched.gov.ph; chedro12.gov.ph | www.ched.gov.ph',
+        '(083) 228-7572',
+    ]);
+    // Any one detail brings CHED's site along, as in the form.
+    const email = footer({ ...none, email: 'chedro12@ched.gov.ph' });
+    assert.deepEqual(email.lines, ['chedro12@ched.gov.ph | www.ched.gov.ph']);
+    assert.ok(email.icons.includes('envelope'));
+    const website = footer({ ...none, website: 'chedro12.gov.ph' });
+    assert.deepEqual(website.lines, ['chedro12.gov.ph | www.ched.gov.ph']);
+    assert.ok(!website.icons.includes('envelope'));
+    assert.deepEqual(footer({ ...none, phone: '(083) 228-7572' }).lines, [
+        'www.ched.gov.ph',
+        '(083) 228-7572',
+    ]);
+
+    // With none on record, the contact lines are blank; the code stays.
+    for (const office of [none, null]) {
+        assert.deepEqual(footer(office).lines, []);
+        assert.match(
+            footer(office).period,
+            /Document code 7F3A-91C2 · Page 1 of 1$/,
+        );
+    }
 });
 
 void test('characters the narrow face lacks use the fallback face', () => {

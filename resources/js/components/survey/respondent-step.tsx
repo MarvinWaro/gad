@@ -51,6 +51,10 @@ export function RespondentStep({
     } = respondent;
     const fieldError = (id: string, serverError?: string) =>
         issues[id] ?? serverError;
+    // The chosen region's own office, for having an institution added.
+    const regionEmail = directories.regions.find(
+        (item) => String(item.id) === form.data.region_id,
+    )?.email;
 
     return (
         <section className="survey-form-card">
@@ -266,11 +270,18 @@ export function RespondentStep({
                         form.data.region_id && heis.length === 0 ? (
                             <>
                                 No institutions are listed for this region yet.
-                                Please choose another region, or email{' '}
-                                <a href="mailto:chedro12@ched.gov.ph">
-                                    chedro12@ched.gov.ph
-                                </a>{' '}
-                                so yours can be added.
+                                Please choose another region, or{' '}
+                                {regionEmail ? (
+                                    <>
+                                        email{' '}
+                                        <a href={`mailto:${regionEmail}`}>
+                                            {regionEmail}
+                                        </a>{' '}
+                                        so yours can be added.
+                                    </>
+                                ) : (
+                                    'contact your CHED regional office so yours can be added.'
+                                )}
                             </>
                         ) : undefined
                     }

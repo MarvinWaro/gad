@@ -26,7 +26,7 @@ enum UserStatus: string
     {
         return match ($this) {
             self::Pending => __('Your account is awaiting approval by the administrator.'),
-            self::Inactive => __('Your account has been deactivated. Please contact CHEDRO XII.'),
+            self::Inactive => __('Your account has been deactivated. Please contact your CHED regional office.'),
             self::Active => '',
         };
     }

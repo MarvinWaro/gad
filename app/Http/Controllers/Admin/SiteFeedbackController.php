@@ -15,6 +15,7 @@ use App\Services\SiteFeedbackSummary;
 use App\Support\CsvCell;
 use App\Support\FeedbackQuestions;
 use App\Support\InstitutionName;
+use App\Support\PageRange;
 use App\Support\PlaceFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -37,14 +38,14 @@ class SiteFeedbackController extends Controller
         $type = FeedbackType::tryFrom((string) ($filters['type'] ?? ''));
 
         return Inertia::render('admin/feedback/index', [
-            'feedback' => SiteFeedbackResource::collection(
+            'feedback' => SiteFeedbackResource::collection(PageRange::within(
                 $this->filtered($user, $filters, $type)
                     ->with(['region:id,name', 'hei:id,name'])
                     ->latest()
                     ->orderByDesc('id')
                     ->paginate(20)
                     ->withQueryString(),
-            ),
+            )),
             'summary' => $summary->for($this->scope($user, $filters), $type),
             'questions' => FeedbackQuestions::forForm(),
             'types' => FeedbackType::options(),

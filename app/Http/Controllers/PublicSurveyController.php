@@ -377,7 +377,9 @@ class PublicSurveyController extends Controller
      */
     private function directories(array $required): array
     {
-        $regions = SurveyRegion::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        // Each region with its office's email, for asking to have an HEI added.
+        $regions = SurveyRegion::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'office_email'])
+            ->map(fn (SurveyRegion $region): array => ['id' => $region->id, 'name' => $region->name, 'email' => $region->office_email]);
         $heis = SurveyHei::query()
             ->join('survey_clusters', 'survey_clusters.id', '=', 'survey_heis.survey_cluster_id')
             ->where('survey_heis.is_active', true)

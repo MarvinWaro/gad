@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::index
- * @see app/Http/Controllers/Settings/RoleManagementController.php:23
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:24
  * @route '/settings/roles'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::index
- * @see app/Http/Controllers/Settings/RoleManagementController.php:23
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:24
  * @route '/settings/roles'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::index
- * @see app/Http/Controllers/Settings/RoleManagementController.php:23
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:24
  * @route '/settings/roles'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::index
- * @see app/Http/Controllers/Settings/RoleManagementController.php:23
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:24
  * @route '/settings/roles'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::index
- * @see app/Http/Controllers/Settings/RoleManagementController.php:23
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:24
  * @route '/settings/roles'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::index
- * @see app/Http/Controllers/Settings/RoleManagementController.php:23
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:24
  * @route '/settings/roles'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::index
- * @see app/Http/Controllers/Settings/RoleManagementController.php:23
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:24
  * @route '/settings/roles'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::store
- * @see app/Http/Controllers/Settings/RoleManagementController.php:76
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:77
  * @route '/settings/roles'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::store
- * @see app/Http/Controllers/Settings/RoleManagementController.php:76
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:77
  * @route '/settings/roles'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::store
- * @see app/Http/Controllers/Settings/RoleManagementController.php:76
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:77
  * @route '/settings/roles'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::store
- * @see app/Http/Controllers/Settings/RoleManagementController.php:76
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:77
  * @route '/settings/roles'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::store
- * @see app/Http/Controllers/Settings/RoleManagementController.php:76
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:77
  * @route '/settings/roles'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::update
- * @see app/Http/Controllers/Settings/RoleManagementController.php:104
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:105
  * @route '/settings/roles/{role}'
  */
 export const update = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -149,7 +149,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::update
- * @see app/Http/Controllers/Settings/RoleManagementController.php:104
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:105
  * @route '/settings/roles/{role}'
  */
 update.url = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -182,7 +182,7 @@ update.url = (args: { role: number | { id: number } } | [role: number | { id: nu
 
 /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::update
- * @see app/Http/Controllers/Settings/RoleManagementController.php:104
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:105
  * @route '/settings/roles/{role}'
  */
 update.put = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -192,7 +192,7 @@ update.put = (args: { role: number | { id: number } } | [role: number | { id: nu
 
     /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::update
- * @see app/Http/Controllers/Settings/RoleManagementController.php:104
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:105
  * @route '/settings/roles/{role}'
  */
     const updateForm = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -207,7 +207,7 @@ update.put = (args: { role: number | { id: number } } | [role: number | { id: nu
 
             /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::update
- * @see app/Http/Controllers/Settings/RoleManagementController.php:104
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:105
  * @route '/settings/roles/{role}'
  */
         updateForm.put = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -223,7 +223,7 @@ update.put = (args: { role: number | { id: number } } | [role: number | { id: nu
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::destroy
- * @see app/Http/Controllers/Settings/RoleManagementController.php:135
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:136
  * @route '/settings/roles/{role}'
  */
 export const destroy = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -238,7 +238,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::destroy
- * @see app/Http/Controllers/Settings/RoleManagementController.php:135
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:136
  * @route '/settings/roles/{role}'
  */
 destroy.url = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -271,7 +271,7 @@ destroy.url = (args: { role: number | { id: number } } | [role: number | { id: n
 
 /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::destroy
- * @see app/Http/Controllers/Settings/RoleManagementController.php:135
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:136
  * @route '/settings/roles/{role}'
  */
 destroy.delete = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -281,7 +281,7 @@ destroy.delete = (args: { role: number | { id: number } } | [role: number | { id
 
     /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::destroy
- * @see app/Http/Controllers/Settings/RoleManagementController.php:135
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:136
  * @route '/settings/roles/{role}'
  */
     const destroyForm = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -296,7 +296,7 @@ destroy.delete = (args: { role: number | { id: number } } | [role: number | { id
 
             /**
 * @see \App\Http\Controllers\Settings\RoleManagementController::destroy
- * @see app/Http/Controllers/Settings/RoleManagementController.php:135
+ * @see app/Http/Controllers/Settings/RoleManagementController.php:136
  * @route '/settings/roles/{role}'
  */
         destroyForm.delete = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

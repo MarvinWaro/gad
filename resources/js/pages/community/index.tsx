@@ -21,6 +21,8 @@ export default function Community({
 }) {
     const { auth } = usePage().props;
     const moderator = auth.permissions.includes('posts.moderate');
+    // Staff post for their own CHED office, such as "CHED Regional Office IV".
+    const office = auth.affiliation ?? 'CHED';
 
     return (
         <>
@@ -35,9 +37,9 @@ export default function Community({
                     }
                 />
                 <PostComposer
-                    authorLabel="CHED Regional Office XII"
+                    authorLabel={office}
                     official
-                    placeholder="Share an announcement from CHED Regional Office XII…"
+                    placeholder={`Share an announcement from ${office}…`}
                 />
                 <FeedTabs scope={feed} href="/community" region={feedRegion} />
                 <Feed

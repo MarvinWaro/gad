@@ -17,7 +17,7 @@ import { PersonAvatar } from '@/components/person-avatar';
 import type { Post } from '@/types';
 
 /**
- * "Share post": repost into the Region XII feed with an optional message.
+ * "Share post": repost into the feed with an optional message.
  * Sharing a share passes along the original, as the server does.
  */
 export function SharePostDialog({

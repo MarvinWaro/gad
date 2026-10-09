@@ -28,7 +28,8 @@ export type TaggedUser = {
     id: number;
     name: string;
     avatar: string | null;
-    hei: string | null;
+    /** Their institution, or their CHED office (User::affiliation). */
+    affiliation: string;
 };
 
 /**
@@ -58,7 +59,8 @@ export type ReactorRef = PersonRef & { type: PostReactionType };
 /** One person in a post's full reactions list. */
 export type Reactor = ReactorRef & {
     avatar: string | null;
-    hei: string | null;
+    /** Their institution, or their CHED office (User::affiliation). */
+    affiliation: string;
 };
 
 /** A post's reactions as the viewer sees them. */
@@ -79,6 +81,8 @@ export type PostContent = {
     created_at: string | null;
     author: AuthorRef;
     hei: HeiRef | null;
+    /** A staff post's CHED office, such as "CHED Regional Office IV"; null for an HEI's. */
+    office: string | null;
     images: PostImage[];
     feeling: PostFeeling | null;
     tags: TaggedUser[];

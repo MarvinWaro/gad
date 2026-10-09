@@ -18,8 +18,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use League\Flysystem\FilesystemException;
 use LogicException;
-use RuntimeException;
 use Throwable;
 
 /**
@@ -167,10 +167,18 @@ class ManageMonitoringReport
     /** File the signed copy and send the finalized revision to CHED. */
     public function submit(User $user, MonitoringReport $report, int $version, UploadedFile $file): void
     {
-        $path = $file->store('monitoring/'.$report->id, 'monitoring');
+        try {
+            $path = $file->store('monitoring/'.$report->id, 'monitoring');
+        } catch (FilesystemException $exception) {
+            // Storage out of reach: nothing is sent, and the cause is logged.
+            report($exception);
+            $path = false;
+        }
 
         if ($path === false) {
-            throw new RuntimeException('The signed copy could not be stored.');
+            throw ValidationException::withMessages([
+                'file' => __('The signed copy could not be saved, so nothing was sent to CHED. Please try again in a few minutes.'),
+            ]);
         }
 
         try {

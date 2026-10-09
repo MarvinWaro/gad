@@ -17,6 +17,7 @@ use App\Models\User;
 use App\Services\ActivityRecorder;
 use App\Services\Notifier;
 use App\Support\CountPhrase;
+use App\Support\PageRange;
 use App\Support\PlaceFilters;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,7 +62,7 @@ class UserManagementController extends Controller
                 isset($validated['region']) ? (int) $validated['region'] : null,
                 isset($validated['hei']) ? (int) $validated['hei'] : null,
             );
-        $users = $filtered()
+        $users = PageRange::within($filtered()
             ->with(['roles:id,name,slug', 'hei:id,name,survey_cluster_id', 'hei.cluster:id,survey_region_id', 'officeRegion:id,name'])
             ->when($status !== null, fn ($query) => $query->where('status', $status))
             // Registrations awaiting approval are the admin's to-do list.
@@ -85,7 +86,7 @@ class UserManagementController extends Controller
                 'is_current_user' => $user->is($actor),
                 'can_manage' => array_diff($user->permissionSlugs(), $actorPermissions) === []
                     && $this->reachesOffice($actor, $user),
-            ]);
+            ]));
 
         $roles = Role::query()
             ->with('permissions:id,slug')
@@ -140,7 +141,7 @@ class UserManagementController extends Controller
                 'national' => $actor->national_access,
                 'regions' => $canEdit
                     ? SurveyRegion::query()
-                        ->when(! $actor->national_access, fn ($query) => $query->whereKey($actor->survey_region_id))
+                        ->withinReachOf($actor)
                         ->orderBy('name')
                         ->get(['id', 'name'])
                     : [],
@@ -150,7 +151,7 @@ class UserManagementController extends Controller
                 ? RegionRegistrationResource::collection(
                     SurveyRegion::query()
                         ->where('is_active', true)
-                        ->when(! $actor->national_access, fn ($query) => $query->whereKey($actor->survey_region_id))
+                        ->withinReachOf($actor)
                         ->orderBy('name')
                         ->get(['id', 'name', 'instant_registration', 'instant_registration_until']),
                 )->resolve($request)
@@ -216,7 +217,7 @@ class UserManagementController extends Controller
             'message' => __('User created. Their temporary password is “:password”.', ['password' => config('auth.temporary_password')]),
         ]);
 
-        return to_route('settings.users.index');
+        return $this->backToList('settings.users.index');
     }
 
     public function update(UpdateManagedUserRequest $request, User $user, ActivityRecorder $activity): RedirectResponse
@@ -272,7 +273,7 @@ class UserManagementController extends Controller
             'message' => __('User updated.'),
         ]);
 
-        return to_route('settings.users.index');
+        return $this->backToList('settings.users.index');
     }
 
     public function updateStatus(Request $request, User $user, ActivityRecorder $activity, Notifier $notifier): RedirectResponse
@@ -357,7 +358,7 @@ class UserManagementController extends Controller
             'message' => __(':name deleted.', ['name' => $user->name]),
         ]);
 
-        return to_route('settings.users.index');
+        return $this->backToList('settings.users.index');
     }
 
     /** @return array{post: int, comment: int} */

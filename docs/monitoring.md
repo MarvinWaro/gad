@@ -26,7 +26,7 @@ The GAD monitoring report replaces the old portal's "Upload Monitoring". The HEI
 - **Page layout:**
     - 8.5 × 13 in pages with 1 in margins, as in the Word file.
     - The letterhead on every page: the CHED seal, CHED's national lines, the region's office name and city, and Bagong Pilipinas.
-    - The footer: the office's address, email, website and phone.
+    - The footer: the office's address, email, website and phone, followed by CHED's www.ched.gov.ph. With none of them on record, the contact lines are blank.
     - Under the footer, a small line with the period, the revision, the document code and "Page N of M".
     - Drafts carry a "DRAFT — NOT FOR SIGNATURE" watermark.
 - **What was left out of the Word file:** its last page ("Remove this page before uploading"), an empty row, and a page number that overlapped the footer. "OFFICE OF THE PRESIDE NT" is printed "OFFICE OF THE PRESIDENT", as agreed on 2026-09-29.
@@ -37,7 +37,7 @@ The GAD monitoring report replaces the old portal's "Upload Monitoring". The HEI
 - **Images, used as they are:**
     - the CHED seal, `public/assets/img/ched_logo.png`
     - the Bagong Pilipinas mark with its wordmark, and the envelope and phone icons, copied out of the Word file into `public/assets/img/letterhead/`
-- **Letterhead details** come from the report's region (`survey_regions.office_*`), editable in Settings → Regions → **Office details**. A blank field leaves its line out. Region XII's details are seeded from the Word file.
+- **Letterhead details** come from the report's region (`survey_regions.office_*`), editable in Settings → Regions → **Office details**: by the Central Office for any region, and by a region's CHED Focal for its own (`region-offices.update`, `SurveyRegionPolicy`). A blank field leaves its line out. Region XII's details are seeded from the Word file.
 
 **The document code** is the first eight characters of a SHA-256 over what the signers put their names to: the template version, report, revision, HEI name, period, details and answers (`App\Support\MonitoringDocument`). Reviewers compare it with the printed copy.
 
@@ -71,7 +71,7 @@ Scoping lives in `App\Models\Concerns\BelongsToRegion` (`withinReachOf`) and `Us
     - The page's stage pill shows whose turn it is: amber while the HEI has work to do, brand while CHED reviews, emerald once reviewed.
 - **Revisions** hold the details and one answer row per requirement key (`MonitoringTemplate`, version `2025`).
     - Answers are stored exactly as typed (`mediumText`). `bootstrap/app.php` exempts the draft route from trimming.
-    - A signed copy exists only on a submitted revision, on the private `monitoring` disk (`storage/app/private/monitoring-files`).
+    - A signed copy exists only on a submitted revision, on the private `monitoring` disk: the Spaces bucket when `FILESYSTEM_UPLOADS=spaces`, otherwise `storage/app/private/monitoring-files`.
 - **Concurrent edits.** Every change claims the report with an update on `lock_version`, the row lock in MySQL and the write lock in SQLite.
     - An autosave writes a field only if it still holds the value its editor started from. Otherwise the field comes back as a conflict: the editor keeps their text and picks **Use their version** or **Keep mine**.
     - Finalizing, unlocking, submitting and reviewing are refused if the report changed since the person loaded it.
@@ -96,7 +96,7 @@ The old portal's two other HEI checklists sit beside the report in the navigatio
 
 ## Setup
 
-Before launch, migrations are edited in place: run `php artisan migrate:fresh --seed` after pulling. PHP and the web server must accept a 20 MB upload plus overhead (`upload_max_filesize >= 20M`, `post_max_size > 20M`). Back up the `monitoring` disk with the database, and never expose it through a public link.
+Before launch, migrations are edited in place: run `php artisan migrate:fresh --seed` after pulling. PHP and the web server must accept a 20 MB upload plus overhead (`upload_max_filesize >= 20M`, `post_max_size > 20M`). Back up the `monitoring` disk with the database, and never expose it through a public link. If the disk can't be reached when an HEI submits, nothing is submitted: the HEI is asked to try again, and the error is logged.
 
 ## Checks
 

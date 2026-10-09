@@ -66,7 +66,8 @@ export type PublishedSurvey = {
 export type DirectoryItem = { id: number; name: string };
 export type Hei = DirectoryItem & { survey_region_id: number };
 export type Directories = {
-    regions: DirectoryItem[];
+    /** With the regional office's email, when it has one. */
+    regions: (DirectoryItem & { email: string | null })[];
     heis: Hei[];
     respondent_groups: Option[];
 };

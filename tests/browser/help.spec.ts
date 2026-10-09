@@ -133,6 +133,10 @@ test('a link to one answer opens it', async ({ page }) => {
     await expect(page.locator('#survey-data')).not.toContainText(
         'email that will be collected',
     );
+    // It names the office running the site (config/phlgadis.php).
+    await expect(page.locator('#survey-data')).toContainText(
+        'ask CHED Regional Office XII to access or delete your response',
+    );
 });
 
 test('the header toggle switches the public site to dark and remembers it', async ({

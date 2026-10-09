@@ -36,6 +36,7 @@ class RbacSeeder extends Seeder
             ['name' => 'Create survey directories', 'slug' => 'survey-directories.create', 'group' => 'Survey directories'],
             ['name' => 'Update survey directories', 'slug' => 'survey-directories.update', 'group' => 'Survey directories'],
             ['name' => 'Delete survey directories', 'slug' => 'survey-directories.delete', 'group' => 'Survey directories'],
+            ['name' => 'Update office details', 'slug' => 'region-offices.update', 'group' => 'Regional offices'],
             ['name' => 'View academic years', 'slug' => 'academic-years.view', 'group' => 'Academic years'],
             ['name' => 'Create academic years', 'slug' => 'academic-years.create', 'group' => 'Academic years'],
             ['name' => 'Update academic years', 'slug' => 'academic-years.update', 'group' => 'Academic years'],
@@ -101,7 +102,7 @@ class RbacSeeder extends Seeder
             // Office) decides whose reports it sees.
             'ched-focal' => [
                 'name' => 'CHED Focal',
-                'description' => 'Reviews its region\'s monitoring reports and GAD surveys, posts in Gender Mainstreaming, writes GAD quests, reads its region\'s law survey responses, and manages its region\'s HEI and CHED Employee accounts.',
+                'description' => 'Reviews its region\'s monitoring reports and GAD surveys, posts in Gender Mainstreaming, writes GAD quests, reads its region\'s law survey responses, and manages its region\'s HEI and CHED Employee accounts and office details.',
                 'permissions' => [
                     'monitoring.view', 'monitoring.review', 'posts.view', 'surveys.view',
                     // Their own region's responses only (SurveyResponse::scopeReachableBy).
@@ -109,6 +110,8 @@ class RbacSeeder extends Seeder
                     'quests.play', 'quests.view', 'quests.create', 'quests.update', 'quests.delete',
                     // Their own region's accounts only (User::grantablePermissionSlugs).
                     'users.view', 'users.create', 'users.update',
+                    // Their own region's letterhead only (SurveyRegionPolicy::updateOffice).
+                    'region-offices.update',
                 ],
             ],
             'ched-employee' => [

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::index
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:25
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:26
  * @route '/settings/ratings'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::index
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:25
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:26
  * @route '/settings/ratings'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::index
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:25
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:26
  * @route '/settings/ratings'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::index
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:25
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:26
  * @route '/settings/ratings'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::index
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:25
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:26
  * @route '/settings/ratings'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::index
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:25
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:26
  * @route '/settings/ratings'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::index
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:25
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:26
  * @route '/settings/ratings'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::exportMethod
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:66
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:67
  * @route '/settings/ratings/export'
  */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::exportMethod
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:66
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:67
  * @route '/settings/ratings/export'
  */
 exportMethod.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::exportMethod
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:66
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:67
  * @route '/settings/ratings/export'
  */
 exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::exportMethod
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:66
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:67
  * @route '/settings/ratings/export'
  */
 exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::exportMethod
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:66
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:67
  * @route '/settings/ratings/export'
  */
     const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::exportMethod
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:66
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:67
  * @route '/settings/ratings/export'
  */
         exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::exportMethod
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:66
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:67
  * @route '/settings/ratings/export'
  */
         exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     exportMethod.form = exportMethodForm
 /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::button
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:108
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:109
  * @route '/settings/ratings/button'
  */
 export const button = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -172,7 +172,7 @@ button.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::button
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:108
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:109
  * @route '/settings/ratings/button'
  */
 button.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ button.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::button
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:108
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:109
  * @route '/settings/ratings/button'
  */
 button.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -191,7 +191,7 @@ button.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
 
     /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::button
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:108
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:109
  * @route '/settings/ratings/button'
  */
     const buttonForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -206,7 +206,7 @@ button.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
 
             /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::button
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:108
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:109
  * @route '/settings/ratings/button'
  */
         buttonForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -222,7 +222,7 @@ button.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     button.form = buttonForm
 /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::destroy
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:95
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:96
  * @route '/settings/ratings/{siteRating}'
  */
 export const destroy = (args: { siteRating: string | { id: string } } | [siteRating: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -237,7 +237,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::destroy
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:95
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:96
  * @route '/settings/ratings/{siteRating}'
  */
 destroy.url = (args: { siteRating: string | { id: string } } | [siteRating: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -270,7 +270,7 @@ destroy.url = (args: { siteRating: string | { id: string } } | [siteRating: stri
 
 /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::destroy
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:95
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:96
  * @route '/settings/ratings/{siteRating}'
  */
 destroy.delete = (args: { siteRating: string | { id: string } } | [siteRating: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -280,7 +280,7 @@ destroy.delete = (args: { siteRating: string | { id: string } } | [siteRating: s
 
     /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::destroy
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:95
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:96
  * @route '/settings/ratings/{siteRating}'
  */
     const destroyForm = (args: { siteRating: string | { id: string } } | [siteRating: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -295,7 +295,7 @@ destroy.delete = (args: { siteRating: string | { id: string } } | [siteRating: s
 
             /**
 * @see \App\Http\Controllers\Settings\SiteRatingManagementController::destroy
- * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:95
+ * @see app/Http/Controllers/Settings/SiteRatingManagementController.php:96
  * @route '/settings/ratings/{siteRating}'
  */
         destroyForm.delete = (args: { siteRating: string | { id: string } } | [siteRating: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

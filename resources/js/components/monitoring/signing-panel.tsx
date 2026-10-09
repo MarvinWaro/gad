@@ -111,6 +111,8 @@ export function SigningPanel({
         event.preventDefault();
         form.post(MonitoringController.submit.url(report.id), {
             forceFormData: true,
+            // A refusal is shown under the upload: keep it in view.
+            preserveScroll: 'errors',
         });
     }
 

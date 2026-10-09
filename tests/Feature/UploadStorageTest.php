@@ -42,6 +42,8 @@ test('on Spaces, photos are public and monitoring files private, each under the 
         'root' => 'production/monitoring-files',
         'visibility' => 'private',
         'throw' => true,
+        // An unreachable bucket gives up in seconds, not minutes.
+        'http' => ['connect_timeout' => 5],
     ]);
 
     expect(uploadDisks(['FILESYSTEM_UPLOADS' => 'spaces', 'SPACES_ROOT' => 'staging/'])['public']['root'])->toBe('staging/public');
