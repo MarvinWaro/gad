@@ -7,9 +7,10 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateRegionOfficeRequest extends FormRequest
 {
+    /** The Central Office for any region, an office for its own (SurveyRegionPolicy). */
     public function authorize(): bool
     {
-        return $this->user()?->can('survey-directories.update') === true;
+        return $this->user()?->can('updateOffice', $this->route('region')) === true;
     }
 
     /** @return array<string, ValidationRule|array<mixed>|string> */
@@ -27,6 +28,6 @@ class UpdateRegionOfficeRequest extends FormRequest
     /** @return array<string, string> */
     public function messages(): array
     {
-        return ['office_website.regex' => __('Enter the website as an address, such as chedro12.gov.ph.')];
+        return ['office_website.regex' => __('Enter the website as an address, such as example.gov.ph.')];
     }
 }

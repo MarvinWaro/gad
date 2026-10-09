@@ -19,6 +19,7 @@ export function FormSelect({
     disabled = false,
     allowEmpty = false,
     emptyLabel = placeholder,
+    wrap = false,
     className,
     contentClassName,
     id,
@@ -35,6 +36,8 @@ export function FormSelect({
     disabled?: boolean;
     allowEmpty?: boolean;
     emptyLabel?: string;
+    /** Let a long choice wrap onto a second line instead of being cut. */
+    wrap?: boolean;
     className?: string;
     contentClassName?: string;
     id?: string;
@@ -59,7 +62,13 @@ export function FormSelect({
                 aria-describedby={describedBy}
                 aria-required={required}
                 aria-invalid={invalid}
-                className={cn('h-11 w-full rounded-[10px]', className)}
+                // min-w-0: a long choice never pushes the field past its column.
+                className={cn(
+                    'h-11 w-full min-w-0 rounded-[10px]',
+                    className,
+                    wrap &&
+                        'min-h-11 text-left whitespace-normal data-[size=default]:h-auto *:data-[slot=select-value]:line-clamp-2',
+                )}
             >
                 <SelectValue placeholder={placeholder} />
             </SelectTrigger>

@@ -28,14 +28,13 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useClipboard } from '@/hooks/use-clipboard';
-import { CHED_LABEL } from '@/lib/ched-label';
 import { formatFull, formatRelative } from '@/lib/relative-time';
 import { cn } from '@/lib/utils';
 import type { PostContent, PostReactionType, ReactionSummary } from '@/types';
 
-/** Who a post speaks for: its school, or CHED for staff posts. */
+/** Who a post speaks for: its school, or its author's CHED office. */
 export function sourceOf(post: PostContent): string {
-    return post.hei?.display_name ?? CHED_LABEL;
+    return post.hei?.display_name ?? post.office ?? 'CHED';
 }
 
 /**
@@ -126,7 +125,7 @@ function PostStatus({ post }: { post: PostContent }) {
     const shown = tags.length > 3 ? tags.slice(0, 2) : tags;
     const others = tags.slice(shown.length);
     const personLabel = (person: PostContent['tags'][number]) =>
-        `${person.name}, ${person.hei ?? CHED_LABEL}`;
+        `${person.name}, ${person.affiliation}`;
 
     return (
         <p className="mt-0.5 text-xs text-muted-foreground">

@@ -3,6 +3,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        {{-- Lists come back to the view a change was made from by its address
+             (Controller::backToList), so same-site requests send it whole. --}}
+        <meta name="referrer" content="strict-origin-when-cross-origin">
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script>

@@ -39,7 +39,7 @@ export function UpcomingEvents({
     events,
     limit,
     title = 'Upcoming events',
-    emptyMessage = 'No upcoming events yet. CHED Regional Office XII posts trainings, campaigns, and deadlines here.',
+    emptyMessage = 'No upcoming events yet. CHED posts trainings, campaigns, and deadlines here.',
     showCalendarLink = true,
     className,
 }: {

@@ -171,8 +171,19 @@ test('validation errors name the field at fault and link to it', async ({
         expect(text.trim()).toMatch(/^(Enter|Choose|Tell|Confirm)/);
     }
 
-    // The offending controls are marked for assistive technology too.
-    await expect(page.locator('[aria-invalid="true"]')).toHaveCount(count);
+    // The offending controls are marked for assistive technology too. A
+    // radio group counts once: each of its radios is marked.
+    const invalid = await page
+        .locator('[aria-invalid="true"]')
+        .evaluateAll(
+            (controls) =>
+                new Set(
+                    controls.map(
+                        (control) => control.getAttribute('name') ?? control.id,
+                    ),
+                ).size,
+        );
+    expect(invalid).toBe(count);
 
     // Following an entry moves focus to the control it names.
     const target = await entries.first().getAttribute('href');

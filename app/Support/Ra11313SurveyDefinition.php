@@ -13,7 +13,7 @@ class Ra11313SurveyDefinition
             // The Safe Spaces Act questionnaire offers two choices for sex.
             if ($question['id'] === 'sex') {
                 $respondent['questions'][$index] = [
-                    'id' => 'sex', 'type' => 'single_select', 'label' => 'Sex', 'required' => true,
+                    'id' => 'sex', 'type' => 'single_select', 'label' => 'Sex assigned at birth', 'required' => true,
                     'options' => self::options([
                         'female' => 'Female',
                         'male' => 'Male',

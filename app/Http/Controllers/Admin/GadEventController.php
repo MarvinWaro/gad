@@ -10,6 +10,7 @@ use App\Models\GadEvent;
 use App\Models\User;
 use App\Services\ActivityRecorder;
 use App\Services\Notifier;
+use App\Support\PageRange;
 use App\Support\PlaceFilters;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,7 +25,7 @@ class GadEventController extends Controller
         $user = $request->user();
         $search = trim((string) $request->query('search', ''));
 
-        $events = GadEvent::query()
+        $events = PageRange::within(GadEvent::query()
             // A regional office lists its own region's events and those for
             // every region; the Central Office lists them all.
             ->visibleTo($user)
@@ -43,7 +44,7 @@ class GadEventController extends Controller
                     'update' => $user->can('update', $event),
                     'delete' => $user->can('delete', $event),
                 ],
-            ]);
+            ]));
 
         return Inertia::render('admin/events/index', [
             'events' => $events,
@@ -71,7 +72,7 @@ class GadEventController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Event created.')]);
 
-        return to_route('admin.events.index');
+        return $this->backToList('admin.events.index');
     }
 
     public function update(SaveGadEventRequest $request, GadEvent $event, ActivityRecorder $activity): RedirectResponse
@@ -81,7 +82,7 @@ class GadEventController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Event updated.')]);
 
-        return back();
+        return $this->backToList('admin.events.index');
     }
 
     public function destroy(GadEvent $event, ActivityRecorder $activity): RedirectResponse
@@ -91,6 +92,6 @@ class GadEventController extends Controller
 
         Inertia::flash('toast', ['type' => 'deleted', 'message' => __('Event deleted.')]);
 
-        return back();
+        return $this->backToList('admin.events.index');
     }
 }

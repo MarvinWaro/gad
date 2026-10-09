@@ -169,7 +169,7 @@ foreach (['female', 'female', 'female', 'female', 'male'] as $index => $sex) {
         'public_reference' => Str::random(20),
         'age' => 22,
         'sex' => $sex,
-        'gender_identity' => 'heterosexual',
+        'gender_identity' => $sex === 'male' ? 'cisgender-man' : 'cisgender-woman',
         'respondent_group' => 'student',
         'survey_region_id' => $region->id,
         'survey_cluster_id' => $cluster->id,

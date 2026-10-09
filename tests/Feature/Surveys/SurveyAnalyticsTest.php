@@ -33,7 +33,7 @@ function analyticsResponse(SurveyHei $hei, array $overrides = []): SurveyRespons
         'public_reference' => Str::random(20),
         'age' => 20,
         'sex' => 'female',
-        'gender_identity' => 'heterosexual',
+        'gender_identity' => 'cisgender-woman',
         'respondent_group' => 'student',
         'survey_region_id' => $hei->cluster->survey_region_id,
         'survey_cluster_id' => $hei->survey_cluster_id,
@@ -76,7 +76,7 @@ test('each answer is counted as it arrives, taken back by a single delete, and k
         ->and(tallied('perpetrators'))->toBe(['battery:teacher' => 1, 'stalking:former-boyfriend' => 1, 'stalking:teacher' => 1])
         ->and(tallied('age_band'))->toBe(['18-24' => 1, 'under-18' => 1])
         ->and(tallied('answering_for'))->toBe(['minor-under-legal-care' => 1, 'self' => 1])
-        ->and(tallied('gender_identity'))->toBe(['heterosexual' => 2]);
+        ->and(tallied('gender_identity'))->toBe(['cisgender-woman' => 2]);
 
     $first->delete();
     expect(tallied('experiences'))->toBe(['battery' => 0, 'none' => 1, 'stalking' => 0]);
@@ -96,11 +96,39 @@ test('the migration counts the responses already kept', function () {
     expect(tallied('experiences'))->toBe(['battery' => 1, 'stalking' => 1]);
 });
 
+test('sexual orientation is tallied, and the migration moves the old gender identities', function () {
+    analyticsResponse($this->hei, ['sexual_orientation' => 'heterosexual']);
+    analyticsResponse($this->hei, ['sex' => 'male', 'gender_identity' => 'cisgender-man']);
+    analyticsResponse($this->hei, ['sex' => 'male', 'gender_identity' => 'cisgender-man']);
+    analyticsResponse($this->hei, ['gender_identity' => 'non-binary']);
+    expect(tallied('sexual_orientation'))->toBe(['heterosexual' => 1]);
+
+    // As kept before the change: "Heterosexual" and "Gender Variant".
+    $migration = require database_path('migrations/2026_10_16_000000_add_sexual_orientation_to_survey_responses_table.php');
+    $migration->down();
+    expect(SurveyResponse::query()->pluck('gender_identity')->countBy()->sortKeys()->all())->toBe(['gender-variant' => 1, 'heterosexual' => 3])
+        ->and(tallied('gender_identity'))->toBe(['gender-variant' => 1, 'heterosexual' => 3]);
+
+    // Each "Heterosexual" becomes Cisgender by its sex; the two men's
+    // tallies, a day and place apart from the woman's, stay one row.
+    $migration->up();
+    expect(SurveyResponse::query()->pluck('gender_identity')->countBy()->sortKeys()->all())->toBe(['cisgender-man' => 2, 'cisgender-woman' => 1, 'non-binary' => 1])
+        ->and(tallied('gender_identity'))->toBe(['cisgender-man' => 2, 'cisgender-woman' => 1, 'non-binary' => 1])
+        ->and(SurveyAnswerTally::query()->where('question', 'gender_identity')->count())->toBe(3);
+
+    // Moved tallies keep counting: a later answer adds to the same row.
+    $response = analyticsResponse($this->hei, ['sex' => 'male', 'gender_identity' => 'cisgender-man']);
+    expect(tallied('gender_identity')['cisgender-man'])->toBe(3)
+        ->and(SurveyAnswerTally::query()->where('question', 'gender_identity')->count())->toBe(3);
+    $response->delete();
+    expect(tallied('gender_identity')['cisgender-man'])->toBe(2);
+});
+
 test('a survey\'s Summary shows each answer split by sex, with who was responsible', function () {
     foreach (range(1, 4) as $index) {
         analyticsResponse($this->hei);
     }
-    analyticsResponse($this->hei, ['sex' => 'male', 'gender_identity' => 'heterosexual', 'answers' => ['experiences' => ['battery'], 'perpetrators' => ['battery' => ['sister-brother']]]]);
+    analyticsResponse($this->hei, ['sex' => 'male', 'gender_identity' => 'cisgender-man', 'answers' => ['experiences' => ['battery'], 'perpetrators' => ['battery' => ['sister-brother']]]]);
 
     $this->actingAs(analyst())->get(route('admin.surveys.summary', $this->survey))
         ->assertOk()
@@ -134,13 +162,52 @@ test('fewer than five responses in view show totals but no answers', function ()
 
     $this->actingAs($analyst)->get(route('admin.surveys.summary', ['survey' => $this->survey, 'sex' => 'male']))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('totals.responses', 1)
+            // Not counted out, or the filter alone would tell how many.
+            ->where('totals.responses', null)
+            ->where('totals.female', null)
             ->where('suppressed', true)
             ->where('questions', [])
             ->where('filters.sex', 'male'));
 
     $this->get(route('admin.surveys.summary', ['survey' => $this->survey, 'respondent_group' => 'student']))
         ->assertInertia(fn (Assert $page) => $page->where('totals.responses', 5)->where('suppressed', false));
+});
+
+test('small groups are not counted out: gender identity, sexual orientation and intersex', function () {
+    foreach (range(1, 6) as $index) {
+        analyticsResponse($this->hei, ['sexual_orientation' => 'heterosexual']);
+    }
+    foreach (range(1, 5) as $index) {
+        analyticsResponse($this->hei, ['sex' => 'male', 'gender_identity' => 'cisgender-man', 'sexual_orientation' => $index === 1 ? 'bisexual' : 'heterosexual']);
+    }
+    analyticsResponse($this->hei, ['sex' => 'male', 'gender_identity' => 'trans-woman']);
+    analyticsResponse($this->hei, ['sex' => 'intersex', 'gender_identity' => 'non-binary']);
+    analyticsResponse($this->hei, ['sex' => 'intersex', 'gender_identity' => 'non-binary']);
+    $counts = fn (array $question): array => collect($question['options'])->filter(fn ($option) => $option['count'] !== 0)->pluck('count', 'value')->all();
+
+    $this->actingAs(analyst())->get(route('admin.surveys.summary', $this->survey))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('totals.responses', 14)
+            ->where('questions', function ($questions) use ($counts) {
+                $questions = collect($questions)->keyBy('key');
+                $identity = $questions['gender_identity'];
+                $orientation = $questions['sexual_orientation'];
+
+                // Two small counts hide each other; no card splits by sex.
+                return $identity['protected'] === true
+                    && $counts($identity) === ['cisgender-man' => 5, 'cisgender-woman' => 6, 'trans-woman' => null, 'non-binary' => null]
+                    && collect($identity['options'])->every(fn ($option) => $option['female'] === null && $option['male'] === null)
+                    // One small count takes the next smallest with it.
+                    && $counts($orientation) === ['heterosexual' => null, 'bisexual' => null]
+                    // Two intersex respondents join "Prefer not to say".
+                    && collect($questions['sex']['options'])->pluck('count', 'label')->all() === ['Female' => 6, 'Male' => 6, 'Intersex or prefer not to say' => 2];
+            }));
+
+    $this->get(route('admin.surveys.index'))
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+            ->where('insights.respondents.sexes', fn ($sexes) => collect($sexes)->pluck('responses', 'label')->all() === [
+                'Female' => 6, 'Male' => 6, 'Intersex or prefer not to say' => 2,
+            ])));
 });
 
 test('a regional office counts only its own region, and HEI accounts cannot open a Summary', function () {

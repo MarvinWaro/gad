@@ -11,6 +11,7 @@ use App\Models\SurveyRespondentGroup;
 use App\Models\SurveyResponse;
 use App\Services\ActivityRecorder;
 use App\Support\CsvCell;
+use App\Support\PageRange;
 use App\Support\RespondentDetails;
 use App\Support\RespondentFollowUps;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,12 +25,12 @@ class SurveyResponseController extends Controller
 {
     public function index(Request $request, Survey $survey): Response
     {
-        $responses = $this->query($request, $survey)
+        $responses = PageRange::within($this->query($request, $survey)
             ->with(['version:id,version', 'region:id,name', 'hei:id,name'])
             ->latest()
             ->paginate(20)
             ->withQueryString()
-            ->through(fn (SurveyResponse $response): array => $this->serialize($response, false));
+            ->through(fn (SurveyResponse $response): array => $this->serialize($response, false)));
 
         return Inertia::render('admin/surveys/responses', [
             'survey' => ['id' => $survey->id, 'code' => $survey->code, 'title' => $survey->title],
@@ -73,7 +74,7 @@ class SurveyResponseController extends Controller
             }
             $selectionColumns = $this->selectionColumns($survey);
             $followUpColumns = $this->followUpColumns();
-            fputcsv($handle, ['Reference', 'Version', 'Submitted', 'Age', 'Sex', 'Respondent group', 'Gender identity', ...array_column($followUpColumns, 'heading'), 'Region', 'HEI', 'Experiences', 'Perpetrators', 'Expires', 'Specified perpetrator details', ...($survey->slug === 'ra-9262' ? ['Answering for'] : []), ...array_values($selectionColumns)]);
+            fputcsv($handle, ['Reference', 'Version', 'Submitted', 'Age', 'Sex at birth', 'Respondent group', 'Gender identity', 'Sexual orientation', ...array_column($followUpColumns, 'heading'), 'Region', 'HEI', 'Experiences', 'Perpetrators', 'Expires', 'Specified perpetrator details', ...($survey->slug === 'ra-9262' ? ['Answering for'] : []), ...array_values($selectionColumns)]);
             $this->query($request, $survey)->with(['version', 'region', 'hei', 'groupAnswers.option'])->latest()->each(function (SurveyResponse $response) use ($handle, $survey, $selectionColumns, $followUpColumns): void {
                 // Free text could read as a formula in a spreadsheet (CsvCell).
                 fputcsv($handle, array_map(fn (mixed $cell): mixed => is_string($cell) ? CsvCell::safe($cell) : $cell, [
@@ -85,6 +86,7 @@ class SurveyResponseController extends Controller
                     $response->respondent_group_other ?: $response->respondent_group,
                     // Blank where the question was not asked.
                     RespondentDetails::genderIdentity($response),
+                    RespondentDetails::sexualOrientation($response),
                     ...array_map(fn (array $column): string => RespondentFollowUps::answerText(
                         $response->groupAnswers->firstWhere('question_id', $column['question']->id),
                     ), $followUpColumns),
@@ -112,7 +114,10 @@ class SurveyResponseController extends Controller
         $surveyResponse->delete();
         $activity->record(ActivityAction::Deleted, ActivityModule::SurveyResponses, $surveyResponse, properties: ['survey' => $survey->title]);
 
-        return to_route('admin.surveys.responses.index', $survey);
+        Inertia::flash('toast', ['type' => 'deleted', 'message' => __('Response :reference deleted.', ['reference' => $surveyResponse->public_reference])]);
+
+        // From its own page, which is gone now, to the list itself.
+        return $this->backToList('admin.surveys.responses.index', $survey);
     }
 
     /** @return Builder<SurveyResponse> */
@@ -146,9 +151,13 @@ class SurveyResponseController extends Controller
             'expires_at' => $response->expires_at->toISOString(),
         ];
         if ($details) {
+            // The optional email shows on this page alone: never in the list,
+            // the export, the statistics, a notice or a log.
+            $data['email'] = $response->email;
             $data['answers'] = $response->answers;
             $data['answer_labels'] = $this->answerLabels($response);
-            // Gender identity and the group's follow-ups, readable, in form order.
+            // Gender identity, sexual orientation and the group's follow-ups,
+            // readable, in form order.
             $data['details'] = RespondentDetails::describe($response);
         }
 

@@ -480,12 +480,12 @@ export function RespondentsChart({
                         caption="Responses by respondent group"
                     />
                     <h3 className="mt-5 mb-2 text-xs font-medium text-muted-foreground">
-                        Sex
+                        Sex at birth
                     </h3>
                     <DonutChart
                         slices={slicesFor(respondents.sexes)}
                         unit="responses"
-                        caption="Responses by sex"
+                        caption="Responses by sex at birth"
                     />
                 </>
             )}

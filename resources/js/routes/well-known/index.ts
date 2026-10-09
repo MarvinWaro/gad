@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 /**
- * @see routes/settings.php:158
+ * @see routes/settings.php:160
  * @route '/.well-known/passkey-endpoints'
  */
 export const passkeys = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ passkeys.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/settings.php:158
+ * @see routes/settings.php:160
  * @route '/.well-known/passkey-endpoints'
  */
 passkeys.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ passkeys.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/settings.php:158
+ * @see routes/settings.php:160
  * @route '/.well-known/passkey-endpoints'
  */
 passkeys.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +30,7 @@ passkeys.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/settings.php:158
+ * @see routes/settings.php:160
  * @route '/.well-known/passkey-endpoints'
  */
 passkeys.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -39,7 +39,7 @@ passkeys.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/settings.php:158
+ * @see routes/settings.php:160
  * @route '/.well-known/passkey-endpoints'
  */
     const passkeysForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -48,7 +48,7 @@ passkeys.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/settings.php:158
+ * @see routes/settings.php:160
  * @route '/.well-known/passkey-endpoints'
  */
         passkeysForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -56,7 +56,7 @@ passkeys.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/settings.php:158
+ * @see routes/settings.php:160
  * @route '/.well-known/passkey-endpoints'
  */
         passkeysForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

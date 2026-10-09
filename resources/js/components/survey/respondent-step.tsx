@@ -42,6 +42,7 @@ export function RespondentStep({
         ageMin,
         ageMax,
         genderIdentities,
+        sexualOrientations,
         groupFollowUps,
         groupRequiresText,
         heis,
@@ -50,6 +51,10 @@ export function RespondentStep({
     } = respondent;
     const fieldError = (id: string, serverError?: string) =>
         issues[id] ?? serverError;
+    // The chosen region's own office, for having an institution added.
+    const regionEmail = directories.regions.find(
+        (item) => String(item.id) === form.data.region_id,
+    )?.email;
 
     return (
         <section className="survey-form-card">
@@ -58,8 +63,8 @@ export function RespondentStep({
                     <h2>{forMinor ? 'Minor details' : 'Respondent details'}</h2>
                     <p>
                         {forMinor
-                            ? "Provide the minor's age, sex, respondent group, and institution. No name or email is collected."
-                            : 'No name or email is collected.'}
+                            ? "Provide the minor's age, sex, respondent group, and institution. No name is collected, and your email is optional."
+                            : 'No name is collected, and your email is optional.'}
                     </p>
                 </div>
             </div>
@@ -82,6 +87,8 @@ export function RespondentStep({
                                     ...data,
                                     answering_for: value,
                                     guardian_consent: false,
+                                    // Not asked about a minor.
+                                    sexual_orientation: '',
                                 }))
                             }
                             placeholder="Select who you are answering for"
@@ -105,7 +112,7 @@ export function RespondentStep({
                     />
                 </Field>
                 <Field
-                    label={detailLabel('Sex')}
+                    label={detailLabel('Sex assigned at birth')}
                     fieldId="sex"
                     error={fieldError('sex', form.errors.sex)}
                     required={isRequired('sex')}
@@ -117,34 +124,46 @@ export function RespondentStep({
                 >
                     <PublicSelect
                         value={form.data.sex}
-                        onChange={(value) =>
-                            // Each sex has its own identity choices.
-                            form.setData((data) => ({
-                                ...data,
-                                sex: value,
-                                gender_identity: '',
-                            }))
-                        }
+                        onChange={(value) => form.setData('sex', value)}
                         placeholder="Select sex"
                         options={sex?.options ?? []}
                         disabled={isLocked(questionnaire, 'sex')}
                     />
                 </Field>
-                {genderIdentities.length > 0 && (
+                {/* The same choices whatever the sex answer, Intersex
+                    included: sex does not decide anyone's gender. */}
+                <div className="survey-field-wide survey-conditional">
+                    <RadioField
+                        label={detailLabel('Gender identity')}
+                        hint={`Choose the option that best describes ${whom}.`}
+                        fieldId="gender_identity"
+                        options={genderIdentities}
+                        value={form.data.gender_identity}
+                        onChange={(value) =>
+                            form.setData('gender_identity', value)
+                        }
+                        required={isRequired('sex')}
+                        error={fieldError(
+                            'gender_identity',
+                            form.errors.gender_identity,
+                        )}
+                    />
+                </div>
+                {sexualOrientations.length > 0 && (
                     <div className="survey-field-wide survey-conditional">
                         <RadioField
-                            label={detailLabel('Gender identity')}
-                            hint={`Choose the option that best describes ${whom}.`}
-                            fieldId="gender_identity"
-                            options={genderIdentities}
-                            value={form.data.gender_identity}
+                            label="Sexual orientation"
+                            hint="Whom you are attracted to. This is separate from gender identity."
+                            fieldId="sexual_orientation"
+                            options={sexualOrientations}
+                            value={form.data.sexual_orientation}
                             onChange={(value) =>
-                                form.setData('gender_identity', value)
+                                form.setData('sexual_orientation', value)
                             }
-                            required={isRequired('sex')}
+                            required={false}
                             error={fieldError(
-                                'gender_identity',
-                                form.errors.gender_identity,
+                                'sexual_orientation',
+                                form.errors.sexual_orientation,
                             )}
                         />
                     </div>
@@ -251,11 +270,18 @@ export function RespondentStep({
                         form.data.region_id && heis.length === 0 ? (
                             <>
                                 No institutions are listed for this region yet.
-                                Please choose another region, or email{' '}
-                                <a href="mailto:chedro12@ched.gov.ph">
-                                    chedro12@ched.gov.ph
-                                </a>{' '}
-                                so yours can be added.
+                                Please choose another region, or{' '}
+                                {regionEmail ? (
+                                    <>
+                                        email{' '}
+                                        <a href={`mailto:${regionEmail}`}>
+                                            {regionEmail}
+                                        </a>{' '}
+                                        so yours can be added.
+                                    </>
+                                ) : (
+                                    'contact your CHED regional office so yours can be added.'
+                                )}
                             </>
                         ) : undefined
                     }
@@ -274,6 +300,24 @@ export function RespondentStep({
                             label: item.name,
                         }))}
                         disabled={heis.length === 0}
+                    />
+                </Field>
+                <Field
+                    label={
+                        forMinor ? 'Your email (the person answering)' : 'Email'
+                    }
+                    fieldId="email"
+                    error={fieldError('email', form.errors.email)}
+                    note="Only authorised CHED staff can see it. Leave it blank if someone else can read your email."
+                    required={false}
+                >
+                    <input
+                        className="survey-input"
+                        type="email"
+                        autoComplete="email"
+                        maxLength={255}
+                        value={form.data.email}
+                        onChange={(e) => form.setData('email', e.target.value)}
                     />
                 </Field>
             </div>

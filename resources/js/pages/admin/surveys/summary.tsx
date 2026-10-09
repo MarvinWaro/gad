@@ -30,6 +30,9 @@ import type { SummaryFilters, SurveySummary } from '@/types/survey-insights';
  */
 export default function SurveySummaryPage(props: SurveySummary) {
     const { survey, period, scope, totals, suppressed, questions } = props;
+    // Null when only a few responses are in view, so they are not counted out.
+    const fewerThan = `Fewer than ${props.minResponses}`;
+    const responses = totals.responses ?? 0;
     const answers = questions.filter(
         (question) => question.group === 'answers',
     );
@@ -82,7 +85,11 @@ export default function SurveySummaryPage(props: SurveySummary) {
                 >
                     <StatTile
                         label="Responses"
-                        value={formatCount(totals.responses)}
+                        value={
+                            totals.responses === null
+                                ? fewerThan
+                                : formatCount(totals.responses)
+                        }
                         note="With the filters above"
                     />
                     <StatTile
@@ -92,8 +99,16 @@ export default function SurveySummaryPage(props: SurveySummary) {
                     />
                     <StatTile
                         label="Female respondents"
-                        value={`${percentOf(totals.female, totals.responses)}%`}
-                        note={`${formatCount(totals.female)} female · ${formatCount(totals.male)} male`}
+                        value={
+                            totals.female === null
+                                ? 'Not shown'
+                                : `${percentOf(totals.female, responses)}%`
+                        }
+                        note={
+                            totals.female === null
+                                ? 'Too few responses to split'
+                                : `${formatCount(totals.female)} female · ${formatCount(totals.male ?? 0)} male`
+                        }
                     />
                 </dl>
 
@@ -136,7 +151,7 @@ export default function SurveySummaryPage(props: SurveySummary) {
                                     <AnswerCard
                                         key={question.key}
                                         question={question}
-                                        respondents={totals.responses}
+                                        respondents={responses}
                                     />
                                 ))}
                             </section>
@@ -156,7 +171,7 @@ export default function SurveySummaryPage(props: SurveySummary) {
                                     <AnswerCard
                                         key={question.key}
                                         question={question}
-                                        respondents={totals.responses}
+                                        respondents={responses}
                                     />
                                 ))}
                             </div>
@@ -203,7 +218,7 @@ function SummaryFilterBar({ survey, filters, options }: SurveySummary) {
                     regions={options.regions}
                     heis={options.heis}
                 />
-                <Filter label="Sex" id="sex">
+                <Filter label="Sex at birth" id="sex">
                     <FormSelect
                         id="sex"
                         className={selectClass}

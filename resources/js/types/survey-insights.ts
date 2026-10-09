@@ -39,7 +39,8 @@ export type SurveyInsightFilters = Pick<
 export type AnswerOption = {
     value: string;
     label: string;
-    count: number;
+    /** Null when withheld, so a small group cannot be picked out. */
+    count: number | null;
     female: number | null;
     male: number | null;
     /** Who was responsible, for an experience. */
@@ -52,6 +53,8 @@ export type AnswerQuestion = {
     group: 'answers' | 'respondents';
     kind: 'matrix' | 'choices';
     options: AnswerOption[];
+    /** Gender identity and sexual orientation: small counts are withheld. */
+    protected?: boolean;
 };
 
 export type SummaryFilters = Omit<DashboardFilters, 'ownership' | 'survey'> & {
@@ -64,7 +67,13 @@ export type SurveySummary = {
     survey: { id: number; code: string; title: string; law_title: string };
     period: DashboardPeriod;
     scope: { label: string; national: boolean };
-    totals: { responses: number; heis: number; female: number; male: number };
+    /** Counts are null when 1 to 4 responses are in view. */
+    totals: {
+        responses: number | null;
+        heis: number;
+        female: number | null;
+        male: number | null;
+    };
     /** Too few responses in view to show answers. */
     suppressed: boolean;
     questions: AnswerQuestion[];

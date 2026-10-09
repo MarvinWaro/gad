@@ -12,10 +12,10 @@ class Ra7877SurveyDefinition
                 [
                     'id' => 'respondent',
                     'title' => 'Respondent details',
-                    'description' => 'Tell us about your demographic and institutional context. No name or email is collected.',
+                    'description' => 'Tell us about your demographic and institutional context. No name is collected, and giving an email is optional.',
                     'questions' => [
                         ['id' => 'age', 'type' => 'integer', 'label' => 'Age', 'required' => true, 'min' => 1, 'max' => 120],
-                        ['id' => 'sex', 'type' => 'single_select', 'label' => 'Sex', 'required' => true, 'options' => self::options(['Female', 'Male', 'Intersex', 'Prefer not to say'])],
+                        ['id' => 'sex', 'type' => 'single_select', 'label' => 'Sex assigned at birth', 'required' => true, 'options' => self::options(['Female', 'Male', 'Intersex', 'Prefer not to say'])],
                         // Choices come from the shared respondent-group
                         // directory, so every law offers the same list and it
                         // is maintained in one place.

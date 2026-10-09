@@ -57,7 +57,9 @@ export function BadgeDialog({
     const [open, setOpen] = useState(false);
     const [preview, setPreview] = useState<string | null>(badge?.image ?? null);
     const [pictureError, setPictureError] = useState<string>();
-    const form = useForm<BadgeForm>({
+    // The badge as saved now: Edit starts from it each time it opens, with
+    // no new picture chosen yet.
+    const saved = (): BadgeForm => ({
         name: badge?.name ?? '',
         description: badge?.description ?? '',
         is_active: badge?.is_active ?? true,
@@ -65,6 +67,7 @@ export function BadgeDialog({
         image: null,
         remove_image: false,
     });
+    const form = useForm<BadgeForm>(saved());
 
     // A chosen picture's preview lives until another replaces it.
     useEffect(
@@ -93,6 +96,16 @@ export function BadgeDialog({
         } catch {
             setPictureError('That picture could not be read. Try a PNG.');
         }
+    }
+
+    function changeOpen(next: boolean) {
+        if (next && badge) {
+            form.setData(saved());
+            form.clearErrors();
+            setPreview(badge.image ?? null);
+            setPictureError(undefined);
+        }
+        setOpen(next);
     }
 
     function removePicture() {
@@ -125,7 +138,7 @@ export function BadgeDialog({
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={changeOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
                 <DialogHeader>

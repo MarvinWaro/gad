@@ -55,6 +55,27 @@ class SurveyRegion extends Model
     }
 
     /**
+     * Regions within the staff account's office: every region for national
+     * access, its own otherwise, and none without an office.
+     *
+     * @param  Builder<SurveyRegion>  $query
+     */
+    public function scopeWithinReachOf(Builder $query, User $user): void
+    {
+        if ($user->national_access) {
+            return;
+        }
+
+        if ($user->survey_region_id === null) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->whereKey($user->survey_region_id);
+    }
+
+    /**
      * Regions letting new HEI accounts in without approval: switched on, and
      * either open-ended or not yet past the closing time.
      *

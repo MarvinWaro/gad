@@ -285,7 +285,10 @@ export default function SurveyIndex({
                                                                         ) =>
                                                                             router.delete(
                                                                                 `/admin/surveys/${survey.id}`,
-                                                                                visit,
+                                                                                {
+                                                                                    preserveScroll: true,
+                                                                                    ...visit,
+                                                                                },
                                                                             )
                                                                         }
                                                                     >

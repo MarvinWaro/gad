@@ -13,6 +13,7 @@ use App\Models\SurveyVersion;
 use App\Models\User;
 use App\Services\ActivityRecorder;
 use App\Services\SurveyStatistics;
+use App\Support\PageRange;
 use App\Support\SurveyDefinitions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,7 +29,9 @@ class SurveyController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $surveys = Survey::query()
+        // Only on full visits and its own page reloads, never on the deferred
+        // insights' reload.
+        $surveys = fn () => PageRange::within(Survey::query()
             // Responses the viewer's office reaches, as the Responses page lists them.
             ->with(['versions' => fn ($query) => $query->withCount(['responses' => fn ($query) => $query->reachableBy($user)])])
             ->latest()
@@ -52,7 +55,7 @@ class SurveyController extends Controller
                 'public_url' => $survey->versions->contains('status', 'published') && $survey->status !== 'archived'
                     ? route('surveys.show', ['law' => $survey->slug])
                     : null,
-            ]);
+            ]));
 
         return Inertia::render('admin/surveys/index', [
             'surveys' => $surveys,
@@ -287,7 +290,7 @@ class SurveyController extends Controller
             'message' => __(':code was deleted.', ['code' => $code]),
         ]);
 
-        return to_route('admin.surveys.index');
+        return $this->backToList('admin.surveys.index');
     }
 
     /**

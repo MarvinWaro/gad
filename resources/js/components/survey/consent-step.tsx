@@ -33,6 +33,11 @@ export function ConsentStep({
                     {retentionPeriod(survey.retention_days)}, then automatically
                     deleted.
                 </p>
+                {/* Always true, whatever the survey's own notice says. */}
+                <p>
+                    Email is optional. If you give one, only authorised CHED
+                    staff can see it, and it is deleted with your response.
+                </p>
             </div>
             <CheckField
                 id="consent"

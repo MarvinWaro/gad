@@ -80,10 +80,8 @@ class PublicSurveyController extends Controller
         $groupQuestion = $this->findQuestion($definition, 'id', 'respondent_group');
         $groups = $this->directoryGroups($groupQuestion);
         $groupChoices = $this->respondentGroupChoices($groupQuestion, $groups);
-        // Follow-ups that apply to this respondent: gender identity for a
-        // Female or Male answer, and the chosen group's own questions.
-        // Anything else that is sent is dropped rather than stored.
-        $genderIdentities = RespondentDetails::genderIdentities($request->input('sex'));
+        // Follow-ups that apply to this respondent: the chosen group's own
+        // questions. Anything else that is sent is dropped rather than stored.
         $chosenGroup = $groups->firstWhere('value', $request->input('respondent_group'));
         $groupQuestions = $chosenGroup?->followUps() ?? [];
         $multiSelects = $this->multiSelectQuestions($definition);
@@ -119,7 +117,13 @@ class PublicSurveyController extends Controller
                     : array_column($groupChoices, 'value')),
             ],
             'respondent_group_other' => ['nullable', 'string', 'max:160', Rule::requiredIf(fn (): bool => collect($groupChoices)->contains(fn (array $option): bool => $option['value'] === $request->input('respondent_group') && ($option['requires_text'] ?? false)))],
-            'gender_identity' => [Rule::excludeIf($genderIdentities === []), $required['sex'], 'nullable', Rule::in(array_keys($genderIdentities))],
+            // The same choices whatever the sex answer, asked as firmly as sex.
+            'gender_identity' => [$required['sex'], 'nullable', Rule::in(array_keys(RespondentDetails::GENDER_IDENTITIES))],
+            // Optional, and never asked about a minor in someone's care.
+            'sexual_orientation' => [Rule::excludeIf($forMinor), 'nullable', Rule::in(array_keys(RespondentDetails::SEXUAL_ORIENTATIONS))],
+            // Optional; for a minor it is the person answering. Only staff who
+            // open single responses ever see it (SurveyResponseController).
+            'email' => ['nullable', 'string', 'email', 'max:255'],
             ...RespondentFollowUps::answerRules($groupQuestions, $request->input('group_answers')),
             'region_id' => [
                 // An institution without its region would not narrow to anything.
@@ -148,6 +152,8 @@ class PublicSurveyController extends Controller
             ],
         ], [], [
             'gender_identity' => 'gender identity',
+            'sexual_orientation' => 'sexual orientation',
+            'email' => 'email',
             ...RespondentFollowUps::answerAttributes($groupQuestions),
         ]);
 
@@ -186,6 +192,8 @@ class PublicSurveyController extends Controller
             'respondent_group' => $validated['respondent_group'] ?? null,
             'respondent_group_other' => $validated['respondent_group_other'] ?? null,
             'gender_identity' => $validated['gender_identity'] ?? null,
+            'sexual_orientation' => $validated['sexual_orientation'] ?? null,
+            'email' => $validated['email'] ?? null,
             'survey_region_id' => $validated['region_id'] ?? null,
             // Never asked: the institution's own, kept for the statistics.
             'survey_cluster_id' => isset($validated['hei_id'])
@@ -369,7 +377,9 @@ class PublicSurveyController extends Controller
      */
     private function directories(array $required): array
     {
-        $regions = SurveyRegion::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        // Each region with its office's email, for asking to have an HEI added.
+        $regions = SurveyRegion::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'office_email'])
+            ->map(fn (SurveyRegion $region): array => ['id' => $region->id, 'name' => $region->name, 'email' => $region->office_email]);
         $heis = SurveyHei::query()
             ->join('survey_clusters', 'survey_clusters.id', '=', 'survey_heis.survey_cluster_id')
             ->where('survey_heis.is_active', true)

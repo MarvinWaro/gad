@@ -32,13 +32,15 @@ type Region = {
     office_email: string | null;
     office_website: string | null;
     office_phone: string | null;
+    /** The Central Office for any region, an office for its own. */
+    can_edit_office: boolean;
 };
 
 const officeFields = [
     {
         key: 'office_city',
         label: 'City',
-        placeholder: 'e.g. Koronadal City',
+        placeholder: 'City, as on the letterhead',
         type: 'text',
     },
     {
@@ -50,19 +52,19 @@ const officeFields = [
     {
         key: 'office_email',
         label: 'Email',
-        placeholder: 'e.g. chedro12@ched.gov.ph',
+        placeholder: 'name@ched.gov.ph',
         type: 'email',
     },
     {
         key: 'office_website',
         label: 'Website',
-        placeholder: 'e.g. chedro12.gov.ph',
+        placeholder: 'example.gov.ph',
         type: 'text',
     },
     {
         key: 'office_phone',
         label: 'Phone and fax',
-        placeholder: 'e.g. (083) 228-7572; Tel. fax. 083-2281130',
+        placeholder: 'Numbers, as on the letterhead',
         type: 'text',
     },
 ] as const;
@@ -132,7 +134,7 @@ export default function Regions({
                                             </td>
                                             <td className="px-5 py-4">
                                                 <div className="flex justify-end gap-1">
-                                                    {permissions.update && (
+                                                    {region.can_edit_office && (
                                                         <OfficeDialog
                                                             region={region}
                                                         />
@@ -227,13 +229,14 @@ function toggleActive(region: Region, visit?: ConfirmVisit) {
 /** The letterhead printed on the office's documents, such as monitoring reports. */
 function OfficeDialog({ region }: { region: Region }) {
     const [open, setOpen] = useState(false);
-    const form = useForm({
+    const saved = () => ({
         office_city: region.office_city ?? '',
         office_address: region.office_address ?? '',
         office_email: region.office_email ?? '',
         office_website: region.office_website ?? '',
         office_phone: region.office_phone ?? '',
     });
+    const form = useForm(saved());
 
     function submit(event: FormEvent) {
         event.preventDefault();
@@ -247,8 +250,12 @@ function OfficeDialog({ region }: { region: Region }) {
         <Dialog
             open={open}
             onOpenChange={(next) => {
+                // It opens with what is saved: a cancelled change is gone.
+                if (next) {
+                    form.setData(saved());
+                    form.clearErrors();
+                }
                 setOpen(next);
-                if (!next) form.clearErrors();
             }}
         >
             <DialogTrigger asChild>
@@ -259,11 +266,11 @@ function OfficeDialog({ region }: { region: Region }) {
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{region.name} office</DialogTitle>
+                    <DialogTitle>Office details</DialogTitle>
                     <DialogDescription>
-                        Printed on the letterhead of this office's documents,
-                        such as monitoring reports. Leave a field blank to leave
-                        its line out.
+                        For {region.name}: printed on the letterhead of its
+                        documents, such as monitoring reports. Leave a field
+                        blank to leave its line out.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={submit} className="space-y-4">
@@ -337,7 +344,7 @@ function RegionDialog() {
                         <Input
                             id="region-name"
                             className="mt-1.5"
-                            placeholder="e.g. Regional Office XII"
+                            placeholder="e.g. Regional Office I"
                             value={form.data.name}
                             onChange={(event) =>
                                 form.setData('name', event.target.value)

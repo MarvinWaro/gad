@@ -88,13 +88,19 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                   },
               ]
             : []),
-        ...(auth.permissions.includes('survey-directories.view')
+        // Offices open Regions too, for their own office details.
+        ...(auth.permissions.includes('survey-directories.view') ||
+        auth.permissions.includes('region-offices.update')
             ? [
                   {
                       title: 'Regions',
                       href: '/settings/regions',
                       icon: Map,
                   },
+              ]
+            : []),
+        ...(auth.permissions.includes('survey-directories.view')
+            ? [
                   {
                       title: 'HEIs',
                       href: '/settings/heis',

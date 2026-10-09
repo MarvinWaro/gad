@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 import awards from './awards'
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::index
- * @see app/Http/Controllers/Settings/BadgeController.php:40
+ * @see app/Http/Controllers/Settings/BadgeController.php:41
  * @route '/settings/badges'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -17,7 +17,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::index
- * @see app/Http/Controllers/Settings/BadgeController.php:40
+ * @see app/Http/Controllers/Settings/BadgeController.php:41
  * @route '/settings/badges'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::index
- * @see app/Http/Controllers/Settings/BadgeController.php:40
+ * @see app/Http/Controllers/Settings/BadgeController.php:41
  * @route '/settings/badges'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::index
- * @see app/Http/Controllers/Settings/BadgeController.php:40
+ * @see app/Http/Controllers/Settings/BadgeController.php:41
  * @route '/settings/badges'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Settings\BadgeController::index
- * @see app/Http/Controllers/Settings/BadgeController.php:40
+ * @see app/Http/Controllers/Settings/BadgeController.php:41
  * @route '/settings/badges'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Settings\BadgeController::index
- * @see app/Http/Controllers/Settings/BadgeController.php:40
+ * @see app/Http/Controllers/Settings/BadgeController.php:41
  * @route '/settings/badges'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -64,7 +64,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Settings\BadgeController::index
- * @see app/Http/Controllers/Settings/BadgeController.php:40
+ * @see app/Http/Controllers/Settings/BadgeController.php:41
  * @route '/settings/badges'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -80,7 +80,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::store
- * @see app/Http/Controllers/Settings/BadgeController.php:69
+ * @see app/Http/Controllers/Settings/BadgeController.php:70
  * @route '/settings/badges'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -95,7 +95,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::store
- * @see app/Http/Controllers/Settings/BadgeController.php:69
+ * @see app/Http/Controllers/Settings/BadgeController.php:70
  * @route '/settings/badges'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -104,7 +104,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::store
- * @see app/Http/Controllers/Settings/BadgeController.php:69
+ * @see app/Http/Controllers/Settings/BadgeController.php:70
  * @route '/settings/badges'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -114,7 +114,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Settings\BadgeController::store
- * @see app/Http/Controllers/Settings/BadgeController.php:69
+ * @see app/Http/Controllers/Settings/BadgeController.php:70
  * @route '/settings/badges'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -124,7 +124,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Settings\BadgeController::store
- * @see app/Http/Controllers/Settings/BadgeController.php:69
+ * @see app/Http/Controllers/Settings/BadgeController.php:70
  * @route '/settings/badges'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -135,7 +135,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::show
- * @see app/Http/Controllers/Settings/BadgeController.php:81
+ * @see app/Http/Controllers/Settings/BadgeController.php:82
  * @route '/settings/badges/{badge}'
  */
 export const show = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -150,7 +150,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::show
- * @see app/Http/Controllers/Settings/BadgeController.php:81
+ * @see app/Http/Controllers/Settings/BadgeController.php:82
  * @route '/settings/badges/{badge}'
  */
 show.url = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -183,7 +183,7 @@ show.url = (args: { badge: string | { id: string } } | [badge: string | { id: st
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::show
- * @see app/Http/Controllers/Settings/BadgeController.php:81
+ * @see app/Http/Controllers/Settings/BadgeController.php:82
  * @route '/settings/badges/{badge}'
  */
 show.get = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -192,7 +192,7 @@ show.get = (args: { badge: string | { id: string } } | [badge: string | { id: st
 })
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::show
- * @see app/Http/Controllers/Settings/BadgeController.php:81
+ * @see app/Http/Controllers/Settings/BadgeController.php:82
  * @route '/settings/badges/{badge}'
  */
 show.head = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -202,7 +202,7 @@ show.head = (args: { badge: string | { id: string } } | [badge: string | { id: s
 
     /**
 * @see \App\Http\Controllers\Settings\BadgeController::show
- * @see app/Http/Controllers/Settings/BadgeController.php:81
+ * @see app/Http/Controllers/Settings/BadgeController.php:82
  * @route '/settings/badges/{badge}'
  */
     const showForm = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -212,7 +212,7 @@ show.head = (args: { badge: string | { id: string } } | [badge: string | { id: s
 
             /**
 * @see \App\Http\Controllers\Settings\BadgeController::show
- * @see app/Http/Controllers/Settings/BadgeController.php:81
+ * @see app/Http/Controllers/Settings/BadgeController.php:82
  * @route '/settings/badges/{badge}'
  */
         showForm.get = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -221,7 +221,7 @@ show.head = (args: { badge: string | { id: string } } | [badge: string | { id: s
         })
             /**
 * @see \App\Http\Controllers\Settings\BadgeController::show
- * @see app/Http/Controllers/Settings/BadgeController.php:81
+ * @see app/Http/Controllers/Settings/BadgeController.php:82
  * @route '/settings/badges/{badge}'
  */
         showForm.head = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -237,7 +237,7 @@ show.head = (args: { badge: string | { id: string } } | [badge: string | { id: s
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::update
- * @see app/Http/Controllers/Settings/BadgeController.php:122
+ * @see app/Http/Controllers/Settings/BadgeController.php:123
  * @route '/settings/badges/{badge}'
  */
 export const update = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -252,7 +252,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::update
- * @see app/Http/Controllers/Settings/BadgeController.php:122
+ * @see app/Http/Controllers/Settings/BadgeController.php:123
  * @route '/settings/badges/{badge}'
  */
 update.url = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -285,7 +285,7 @@ update.url = (args: { badge: string | { id: string } } | [badge: string | { id: 
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::update
- * @see app/Http/Controllers/Settings/BadgeController.php:122
+ * @see app/Http/Controllers/Settings/BadgeController.php:123
  * @route '/settings/badges/{badge}'
  */
 update.put = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -295,7 +295,7 @@ update.put = (args: { badge: string | { id: string } } | [badge: string | { id: 
 
     /**
 * @see \App\Http\Controllers\Settings\BadgeController::update
- * @see app/Http/Controllers/Settings/BadgeController.php:122
+ * @see app/Http/Controllers/Settings/BadgeController.php:123
  * @route '/settings/badges/{badge}'
  */
     const updateForm = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -310,7 +310,7 @@ update.put = (args: { badge: string | { id: string } } | [badge: string | { id: 
 
             /**
 * @see \App\Http\Controllers\Settings\BadgeController::update
- * @see app/Http/Controllers/Settings/BadgeController.php:122
+ * @see app/Http/Controllers/Settings/BadgeController.php:123
  * @route '/settings/badges/{badge}'
  */
         updateForm.put = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -326,7 +326,7 @@ update.put = (args: { badge: string | { id: string } } | [badge: string | { id: 
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::status
- * @see app/Http/Controllers/Settings/BadgeController.php:131
+ * @see app/Http/Controllers/Settings/BadgeController.php:132
  * @route '/settings/badges/{badge}/status'
  */
 export const status = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -341,7 +341,7 @@ status.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::status
- * @see app/Http/Controllers/Settings/BadgeController.php:131
+ * @see app/Http/Controllers/Settings/BadgeController.php:132
  * @route '/settings/badges/{badge}/status'
  */
 status.url = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -374,7 +374,7 @@ status.url = (args: { badge: string | { id: string } } | [badge: string | { id: 
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::status
- * @see app/Http/Controllers/Settings/BadgeController.php:131
+ * @see app/Http/Controllers/Settings/BadgeController.php:132
  * @route '/settings/badges/{badge}/status'
  */
 status.patch = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -384,7 +384,7 @@ status.patch = (args: { badge: string | { id: string } } | [badge: string | { id
 
     /**
 * @see \App\Http\Controllers\Settings\BadgeController::status
- * @see app/Http/Controllers/Settings/BadgeController.php:131
+ * @see app/Http/Controllers/Settings/BadgeController.php:132
  * @route '/settings/badges/{badge}/status'
  */
     const statusForm = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -399,7 +399,7 @@ status.patch = (args: { badge: string | { id: string } } | [badge: string | { id
 
             /**
 * @see \App\Http\Controllers\Settings\BadgeController::status
- * @see app/Http/Controllers/Settings/BadgeController.php:131
+ * @see app/Http/Controllers/Settings/BadgeController.php:132
  * @route '/settings/badges/{badge}/status'
  */
         statusForm.patch = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -415,7 +415,7 @@ status.patch = (args: { badge: string | { id: string } } | [badge: string | { id
     status.form = statusForm
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::destroy
- * @see app/Http/Controllers/Settings/BadgeController.php:142
+ * @see app/Http/Controllers/Settings/BadgeController.php:143
  * @route '/settings/badges/{badge}'
  */
 export const destroy = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -430,7 +430,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::destroy
- * @see app/Http/Controllers/Settings/BadgeController.php:142
+ * @see app/Http/Controllers/Settings/BadgeController.php:143
  * @route '/settings/badges/{badge}'
  */
 destroy.url = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -463,7 +463,7 @@ destroy.url = (args: { badge: string | { id: string } } | [badge: string | { id:
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::destroy
- * @see app/Http/Controllers/Settings/BadgeController.php:142
+ * @see app/Http/Controllers/Settings/BadgeController.php:143
  * @route '/settings/badges/{badge}'
  */
 destroy.delete = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -473,7 +473,7 @@ destroy.delete = (args: { badge: string | { id: string } } | [badge: string | { 
 
     /**
 * @see \App\Http\Controllers\Settings\BadgeController::destroy
- * @see app/Http/Controllers/Settings/BadgeController.php:142
+ * @see app/Http/Controllers/Settings/BadgeController.php:143
  * @route '/settings/badges/{badge}'
  */
     const destroyForm = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -488,7 +488,7 @@ destroy.delete = (args: { badge: string | { id: string } } | [badge: string | { 
 
             /**
 * @see \App\Http\Controllers\Settings\BadgeController::destroy
- * @see app/Http/Controllers/Settings/BadgeController.php:142
+ * @see app/Http/Controllers/Settings/BadgeController.php:143
  * @route '/settings/badges/{badge}'
  */
         destroyForm.delete = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -504,7 +504,7 @@ destroy.delete = (args: { badge: string | { id: string } } | [badge: string | { 
     destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::people
- * @see app/Http/Controllers/Settings/BadgeController.php:156
+ * @see app/Http/Controllers/Settings/BadgeController.php:157
  * @route '/settings/badges/{badge}/people'
  */
 export const people = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -519,7 +519,7 @@ people.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::people
- * @see app/Http/Controllers/Settings/BadgeController.php:156
+ * @see app/Http/Controllers/Settings/BadgeController.php:157
  * @route '/settings/badges/{badge}/people'
  */
 people.url = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -552,7 +552,7 @@ people.url = (args: { badge: string | { id: string } } | [badge: string | { id: 
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::people
- * @see app/Http/Controllers/Settings/BadgeController.php:156
+ * @see app/Http/Controllers/Settings/BadgeController.php:157
  * @route '/settings/badges/{badge}/people'
  */
 people.get = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -561,7 +561,7 @@ people.get = (args: { badge: string | { id: string } } | [badge: string | { id: 
 })
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::people
- * @see app/Http/Controllers/Settings/BadgeController.php:156
+ * @see app/Http/Controllers/Settings/BadgeController.php:157
  * @route '/settings/badges/{badge}/people'
  */
 people.head = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -571,7 +571,7 @@ people.head = (args: { badge: string | { id: string } } | [badge: string | { id:
 
     /**
 * @see \App\Http\Controllers\Settings\BadgeController::people
- * @see app/Http/Controllers/Settings/BadgeController.php:156
+ * @see app/Http/Controllers/Settings/BadgeController.php:157
  * @route '/settings/badges/{badge}/people'
  */
     const peopleForm = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -581,7 +581,7 @@ people.head = (args: { badge: string | { id: string } } | [badge: string | { id:
 
             /**
 * @see \App\Http\Controllers\Settings\BadgeController::people
- * @see app/Http/Controllers/Settings/BadgeController.php:156
+ * @see app/Http/Controllers/Settings/BadgeController.php:157
  * @route '/settings/badges/{badge}/people'
  */
         peopleForm.get = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -590,7 +590,7 @@ people.head = (args: { badge: string | { id: string } } | [badge: string | { id:
         })
             /**
 * @see \App\Http\Controllers\Settings\BadgeController::people
- * @see app/Http/Controllers/Settings/BadgeController.php:156
+ * @see app/Http/Controllers/Settings/BadgeController.php:157
  * @route '/settings/badges/{badge}/people'
  */
         peopleForm.head = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

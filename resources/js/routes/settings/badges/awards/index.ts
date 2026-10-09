@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::store
- * @see app/Http/Controllers/Settings/BadgeController.php:189
+ * @see app/Http/Controllers/Settings/BadgeController.php:190
  * @route '/settings/badges/{badge}/awards'
  */
 export const store = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::store
- * @see app/Http/Controllers/Settings/BadgeController.php:189
+ * @see app/Http/Controllers/Settings/BadgeController.php:190
  * @route '/settings/badges/{badge}/awards'
  */
 store.url = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ store.url = (args: { badge: string | { id: string } } | [badge: string | { id: s
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::store
- * @see app/Http/Controllers/Settings/BadgeController.php:189
+ * @see app/Http/Controllers/Settings/BadgeController.php:190
  * @route '/settings/badges/{badge}/awards'
  */
 store.post = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -59,7 +59,7 @@ store.post = (args: { badge: string | { id: string } } | [badge: string | { id: 
 
     /**
 * @see \App\Http\Controllers\Settings\BadgeController::store
- * @see app/Http/Controllers/Settings/BadgeController.php:189
+ * @see app/Http/Controllers/Settings/BadgeController.php:190
  * @route '/settings/badges/{badge}/awards'
  */
     const storeForm = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -69,7 +69,7 @@ store.post = (args: { badge: string | { id: string } } | [badge: string | { id: 
 
             /**
 * @see \App\Http\Controllers\Settings\BadgeController::store
- * @see app/Http/Controllers/Settings/BadgeController.php:189
+ * @see app/Http/Controllers/Settings/BadgeController.php:190
  * @route '/settings/badges/{badge}/awards'
  */
         storeForm.post = (args: { badge: string | { id: string } } | [badge: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -80,7 +80,7 @@ store.post = (args: { badge: string | { id: string } } | [badge: string | { id: 
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::destroy
- * @see app/Http/Controllers/Settings/BadgeController.php:201
+ * @see app/Http/Controllers/Settings/BadgeController.php:202
  * @route '/settings/badges/{badge}/awards/{award}'
  */
 export const destroy = (args: { badge: string | { id: string }, award: number | { id: number } } | [badge: string | { id: string }, award: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -95,7 +95,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::destroy
- * @see app/Http/Controllers/Settings/BadgeController.php:201
+ * @see app/Http/Controllers/Settings/BadgeController.php:202
  * @route '/settings/badges/{badge}/awards/{award}'
  */
 destroy.url = (args: { badge: string | { id: string }, award: number | { id: number } } | [badge: string | { id: string }, award: number | { id: number } ], options?: RouteQueryOptions) => {
@@ -125,7 +125,7 @@ destroy.url = (args: { badge: string | { id: string }, award: number | { id: num
 
 /**
 * @see \App\Http\Controllers\Settings\BadgeController::destroy
- * @see app/Http/Controllers/Settings/BadgeController.php:201
+ * @see app/Http/Controllers/Settings/BadgeController.php:202
  * @route '/settings/badges/{badge}/awards/{award}'
  */
 destroy.delete = (args: { badge: string | { id: string }, award: number | { id: number } } | [badge: string | { id: string }, award: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -135,7 +135,7 @@ destroy.delete = (args: { badge: string | { id: string }, award: number | { id: 
 
     /**
 * @see \App\Http\Controllers\Settings\BadgeController::destroy
- * @see app/Http/Controllers/Settings/BadgeController.php:201
+ * @see app/Http/Controllers/Settings/BadgeController.php:202
  * @route '/settings/badges/{badge}/awards/{award}'
  */
     const destroyForm = (args: { badge: string | { id: string }, award: number | { id: number } } | [badge: string | { id: string }, award: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -150,7 +150,7 @@ destroy.delete = (args: { badge: string | { id: string }, award: number | { id: 
 
             /**
 * @see \App\Http\Controllers\Settings\BadgeController::destroy
- * @see app/Http/Controllers/Settings/BadgeController.php:201
+ * @see app/Http/Controllers/Settings/BadgeController.php:202
  * @route '/settings/badges/{badge}/awards/{award}'
  */
         destroyForm.delete = (args: { badge: string | { id: string }, award: number | { id: number } } | [badge: string | { id: string }, award: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

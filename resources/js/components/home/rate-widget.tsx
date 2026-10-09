@@ -8,6 +8,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
+import { useOperator } from '@/hooks/use-operator';
 import { store } from '@/routes/ratings';
 
 // What each number of stars means, shown once a rating is picked.
@@ -31,6 +32,7 @@ export function RateWidget() {
         () => typeof window !== 'undefined' && window.location.hash === '#rate',
     );
     const [sent, setSent] = useState(false);
+    const operator = useOperator();
     const [preview, setPreview] = useState(0);
     const form = useForm({ rating: 0, suggestion: '', website: '' });
     const shown = preview || form.data.rating;
@@ -82,8 +84,7 @@ export function RateWidget() {
                         <CircleCheck aria-hidden="true" />
                         <h2 id="rate-card-title">Thank you!</h2>
                         <p>
-                            Your rating helps CHED Regional Office XII improve
-                            PHLGADIS.
+                            Your rating helps {operator.name} improve PHLGADIS.
                         </p>
                         <Button
                             variant="outline"

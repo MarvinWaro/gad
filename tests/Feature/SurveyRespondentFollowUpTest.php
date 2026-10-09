@@ -13,6 +13,7 @@ use App\Models\User;
 use Database\Seeders\RbacSeeder;
 use Database\Seeders\SurveySeeder;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -113,36 +114,82 @@ test('the public form receives each group\'s follow-up questions and the gender 
         ->where('directories.respondent_groups.0.follow_ups.1.type', 'radio')
         ->where('directories.respondent_groups.1.follow_ups', [])
         ->where('directories.respondent_groups.2.follow_ups.1.label', 'Status of employment')
-        ->where('respondentDetails.gender_identities.female.0.label', 'Heterosexual (Babae)')
-        ->where('respondentDetails.gender_identities.male.1.value', 'trans-woman'));
+        // One list for everyone, its choices never overlapping.
+        ->where('respondentDetails.gender_identities', fn ($choices) => collect($choices)->pluck('value')->all() === [
+            'cisgender-man', 'cisgender-woman', 'trans-man', 'trans-woman', 'non-binary', 'another', 'prefer-not-to-say',
+        ])
+        ->where('respondentDetails.gender_identities.0.label', 'Cisgender Man (Lalaki, at lalaki rin noong ipinanganak)'));
 });
 
-test('a female or male respondent is asked their gender identity, from that sex\'s choices', function () {
+test('every sex answer, Intersex and Prefer not to say included, is asked the same gender identity list', function (string $sex) {
     $store = route('surveys.responses.store', $this->survey);
 
-    $this->post($store, followUpPayload())->assertSessionHasErrors('gender_identity');
-    // "Trans Woman" is offered after Male, not Female.
-    $this->post($store, followUpPayload(['gender_identity' => 'trans-woman']))->assertSessionHasErrors('gender_identity');
+    $this->post($store, followUpPayload(['sex' => $sex]))->assertSessionHasErrors('gender_identity');
+    // An orientation, or the old "Gender Variant" (an expression), is not an identity.
+    $this->post($store, followUpPayload(['sex' => $sex, 'gender_identity' => 'heterosexual']))->assertSessionHasErrors('gender_identity');
+    $this->post($store, followUpPayload(['sex' => $sex, 'gender_identity' => 'gender-variant']))->assertSessionHasErrors('gender_identity');
     expect(SurveyResponse::query()->count())->toBe(0);
 
-    $this->post($store, followUpPayload(['gender_identity' => 'trans-man']))->assertSessionHasNoErrors();
-    $this->post($store, followUpPayload(['sex' => 'male', 'gender_identity' => 'trans-woman']))->assertSessionHasNoErrors();
+    foreach (['trans-woman', 'non-binary', 'another'] as $identity) {
+        $this->post($store, followUpPayload(['sex' => $sex, 'gender_identity' => $identity]))->assertSessionHasNoErrors();
+    }
 
     expect(SurveyResponse::query()->pluck('gender_identity')->all())
-        ->toEqualCanonicalizing(['trans-man', 'trans-woman']);
+        ->toEqualCanonicalizing(['trans-woman', 'non-binary', 'another']);
+})->with(['female', 'male', 'intersex', 'prefer-not-to-say']);
+
+test('sexual orientation is its own optional question, whatever the sex answer', function () {
+    $store = route('surveys.responses.store', $this->survey);
+
+    $this->get(route('surveys.show', ['law' => 'ra-7877']))->assertInertia(fn (Assert $page) => $page
+        ->where('respondentDetails.sexual_orientations.0', ['value' => 'heterosexual', 'label' => 'Heterosexual (Naaakit sa ibang kasarian)'])
+        ->where('respondentDetails.sexual_orientations.4', ['value' => 'another', 'label' => 'Another sexual orientation (Iba pa)'])
+        ->where('respondentDetails.sexual_orientations.5.value', 'prefer-not-to-say'));
+
+    $this->post($store, followUpPayload(['gender_identity' => 'cisgender-woman', 'sexual_orientation' => 'cisgender-woman']))->assertSessionHasErrors('sexual_orientation');
+    $this->post($store, followUpPayload(['gender_identity' => 'cisgender-woman']))->assertSessionHasNoErrors();
+    $this->post($store, followUpPayload(['gender_identity' => 'trans-man', 'sexual_orientation' => 'bisexual']))->assertSessionHasNoErrors();
+    $this->post($store, followUpPayload(['sex' => 'intersex', 'gender_identity' => 'non-binary', 'sexual_orientation' => 'gay']))->assertSessionHasNoErrors();
+
+    expect(SurveyResponse::query()->orderBy('id')->pluck('sexual_orientation')->all())->toBe([null, 'bisexual', 'gay']);
+
+    $response = SurveyResponse::query()->where('sexual_orientation', 'bisexual')->sole();
+    $this->actingAs($this->admin)->get(route('admin.surveys.responses.show', [$this->survey, $response]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('response.details.Gender identity', 'Trans Man (Lalaki ngunit ipinanganak sa katawan ng isang Babae)')
+            ->where('response.details.Sexual orientation', 'Bisexual (Naaakit sa higit sa isang kasarian)'));
 });
 
-test('other answers for sex are not asked about gender identity', function (string $sex) {
-    $this->post(route('surveys.responses.store', $this->survey), followUpPayload([
-        'sex' => $sex, 'gender_identity' => 'trans-man',
-    ]))->assertSessionHasNoErrors();
+test('an optional email is kept encrypted and shown only on the page of its response', function () {
+    $store = route('surveys.responses.store', $this->survey);
+    $answer = ['gender_identity' => 'cisgender-woman'];
 
-    expect(SurveyResponse::query()->sole()->gender_identity)->toBeNull();
-})->with(['intersex', 'prefer-not-to-say']);
+    $this->post($store, followUpPayload([...$answer, 'email' => 'not-an-email']))->assertSessionHasErrors('email');
+    $this->post($store, followUpPayload($answer))->assertSessionHasNoErrors();
+    $this->post($store, followUpPayload([...$answer, 'email' => 'respondent@example.com']))->assertSessionHasNoErrors();
+
+    $response = SurveyResponse::query()->whereNotNull('email')->sole();
+    $stored = DB::table('survey_responses')->where('id', $response->id)->value('email');
+
+    expect(SurveyResponse::query()->whereNull('email')->count())->toBe(1)
+        ->and($response->email)->toBe('respondent@example.com')
+        // Encrypted at rest, and never serialized with the model.
+        ->and($stored)->not->toContain('respondent@example.com')
+        ->and($response->toArray())->not->toHaveKey('email')
+        ->and($response->toJson())->not->toContain('respondent@example.com');
+
+    $this->actingAs($this->admin)->get(route('admin.surveys.responses.show', [$this->survey, $response]))
+        ->assertInertia(fn (Assert $page) => $page->where('response.email', 'respondent@example.com'));
+    $this->get(route('admin.surveys.responses.index', $this->survey))
+        ->assertInertia(fn (Assert $page) => $page->where('responses.data', fn ($rows) => collect($rows)->every(fn ($row) => ! array_key_exists('email', (array) $row))));
+    expect($this->get(route('admin.surveys.responses.export', $this->survey))->streamedContent())
+        ->not->toContain('respondent@example.com')
+        ->toContain('Sex at birth');
+});
 
 test('students answer their group\'s questions, and only theirs are kept', function () {
     $store = route('surveys.responses.store', $this->survey);
-    $student = ['respondent_group' => 'student', 'gender_identity' => 'heterosexual'];
+    $student = ['respondent_group' => 'student', 'gender_identity' => 'cisgender-woman'];
 
     $this->post($store, followUpPayload($student))
         ->assertSessionHasErrors(['group_answers.student-year', 'group_answers.scholar']);
@@ -163,7 +210,7 @@ test('students answer their group\'s questions, and only theirs are kept', funct
 
 test('employees answer theirs', function () {
     $store = route('surveys.responses.store', $this->survey);
-    $employee = ['respondent_group' => 'employee', 'gender_identity' => 'heterosexual'];
+    $employee = ['respondent_group' => 'employee', 'gender_identity' => 'cisgender-woman'];
 
     $this->post($store, followUpPayload($employee))
         ->assertSessionHasErrors(['group_answers.unit-division', 'group_answers.employment-status']);
@@ -183,7 +230,7 @@ test('a group without follow-ups stores none, whatever is sent', function () {
 
     $response = SurveyResponse::query()->sole();
     expect($response->respondent_group)->toBe('alumni')
-        ->and($response->gender_identity)->toBe('heterosexual')
+        ->and($response->gender_identity)->toBe('cisgender-woman')
         ->and($response->groupAnswers()->count())->toBe(0);
 });
 
@@ -200,7 +247,7 @@ test('an administrator can give a new group its own question, with an Others cho
     ]]);
 
     $store = route('surveys.responses.store', $this->survey);
-    $answer = ['respondent_group' => 'civilian', 'gender_identity' => 'heterosexual'];
+    $answer = ['respondent_group' => 'civilian', 'gender_identity' => 'cisgender-woman'];
 
     $this->post($store, followUpPayload($answer))->assertSessionHasErrors('group_answers.occupation');
     // "Others" opens a box that must be filled in.
@@ -288,7 +335,7 @@ test('reviewers see the follow-ups on the response and in the export', function 
         'group_answers' => ['student-year' => '3rd-year', 'scholar' => 'yes'],
     ]))->assertSessionHasNoErrors();
     $this->post($store, followUpPayload([
-        'respondent_group' => 'civilian', 'gender_identity' => 'heterosexual',
+        'respondent_group' => 'civilian', 'gender_identity' => 'cisgender-woman',
         'group_answers' => ['occupation' => 'others'],
         'group_answer_details' => ['occupation' => 'Tricycle driver'],
     ]))->assertSessionHasNoErrors();
@@ -315,7 +362,7 @@ test('reviewers see the follow-ups on the response and in the export', function 
 test('an answered question that is removed is retired: gone from the form, kept on its answers', function () {
     $civilian = addCivilianGroup();
     $this->post(route('surveys.responses.store', $this->survey), followUpPayload([
-        'respondent_group' => 'civilian', 'gender_identity' => 'heterosexual',
+        'respondent_group' => 'civilian', 'gender_identity' => 'cisgender-woman',
         'group_answers' => ['occupation' => 'vendor'],
     ]))->assertSessionHasNoErrors();
 
@@ -351,7 +398,7 @@ test('a picked choice that is removed is retired: no longer offered, still read 
     $civilian = addCivilianGroup();
     $store = route('surveys.responses.store', $this->survey);
     $this->post($store, followUpPayload([
-        'respondent_group' => 'civilian', 'gender_identity' => 'heterosexual',
+        'respondent_group' => 'civilian', 'gender_identity' => 'cisgender-woman',
         'group_answers' => ['occupation' => 'farmer'],
     ]))->assertSessionHasNoErrors();
 
@@ -368,7 +415,7 @@ test('a picked choice that is removed is retired: no longer offered, still read 
 
     // No longer accepted from respondents…
     $this->post($store, followUpPayload([
-        'respondent_group' => 'civilian', 'gender_identity' => 'heterosexual',
+        'respondent_group' => 'civilian', 'gender_identity' => 'cisgender-woman',
         'group_answers' => ['occupation' => 'farmer'],
     ]))->assertSessionHasErrors('group_answers.occupation');
 
@@ -380,7 +427,7 @@ test('a picked choice that is removed is retired: no longer offered, still read 
 
 test('a response\'s answers are removed with it, including when it expires', function () {
     $this->post(route('surveys.responses.store', $this->survey), followUpPayload([
-        'respondent_group' => 'student', 'gender_identity' => 'heterosexual',
+        'respondent_group' => 'student', 'gender_identity' => 'cisgender-woman',
         'group_answers' => ['student-year' => '1st-year', 'scholar' => 'no'],
     ]))->assertSessionHasNoErrors();
     expect(SurveyGroupAnswer::query()->count())->toBe(2);
@@ -394,7 +441,7 @@ test('a response\'s answers are removed with it, including when it expires', fun
 
 test('the database only accepts a choice that belongs to the answered question', function () {
     $this->post(route('surveys.responses.store', $this->survey), followUpPayload([
-        'respondent_group' => 'student', 'gender_identity' => 'heterosexual',
+        'respondent_group' => 'student', 'gender_identity' => 'cisgender-woman',
         'group_answers' => ['student-year' => '1st-year', 'scholar' => 'no'],
     ]))->assertSessionHasNoErrors();
     $response = SurveyResponse::query()->sole();
@@ -410,7 +457,7 @@ test('the database only accepts a choice that belongs to the answered question',
 
 test('a choice that has been picked cannot be deleted outright', function () {
     $this->post(route('surveys.responses.store', $this->survey), followUpPayload([
-        'respondent_group' => 'student', 'gender_identity' => 'heterosexual',
+        'respondent_group' => 'student', 'gender_identity' => 'cisgender-woman',
         'group_answers' => ['student-year' => '1st-year', 'scholar' => 'no'],
     ]))->assertSessionHasNoErrors();
 

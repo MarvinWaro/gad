@@ -2,7 +2,9 @@
 
 RA 9262 uses the shared survey builder and four-step public questionnaire. Its
 definition contains the supplied 21 experience choices and 16 perpetrator
-choices, plus an exclusive none choice. No name or email is collected.
+choices, plus an exclusive none choice. No name is collected, and giving an
+email is optional (`docs/respondent-support.md`); answering for a minor, it is
+the email of the person answering.
 
 The answering-for question stores `self` or `minor-under-legal-care` in
 `survey_responses.answers.answering_for`. When answering for a minor, all

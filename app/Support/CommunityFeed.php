@@ -183,18 +183,23 @@ class CommunityFeed
     {
         return self::withReactions(self::visibleTo($viewer, $scope), $viewer)
             ->with([
-                'author:id,name,status,avatar_path',
+                // Offices name CHED staff: a post's author, a tagged person.
+                'author:id,name,status,avatar_path,survey_region_id',
+                'author.officeRegion:id,name',
                 'hei:id,name',
                 'images',
-                'tags:id,name,survey_hei_id,avatar_path',
+                'tags:id,name,survey_hei_id,survey_region_id,avatar_path',
                 'tags.hei:id,name',
+                'tags.officeRegion:id,name',
                 'sdgs',
                 'achieveItems',
-                'sharedPost.author:id,name,status,avatar_path',
+                'sharedPost.author:id,name,status,avatar_path,survey_region_id',
+                'sharedPost.author.officeRegion:id,name',
                 'sharedPost.hei:id,name',
                 'sharedPost.images',
-                'sharedPost.tags:id,name,survey_hei_id,avatar_path',
+                'sharedPost.tags:id,name,survey_hei_id,survey_region_id,avatar_path',
                 'sharedPost.tags.hei:id,name',
+                'sharedPost.tags.officeRegion:id,name',
                 'sharedPost.sdgs',
                 'sharedPost.achieveItems',
                 'comments' => fn ($query) => $query
@@ -257,6 +262,8 @@ class CommunityFeed
                 'name' => $post->hei->name,
                 'display_name' => InstitutionName::display($post->hei->name),
             ] : null,
+            // Who a staff post speaks for: its author's CHED office.
+            'office' => $post->hei ? null : $post->author->chedOffice(),
             'images' => $post->images
                 ->map(fn (PostImage $image): array => [
                     'id' => $image->id,
@@ -275,7 +282,7 @@ class CommunityFeed
                     'id' => $user->id,
                     'name' => $user->name,
                     'avatar' => $user->avatar,
-                    'hei' => $user->hei ? InstitutionName::display($user->hei->name) : null,
+                    'affiliation' => $user->affiliation(),
                 ])
                 ->values(),
             // Codes only, in their official order; the client holds the names

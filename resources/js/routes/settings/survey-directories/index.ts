@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::sync
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:130
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:145
  * @route '/settings/survey-directories/sync-heis'
  */
 export const sync = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ sync.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::sync
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:130
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:145
  * @route '/settings/survey-directories/sync-heis'
  */
 sync.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ sync.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::sync
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:130
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:145
  * @route '/settings/survey-directories/sync-heis'
  */
 sync.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ sync.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::sync
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:130
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:145
  * @route '/settings/survey-directories/sync-heis'
  */
     const syncForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ sync.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::sync
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:130
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:145
  * @route '/settings/survey-directories/sync-heis'
  */
         syncForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -56,7 +56,7 @@ sync.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     sync.form = syncForm
 /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::store
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:142
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:157
  * @route '/settings/survey-directories/{type}'
  */
 export const store = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -71,7 +71,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::store
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:142
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:157
  * @route '/settings/survey-directories/{type}'
  */
 store.url = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -99,7 +99,7 @@ store.url = (args: { type: string | number } | [type: string | number ] | string
 
 /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::store
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:142
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:157
  * @route '/settings/survey-directories/{type}'
  */
 store.post = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -109,7 +109,7 @@ store.post = (args: { type: string | number } | [type: string | number ] | strin
 
     /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::store
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:142
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:157
  * @route '/settings/survey-directories/{type}'
  */
     const storeForm = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -119,7 +119,7 @@ store.post = (args: { type: string | number } | [type: string | number ] | strin
 
             /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::store
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:142
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:157
  * @route '/settings/survey-directories/{type}'
  */
         storeForm.post = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -130,7 +130,7 @@ store.post = (args: { type: string | number } | [type: string | number ] | strin
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::update
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:228
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:243
  * @route '/settings/survey-directories/{type}/{id}'
  */
 export const update = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -145,7 +145,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::update
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:228
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:243
  * @route '/settings/survey-directories/{type}/{id}'
  */
 update.url = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions) => {
@@ -171,7 +171,7 @@ update.url = (args: { type: string | number, id: string | number } | [type: stri
 
 /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::update
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:228
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:243
  * @route '/settings/survey-directories/{type}/{id}'
  */
 update.put = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -181,7 +181,7 @@ update.put = (args: { type: string | number, id: string | number } | [type: stri
 
     /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::update
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:228
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:243
  * @route '/settings/survey-directories/{type}/{id}'
  */
     const updateForm = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -196,7 +196,7 @@ update.put = (args: { type: string | number, id: string | number } | [type: stri
 
             /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::update
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:228
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:243
  * @route '/settings/survey-directories/{type}/{id}'
  */
         updateForm.put = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -212,7 +212,7 @@ update.put = (args: { type: string | number, id: string | number } | [type: stri
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::destroy
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:325
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:340
  * @route '/settings/survey-directories/{type}/{id}'
  */
 export const destroy = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -227,7 +227,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::destroy
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:325
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:340
  * @route '/settings/survey-directories/{type}/{id}'
  */
 destroy.url = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions) => {
@@ -253,7 +253,7 @@ destroy.url = (args: { type: string | number, id: string | number } | [type: str
 
 /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::destroy
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:325
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:340
  * @route '/settings/survey-directories/{type}/{id}'
  */
 destroy.delete = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -263,7 +263,7 @@ destroy.delete = (args: { type: string | number, id: string | number } | [type: 
 
     /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::destroy
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:325
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:340
  * @route '/settings/survey-directories/{type}/{id}'
  */
     const destroyForm = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -278,7 +278,7 @@ destroy.delete = (args: { type: string | number, id: string | number } | [type: 
 
             /**
 * @see \App\Http\Controllers\Settings\SurveyDirectoryController::destroy
- * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:325
+ * @see app/Http/Controllers/Settings/SurveyDirectoryController.php:340
  * @route '/settings/survey-directories/{type}/{id}'
  */
         destroyForm.delete = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

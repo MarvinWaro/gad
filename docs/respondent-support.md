@@ -15,9 +15,29 @@ making their survey answers identifiable. It has two parts:
    reach them. It is stored apart from survey answers and seen only by named
    CHED staff.
 
-## Why the survey gets no email field
+## The survey's optional email (decided 2026-10-08)
 
-An optional email field on the questionnaire was considered and rejected:
+An optional email field on the questionnaire was first considered and
+rejected, for the reasons below. On 2026-10-08 CHED chose to collect one
+anyway, optional on every survey, before deciding what it is for. It is kept
+under these safeguards:
+
+- **Optional, with a warning.** The field says to leave it blank if someone
+  else can read the respondent's email. Answering for a minor, it asks for the
+  email of the person answering, never the child's.
+- **Encrypted** in `survey_responses.email` (the `encrypted` cast), and hidden
+  from the model's serialization.
+- **Seen in one place:** a single response's page, by staff who can already
+  open responses (`survey-responses.view`, within their region). Never in the
+  responses list, the CSV export, the statistics, a notice or a log.
+- **Deleted with the response** at the end of its retention period.
+- **Notices tell the truth.** The form, consent step, confirmation and FAQ say
+  the email is optional and who sees it; live surveys' "No name or email is
+  collected" became "No name is collected, and giving an email is optional."
+- **Still owed under RA 10173:** DPO review and an updated privacy impact
+  assessment, and a process for when, why and how staff may use an email.
+
+The original reasons still apply, which is why the safeguards exist:
 
 - **Safety.** Abusers often read the victim's email. A CHED message about a
   violence survey can put the respondent in danger, above all under RA 9262.
@@ -29,9 +49,8 @@ An optional email field on the questionnaire was considered and rejected:
 - **Duty to act.** Holding a victim's contact details with no process to follow
   up is worse than never asking.
 
-Survey responses stay anonymous. The questionnaire, `survey_responses`, and the
-CSV export never gain contact fields, and nothing links a response to a
-support request.
+Survey responses stay anonymous unless the respondent gives an email. The CSV
+export never carries it, and nothing links a response to a support request.
 
 ## Part 1: Help contacts
 
@@ -170,7 +189,8 @@ searched, and the list doesn't need to.
     - how to withdraw, and whom to contact.
 - The survey notices can add: "If you ask CHED to contact you, that request is
   kept separately from your answers."
-- The survey promise "No name or email is collected" stays true.
+- The survey promise "No name is collected, and giving an email is optional"
+  stays true.
 
 ## Permissions
 
@@ -210,7 +230,8 @@ dedicated role to named CHED staff.
 
 Pest:
 
-- `survey_responses` has no contact columns and no link to `support_requests`.
+- `survey_responses` has no link to `support_requests`, and its optional email
+  stays encrypted and out of the list and export.
 - Contact fields are stored encrypted.
 - Only `support-requests.view` can list or open requests. Everyone else gets
   403, and HEI users never see the menu.

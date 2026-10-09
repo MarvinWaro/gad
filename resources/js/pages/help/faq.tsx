@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { ChevronDown, LifeBuoy, Mail, Phone } from 'lucide-react';
 import { PublicPage } from '@/components/public/public-page';
 import { Button } from '@/components/ui/button';
-import { chedContact } from '@/data/contact';
 import { faqIntro, faqs, type FaqItem } from '@/data/faq';
+import { useOperator } from '@/hooks/use-operator';
 import { hashTarget } from '@/lib/hash-target';
 import { home } from '@/routes';
 import '../../../css/public.css';
@@ -70,36 +70,44 @@ function FaqIntro() {
 // Native disclosure: works without JavaScript, and find-in-page opens a
 // closed answer that matches.
 function FaqEntry({ item }: { item: FaqItem }) {
+    const operator = useOperator();
+
     return (
         <details id={item.id} className="faq-item">
             <summary>
                 <span>{item.question}</span>
                 <ChevronDown aria-hidden="true" />
             </summary>
-            <p className="faq-answer">{item.answer}</p>
+            <p className="faq-answer">
+                {typeof item.answer === 'string'
+                    ? item.answer
+                    : item.answer(operator)}
+            </p>
         </details>
     );
 }
 
 function FaqContact() {
+    const operator = useOperator();
+
     return (
         <section className="notice-panel" aria-labelledby="faq-contact-title">
             <LifeBuoy aria-hidden="true" />
             <div>
                 <h2 id="faq-contact-title">Still have questions?</h2>
-                <p>CHED Regional Office XII can help.</p>
+                <p>{operator.name} can help.</p>
             </div>
             <div className="faq-contact-actions">
                 <Button asChild variant="outline">
-                    <a href={chedContact.hotline.href}>
+                    <a href={operator.hotlineHref}>
                         <Phone aria-hidden="true" />
-                        {chedContact.hotline.label}
+                        {operator.hotline}
                     </a>
                 </Button>
                 <Button asChild variant="outline">
-                    <a href={`mailto:${chedContact.email}`}>
+                    <a href={`mailto:${operator.email}`}>
                         <Mail aria-hidden="true" />
-                        {chedContact.email}
+                        {operator.email}
                     </a>
                 </Button>
             </div>

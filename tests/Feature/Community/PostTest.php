@@ -9,11 +9,13 @@ use App\Models\PostAchieveItem;
 use App\Models\PostComment;
 use App\Models\PostReaction;
 use App\Models\PostSdg;
+use App\Models\SurveyRegion;
 use App\Models\User;
 use App\Support\CommunityFeed;
 use App\Support\InstitutionName;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -177,9 +179,9 @@ test('authors add a feeling and tag active people, and the feed shows both', fun
             ->where('posts.data.0.feeling', ['value' => 'proud', 'label' => 'proud', 'emoji' => '🏅'])
             ->has('posts.data.0.tags', 2)
             ->where('posts.data.0.tags.0.name', 'Ana Cruz')
-            ->where('posts.data.0.tags.0.hei', InstitutionName::display($colleague->hei->name))
+            ->where('posts.data.0.tags.0.affiliation', InstitutionName::display($colleague->hei->name))
             ->where('posts.data.0.tags.1.name', 'Ben Reyes')
-            ->where('posts.data.0.tags.1.hei', null)));
+            ->where('posts.data.0.tags.1.affiliation', 'CHED Central Office')));
 });
 
 test('a post without a feeling or tags shows neither', function () {
@@ -398,7 +400,7 @@ test('the reactions list pages newest first, filters by reaction, and shares no 
             'id' => $member->id,
             'name' => $member->name,
             'avatar' => null,
-            'hei' => InstitutionName::display($member->hei->name),
+            'affiliation' => InstitutionName::display($member->hei->name),
             'type' => 'care',
         ])
         ->and($first->json('meta.next_cursor'))->not->toBeNull();
@@ -591,6 +593,64 @@ test('the community page is for CHED staff, and only moderators remove others\' 
     $this->get(route('posts.show', $post))->assertInertia(fn (Assert $page) => $page->where('feedUrl', route('community')));
 
     $this->actingAs(communityMember())->get(route('community'))->assertForbidden();
+});
+
+test('a CHED post speaks for the office of its author, never one fixed region', function () {
+    $region = SurveyRegion::query()->create(['name' => 'Regional Office IV', 'is_active' => true]);
+    $regional = User::factory()->regionalOffice($region)->create();
+    $regional->assignRole('ched-employee');
+    $central = User::factory()->nationalOffice()->create();
+    $central->assignRole('admin');
+    $school = communityMember();
+    communityPost($school, ['body' => 'From a school.']);
+    communityPost($regional, ['body' => 'From Region IV.', 'survey_hei_id' => null]);
+    communityPost($central, ['body' => 'From the Central Office.', 'survey_hei_id' => null]);
+    // Tagging the regional staff member names their office too.
+    Post::query()->where('body', 'From a school.')->sole()->tags()->attach($regional->id);
+
+    $this->actingAs($central)->get(route('community'))
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+            ->where('posts.data', function ($posts) use ($school) {
+                $by = collect($posts)->keyBy('body');
+
+                return $by['From Region IV.']['office'] === 'CHED Regional Office IV'
+                    && $by['From the Central Office.']['office'] === 'CHED Central Office'
+                    && $by['From a school.']['office'] === null
+                    && $by['From a school.']['hei']['display_name'] === InstitutionName::display($school->hei->name)
+                    && $by['From a school.']['tags'][0]['affiliation'] === 'CHED Regional Office IV';
+            })));
+
+    // The staff composer is labelled with the viewer's own office.
+    $this->actingAs($regional)->get(route('community'))
+        ->assertInertia(fn (Assert $page) => $page->where('auth.affiliation', 'CHED Regional Office IV'));
+});
+
+test('the feed names CHED offices without a query per post', function () {
+    $viewer = communityModerator();
+    $count = function () use ($viewer): int {
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        CommunityFeed::page($viewer);
+        $queries = count(DB::getQueryLog());
+        DB::disableQueryLog();
+
+        return $queries;
+    };
+    $staffPost = function (): void {
+        $author = User::factory()->regionalOffice(SurveyRegion::query()->create(['name' => 'Regional Office '.Str::random(4), 'is_active' => true]))->create();
+        $tagged = User::factory()->regionalOffice(SurveyRegion::query()->create(['name' => 'Regional Office '.Str::random(4), 'is_active' => true]))->create();
+        communityPost($author, ['survey_hei_id' => null])->tags()->attach($tagged->id);
+    };
+
+    $staffPost();
+    // The first read also loads the viewer's roles, once.
+    $count();
+    $one = $count();
+    foreach (range(1, 4) as $index) {
+        $staffPost();
+    }
+
+    expect($count())->toBe($one);
 });
 
 test('accounts awaiting approval cannot post', function () {

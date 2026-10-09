@@ -3,17 +3,21 @@
 // with three changes agreed on 2026-09-28:
 // - "What data do the surveys collect?" is answered with how the new survey
 //   works, in the words its consent step, details step and confirmation page
-//   use. The old answer said an email is collected; the new survey collects
-//   none.
+//   use, and names the office running the site (config/phlgadis.php). The
+//   old answer said an email is collected; the new survey asks for one, and
+//   giving it is optional.
 // - "Republic Act 78777" reads 7877.
 // - The RA 7877 quote reads "its human resources", as Section 2 of the Act
 //   does (LawPhil). The RA 9262 and RA 11313 quotes already match theirs.
+
+import type { SiteOperator } from '@/types/site';
 
 export type FaqItem = {
     /** The anchor for links straight to this answer: /help/faq#{id}. */
     id: string;
     question: string;
-    answer: string;
+    /** Built from the site's operator when the answer names it. */
+    answer: string | ((operator: SiteOperator) => string);
 };
 
 /** The old page's opening: what PHLGADIS is for, and its objectives. */
@@ -44,7 +48,8 @@ export const faqs: FaqItem[] = [
     {
         id: 'survey-data',
         question: 'What data do the surveys collect?',
-        answer: 'Each survey states what it collects in its privacy notice, shown before you begin. No name or email is collected, and no IP address or browser details are stored with your response. After you submit, you receive a reference code that you can use to ask CHED Regional Office XII to access or delete your response.',
+        answer: (operator) =>
+            `Each survey states what it collects in its privacy notice, shown before you begin. No name is collected, giving an email is optional, and no IP address or browser details are stored with your response. After you submit, you receive a reference code that you can use to ask ${operator.name} to access or delete your response.`,
     },
     {
         id: 'ra-7877',

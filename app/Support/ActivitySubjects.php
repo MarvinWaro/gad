@@ -145,9 +145,10 @@ class ActivitySubjects
             },
             $subject instanceof Role => $viewer->can('roles.view') ? route('settings.roles.index') : null,
             $subject instanceof AcademicYear => $viewer->can('academic-years.view') ? route('settings.academic-years.index') : null,
-            ! $viewer->can('survey-directories.view') && ($subject instanceof SurveyRegion || $subject instanceof SurveyCluster
+            // Offices open the regions page too, for their office details.
+            $subject instanceof SurveyRegion => $viewer->can('viewAny', SurveyRegion::class) ? route('settings.regions.index') : null,
+            ! $viewer->can('survey-directories.view') && ($subject instanceof SurveyCluster
                 || $subject instanceof SurveyHei || $subject instanceof SurveyRespondentGroup) => null,
-            $subject instanceof SurveyRegion => route('settings.regions.index'),
             // Clusters are kept out of sight, so there is no page to open.
             $subject instanceof SurveyCluster => null,
             $subject instanceof SurveyHei => route('settings.heis.index', ['search' => $subject->name]),

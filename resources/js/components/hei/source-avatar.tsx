@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 /**
  * Who a post speaks for: the author's profile photo when they have one
  * (the school's name always sits beside it), otherwise an HEI's acronym on
- * cream, or the PHLGADIS mark for CHED Regional Office XII.
+ * cream, or the PHLGADIS mark for a CHED office.
  */
 export function SourceAvatar({
     name,

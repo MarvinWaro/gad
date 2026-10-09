@@ -53,7 +53,7 @@ class PlaceFilters
     public static function options(User $user, array $filters): array
     {
         $regions = SurveyRegion::query()
-            ->when(! $user->national_access, fn ($query) => $query->whereKey($user->survey_region_id))
+            ->withinReachOf($user)
             ->orderBy('name')
             ->get(['id', 'name']);
         $regionId = $user->national_access ? (int) ($filters['region'] ?? 0) : (int) $user->survey_region_id;

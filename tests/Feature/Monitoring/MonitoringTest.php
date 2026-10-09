@@ -7,10 +7,13 @@ use App\Models\SurveyRegion;
 use App\Models\User;
 use App\Support\MonitoringTemplate;
 use Database\Seeders\RbacSeeder;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
+use League\Flysystem\UnableToWriteFile;
 
 beforeEach(function () {
     // The first semester of 2026-2027, in Philippine time.
@@ -259,6 +262,29 @@ test('submitting needs a finalized report, a signed PDF and confirmation', funct
     monitoringSave($this, $report, ['codi' => 'Too late'])->assertUnprocessable();
     $this->post('/monitoring/'.$report->id.'/reopen', ['lock_version' => $report->fresh()->lock_version])
         ->assertSessionHasErrors('report');
+});
+
+test('a signed copy that storage cannot take is not sent, and says to try again', function () {
+    Exceptions::fake();
+    $report = monitoringReport($this);
+    monitoringFinalize($this, $report)->assertSessionHasNoErrors();
+    // The bucket cannot be reached, as when the network is down.
+    Storage::set('monitoring', Mockery::mock(FilesystemAdapter::class)
+        ->shouldReceive('putFileAs')
+        ->once()
+        ->andThrow(UnableToWriteFile::atLocation('monitoring/signed.pdf', 'Could not connect to server'))
+        ->getMock());
+
+    monitoringSubmit($this, $report)->assertSessionHasErrors([
+        'file' => 'The signed copy could not be saved, so nothing was sent to CHED. Please try again in a few minutes.',
+    ]);
+
+    $revision = $report->fresh()->currentRevision;
+    expect($report->fresh()->status)->toBe('draft')
+        ->and($revision->submitted_at)->toBeNull()
+        ->and($revision->attachment)->toBeNull();
+    // Logged for whoever looks after the server.
+    Exceptions::assertReported(UnableToWriteFile::class);
 });
 
 test('a returned report opens the next revision with the same answers', function () {

@@ -25,7 +25,6 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { CHED_LABEL } from '@/lib/ched-label';
 import {
     POST_REACTIONS,
     reactionOption,
@@ -663,7 +662,7 @@ function ReactorRow({ person }: { person: Reactor }) {
                     className="block truncate text-sm font-medium"
                 />
                 <span className="block truncate text-xs text-muted-foreground">
-                    {person.hei ?? CHED_LABEL}
+                    {person.affiliation}
                 </span>
             </span>
             <span className="sr-only">reacted with {reaction.label}</span>

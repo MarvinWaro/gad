@@ -92,7 +92,7 @@ function createSurveyHei(array $attributes = []): SurveyHei
 function respondentFollowUps(): array
 {
     return [
-        'gender_identity' => 'heterosexual',
+        'gender_identity' => 'cisgender-woman',
         'group_answers' => [
             'student-year' => '2nd-year',
             'scholar' => 'no',

@@ -177,3 +177,152 @@ test('the users list filters by role and place as soon as they change', async ({
         fullPage: true,
     });
 });
+
+test('long region and institution names wrap inside the user dialog', async ({
+    page,
+}, testInfo) => {
+    await page.goto('/login');
+    await page.getByLabel('Email address').fill('browser-admin@example.test');
+    await page.getByLabel('Password', { exact: true }).fill('browser-password');
+    await page.getByRole('button', { name: 'Log in', exact: true }).click();
+    await expect(page).toHaveURL(/dashboard/);
+    await page.goto('/settings/users');
+
+    await page.getByRole('button', { name: 'Add user' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Create user' });
+    await dialog.getByRole('checkbox', { name: 'HEI Focal' }).click();
+    const region = dialog.getByRole('combobox', { name: 'Region' });
+    const institution = dialog.getByRole('combobox', { name: 'Institution' });
+    await expect(region).toHaveText('Regional Office XII');
+
+    // The fixture's names are short, so the longest real ones stand in.
+    await region.locator('[data-slot="select-value"]').evaluate((value) => {
+        value.textContent =
+            'Bangsamoro Autonomous Region In Muslim Mindanao (BARMM)';
+    });
+    await institution
+        .locator('span')
+        .first()
+        .evaluate((value) => {
+            value.textContent =
+                'Mindanao State University – General Santos City';
+        });
+
+    // Where each field sits, and whether its whole name shows.
+    const measure = () =>
+        dialog.evaluate((element) => {
+            const form = element.querySelector('form')!.getBoundingClientRect();
+            const field = (name: string) => {
+                const trigger = [
+                    ...element.querySelectorAll('[role="combobox"]'),
+                ].find(
+                    (control) =>
+                        control.id &&
+                        element
+                            .querySelector(`label[for="${control.id}"]`)
+                            ?.textContent?.trim() === name,
+                )!;
+                const text = trigger.firstElementChild!;
+                const box = trigger.getBoundingClientRect();
+
+                return {
+                    top: box.top,
+                    bottom: box.bottom,
+                    height: box.height,
+                    inside:
+                        box.left >= form.left - 0.5 &&
+                        box.right <= form.right + 0.5,
+                    whole: text.scrollHeight <= text.clientHeight + 1,
+                };
+            };
+
+            return {
+                region: field('Region'),
+                institution: field('Institution'),
+            };
+        });
+
+    // A row each: nothing overlaps, and both stay inside the form.
+    let fields = await measure();
+    expect(fields.region.inside && fields.institution.inside).toBe(true);
+    expect(fields.region.bottom).toBeLessThanOrEqual(fields.institution.top);
+
+    // On a phone, long names wrap onto a second line instead of being cut.
+    await page.setViewportSize({ width: 375, height: 800 });
+    fields = await measure();
+    for (const field of [fields.region, fields.institution]) {
+        expect(field.inside).toBe(true);
+        expect(field.height).toBeGreaterThan(44);
+        expect(field.whole).toBe(true);
+    }
+    expect(
+        await page.evaluate(
+            () =>
+                document.documentElement.scrollWidth <=
+                document.documentElement.clientWidth,
+        ),
+    ).toBe(true);
+    await dialog.screenshot({
+        path: testInfo.outputPath('user-form-long-names-375.png'),
+    });
+});
+
+test('saving an account keeps the filtered list, and Edit shows what is saved', async ({
+    page,
+}) => {
+    await page.goto('/login');
+    await page.getByLabel('Email address').fill('browser-admin@example.test');
+    await page.getByLabel('Password', { exact: true }).fill('browser-password');
+    await page.getByRole('button', { name: 'Log in', exact: true }).click();
+    await expect(page).toHaveURL(/dashboard/);
+    await page.goto('/settings/users');
+
+    // An account of its own, so the other specs' accounts stay as they are.
+    await page.getByRole('button', { name: 'Add user' }).click();
+    const create = page.getByRole('dialog', { name: 'Create user' });
+    await create.getByLabel('Name', { exact: true }).fill('List State Member');
+    await create.getByLabel('Email address').fill('list-state@example.test');
+    await create.getByRole('checkbox', { name: 'HEI User' }).click();
+    await create.getByRole('combobox', { name: 'Institution' }).click();
+    await page.getByRole('option', { name: 'Browser Test HEI' }).click();
+    await create.getByRole('button', { name: 'Create user' }).click();
+    await expect(create).toBeHidden();
+
+    // Narrow the list, then edit the account from it.
+    const filters = page.getByRole('group', { name: 'Filter users' });
+    await filters.getByRole('combobox', { name: 'Role' }).click();
+    await page.getByRole('option', { name: 'HEI User', exact: true }).click();
+    await expect(page).toHaveURL(/role=hei(&|$)/);
+    const row = page
+        .getByRole('row')
+        .filter({ hasText: 'list-state@example.test' });
+    await row.getByRole('button', { name: 'Edit List State Member' }).click();
+    const edit = page.getByRole('dialog', { name: 'Edit user' });
+    await edit.getByLabel('Name', { exact: true }).fill('List State Saved');
+    await edit.getByRole('button', { name: 'Save changes' }).click();
+    await expect(edit).toBeHidden();
+
+    // Still the same filtered list, with the change in it.
+    await expect(page).toHaveURL(/role=hei(&|$)/);
+    await expect(filters.getByRole('combobox', { name: 'Role' })).toHaveText(
+        'HEI User',
+    );
+    await expect(
+        row.getByText('List State Saved', { exact: true }),
+    ).toBeVisible();
+
+    // Edit opens with what is saved, and a cancelled change never comes back.
+    const reopen = () =>
+        row.getByRole('button', { name: 'Edit List State Saved' }).click();
+    await reopen();
+    await expect(edit.getByLabel('Name', { exact: true })).toHaveValue(
+        'List State Saved',
+    );
+    await edit.getByLabel('Name', { exact: true }).fill('Not saved');
+    await edit.getByRole('button', { name: 'Cancel' }).click();
+    await expect(edit).toBeHidden();
+    await reopen();
+    await expect(edit.getByLabel('Name', { exact: true })).toHaveValue(
+        'List State Saved',
+    );
+});

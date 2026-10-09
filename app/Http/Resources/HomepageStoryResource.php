@@ -56,9 +56,7 @@ class HomepageStoryResource extends JsonResource
             return InstitutionName::display($this->hei->name);
         }
 
-        $office = $this->author?->officeRegion?->name;
-
-        return $office !== null ? "CHED {$office}" : 'CHED Central Office';
+        return $this->author?->chedOffice() ?? 'CHED Central Office';
     }
 
     /** Posts have no title: the first line or sentence stands in for one. */
