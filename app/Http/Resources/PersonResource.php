@@ -21,6 +21,8 @@ class PersonResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            // For links: the number never goes in an address.
+            'ulid' => $this->ulid,
             'name' => $this->name,
             'avatar' => $this->avatar,
             'affiliation' => $this->affiliation(),

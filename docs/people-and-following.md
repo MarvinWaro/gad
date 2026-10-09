@@ -4,7 +4,7 @@ Every signed-in account has a profile others can open, can follow anyone, and ca
 
 ## Profiles
 
-- **Your own** is `/profile` (My Profile). **Anyone else's** is `/people/{id}`. Your own id there leads to `/profile`, keeping `?tab=`.
+- **Your own** is `/profile` (My Profile). **Anyone else's** is `/people/{ulid}`, the account's public ULID (`users.ulid`): the database number never goes in an address, and `/people/6` gives 404, so profiles can't be walked through by counting. Your own ULID there leads to `/profile`, keeping `?tab=`.
 - **What others see:**
     - the name, photo and affiliation (`User::affiliation()`: the institution, or "CHED {office}", or "CHED Central Office")
     - follower and following counts, counting active accounts only
@@ -50,10 +50,10 @@ The header's field (from 768px in the top header and from 1024px in the sidebar 
 
 | Method and path                                              | What                                                                           |
 | ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| `GET /people/{id}`                                           | The profile page (`?tab=posts\|about\|badges`).                                |
-| `GET /people/{id}/followers`, `/following`                   | JSON, `PersonResource`, 20 a page, the latest first. Throttled to 60 a minute. |
-| `POST /people/{id}/follow`                                   | `{following, followers_count}`. Throttled to 30 a minute.                      |
-| `DELETE /people/{id}/follow`                                 | The same.                                                                      |
+| `GET /people/{ulid}`                                         | The profile page (`?tab=posts\|about\|badges`).                                |
+| `GET /people/{ulid}/followers`, `/following`                 | JSON, `PersonResource`, 20 a page, the latest first. Throttled to 60 a minute. |
+| `POST /people/{ulid}/follow`                                 | `{following, followers_count}`. Throttled to 30 a minute.                      |
+| `DELETE /people/{ulid}/follow`                               | The same.                                                                      |
 | `GET /search/people?q=`                                      | JSON, the best 8, `PersonResource`. Throttled to 90 a minute.                  |
 | `GET /search?q=`                                             | The results page, 20 at a time.                                                |
 | `GET /dashboard?feed=region\|following`, `/community?feed=…` | The My region and Following feeds.                                             |

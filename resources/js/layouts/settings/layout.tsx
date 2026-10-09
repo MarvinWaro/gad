@@ -6,6 +6,7 @@ import {
     ContactRound,
     GraduationCap,
     History,
+    IdCard,
     Map,
     Palette,
     ShieldCheck,
@@ -22,6 +23,7 @@ import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
+import { show as showVirtualId } from '@/routes/virtual-id';
 import type { Auth, NavItem } from '@/types';
 
 const accountNavItems: NavItem[] = [
@@ -29,6 +31,11 @@ const accountNavItems: NavItem[] = [
         title: 'Profile',
         href: edit(),
         icon: UserRound,
+    },
+    {
+        title: 'Virtual ID',
+        href: showVirtualId(),
+        icon: IdCard,
     },
     {
         title: 'Security',

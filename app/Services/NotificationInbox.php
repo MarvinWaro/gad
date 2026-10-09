@@ -21,7 +21,7 @@ class NotificationInbox
     public const PAGE_SIZE = 15;
 
     /** What NotificationResource reads. */
-    public const RELATIONS = ['activity.user:id,avatar_path', 'activity.subject', 'activity.hei:id,name', 'subject'];
+    public const RELATIONS = ['activity.user:id,ulid,avatar_path', 'activity.subject', 'activity.hei:id,name', 'subject'];
 
     /**
      * How many are unread, and when the newest arrived, so the browser can

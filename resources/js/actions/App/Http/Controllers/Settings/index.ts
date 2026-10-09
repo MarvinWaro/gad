@@ -3,6 +3,7 @@ import ProfileAvatarController from './ProfileAvatarController'
 import TemporaryPasswordController from './TemporaryPasswordController'
 import AcademicYearController from './AcademicYearController'
 import SecurityController from './SecurityController'
+import VirtualIdController from './VirtualIdController'
 import UserManagementController from './UserManagementController'
 import RegionRegistrationController from './RegionRegistrationController'
 import RoleManagementController from './RoleManagementController'
@@ -18,6 +19,7 @@ ProfileAvatarController: Object.assign(ProfileAvatarController, ProfileAvatarCon
 TemporaryPasswordController: Object.assign(TemporaryPasswordController, TemporaryPasswordController),
 AcademicYearController: Object.assign(AcademicYearController, AcademicYearController),
 SecurityController: Object.assign(SecurityController, SecurityController),
+VirtualIdController: Object.assign(VirtualIdController, VirtualIdController),
 UserManagementController: Object.assign(UserManagementController, UserManagementController),
 RegionRegistrationController: Object.assign(RegionRegistrationController, RegionRegistrationController),
 RoleManagementController: Object.assign(RoleManagementController, RoleManagementController),

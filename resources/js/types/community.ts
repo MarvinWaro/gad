@@ -4,6 +4,8 @@ export type PersonRef = { id: number; name: string };
 
 /** A post or comment author; deactivated accounts keep their content. */
 export type AuthorRef = PersonRef & {
+    /** For their profile link. */
+    ulid: string;
     /** Profile photo URL, or null to show initials. */
     avatar: string | null;
     deactivated: boolean;
@@ -58,6 +60,8 @@ export type ReactorRef = PersonRef & { type: PostReactionType };
 
 /** One person in a post's full reactions list. */
 export type Reactor = ReactorRef & {
+    /** For their profile link. */
+    ulid: string;
     avatar: string | null;
     /** Their institution, or their CHED office (User::affiliation). */
     affiliation: string;
@@ -170,6 +174,8 @@ export type HeiSurvey = {
 /** A colleague on the HEI home (App\Http\Resources\InstitutionPersonResource). */
 export type InstitutionPerson = {
     id: number;
+    /** For their profile link. */
+    ulid: string;
     name: string;
     avatar: string | null;
     /** The institution's GAD Focal Person. */

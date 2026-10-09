@@ -20,6 +20,7 @@ class PostReactorResource extends JsonResource
     {
         return [
             'id' => $this->user->id,
+            'ulid' => $this->user->ulid,
             'name' => $this->user->name,
             'avatar' => $this->user->avatar,
             'affiliation' => $this->user->affiliation(),

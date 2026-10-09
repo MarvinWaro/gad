@@ -398,6 +398,7 @@ test('the reactions list pages newest first, filters by reaction, and shares no 
     expect($first->json('data'))->toHaveCount(20)
         ->and($first->json('data.0'))->toBe([
             'id' => $member->id,
+            'ulid' => $member->ulid,
             'name' => $member->name,
             'avatar' => null,
             'affiliation' => InstitutionName::display($member->hei->name),

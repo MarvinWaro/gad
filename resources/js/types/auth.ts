@@ -1,5 +1,7 @@
 export type User = {
     id: number;
+    /** Public: profile addresses use it, never `id`. */
+    ulid: string;
     name: string;
     email: string;
     avatar?: string | null;

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\UserStatus;
 use App\Support\InstitutionName;
+use App\Support\ParticipantCode;
 use App\Support\PeopleSearch;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Appends;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -25,6 +27,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
  * @property int $id
+ * @property string $ulid Public: profile addresses and follow links; `id` never leaves the server in a URL.
+ * @property string $participant_code The Virtual ID's code, which its QR holds (ParticipantCode). Hidden: only its owner sees it.
  * @property string $name
  * @property string $email
  * @property int|null $survey_hei_id
@@ -48,7 +52,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $updated_at
  */
 #[Fillable(['name', 'email', 'password', 'survey_hei_id', 'mobile_number', 'sex', 'status'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'avatar_path', 'search_name', 'search_sounds'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'avatar_path', 'search_name', 'search_sounds', 'participant_code'])]
 #[Appends(['avatar'])]
 // Email verification is temporarily optional. Restore MustVerifyEmail here to
 // require verification again; keep the verification routes and stored status.
@@ -58,7 +62,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, PasskeyAuthenticatable, RoutesNotifications, TwoFactorAuthenticatable;
+    use HasFactory, HasUlids, PasskeyAuthenticatable, RoutesNotifications, TwoFactorAuthenticatable;
 
     /**
      * Mirror the column default so unsaved models agree with the database.
@@ -69,6 +73,16 @@ class User extends Authenticatable implements PasskeyUser
         'status' => 'active',
         'national_access' => false,
     ];
+
+    /**
+     * The public ULID, filled in on creation; the key stays a number.
+     *
+     * @return list<string>
+     */
+    public function uniqueIds(): array
+    {
+        return ['ulid'];
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -89,11 +103,15 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
-     * The name's search keys follow the name. A removed account takes its
-     * profile photo with it.
+     * The name's search keys follow the name. A new account gets its Virtual
+     * ID code. A removed account takes its profile photo with it.
      */
     protected static function booted(): void
     {
+        static::creating(function (User $user): void {
+            $user->participant_code ??= ParticipantCode::unique();
+        });
+
         static::saving(function (User $user): void {
             if ($user->isDirty('name') || ! $user->exists) {
                 $user->forceFill(PeopleSearch::keysFor($user->name));

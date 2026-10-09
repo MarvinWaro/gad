@@ -14,6 +14,7 @@ use App\Http\Controllers\Settings\StudentCountController;
 use App\Http\Controllers\Settings\SurveyDirectoryController;
 use App\Http\Controllers\Settings\TemporaryPasswordController;
 use App\Http\Controllers\Settings\UserManagementController;
+use App\Http\Controllers\Settings\VirtualIdController;
 use App\Models\SurveyRegion;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
@@ -56,6 +57,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('user-password.update');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+    // Your Virtual ID, which staff scan to check you in at GAD events.
+    Route::get('settings/virtual-id', [VirtualIdController::class, 'show'])->name('virtual-id.show');
+    Route::get('settings/virtual-id/photo', [VirtualIdController::class, 'photo'])->name('virtual-id.photo');
 
     Route::get('settings/users', [UserManagementController::class, 'index'])
         ->middleware('can:users.view')

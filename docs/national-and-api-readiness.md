@@ -59,7 +59,7 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 
 - [ ] **No API routes yet:** no `routes/api.php` and no token authentication. Laravel Sanctum is the likely fit.
 - [ ] **Few API Resource classes:** only `PostReactorResource` (a post's reactions list, cursor-paginated with Laravel's `meta`) so far. Other controllers build arrays inline, for example `SurveyResponseController::serialize` and `SiteRatingManagementController::index`. Move each model's shape into one Resource as it is touched.
-- [ ] **People are addressed by their integer id.** Profiles live at `/people/{id}` and follower lists and search send `id` (`PersonResource`, since 2026-10-04), as posts' authors already did. Before `/api/v1` exposes people, give users a ULID handle and route profiles by it.
+- [ ] **People are addressed by their integer id.** Done for links since 2026-10-09: every account has a public ULID (`users.ulid`, filled by `HasUlids`), and profiles and follow routes take only that (`/people/{person:ulid}`); a number gives 404. Still to do: page data keeps the integer `id` beside `ulid` for tagging, badge awards and keys. Before `/api/v1` exposes people, send the ULID alone.
 - [ ] **Validation is mostly inline** `$request->validate(...)`. Move rules into Form Requests as endpoints are touched, so web and API share them.
 - [ ] **First endpoints to offer, read-only:**
     - directories (regions, HEIs)

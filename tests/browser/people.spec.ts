@@ -57,6 +57,9 @@ async function checkBothThemes(page: Page, testInfo: TestInfo, name: string) {
     await page.setViewportSize({ width: 1440, height: 900 });
 }
 
+// Profiles are addressed by the account's public ULID, never its number.
+const profileUrl = /\/people\/[0-9a-hjkmnp-tv-z]{26}$/;
+
 test('finding a colleague by search and following them', async ({
     page,
 }, testInfo) => {
@@ -75,7 +78,7 @@ test('finding a colleague by search and following them', async ({
     await expect(search).toHaveAttribute('aria-activedescendant', /option-0$/);
     await search.press('Enter');
 
-    await expect(page).toHaveURL(/\/people\/\d+$/);
+    await expect(page).toHaveURL(profileUrl);
     await expect(
         page.getByRole('heading', { level: 1, name: 'Browser Test Member' }),
     ).toBeVisible();
@@ -164,7 +167,7 @@ test("the person followed is told, and opens the follower's profile", async ({
             name: /Fictional Monitoring Member started following you/,
         })
         .click();
-    await expect(page).toHaveURL(/\/people\/\d+$/);
+    await expect(page).toHaveURL(profileUrl);
     await expect(
         page.getByRole('heading', {
             level: 1,

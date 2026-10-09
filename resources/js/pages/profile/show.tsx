@@ -74,7 +74,7 @@ function tabFromUrl(url: string, own: boolean): Tab {
 }
 
 /**
- * A profile: your own (`/profile`) or anyone else's (`/people/{id}`), as on
+ * A profile: your own (`/profile`) or anyone else's (`/people/{ulid}`), as on
  * Facebook. Their photo and place, who follows them, their greatest badges,
  * then Posts, About and Badges; your own adds your activity and the badges
  * you can still earn.
@@ -86,7 +86,7 @@ export default function Profile(props: ProfileProps) {
         breadcrumbs: [
             own
                 ? { title: 'My Profile', href: myProfileHref }
-                : { title: person.name, href: profileOf.url(person.id) },
+                : { title: person.name, href: profileOf.url(person.ulid) },
         ],
     });
 

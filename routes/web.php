@@ -110,18 +110,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('profile', MyProfileController::class)->name('my-profile');
 
     // People: profiles, following and search (docs/people-and-following.md).
-    Route::whereNumber('person')->group(function () {
-        Route::get('people/{person}', [PersonProfileController::class, 'show'])->name('people.show');
-        Route::get('people/{person}/followers', [PersonProfileController::class, 'followers'])
+    // Addressed by the account's public ULID, never its number.
+    Route::whereUlid('person')->group(function () {
+        Route::get('people/{person:ulid}', [PersonProfileController::class, 'show'])->name('people.show');
+        Route::get('people/{person:ulid}/followers', [PersonProfileController::class, 'followers'])
             ->middleware('throttle:60,1')
             ->name('people.followers');
-        Route::get('people/{person}/following', [PersonProfileController::class, 'following'])
+        Route::get('people/{person:ulid}/following', [PersonProfileController::class, 'following'])
             ->middleware('throttle:60,1')
             ->name('people.following');
-        Route::post('people/{person}/follow', [FollowController::class, 'store'])
+        Route::post('people/{person:ulid}/follow', [FollowController::class, 'store'])
             ->middleware('throttle:30,1')
             ->name('people.follow');
-        Route::delete('people/{person}/follow', [FollowController::class, 'destroy'])
+        Route::delete('people/{person:ulid}/follow', [FollowController::class, 'destroy'])
             ->middleware('throttle:30,1')
             ->name('people.unfollow');
     });

@@ -8,8 +8,8 @@ import { show } from '@/routes/people';
 export function useProfileHref() {
     const { auth } = usePage().props;
 
-    return (personId: number) =>
-        personId === auth.user.id ? myProfileHref : show.url(personId);
+    return (ulid: string) =>
+        ulid === auth.user.ulid ? myProfileHref : show.url(ulid);
 }
 
 /** Someone's name, or anything naming them, as a link to their profile. */
@@ -18,7 +18,7 @@ export function PersonLink({
     className,
     children,
 }: {
-    person: { id: number; name: string };
+    person: { ulid: string; name: string };
     className?: string;
     children?: ReactNode;
 }) {
@@ -26,7 +26,7 @@ export function PersonLink({
 
     return (
         <Link
-            href={profileHref(person.id)}
+            href={profileHref(person.ulid)}
             className={cn(
                 'rounded-sm underline-offset-2 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50',
                 className,

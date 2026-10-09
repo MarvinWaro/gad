@@ -38,7 +38,7 @@ class InstitutionPeople
             ->orderByDesc('is_focal')
             ->orderBy('name')
             ->limit(self::LIMIT)
-            ->get(['id', 'name', 'avatar_path']);
+            ->get(['id', 'ulid', 'name', 'avatar_path']);
 
         return [
             'people' => InstitutionPersonResource::collection($people)->resolve(),

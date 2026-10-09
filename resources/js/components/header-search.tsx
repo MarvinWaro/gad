@@ -120,7 +120,7 @@ function PeopleSearchBox({
     const options: Option[] = people?.length
         ? [
               ...people.map((person) => ({
-                  href: profile.url(person.id),
+                  href: profile.url(person.ulid),
                   person,
               })),
               { href: resultsHref, person: null },

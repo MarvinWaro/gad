@@ -1,6 +1,8 @@
 /** `PersonResource`: someone in search results and follower lists. */
 export type Person = {
     id: number;
+    /** For their profile and follow links: the number never goes in an address. */
+    ulid: string;
     name: string;
     avatar: string | null;
     /** Their institution, or their CHED office. */

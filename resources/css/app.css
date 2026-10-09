@@ -85,6 +85,12 @@
     --color-thrust: var(--thrust);
     --color-enabler: var(--enabler);
     --color-media-panel: var(--media-panel);
+    --color-paper: var(--paper);
+    --color-paper-foreground: var(--paper-foreground);
+    --color-paper-accent: var(--paper-accent);
+    --color-paper-tint: var(--paper-tint);
+    --color-mark-pink: var(--mark-pink);
+    --color-mark-blue: var(--mark-blue);
     --color-alert-badge: var(--alert-badge);
     --color-alert-badge-foreground: var(--alert-badge-foreground);
 }
@@ -174,6 +180,21 @@
        photo (the A.C.H.I.E.V.E. strip). */
     --media-scrim: rgb(24 29 38 / 0.62);
     --media-panel: rgb(24 29 38 / 0.88);
+    /* Paper: white in either theme, like a printed card. Official marks
+       keep their own colours on it, and cameras read QR codes dark on light
+       (the Virtual ID). */
+    --paper: #ffffff;
+    --paper-foreground: #000000;
+    /* Its accents: the light theme's brand and brand-soft, kept in both
+       themes so the card stays one printed design (var(--brand) would
+       follow .dark, which redefines it on the same element). */
+    --paper-accent: #7030a8;
+    --paper-tint: #f1eaf8;
+    /* The official ⚥ icon's own pink and blue (public/assets/img/gadicon.png),
+       for the shapes that frame it on the Virtual ID. Decoration only: never
+       for data, where pink and blue would read as gender coding. */
+    --mark-pink: #ff72ae;
+    --mark-blue: #6bbfff;
     /* Toasts: a deep tinted surface with bright text, green when something
        went through and red when it failed or was deleted. */
     --toast-success-bg: #052912;

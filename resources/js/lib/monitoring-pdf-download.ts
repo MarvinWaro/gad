@@ -56,8 +56,12 @@ function fontUrls(files: FontFiles): FontFiles {
     );
 }
 
-/** pdfmake is large, so it loads only when someone asks for a PDF. */
-function loadPdfMake(): Promise<PdfMake> {
+/**
+ * pdfmake is large, so it loads only when someone asks for a PDF. The one
+ * loader for the app's PDFs (monitoring reports, the Virtual ID), with the
+ * PDF fonts in `PDF_FONTS` added.
+ */
+export function loadPdfMake(): Promise<PdfMake> {
     loading ??= import('pdfmake/build/pdfmake')
         .then((module) => {
             const pdfMake = ((module as { default?: PdfMake }).default ??
