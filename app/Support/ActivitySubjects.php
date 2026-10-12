@@ -7,6 +7,7 @@ use App\Models\Badge;
 use App\Models\CarouselSlide;
 use App\Models\ChecklistResponse;
 use App\Models\GadEvent;
+use App\Models\GadEventCheckIn;
 use App\Models\MonitoringReport;
 use App\Models\Post;
 use App\Models\PostComment;
@@ -47,6 +48,7 @@ class ActivitySubjects
         'survey' => Survey::class,
         'survey-response' => SurveyResponse::class,
         'event' => GadEvent::class,
+        'event-check-in' => GadEventCheckIn::class,
         'carousel-slide' => CarouselSlide::class,
         'post' => Post::class,
         'comment' => PostComment::class,
@@ -100,6 +102,7 @@ class ActivitySubjects
             $subject instanceof ChecklistResponse => sprintf('%s, AY %s', $subject->type->label(), $subject->academic_year),
             $subject instanceof SiteRating => sprintf('%d-star rating', (int) $subject->getAttribute('rating')),
             $subject instanceof SiteFeedback => self::excerpt($subject->feedback),
+            $subject instanceof GadEventCheckIn => sprintf('%s at %s', $subject->user->name ?? 'Someone', $subject->event->title ?? 'a GAD event'),
             default => (string) $subject->getKey(),
         };
     }
@@ -118,6 +121,10 @@ class ActivitySubjects
             $subject instanceof Quest, $subject instanceof Badge, $subject instanceof GadEvent => $subject->survey_region_id !== null ? new ActivityPlace($subject->survey_region_id) : null,
             $subject instanceof Post => ActivityPlace::ofHei($subject->getAttribute('survey_hei_id')),
             $subject instanceof PostComment => $subject->post !== null ? self::place($subject->post) : null,
+            // Where the person checked in belonged, so their region's office sees it.
+            $subject instanceof GadEventCheckIn => $subject->survey_hei_id !== null
+                ? ActivityPlace::ofHei($subject->survey_hei_id)
+                : ($subject->survey_region_id !== null ? new ActivityPlace($subject->survey_region_id) : null),
             $subject instanceof MonitoringReport, $subject instanceof ChecklistResponse,
             $subject instanceof SurveyResponse, $subject instanceof SiteFeedback => new ActivityPlace(
                 $subject->getAttribute('survey_region_id'),
@@ -155,6 +162,7 @@ class ActivitySubjects
             $subject instanceof SurveyRespondentGroup => route('settings.respondent-groups.index'),
             $subject instanceof Survey => $viewer->can('surveys.view') ? route('admin.surveys.edit', $subject) : null,
             $subject instanceof GadEvent => route($viewer->can('events.view') ? 'admin.events.index' : 'events.index'),
+            $subject instanceof GadEventCheckIn => $viewer->can('events.view') ? route('admin.events.index') : null,
             $subject instanceof CarouselSlide => $viewer->can('carousel.view') ? route('admin.carousels.index') : null,
             $subject instanceof Post => route('posts.show', $subject),
             $subject instanceof PostComment => route('posts.show', $subject->getAttribute('post_id')),

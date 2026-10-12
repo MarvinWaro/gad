@@ -1,4 +1,5 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import checkIns from './check-ins'
 /**
 * @see \App\Http\Controllers\Admin\GadEventController::index
  * @see app/Http/Controllers/Admin/GadEventController.php:22
@@ -315,6 +316,7 @@ const events = {
 store: Object.assign(store, store),
 update: Object.assign(update, update),
 destroy: Object.assign(destroy, destroy),
+checkIns: Object.assign(checkIns, checkIns),
 }
 
 export default events

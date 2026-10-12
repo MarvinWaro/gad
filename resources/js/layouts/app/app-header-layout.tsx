@@ -6,10 +6,12 @@ import type { AppLayoutProps } from '@/types';
 export default function AppHeaderLayout({
     children,
     breadcrumbs,
+    kiosk = false,
 }: AppLayoutProps) {
+    // In kiosk mode the top bar steps aside, as in AppSidebarLayout.
     return (
         <AppShell variant="header">
-            <AppHeader breadcrumbs={breadcrumbs} />
+            {!kiosk && <AppHeader breadcrumbs={breadcrumbs} />}
             <AppContent variant="header">{children}</AppContent>
         </AppShell>
     );

@@ -179,6 +179,7 @@ test('the staff pages fit a 360px phone', async ({ browser }) => {
         '/admin/monitoring/training',
         '/community',
         '/admin/events',
+        '/admin/scanner',
         '/admin/surveys',
         '/admin/carousels',
         '/admin/feedback',

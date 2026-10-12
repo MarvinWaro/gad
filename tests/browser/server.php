@@ -9,6 +9,7 @@ use App\Enums\ActivityModule;
 use App\Enums\StudentCountKind;
 use App\Models\AcademicYear;
 use App\Models\DisciplineGroup;
+use App\Models\GadEvent;
 use App\Models\Notification;
 use App\Models\Permission;
 use App\Models\Post;
@@ -259,6 +260,31 @@ foreach (['I', 'II', 'III', 'IV', 'V', 'VI'] as $number) {
 }
 $national = User::factory()->nationalOffice()->create(['email' => 'browser-national@example.test', 'password' => 'browser-password']);
 $national->assignRole('admin');
+
+// The QR scanner (tests/browser/scanner.spec.ts): a Region XII training that
+// runs from yesterday to tomorrow in Philippine time, so it is one of today's
+// events whenever the tests run, and two HEI users with known Virtual ID
+// codes: one typed in, one shown to a fake camera. Plain HEI users, so the
+// HEI home still lists the institution's focal person first.
+$today = GadEvent::localNow();
+GadEvent::query()->create([
+    'title' => 'Fixture Check-in Training',
+    'category' => 'training',
+    'survey_region_id' => $region->id,
+    'is_all_day' => true,
+    'starts_at' => $today->subDay()->startOfDay(),
+    'ends_at' => $today->addDay()->endOfDay()->startOfSecond(),
+]);
+foreach (['Fictional Scan Participant' => 'GAD-SCAN-2026', 'Fictional Camera Participant' => 'GAD-CAM0-2026'] as $name => $code) {
+    $participant = User::factory()->create([
+        'name' => $name,
+        'email' => strtolower(str_replace(' ', '-', $name)).'@example.test',
+        'password' => 'browser-password',
+        'survey_hei_id' => $hei->id,
+    ]);
+    $participant->forceFill(['participant_code' => $code])->save();
+    $participant->assignRole('hei');
+}
 
 // Twelve notifications for the member, two of them read: comments on their
 // seed posts, written as the app writes them and dated days back, so the

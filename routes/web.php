@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\CarouselSlideController;
+use App\Http\Controllers\Admin\EventCheckInController;
+use App\Http\Controllers\Admin\EventScannerController;
 use App\Http\Controllers\Admin\GadEventController;
 use App\Http\Controllers\Admin\SiteFeedbackController as AdminSiteFeedbackController;
 use App\Http\Controllers\Admin\SurveyController;
@@ -184,6 +186,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('events', [GadEventController::class, 'store'])->middleware('can:create,'.GadEvent::class)->name('events.store');
         Route::put('events/{event}', [GadEventController::class, 'update'])->middleware('can:update,event')->name('events.update');
         Route::delete('events/{event}', [GadEventController::class, 'destroy'])->middleware('can:delete,event')->name('events.destroy');
+
+        // The QR scanner (docs/event-check-in.md). GadEventPolicy::checkIn:
+        // staff check people in at the events they see, today only.
+        Route::get('scanner', [EventScannerController::class, 'show'])->middleware('can:events.check-in')->name('scanner');
+        Route::get('events/{event}/check-ins', [EventCheckInController::class, 'index'])
+            ->middleware(['can:checkIn,event', 'throttle:60,1'])
+            ->name('events.check-ins.index');
+        Route::post('events/{event}/check-ins', [EventCheckInController::class, 'store'])
+            ->middleware(['can:checkIn,event', 'throttle:120,1'])
+            ->name('events.check-ins.store');
 
         Route::get('carousels', [CarouselSlideController::class, 'index'])
             ->middleware('can:carousel.view')

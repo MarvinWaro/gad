@@ -45,6 +45,7 @@ class RbacSeeder extends Seeder
             ['name' => 'Create GAD events', 'slug' => 'events.create', 'group' => 'GAD events'],
             ['name' => 'Update GAD events', 'slug' => 'events.update', 'group' => 'GAD events'],
             ['name' => 'Delete GAD events', 'slug' => 'events.delete', 'group' => 'GAD events'],
+            ['name' => 'Check people in to GAD events', 'slug' => 'events.check-in', 'group' => 'GAD events'],
             ['name' => 'View and post in Gender Mainstreaming', 'slug' => 'posts.view', 'group' => 'Community'],
             ['name' => 'Moderate community posts', 'slug' => 'posts.moderate', 'group' => 'Community'],
             ['name' => 'View site ratings', 'slug' => 'site-ratings.view', 'group' => 'Site ratings'],
@@ -92,7 +93,7 @@ class RbacSeeder extends Seeder
                 'permissions' => [
                     'carousel.view', 'carousel.create', 'carousel.update',
                     'surveys.view', 'surveys.create', 'surveys.update',
-                    'events.view', 'events.create', 'events.update',
+                    'events.view', 'events.create', 'events.update', 'events.check-in',
                     'site-ratings.view',
                     'monitoring.view', 'monitoring.review',
                     'quests.play',
@@ -112,12 +113,14 @@ class RbacSeeder extends Seeder
                     'users.view', 'users.create', 'users.update',
                     // Their own region's letterhead only (SurveyRegionPolicy::updateOffice).
                     'region-offices.update',
+                    // The QR scanner, at the events they see (GadEventPolicy::checkIn).
+                    'events.check-in',
                 ],
             ],
             'ched-employee' => [
                 'name' => 'CHED Employee',
                 'description' => 'Views the monitoring reports and GAD surveys of their office\'s region and posts in Gender Mainstreaming.',
-                'permissions' => ['monitoring.view', 'posts.view', 'quests.play'],
+                'permissions' => ['monitoring.view', 'posts.view', 'quests.play', 'events.check-in'],
             ],
             // An HEI's own people (Role::HEI_SLUGS), placed through their HEI.
             'hei' => [

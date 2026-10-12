@@ -1,6 +1,6 @@
 # Virtual ID
 
-Every account has a Virtual ID: a wallet-size card in **Settings → Virtual ID** (`/settings/virtual-id`) with its name, photo, institution or CHED office, and a participant code with its QR. It is the first step of event registration by QR. Staff will scan it to check people in at GAD events.
+Every account has a Virtual ID: a wallet-size card in **Settings → Virtual ID** (`/settings/virtual-id`) with its name, photo, institution or CHED office, and a participant code with its QR. It is the first step of event registration by QR. Staff scan it with the QR Scanner to check people in at GAD events (`docs/event-check-in.md`).
 
 ## The participant code
 
@@ -49,4 +49,4 @@ Every account has a Virtual ID: a wallet-size card in **Settings → Virtual ID*
 ## Not built yet
 
 - Resetting a code whose screenshot leaked.
-- Event registration and check-in: Join, the staff scanner, and certificates.
+- Join and certificates. The staff scanner is built: `docs/event-check-in.md`.

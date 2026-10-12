@@ -49,7 +49,7 @@ export function VirtualIdCard({ card }: { card: VirtualId }) {
 
     useEffect(() => {
         let current = true;
-        loadCardImages(card.photo).then(
+        void loadCardImages(card.photo).then(
             (loaded) => current && setImages(loaded),
         );
 

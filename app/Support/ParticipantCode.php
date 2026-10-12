@@ -27,6 +27,32 @@ final class ParticipantCode
         return 'GAD-'.substr($characters, 0, 4).'-'.substr($characters, 4);
     }
 
+    /**
+     * A code as a scanner read it or staff typed it, written the one way the
+     * accounts hold it, or null when it can't be one. Case, spaces, dashes
+     * and the "GAD" prefix don't matter, and, as Crockford's base32 reads
+     * them, I and L are 1 and O is 0.
+     */
+    public static function parse(string $text): ?string
+    {
+        $characters = strtr(
+            strtoupper((string) preg_replace('/[\s-]+/', '', $text)),
+            ['I' => '1', 'L' => '1', 'O' => '0'],
+        );
+
+        // Only a prefix when a whole code follows: a code's own characters
+        // may begin with G, A and D.
+        if (strlen($characters) === 11 && str_starts_with($characters, 'GAD')) {
+            $characters = substr($characters, 3);
+        }
+
+        if (preg_match('/^['.self::ALPHABET.']{8}$/', $characters) !== 1) {
+            return null;
+        }
+
+        return 'GAD-'.substr($characters, 0, 4).'-'.substr($characters, 4);
+    }
+
     /** A code no account holds yet. */
     public static function unique(): string
     {

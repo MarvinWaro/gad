@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -64,6 +65,16 @@ class GadEvent extends Model
     }
 
     /**
+     * Who came, a row per person per day (docs/event-check-in.md).
+     *
+     * @return HasMany<GadEventCheckIn, $this>
+     */
+    public function checkIns(): HasMany
+    {
+        return $this->hasMany(GadEventCheckIn::class);
+    }
+
+    /**
      * Events an account sees: every one for the Central Office; otherwise
      * those for every region and its own region's (an HEI account's through
      * its HEI, staff by their office).
@@ -96,6 +107,21 @@ class GadEvent extends Model
             ->where(fn (Builder $query) => $query
                 ->where('starts_at', '>=', $from)
                 ->orWhere('ends_at', '>=', $from));
+    }
+
+    /**
+     * Events people can be checked in to on `$now`'s Philippine day: those
+     * running that day, multi-day ones included, but never a deadline,
+     * which nobody attends. The scanner's list and the check-in itself
+     * both ask this.
+     *
+     * @param  Builder<GadEvent>  $query
+     */
+    public function scopeOpenForCheckIn(Builder $query, CarbonImmutable $now): void
+    {
+        $query
+            ->where('category', '!=', 'deadline')
+            ->between($now->startOfDay(), $now->endOfDay());
     }
 
     /** @return array<string, mixed> */

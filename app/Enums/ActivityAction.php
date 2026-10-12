@@ -47,6 +47,7 @@ enum ActivityAction: string
     case Awarded = 'awarded';
     case Followed = 'followed';
     case Unfollowed = 'unfollowed';
+    case CheckedIn = 'checked_in';
 
     /** The entry's badge. */
     public function label(): string
@@ -91,6 +92,7 @@ enum ActivityAction: string
             self::Awarded => 'Awarded',
             self::Followed => 'Followed',
             self::Unfollowed => 'Unfollowed',
+            self::CheckedIn => 'Checked in',
         };
     }
 
@@ -140,6 +142,7 @@ enum ActivityAction: string
             self::Awarded => 'Awarded :noun :subject',
             self::Followed => 'Followed :subject',
             self::Unfollowed => 'Stopped following :subject',
+            self::CheckedIn => 'Checked in :subject',
         };
     }
 
@@ -153,7 +156,7 @@ enum ActivityAction: string
         return match ($this) {
             self::Login, self::Registered, self::Created, self::Activated, self::Approved,
             self::Published, self::Submitted, self::Reviewed, self::Completed,
-            self::Earned, self::Awarded => 'positive',
+            self::Earned, self::Awarded, self::CheckedIn => 'positive',
             self::Deactivated, self::MarkedPending, self::Archived, self::Reopened, self::Returned, self::Closed,
             self::Unreacted, self::TwoFactorDisabled, self::PasskeyRemoved => 'warning',
             self::Deleted, self::LoginFailed => 'danger',

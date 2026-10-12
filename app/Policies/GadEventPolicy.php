@@ -6,8 +6,9 @@ use App\Models\GadEvent;
 use App\Models\User;
 
 /**
- * Who may add and change GAD events. Staff work on the events of the region
- * their office covers; an event for every region is the Central Office's.
+ * Who may add and change GAD events, and check people in to them. Staff
+ * work on the events of the region their office covers; an event for every
+ * region is the Central Office's.
  */
 class GadEventPolicy
 {
@@ -24,5 +25,17 @@ class GadEventPolicy
     public function delete(User $user, GadEvent $event): bool
     {
         return $user->hasPermissionTo('events.delete') && $user->reachesRegion($event->survey_region_id);
+    }
+
+    /**
+     * Checking people in with the QR scanner: at any event the staff member
+     * sees, so their own region's and every region's (the Central Office's
+     * at all of them), but never at a deadline, which nobody attends.
+     */
+    public function checkIn(User $user, GadEvent $event): bool
+    {
+        return $user->hasPermissionTo('events.check-in')
+            && $event->category !== 'deadline'
+            && GadEvent::query()->visibleTo($user)->whereKey($event->getKey())->exists();
     }
 }
