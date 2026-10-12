@@ -48,6 +48,9 @@ enum ActivityAction: string
     case Followed = 'followed';
     case Unfollowed = 'unfollowed';
     case CheckedIn = 'checked_in';
+    case Released = 'released';
+    case Withdrawn = 'withdrawn';
+    case Restored = 'restored';
 
     /** The entry's badge. */
     public function label(): string
@@ -93,6 +96,9 @@ enum ActivityAction: string
             self::Followed => 'Followed',
             self::Unfollowed => 'Unfollowed',
             self::CheckedIn => 'Checked in',
+            self::Released => 'Released',
+            self::Withdrawn => 'Withdrawn',
+            self::Restored => 'Restored',
         };
     }
 
@@ -143,6 +149,9 @@ enum ActivityAction: string
             self::Followed => 'Followed :subject',
             self::Unfollowed => 'Stopped following :subject',
             self::CheckedIn => 'Checked in :subject',
+            self::Released => 'Released :noun :subject',
+            self::Withdrawn => 'Withdrew :noun :subject',
+            self::Restored => 'Restored :noun :subject',
         };
     }
 
@@ -156,9 +165,9 @@ enum ActivityAction: string
         return match ($this) {
             self::Login, self::Registered, self::Created, self::Activated, self::Approved,
             self::Published, self::Submitted, self::Reviewed, self::Completed,
-            self::Earned, self::Awarded, self::CheckedIn => 'positive',
+            self::Earned, self::Awarded, self::CheckedIn, self::Released, self::Restored => 'positive',
             self::Deactivated, self::MarkedPending, self::Archived, self::Reopened, self::Returned, self::Closed,
-            self::Unreacted, self::TwoFactorDisabled, self::PasskeyRemoved => 'warning',
+            self::Unreacted, self::TwoFactorDisabled, self::PasskeyRemoved, self::Withdrawn => 'warning',
             self::Deleted, self::LoginFailed => 'danger',
             self::Logout, self::Exported, self::Downloaded, self::Unfollowed => 'neutral',
             default => 'info',

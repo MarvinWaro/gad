@@ -8,6 +8,9 @@ use App\Http\Controllers\Admin\SiteFeedbackController as AdminSiteFeedbackContro
 use App\Http\Controllers\Admin\SurveyController;
 use App\Http\Controllers\Admin\SurveyResponseController;
 use App\Http\Controllers\Admin\SurveySummaryController;
+use App\Http\Controllers\CertificateDocumentController;
+use App\Http\Controllers\CertificateFileController;
+use App\Http\Controllers\CertificateVerificationController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
@@ -30,6 +33,7 @@ use App\Models\CarouselSlide;
 use App\Models\GadEvent;
 use App\Models\SiteSetting;
 use App\Models\Survey;
+use App\Support\CertificateFiles;
 use App\Support\HomepageStories;
 use App\Support\StudentStatistics;
 use Illuminate\Http\Request;
@@ -87,6 +91,15 @@ Route::post('/feedback', [SiteFeedbackController::class, 'store'])
     ->middleware('throttle:feedback')
     ->name('feedback.store');
 
+// Where a certificate's QR leads: whether PHLGADIS gave it (docs/certificates.md).
+Route::get('/verify', [CertificateVerificationController::class, 'show'])
+    ->middleware('throttle:30,1')
+    ->name('verify.index');
+Route::get('/verify/{number}', [CertificateVerificationController::class, 'show'])
+    ->where('number', '[A-Za-z0-9 -]{1,30}')
+    ->middleware('throttle:30,1')
+    ->name('verify.show');
+
 Route::inertia('/resources/definition-of-terms', 'resources/definition-of-terms')->name('resources.terms');
 Route::inertia('/resources/gad-enabling-republic-acts', 'resources/gad-enabling-republic-acts')->name('resources.acts');
 Route::inertia('/resources/issuances', 'resources/issuances')->name('resources.issuances');
@@ -107,6 +120,18 @@ Route::post('/surveys/{survey:slug}/responses', [PublicSurveyController::class, 
     ->name('surveys.responses.store');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // A certificate's printed contents, for its holder or the staff who
+    // release it; its signatures and logos come through signed links.
+    Route::get('certificates/{certificate}/document', [CertificateDocumentController::class, 'show'])
+        ->whereUlid('certificate')
+        ->middleware(['can:download,certificate', 'throttle:30,1'])
+        ->name('certificates.document');
+    Route::get('certificate-files/{folder}/{file}', [CertificateFileController::class, 'show'])
+        ->whereIn('folder', CertificateFiles::FOLDERS)
+        ->where('file', '[A-Za-z0-9]{1,64}\.(png|jpe?g)')
+        ->middleware('signed')
+        ->name('certificate-files.show');
+
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('events', [EventController::class, 'index'])->name('events.index');
     Route::get('profile', MyProfileController::class)->name('my-profile');

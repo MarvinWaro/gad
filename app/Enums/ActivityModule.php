@@ -30,6 +30,7 @@ enum ActivityModule: string
     case Quests = 'quests';
     case Badges = 'badges';
     case People = 'people';
+    case Certificates = 'certificates';
 
     public function label(): string
     {
@@ -56,6 +57,7 @@ enum ActivityModule: string
             self::Quests => 'GAD Quest',
             self::Badges => 'Badges',
             self::People => 'People',
+            self::Certificates => 'Certificates',
         };
     }
 }

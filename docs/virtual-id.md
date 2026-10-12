@@ -49,4 +49,4 @@ Every account has a Virtual ID: a wallet-size card in **Settings → Virtual ID*
 ## Not built yet
 
 - Resetting a code whose screenshot leaked.
-- Join and certificates. The staff scanner is built: `docs/event-check-in.md`.
+- Join. The staff scanner (`docs/event-check-in.md`) and certificates (`docs/certificates.md`) are built.

@@ -3,7 +3,12 @@
 use App\Actions\Quests\ManageQuest;
 use App\Actions\Quests\PlayQuest;
 use App\Actions\Quests\SaveQuest;
+use App\Enums\CertificateKind;
 use App\Enums\QuestStatus;
+use App\Models\CertificateDesign;
+use App\Models\CertificateSignatory;
+use App\Models\GadEvent;
+use App\Models\GadEventCheckIn;
 use App\Models\Quest;
 use App\Models\QuestAttempt;
 use App\Models\SurveyCluster;
@@ -11,6 +16,7 @@ use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 /*
@@ -202,4 +208,96 @@ function playQuest(Quest $quest, User $player, int $correct): QuestAttempt
     }
 
     return $attempt->refresh();
+}
+
+/** Staff of a regional office, or of the Central Office with none. */
+function certificateStaff(string $role, ?SurveyRegion $region = null): User
+{
+    $staff = ($region ? User::factory()->regionalOffice($region) : User::factory()->nationalOffice())->create();
+    $staff->assignRole($role);
+
+    return $staff;
+}
+
+/**
+ * Someone at an HEI in the region.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function certificateGuest(SurveyRegion $region, array $attributes = []): User
+{
+    $cluster = SurveyCluster::query()->firstOrCreate(
+        ['survey_region_id' => $region->id, 'name' => "{$region->name} cluster"],
+        ['is_active' => true],
+    );
+    $hei = SurveyHei::query()->firstOrCreate(
+        ['name' => "{$region->name} College"],
+        ['survey_cluster_id' => $cluster->id, 'is_active' => true],
+    );
+    $guest = User::factory()->create(['survey_hei_id' => $hei->id, ...$attributes]);
+    $guest->assignRole('hei');
+
+    return $guest;
+}
+
+/** A signatory of the office, with an e-signature on the fake certificates disk. */
+function certificateSignatory(?SurveyRegion $region, string $name = 'Maria Santos', string $position = 'Regional Director'): CertificateSignatory
+{
+    return CertificateSignatory::query()->create([
+        'survey_region_id' => $region?->id,
+        'name' => $name,
+        'position' => $position,
+        'signature_path' => UploadedFile::fake()->image('signature.png', 600, 200)->store('signatures', 'certificates'),
+    ]);
+}
+
+/**
+ * A design of the office, signed by the given signatories in order.
+ *
+ * @param  list<CertificateSignatory>  $signatories
+ * @param  array<string, mixed>  $attributes
+ */
+function certificateDesign(?SurveyRegion $region, array $signatories, CertificateKind $kind = CertificateKind::Participation, array $attributes = []): CertificateDesign
+{
+    $design = CertificateDesign::query()->create([
+        'survey_region_id' => $region?->id,
+        'kind' => $kind,
+        'name' => "{$kind->title()} design",
+        'background' => 'frame',
+        'body' => $kind->defaultBody(),
+        'logo_paths' => [],
+        ...$attributes,
+    ]);
+    foreach (array_values($signatories) as $index => $signatory) {
+        $design->signatories()->attach($signatory->id, ['position' => $index + 1]);
+    }
+
+    return $design;
+}
+
+/** A GAD event in Philippine wall-clock time, with a venue unless told otherwise. */
+function certificateEvent(string $title, ?SurveyRegion $region, string $startsAt = '2026-10-14 08:00:00', ?string $endsAt = '2026-10-15 17:00:00', string $category = 'training', ?string $location = 'Koronadal City'): GadEvent
+{
+    return GadEvent::query()->create([
+        'title' => $title,
+        'category' => $category,
+        'is_all_day' => false,
+        'starts_at' => $startsAt,
+        'ends_at' => $endsAt,
+        'location' => $location,
+        'survey_region_id' => $region?->id,
+    ]);
+}
+
+/** Someone checked in to the event on a Philippine day. */
+function certificateCheckIn(GadEvent $event, User $person, string $day = '2026-10-14'): GadEventCheckIn
+{
+    return GadEventCheckIn::query()->create([
+        'gad_event_id' => $event->id,
+        'user_id' => $person->id,
+        'attended_on' => $day,
+        'method' => 'scan',
+        'survey_region_id' => $person->regionId(),
+        'survey_hei_id' => $person->survey_hei_id,
+    ]);
 }

@@ -10,6 +10,7 @@ use App\Enums\StudentCountKind;
 use App\Models\AcademicYear;
 use App\Models\DisciplineGroup;
 use App\Models\GadEvent;
+use App\Models\GadEventCheckIn;
 use App\Models\Notification;
 use App\Models\Permission;
 use App\Models\Post;
@@ -284,6 +285,36 @@ foreach (['Fictional Scan Participant' => 'GAD-SCAN-2026', 'Fictional Camera Par
     ]);
     $participant->forceFill(['participant_code' => $code])->save();
     $participant->assignRole('hei');
+}
+
+// Certificates (tests/browser/certificates.spec.ts): a Region XII workshop,
+// with its venue, that ended two days ago, and an HEI user checked in on
+// both of its days, who has no certificate until the spec releases one.
+$workshop = GadEvent::query()->create([
+    'title' => 'Fixture Certificate Workshop',
+    'category' => 'training',
+    'survey_region_id' => $region->id,
+    'location' => 'Fixture Convention Hall',
+    'is_all_day' => true,
+    'starts_at' => $today->subDays(3)->startOfDay(),
+    'ends_at' => $today->subDays(2)->endOfDay()->startOfSecond(),
+]);
+$attendee = User::factory()->create([
+    'name' => 'Fictional Certificate Participant',
+    'email' => 'fictional-certificate-participant@example.test',
+    'password' => 'browser-password',
+    'survey_hei_id' => $hei->id,
+]);
+$attendee->assignRole('hei');
+foreach ([3, 2] as $daysAgo) {
+    GadEventCheckIn::query()->create([
+        'gad_event_id' => $workshop->id,
+        'user_id' => $attendee->id,
+        'attended_on' => $today->subDays($daysAgo)->toDateString(),
+        'method' => 'typed',
+        'survey_region_id' => $region->id,
+        'survey_hei_id' => $hei->id,
+    ]);
 }
 
 // Twelve notifications for the member, two of them read: comments on their

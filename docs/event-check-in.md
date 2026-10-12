@@ -1,6 +1,6 @@
 # Event check-in
 
-Staff check people in at GAD events with the **QR Scanner** (`/admin/scanner`, `admin.scanner`). They pick one of today's events, then scan the person's Virtual ID (`docs/virtual-id.md`) or type its code. This is the second step of event registration by QR, after the Virtual ID.
+Staff check people in at GAD events with the **QR Scanner** (`/admin/scanner`, `admin.scanner`). They pick one of today's events, then scan the person's Virtual ID (`docs/virtual-id.md`) or type its code. This is the second step of event registration by QR, after the Virtual ID. The people checked in can then be given certificates (`docs/certificates.md`).
 
 ## Who can scan
 
@@ -93,6 +93,5 @@ It never sends the participant code, email, mobile or sex.
 
 - **Join:** registering for an event before it. Today everyone checks in as a walk-in.
 - Undoing a check-in made by mistake.
-- Certificates, which will be soft copies.
 - Sound or vibration on a scan.
 - Attendance lists and exports by event, region and HEI.

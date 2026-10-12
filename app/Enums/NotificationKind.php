@@ -28,6 +28,7 @@ enum NotificationKind: string
     case BadgeAwarded = 'badge_awarded';
     case BadgeEarned = 'badge_earned';
     case UserFollowed = 'user_followed';
+    case CertificateReleased = 'certificate_released';
 
     /** Its name in the Type filter. */
     public function label(): string
@@ -52,6 +53,7 @@ enum NotificationKind: string
             self::BadgeAwarded => 'Badges awarded to you',
             self::BadgeEarned => 'Badges you earned',
             self::UserFollowed => 'New followers',
+            self::CertificateReleased => 'Certificates released to you',
         };
     }
 
@@ -68,6 +70,7 @@ enum NotificationKind: string
             self::SiteFeedback => ActivityModule::SiteFeedback,
             self::BadgeAwarded, self::BadgeEarned => ActivityModule::Badges,
             self::UserFollowed => ActivityModule::People,
+            self::CertificateReleased => ActivityModule::Certificates,
         };
     }
 
@@ -76,7 +79,7 @@ enum NotificationKind: string
     {
         return match ($this) {
             self::ReportSubmitted, self::ReportReviewed, self::GadSurveySubmitted,
-            self::AccountApproved, self::BadgeAwarded, self::BadgeEarned => 'positive',
+            self::AccountApproved, self::BadgeAwarded, self::BadgeEarned, self::CertificateReleased => 'positive',
             self::ReportReturned, self::AccountPending => 'warning',
             self::PostRemoved, self::CommentRemoved => 'danger',
             default => 'info',
@@ -110,6 +113,7 @@ enum NotificationKind: string
             self::BadgeAwarded => 'awarded you the :subject badge',
             self::BadgeEarned => 'You earned the :subject badge. See it on your profile.',
             self::UserFollowed => 'started following you',
+            self::CertificateReleased => 'released your :subject. Download it from My certificates.',
         };
     }
 

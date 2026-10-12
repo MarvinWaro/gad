@@ -72,6 +72,11 @@ class RbacSeeder extends Seeder
             ['name' => 'Edit badges and switch them on or off', 'slug' => 'badges.update', 'group' => 'Badges'],
             ['name' => 'Delete badges', 'slug' => 'badges.delete', 'group' => 'Badges'],
             ['name' => 'Award badges by hand', 'slug' => 'badges.award', 'group' => 'Badges'],
+            ['name' => 'View certificates and signatories', 'slug' => 'certificates.view', 'group' => 'Certificates'],
+            ['name' => 'Create certificates and signatories', 'slug' => 'certificates.create', 'group' => 'Certificates'],
+            ['name' => 'Edit certificates and signatories', 'slug' => 'certificates.update', 'group' => 'Certificates'],
+            ['name' => 'Delete certificates and signatories', 'slug' => 'certificates.delete', 'group' => 'Certificates'],
+            ['name' => 'Release and withdraw event certificates', 'slug' => 'certificates.release', 'group' => 'Certificates'],
         ])->mapWithKeys(function (array $attributes): array {
             $permission = Permission::query()->updateOrCreate(
                 ['slug' => $attributes['slug']],
@@ -103,7 +108,7 @@ class RbacSeeder extends Seeder
             // Office) decides whose reports it sees.
             'ched-focal' => [
                 'name' => 'CHED Focal',
-                'description' => 'Reviews its region\'s monitoring reports and GAD surveys, posts in Gender Mainstreaming, writes GAD quests, reads its region\'s law survey responses, and manages its region\'s HEI and CHED Employee accounts and office details.',
+                'description' => 'Reviews its region\'s monitoring reports and GAD surveys, posts in Gender Mainstreaming, writes GAD quests, reads its region\'s law survey responses, and manages its region\'s HEI and CHED Employee accounts and office details, and gives its region\'s GAD event certificates.',
                 'permissions' => [
                     'monitoring.view', 'monitoring.review', 'posts.view', 'surveys.view',
                     // Their own region's responses only (SurveyResponse::scopeReachableBy).
@@ -115,6 +120,8 @@ class RbacSeeder extends Seeder
                     'region-offices.update',
                     // The QR scanner, at the events they see (GadEventPolicy::checkIn).
                     'events.check-in',
+                    // Their own region's certificates and signatories (docs/certificates.md).
+                    'certificates.view', 'certificates.create', 'certificates.update', 'certificates.delete', 'certificates.release',
                 ],
             ],
             'ched-employee' => [

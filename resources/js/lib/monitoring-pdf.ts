@@ -75,9 +75,10 @@ const LINK = '#0563c1';
 const MUTED = '#555555';
 const WATERMARK = '#8c8c8c';
 
-// The same on every CHED letterhead; the regional lines come from the office.
-const REPUBLIC = 'Republic of the Philippines';
-const NATIONAL_OFFICES = [
+// The same on every CHED letterhead (the monitoring report's and certificates');
+// the regional lines come from the office.
+export const REPUBLIC = 'Republic of the Philippines';
+export const NATIONAL_OFFICES = [
     'OFFICE OF THE PRESIDENT',
     'COMMISSION ON HIGHER EDUCATION',
 ];

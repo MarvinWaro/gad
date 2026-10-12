@@ -87,6 +87,11 @@ class GadEventController extends Controller
 
     public function destroy(GadEvent $event, ActivityRecorder $activity): RedirectResponse
     {
+        // Their verify pages must keep working (docs/certificates.md).
+        if ($event->certificates()->whereNotNull('released_at')->exists()) {
+            return $this->refuse(__('Certificates were released for :event, so it stays. Deleting it would void them.', ['event' => $event->title]));
+        }
+
         $event->delete();
         $activity->record(ActivityAction::Deleted, ActivityModule::Events, $event);
 

@@ -9,6 +9,9 @@ import activityLogs from './activity-logs'
 import ratings from './ratings'
 import studentCounts from './student-counts'
 import badges from './badges'
+import certificateSignatories from './certificate-signatories'
+import certificates from './certificates'
+import eventCertificates from './event-certificates'
 const settings = {
     academicYears: Object.assign(academicYears, academicYears),
 users: Object.assign(users, users),
@@ -21,6 +24,9 @@ activityLogs: Object.assign(activityLogs, activityLogs),
 ratings: Object.assign(ratings, ratings),
 studentCounts: Object.assign(studentCounts, studentCounts),
 badges: Object.assign(badges, badges),
+certificateSignatories: Object.assign(certificateSignatories, certificateSignatories),
+certificates: Object.assign(certificates, certificates),
+eventCertificates: Object.assign(eventCertificates, eventCertificates),
 }
 
 export default settings

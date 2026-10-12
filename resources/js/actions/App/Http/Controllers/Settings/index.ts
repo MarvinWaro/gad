@@ -13,6 +13,10 @@ import ActivityLogController from './ActivityLogController'
 import SiteRatingManagementController from './SiteRatingManagementController'
 import StudentCountController from './StudentCountController'
 import BadgeController from './BadgeController'
+import MyCertificateController from './MyCertificateController'
+import CertificateSignatoryController from './CertificateSignatoryController'
+import CertificateDesignController from './CertificateDesignController'
+import EventCertificateController from './EventCertificateController'
 const Settings = {
     ProfileController: Object.assign(ProfileController, ProfileController),
 ProfileAvatarController: Object.assign(ProfileAvatarController, ProfileAvatarController),
@@ -29,6 +33,10 @@ ActivityLogController: Object.assign(ActivityLogController, ActivityLogControlle
 SiteRatingManagementController: Object.assign(SiteRatingManagementController, SiteRatingManagementController),
 StudentCountController: Object.assign(StudentCountController, StudentCountController),
 BadgeController: Object.assign(BadgeController, BadgeController),
+MyCertificateController: Object.assign(MyCertificateController, MyCertificateController),
+CertificateSignatoryController: Object.assign(CertificateSignatoryController, CertificateSignatoryController),
+CertificateDesignController: Object.assign(CertificateDesignController, CertificateDesignController),
+EventCertificateController: Object.assign(EventCertificateController, EventCertificateController),
 }
 
 export default Settings

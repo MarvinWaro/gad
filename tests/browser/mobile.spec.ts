@@ -124,6 +124,7 @@ test('the public pages fit a 360px phone', async ({ browser }) => {
         '/resources/manuals',
         '/surveys/ra-7877',
         '/surveys/ra-9262',
+        '/verify',
         '/login',
         '/register',
         '/forgot-password',
@@ -147,6 +148,7 @@ test('the HEI pages fit a 360px phone', async ({ browser }) => {
         '/settings/profile',
         '/settings/security',
         '/settings/appearance',
+        '/settings/my-certificates',
         '/quests',
     ]) {
         await checkPage(page, path);
@@ -193,6 +195,9 @@ test('the staff pages fit a 360px phone', async ({ browser }) => {
         '/settings/ratings',
         '/settings/student-counts',
         '/settings/badges',
+        '/settings/certificates',
+        '/settings/certificates/create',
+        '/settings/certificate-signatories',
         '/quests/manage',
         '/quests/manage/create',
         '/notifications',

@@ -102,6 +102,17 @@ class Notifier
         $this->guarded(fn () => $this->insert(NotificationKind::BadgeEarned, $entry, [$earner->id]));
     }
 
+    /**
+     * An event's certificates released: the people just given one, which
+     * after the first release are only those checked in since.
+     *
+     * @param  Builder<User>  $holders
+     */
+    public function certificateReleased(?ActivityLog $entry, Builder $holders): void
+    {
+        $this->send(NotificationKind::CertificateReleased, $entry, $holders);
+    }
+
     /** Someone followed a person: that person. */
     public function userFollowed(User $followed, ?ActivityLog $entry): void
     {

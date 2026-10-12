@@ -1,7 +1,10 @@
 import Api from './Api'
 import SiteRatingController from './SiteRatingController'
 import SiteFeedbackController from './SiteFeedbackController'
+import CertificateVerificationController from './CertificateVerificationController'
 import PublicSurveyController from './PublicSurveyController'
+import CertificateDocumentController from './CertificateDocumentController'
+import CertificateFileController from './CertificateFileController'
 import DashboardController from './DashboardController'
 import EventController from './EventController'
 import MyProfileController from './MyProfileController'
@@ -27,7 +30,10 @@ const Controllers = {
     Api: Object.assign(Api, Api),
 SiteRatingController: Object.assign(SiteRatingController, SiteRatingController),
 SiteFeedbackController: Object.assign(SiteFeedbackController, SiteFeedbackController),
+CertificateVerificationController: Object.assign(CertificateVerificationController, CertificateVerificationController),
 PublicSurveyController: Object.assign(PublicSurveyController, PublicSurveyController),
+CertificateDocumentController: Object.assign(CertificateDocumentController, CertificateDocumentController),
+CertificateFileController: Object.assign(CertificateFileController, CertificateFileController),
 DashboardController: Object.assign(DashboardController, DashboardController),
 EventController: Object.assign(EventController, EventController),
 MyProfileController: Object.assign(MyProfileController, MyProfileController),

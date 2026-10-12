@@ -5,8 +5,12 @@ namespace App\Support;
 use App\Models\AcademicYear;
 use App\Models\Badge;
 use App\Models\CarouselSlide;
+use App\Models\Certificate;
+use App\Models\CertificateDesign;
+use App\Models\CertificateSignatory;
 use App\Models\ChecklistResponse;
 use App\Models\GadEvent;
+use App\Models\GadEventCertificate;
 use App\Models\GadEventCheckIn;
 use App\Models\MonitoringReport;
 use App\Models\Post;
@@ -58,6 +62,10 @@ class ActivitySubjects
         'site-feedback' => SiteFeedback::class,
         'quest' => Quest::class,
         'badge' => Badge::class,
+        'certificate-signatory' => CertificateSignatory::class,
+        'certificate-design' => CertificateDesign::class,
+        'event-certificate' => GadEventCertificate::class,
+        'certificate' => Certificate::class,
     ];
 
     /** The kind of record, as the entry's sentence names it. */
@@ -75,6 +83,9 @@ class ActivitySubjects
             'gad-survey-answer' => 'the',
             'site-rating' => 'a',
             'site-feedback' => 'website feedback',
+            'certificate-signatory' => 'signatory',
+            'certificate-design' => 'certificate design',
+            'event-certificate' => 'the',
             null => '',
             default => $type,
         };
@@ -103,6 +114,9 @@ class ActivitySubjects
             $subject instanceof SiteRating => sprintf('%d-star rating', (int) $subject->getAttribute('rating')),
             $subject instanceof SiteFeedback => self::excerpt($subject->feedback),
             $subject instanceof GadEventCheckIn => sprintf('%s at %s', $subject->user->name ?? 'Someone', $subject->event->title ?? 'a GAD event'),
+            $subject instanceof CertificateSignatory, $subject instanceof CertificateDesign => (string) $subject->getAttribute('name'),
+            $subject instanceof GadEventCertificate => sprintf('%s for %s', $subject->design->kind->title(), $subject->event->title ?? 'a GAD event'),
+            $subject instanceof Certificate => sprintf('%s of %s', $subject->number, $subject->name),
             default => (string) $subject->getKey(),
         };
     }
@@ -118,7 +132,13 @@ class ActivitySubjects
             $subject instanceof SurveyCluster => new ActivityPlace((int) $subject->getAttribute('survey_region_id'), (int) $subject->getKey()),
             $subject instanceof SurveyHei => ActivityPlace::ofHei((int) $subject->getKey()),
             // A quest, badge or event for every region belongs to no one place.
-            $subject instanceof Quest, $subject instanceof Badge, $subject instanceof GadEvent => $subject->survey_region_id !== null ? new ActivityPlace($subject->survey_region_id) : null,
+            $subject instanceof Quest, $subject instanceof Badge, $subject instanceof GadEvent,
+            $subject instanceof CertificateSignatory, $subject instanceof CertificateDesign => $subject->survey_region_id !== null ? new ActivityPlace($subject->survey_region_id) : null,
+            $subject instanceof GadEventCertificate => $subject->event !== null ? self::place($subject->event) : null,
+            // Where its holder belonged, so their region's office sees it.
+            $subject instanceof Certificate => $subject->survey_hei_id !== null
+                ? ActivityPlace::ofHei($subject->survey_hei_id)
+                : ($subject->survey_region_id !== null ? new ActivityPlace($subject->survey_region_id) : null),
             $subject instanceof Post => ActivityPlace::ofHei($subject->getAttribute('survey_hei_id')),
             $subject instanceof PostComment => $subject->post !== null ? self::place($subject->post) : null,
             // Where the person checked in belonged, so their region's office sees it.
@@ -176,6 +196,15 @@ class ActivitySubjects
             $subject instanceof SiteFeedback => $viewer->can('feedback.view') ? route('admin.feedback.index') : null,
             // Whoever holds it sees it on their profile.
             $subject instanceof Badge => $viewer->can('badges.view') ? route('settings.badges.show', $subject) : route('my-profile', ['tab' => 'badges']),
+            $subject instanceof CertificateSignatory => $viewer->can('certificates.view') ? route('settings.certificate-signatories.index') : null,
+            $subject instanceof CertificateDesign => $viewer->can('view', $subject) ? route('settings.certificates.show', $subject) : null,
+            $subject instanceof GadEventCertificate => $viewer->can('release', $subject) ? route('settings.event-certificates.show', $subject) : null,
+            // Its holder downloads it; the office opens its release page.
+            $subject instanceof Certificate => match (true) {
+                $subject->user_id === $viewer->id => route('my-certificates.index'),
+                $subject->eventCertificate !== null && $viewer->can('release', $subject->eventCertificate) => route('settings.event-certificates.show', $subject->eventCertificate),
+                default => null,
+            },
             $subject instanceof Quest => match (true) {
                 $viewer->can('results', $subject) => route('quests.manage.show', $subject),
                 $viewer->can('play', $subject) => route('quests.show', $subject),

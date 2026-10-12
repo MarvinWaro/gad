@@ -27,6 +27,7 @@ void createInertiaApp({
                 name === 'feedback' ||
                 name.startsWith('about/') ||
                 name.startsWith('surveys/') ||
+                name.startsWith('certificates/') ||
                 name.startsWith('resources/') ||
                 name.startsWith('help/'):
                 return null;

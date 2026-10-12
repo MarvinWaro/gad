@@ -3,6 +3,10 @@
 use App\Http\Controllers\Settings\AcademicYearController;
 use App\Http\Controllers\Settings\ActivityLogController;
 use App\Http\Controllers\Settings\BadgeController;
+use App\Http\Controllers\Settings\CertificateDesignController;
+use App\Http\Controllers\Settings\CertificateSignatoryController;
+use App\Http\Controllers\Settings\EventCertificateController;
+use App\Http\Controllers\Settings\MyCertificateController;
 use App\Http\Controllers\Settings\ProfileAvatarController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\RegionOfficeController;
@@ -15,6 +19,8 @@ use App\Http\Controllers\Settings\SurveyDirectoryController;
 use App\Http\Controllers\Settings\TemporaryPasswordController;
 use App\Http\Controllers\Settings\UserManagementController;
 use App\Http\Controllers\Settings\VirtualIdController;
+use App\Models\CertificateDesign;
+use App\Models\CertificateSignatory;
 use App\Models\SurveyRegion;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
@@ -158,6 +164,58 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('can:badges.award')->name('settings.badges.awards.store');
         Route::delete('settings/badges/{badge}/awards/{award}', [BadgeController::class, 'revoke'])
             ->middleware('can:award,badge')->scopeBindings()->name('settings.badges.awards.destroy');
+    });
+
+    // Your certificates from GAD events (docs/certificates.md).
+    Route::get('settings/my-certificates', [MyCertificateController::class, 'index'])->name('my-certificates.index');
+
+    // Certificates and their signatories (docs/certificates.md).
+    Route::get('settings/certificate-signatories', [CertificateSignatoryController::class, 'index'])
+        ->middleware('can:certificates.view')->name('settings.certificate-signatories.index');
+    Route::post('settings/certificate-signatories', [CertificateSignatoryController::class, 'store'])
+        ->middleware(['can:create,'.CertificateSignatory::class, 'throttle:20,1'])->name('settings.certificate-signatories.store');
+    Route::whereUlid('signatory')->group(function () {
+        // A form with a picture: sent as POST with _method=PUT.
+        Route::put('settings/certificate-signatories/{signatory}', [CertificateSignatoryController::class, 'update'])
+            ->middleware(['can:update,signatory', 'throttle:20,1'])->name('settings.certificate-signatories.update');
+        Route::delete('settings/certificate-signatories/{signatory}', [CertificateSignatoryController::class, 'destroy'])
+            ->middleware('can:delete,signatory')->name('settings.certificate-signatories.destroy');
+    });
+
+    Route::get('settings/certificates', [CertificateDesignController::class, 'index'])
+        ->middleware('can:certificates.view')->name('settings.certificates.index');
+    Route::get('settings/certificates/create', [CertificateDesignController::class, 'create'])
+        ->middleware('can:create,'.CertificateDesign::class)->name('settings.certificates.create');
+    Route::post('settings/certificates', [CertificateDesignController::class, 'store'])
+        ->middleware(['can:create,'.CertificateDesign::class, 'throttle:20,1'])->name('settings.certificates.store');
+    Route::whereUlid('design')->group(function () {
+        Route::get('settings/certificates/{design}', [CertificateDesignController::class, 'show'])
+            ->middleware('can:view,design')->name('settings.certificates.show');
+        // A form with logos: sent as POST with _method=PUT.
+        Route::put('settings/certificates/{design}', [CertificateDesignController::class, 'update'])
+            ->middleware(['can:update,design', 'throttle:20,1'])->name('settings.certificates.update');
+        Route::post('settings/certificates/{design}/duplicate', [CertificateDesignController::class, 'duplicate'])
+            ->middleware(['can:view,design', 'can:create,'.CertificateDesign::class])->name('settings.certificates.duplicate');
+        Route::delete('settings/certificates/{design}', [CertificateDesignController::class, 'destroy'])
+            ->middleware('can:delete,design')->name('settings.certificates.destroy');
+        Route::get('settings/certificates/{design}/events', [CertificateDesignController::class, 'events'])
+            ->middleware(['can:use,design', 'throttle:60,1'])->name('settings.certificates.events');
+        Route::post('settings/certificates/{design}/events', [CertificateDesignController::class, 'use'])
+            ->middleware('can:use,design')->name('settings.certificates.use');
+    });
+
+    Route::whereUlid('eventCertificate')->group(function () {
+        Route::get('settings/event-certificates/{eventCertificate}', [EventCertificateController::class, 'show'])
+            ->middleware('can:release,eventCertificate')->name('settings.event-certificates.show');
+        Route::delete('settings/event-certificates/{eventCertificate}', [EventCertificateController::class, 'destroy'])
+            ->middleware('can:release,eventCertificate')->name('settings.event-certificates.destroy');
+        Route::post('settings/event-certificates/{eventCertificate}/release', [EventCertificateController::class, 'release'])
+            ->middleware(['can:release,eventCertificate', 'throttle:10,1'])->name('settings.event-certificates.release');
+        Route::post('settings/event-certificates/{eventCertificate}/refresh', [EventCertificateController::class, 'refresh'])
+            ->middleware(['can:release,eventCertificate', 'throttle:10,1'])->name('settings.event-certificates.refresh');
+        Route::put('settings/event-certificates/{eventCertificate}/certificates/{certificate}/status', [EventCertificateController::class, 'status'])
+            ->whereUlid('certificate')
+            ->middleware('can:release,eventCertificate')->scopeBindings()->name('settings.event-certificates.status');
     });
 });
 

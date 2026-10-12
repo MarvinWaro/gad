@@ -110,6 +110,8 @@ class Notification extends Model
             $subject === null => null,
             // Badges are told to the person who now holds them: their profile.
             in_array($this->kind, [NotificationKind::BadgeAwarded, NotificationKind::BadgeEarned], true) => route('my-profile', ['tab' => 'badges']),
+            // A certificate released to them: where they download it.
+            $this->kind === NotificationKind::CertificateReleased => route('my-certificates.index'),
             // A new follower: who they are.
             $this->kind === NotificationKind::UserFollowed => $this->activity?->user !== null
                 ? route('people.show', $this->activity->user)

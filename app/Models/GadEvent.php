@@ -75,6 +75,17 @@ class GadEvent extends Model
     }
 
     /**
+     * The certificate designs used on it, one of each kind
+     * (docs/certificates.md).
+     *
+     * @return HasMany<GadEventCertificate, $this>
+     */
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(GadEventCertificate::class);
+    }
+
+    /**
      * Events an account sees: every one for the Central Office; otherwise
      * those for every region and its own region's (an HEI account's through
      * its HEI, staff by their office).

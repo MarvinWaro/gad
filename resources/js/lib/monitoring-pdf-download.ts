@@ -27,9 +27,9 @@ const FALLBACK_FONTS: FontFiles = {
     },
 };
 
-// The official marks, used as they are; the letterhead's own copies come
-// from the Word template.
-const IMAGES: Record<(typeof PDF_IMAGES)[number], string> = {
+// The official marks, used as they are, here and on certificates; the
+// letterhead's own copies come from the Word template.
+export const PDF_IMAGE_FILES: Record<(typeof PDF_IMAGES)[number], string> = {
     chedSeal: '/assets/img/ched_logo.png',
     bagongPilipinas: '/assets/img/letterhead/bagong-pilipinas.png',
     envelope: '/assets/img/letterhead/envelope.png',
@@ -98,7 +98,10 @@ export async function downloadMonitoringPdf(
 
     const document = buildMonitoringDocument(input);
     document.images = Object.fromEntries(
-        Object.entries(IMAGES).map(([name, path]) => [name, absolute(path)]),
+        Object.entries(PDF_IMAGE_FILES).map(([name, path]) => [
+            name,
+            absolute(path),
+        ]),
     );
 
     await pdfMake.createPdf(document).download(monitoringPdfFileName(input));
