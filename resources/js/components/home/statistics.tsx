@@ -23,6 +23,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { RegionSelect } from '@/components/public/region-select';
 import { DataState, SectionHeading } from '@/components/public/shared';
 import type {
     DatasetKind,
@@ -42,6 +43,7 @@ import {
     summarize,
 } from '@/lib/gad-statistics';
 import { localDay } from '@/lib/manila-time';
+import { withQueryValue } from '@/lib/query';
 
 type DisplayView = 'line' | 'counts' | 'balance' | 'table';
 
@@ -67,9 +69,6 @@ const chartConfig = {
  */
 const LINE_GROUP_WIDTH = 52;
 const LINE_AXIS_ROOM = 150;
-
-/** The Select's value for every region; Radix reserves the empty string. */
-const ALL_REGIONS = 'all';
 
 /**
  * "See the people behind the numbers.": the enrollment and graduates that
@@ -115,15 +114,24 @@ export function Statistics({
                       : []),
               ];
 
-    function chooseRegion(value: string) {
-        router.get('/', value === ALL_REGIONS ? {} : { region: value }, {
-            only: ['statistics'],
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-            onStart: () => setLoading(true),
-            onFinish: () => setLoading(false),
-        });
+    function chooseRegion(next: number | null) {
+        // The events section's region stays in the address too.
+        router.get(
+            '/',
+            withQueryValue(
+                window.location.search,
+                'region',
+                next === null ? null : String(next),
+            ),
+            {
+                only: ['statistics'],
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onStart: () => setLoading(true),
+                onFinish: () => setLoading(false),
+            },
+        );
     }
 
     return (
@@ -140,35 +148,12 @@ export function Statistics({
                 >
                     <div className="statistics-filters">
                         {regions.length > 0 && (
-                            <div className="year-control">
-                                <label htmlFor="statistics-region">
-                                    Region
-                                </label>
-                                <Select
-                                    value={region || ALL_REGIONS}
-                                    onValueChange={chooseRegion}
-                                >
-                                    <SelectTrigger
-                                        id="statistics-region"
-                                        aria-label="Region"
-                                    >
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent className="public-theme">
-                                        <SelectItem value={ALL_REGIONS}>
-                                            All regions
-                                        </SelectItem>
-                                        {regions.map((option) => (
-                                            <SelectItem
-                                                key={option.id}
-                                                value={String(option.id)}
-                                            >
-                                                {option.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                            <RegionSelect
+                                id="statistics-region"
+                                regions={regions}
+                                value={region ? Number(region) : null}
+                                onChange={chooseRegion}
+                            />
                         )}
                         <div className="year-control">
                             <label htmlFor="academic-year">Academic year</label>

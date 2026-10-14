@@ -21,6 +21,7 @@ class InstitutionPersonResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'ulid' => $this->ulid,
             'name' => $this->name,
             'avatar' => $this->avatar,
             'focal' => (bool) $this->getAttribute('is_focal'),

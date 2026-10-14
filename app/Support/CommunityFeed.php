@@ -184,7 +184,7 @@ class CommunityFeed
         return self::withReactions(self::visibleTo($viewer, $scope), $viewer)
             ->with([
                 // Offices name CHED staff: a post's author, a tagged person.
-                'author:id,name,status,avatar_path,survey_region_id',
+                'author:id,ulid,name,status,avatar_path,survey_region_id',
                 'author.officeRegion:id,name',
                 'hei:id,name',
                 'images',
@@ -193,7 +193,7 @@ class CommunityFeed
                 'tags.officeRegion:id,name',
                 'sdgs',
                 'achieveItems',
-                'sharedPost.author:id,name,status,avatar_path,survey_region_id',
+                'sharedPost.author:id,ulid,name,status,avatar_path,survey_region_id',
                 'sharedPost.author.officeRegion:id,name',
                 'sharedPost.hei:id,name',
                 'sharedPost.images',
@@ -205,8 +205,8 @@ class CommunityFeed
                 'comments' => fn ($query) => $query
                     ->whereNull('parent_id')
                     ->with([
-                        'author:id,name,status,avatar_path',
-                        'replies.author:id,name,status,avatar_path',
+                        'author:id,ulid,name,status,avatar_path',
+                        'replies.author:id,ulid,name,status,avatar_path',
                         'replies.replyTo:id,name',
                     ])
                     ->latest()
@@ -307,6 +307,7 @@ class CommunityFeed
     {
         return [
             'id' => $author->id,
+            'ulid' => $author->ulid,
             'name' => $author->name,
             'avatar' => $author->avatar,
             'deactivated' => $author->status === UserStatus::Inactive,

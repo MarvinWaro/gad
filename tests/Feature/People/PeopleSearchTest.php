@@ -95,7 +95,7 @@ test('only active accounts are found, with nothing private', function () {
 
     $this->actingAs($this->viewer)->getJson(route('search.people', ['q' => 'marvin']))
         ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0', fn (array $person): bool => array_keys($person) === ['id', 'name', 'avatar', 'affiliation', 'following', 'follows_you', 'is_you']);
+        ->assertJsonPath('data.0', fn (array $person): bool => array_keys($person) === ['id', 'ulid', 'name', 'avatar', 'affiliation', 'following', 'follows_you', 'is_you']);
     expect(suggested('m'))->toBe([]);
 });
 

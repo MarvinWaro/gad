@@ -107,12 +107,16 @@ class Notification extends Model
         }
 
         return match (true) {
+            // An event deleted after it was called off: the calendar.
+            $subject === null && $this->kind === NotificationKind::EventCancelled => route('events.index'),
             $subject === null => null,
             // Badges are told to the person who now holds them: their profile.
             in_array($this->kind, [NotificationKind::BadgeAwarded, NotificationKind::BadgeEarned], true) => route('my-profile', ['tab' => 'badges']),
+            // A certificate released to them: where they download it.
+            in_array($this->kind, [NotificationKind::CertificateReleased, NotificationKind::CertificateReady], true) => route('my-certificates.index'),
             // A new follower: who they are.
-            $this->kind === NotificationKind::UserFollowed => $this->activity?->user_id !== null
-                ? route('people.show', $this->activity->user_id)
+            $this->kind === NotificationKind::UserFollowed => $this->activity?->user !== null
+                ? route('people.show', $this->activity->user)
                 : null,
             default => ActivitySubjects::url($subject, $viewer),
         };

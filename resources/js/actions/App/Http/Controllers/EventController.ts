@@ -1,7 +1,7 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\EventController::index
- * @see app/Http/Controllers/EventController.php:14
+ * @see app/Http/Controllers/EventController.php:23
  * @route '/events'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\EventController::index
- * @see app/Http/Controllers/EventController.php:14
+ * @see app/Http/Controllers/EventController.php:23
  * @route '/events'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\EventController::index
- * @see app/Http/Controllers/EventController.php:14
+ * @see app/Http/Controllers/EventController.php:23
  * @route '/events'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\EventController::index
- * @see app/Http/Controllers/EventController.php:14
+ * @see app/Http/Controllers/EventController.php:23
  * @route '/events'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\EventController::index
- * @see app/Http/Controllers/EventController.php:14
+ * @see app/Http/Controllers/EventController.php:23
  * @route '/events'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\EventController::index
- * @see app/Http/Controllers/EventController.php:14
+ * @see app/Http/Controllers/EventController.php:23
  * @route '/events'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\EventController::index
- * @see app/Http/Controllers/EventController.php:14
+ * @see app/Http/Controllers/EventController.php:23
  * @route '/events'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -77,6 +77,108 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     index.form = indexForm
-const EventController = { index }
+/**
+* @see \App\Http\Controllers\EventController::show
+ * @see app/Http/Controllers/EventController.php:40
+ * @route '/events/{event}'
+ */
+export const show = (args: { event: string | { ulid: string } } | [event: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: show.url(args, options),
+    method: 'get',
+})
+
+show.definition = {
+    methods: ["get","head"],
+    url: '/events/{event}',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\EventController::show
+ * @see app/Http/Controllers/EventController.php:40
+ * @route '/events/{event}'
+ */
+show.url = (args: { event: string | { ulid: string } } | [event: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { event: args }
+    }
+
+            if (typeof args === 'object' && !Array.isArray(args) && 'ulid' in args) {
+            args = { event: args.ulid }
+        }
+    
+    if (Array.isArray(args)) {
+        args = {
+                    event: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        event: typeof args.event === 'object'
+                ? args.event.ulid
+                : args.event,
+                }
+
+    return show.definition.url
+            .replace('{event}', parsedArgs.event.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\EventController::show
+ * @see app/Http/Controllers/EventController.php:40
+ * @route '/events/{event}'
+ */
+show.get = (args: { event: string | { ulid: string } } | [event: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: show.url(args, options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\EventController::show
+ * @see app/Http/Controllers/EventController.php:40
+ * @route '/events/{event}'
+ */
+show.head = (args: { event: string | { ulid: string } } | [event: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: show.url(args, options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\EventController::show
+ * @see app/Http/Controllers/EventController.php:40
+ * @route '/events/{event}'
+ */
+    const showForm = (args: { event: string | { ulid: string } } | [event: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\EventController::show
+ * @see app/Http/Controllers/EventController.php:40
+ * @route '/events/{event}'
+ */
+        showForm.get = (args: { event: string | { ulid: string } } | [event: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\EventController::show
+ * @see app/Http/Controllers/EventController.php:40
+ * @route '/events/{event}'
+ */
+        showForm.head = (args: { event: string | { ulid: string } } | [event: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
+const EventController = { index, show }
 
 export default EventController

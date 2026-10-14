@@ -7,10 +7,13 @@ import type { AppLayoutProps } from '@/types';
 export default function AppSidebarLayout({
     children,
     breadcrumbs = [],
+    kiosk = false,
 }: AppLayoutProps) {
+    // In kiosk mode the sidebar and the top bar step aside; the page keeps
+    // its place in the tree, so it never remounts.
     return (
         <AppShell variant="sidebar">
-            <AppSidebar />
+            {!kiosk && <AppSidebar />}
             {/* --app-header follows AppSidebarHeader: 64px, or 48px beside
                 the icon-only sidebar, and 8px lower on desktop, where the
                 page sits in an inset card. */}
@@ -18,7 +21,7 @@ export default function AppSidebarLayout({
                 variant="sidebar"
                 className="dot-backdrop min-w-0 overflow-x-clip [--app-header:4rem] group-has-data-[collapsible=icon]/sidebar-wrapper:[--app-header:3rem] md:[--app-header:4.5rem] md:group-has-data-[collapsible=icon]/sidebar-wrapper:[--app-header:3.5rem]"
             >
-                <AppSidebarHeader breadcrumbs={breadcrumbs} />
+                {!kiosk && <AppSidebarHeader breadcrumbs={breadcrumbs} />}
                 {children}
             </AppContent>
         </AppShell>

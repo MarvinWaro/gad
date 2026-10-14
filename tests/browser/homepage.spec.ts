@@ -51,10 +51,16 @@ for (const width of [375, 768, 1280, 1536]) {
                 /reveal-pending(?!.*is-revealed)/,
             );
         }
+        // The reveals end; a "Happening now" dot pulses for good.
         await page.locator('main').evaluate(async (element) => {
             await Promise.all(
                 element
                     .getAnimations({ subtree: true })
+                    .filter(
+                        (animation) =>
+                            animation.effect?.getComputedTiming().iterations !==
+                            Infinity,
+                    )
                     .map((animation) => animation.finished),
             );
         });
@@ -263,8 +269,10 @@ test('statistics reconcile through dataset, sex, view and region controls', asyn
     await page.getByRole('option', { name: '2025-2026' }).click();
 
     // Only regions with figures are offered. Choosing one reloads just the
-    // statistics and keeps the view.
-    await page.getByRole('combobox', { name: 'Region', exact: true }).click();
+    // statistics and keeps the view. (GAD events has a Region filter too.)
+    await statistics
+        .getByRole('combobox', { name: 'Region', exact: true })
+        .click();
     await expect(page.getByRole('option')).toHaveText([
         'All regions',
         'Regional Office XII',
@@ -525,10 +533,16 @@ test('homepage and preview dialog meet automated WCAG AA checks', async ({
             /reveal-pending(?!.*is-revealed)/,
         );
     }
+    // The reveals end; a "Happening now" dot pulses for good.
     await page.locator('main').evaluate(async (element) => {
         await Promise.all(
             element
                 .getAnimations({ subtree: true })
+                .filter(
+                    (animation) =>
+                        animation.effect?.getComputedTiming().iterations !==
+                        Infinity,
+                )
                 .map((animation) => animation.finished),
         );
     });

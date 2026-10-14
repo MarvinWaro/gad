@@ -249,7 +249,7 @@ test('the home lists colleagues on PHLGADIS, the GAD Focal Person first', functi
                 ['Zed Colleague', false],
             ])
             // Only who they are: no email or roles leave the server.
-            ->where('people.people.0', fn ($person) => array_keys(collect($person)->all()) === ['id', 'name', 'avatar', 'focal']));
+            ->where('people.people.0', fn ($person) => array_keys(collect($person)->all()) === ['id', 'ulid', 'name', 'avatar', 'focal']));
 });
 
 test('the people list stops at six, and is empty for the first account', function () {

@@ -29,7 +29,7 @@ export function FollowListDialog({
     kind,
     count,
 }: {
-    person: { id: number; name: string };
+    person: { ulid: string; name: string };
     kind: Kind;
     count: number;
 }) {
@@ -68,7 +68,7 @@ export function FollowListDialog({
                         : `People ${person.name} follows, the latest first.`}
                 </DialogDescription>
                 <div className="min-h-0 overflow-y-auto">
-                    <PeopleList personId={person.id} kind={kind} />
+                    <PeopleList personUlid={person.ulid} kind={kind} />
                 </div>
             </DialogContent>
         </Dialog>
@@ -77,7 +77,7 @@ export function FollowListDialog({
 
 type Loaded = { page: number; people: Person[]; more: boolean };
 
-function PeopleList({ personId, kind }: { personId: number; kind: Kind }) {
+function PeopleList({ personUlid, kind }: { personUlid: string; kind: Kind }) {
     const [page, setPage] = useState(1);
     const [loaded, setLoaded] = useState<Loaded | null>(null);
     const [failed, setFailed] = useState(false);
@@ -87,7 +87,7 @@ function PeopleList({ personId, kind }: { personId: number; kind: Kind }) {
         const controller = new AbortController();
         const route = kind === 'followers' ? followers : following;
 
-        fetch(route.url(personId, { query: { page } }), {
+        fetch(route.url(personUlid, { query: { page } }), {
             headers: {
                 Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -118,7 +118,7 @@ function PeopleList({ personId, kind }: { personId: number; kind: Kind }) {
             });
 
         return () => controller.abort();
-    }, [personId, kind, page, attempt]);
+    }, [personUlid, kind, page, attempt]);
 
     const people = loaded?.people ?? [];
     const loading = !failed && loaded?.page !== page;

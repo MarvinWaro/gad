@@ -13,6 +13,11 @@ test('archiving a survey asks first, and restoring it does not', async ({
 }) => {
     await signIn(page);
     await page.goto('/admin/surveys');
+    // The figures above the library arrive just after the page. Wait for
+    // them, or they push the row, and the confirmation open on it, down.
+    await expect(
+        page.getByRole('heading', { name: 'Responses by law' }),
+    ).toBeVisible();
     const row = page.getByRole('row').filter({ hasText: 'RA 7877' });
     const archive = row.getByRole('button', {
         name: 'Archive this survey and close it to the public',

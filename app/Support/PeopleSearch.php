@@ -97,7 +97,7 @@ final class PeopleSearch
                     ->whereRaw($byLettersOrSound, $soundBindings)
                     ->orWhereIn('survey_hei_id', SurveyHei::query()->select('id')->where('name', 'like', $institution))),
             )
-            ->select(['id', 'name', 'avatar_path', 'survey_hei_id', 'survey_region_id', 'status'])
+            ->select(['id', 'ulid', 'name', 'avatar_path', 'survey_hei_id', 'survey_region_id', 'status'])
             ->with(['hei:id,name', 'officeRegion:id,name'])
             ->withExists(PersonResource::viewerFlags($viewer))
             ->orderByRaw(

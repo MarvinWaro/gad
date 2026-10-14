@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\Survey;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
@@ -163,4 +165,16 @@ test('the first administrator takes ADMIN_PASSWORD, and production refuses to se
 
     expect(fn () => app(AdminUserSeeder::class)->run())->toThrow(RuntimeException::class, 'Set ADMIN_PASSWORD');
     expect(User::query()->count())->toBe(0);
+});
+
+test('every seeded role and permission fits its columns, as MySQL enforces and SQLite does not', function () {
+    $this->seed(RbacSeeder::class);
+
+    foreach (Role::query()->get() as $role) {
+        expect(mb_strlen((string) $role->description))->toBeLessThanOrEqual(255, "{$role->slug}'s description is too long")
+            ->and(mb_strlen($role->name))->toBeLessThanOrEqual(255);
+    }
+    foreach (Permission::query()->get() as $permission) {
+        expect(mb_strlen($permission->name))->toBeLessThanOrEqual(255, "{$permission->slug}'s name is too long");
+    }
 });

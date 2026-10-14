@@ -14,6 +14,7 @@ import {
     MessageSquareText,
     MoreHorizontal,
     Reply,
+    ScrollText,
     Tag,
     Trash2,
     Undo2,
@@ -62,6 +63,7 @@ const kindIcons: Record<string, LucideIcon> = {
     badge_awarded: Award,
     badge_earned: Award,
     user_followed: UserPlus,
+    certificate_released: ScrollText,
 };
 
 export type NotificationChanges = {

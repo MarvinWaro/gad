@@ -24,7 +24,7 @@ export function FollowButton({
     onChange,
     className,
 }: {
-    person: { id: number; name: string; following: boolean };
+    person: { ulid: string; name: string; following: boolean };
     /** The answer, such as to update a follower count. */
     onChange?: (state: FollowState) => void;
     className?: string;
@@ -46,13 +46,15 @@ export function FollowButton({
 
     function start() {
         request
-            .post(follow.url(person.id), options)
+            .post(follow.url(person.ulid), options)
             // Failures are told above.
             .catch(() => undefined);
     }
 
     function stop() {
-        request.delete(unfollow.url(person.id), options).catch(() => undefined);
+        request
+            .delete(unfollow.url(person.ulid), options)
+            .catch(() => undefined);
     }
 
     if (!following) {

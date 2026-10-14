@@ -13,9 +13,6 @@ import { BetaTag } from '@/components/beta-tag';
 import { responsesLabel, SurveyActions } from '@/components/hei/survey-panel';
 import { firstName, greeting } from '@/components/hei/welcome-band';
 import { PersonAvatar } from '@/components/person-avatar';
-import { LevelMark } from '@/components/quests/quest-badge';
-import { questAction } from '@/components/quests/quest-card';
-import { Button } from '@/components/ui/button';
 import {
     Collapsible,
     CollapsibleContent,
@@ -27,9 +24,8 @@ import { cn } from '@/lib/utils';
 import { about, dashboard, home, myProfile } from '@/routes';
 import { create as feedback } from '@/routes/feedback';
 import { faq } from '@/routes/help';
-import { index as quests, show as quest } from '@/routes/quests';
+import { index as quests } from '@/routes/quests';
 import type { HeiRef, HeiSurvey } from '@/types';
-import type { QuestCard } from '@/types/quests';
 
 /** A row of the list: 44px, rounded, a muted tint on hover. */
 const rowClass =
@@ -37,10 +33,11 @@ const rowClass =
 
 /**
  * The HEI home's left column from 1280px, laid out like Facebook's: you,
- * where you are, the law surveys and resources as groups that fold, the
- * open GAD Quest, then a small footer. Events and Records are left to the
- * top bar and Quick links rather than listed twice. A plain list on the
- * page, without cards, so the feed stays the centre of attention.
+ * where you go, the law surveys and resources as groups that fold, then a
+ * small footer. Events and Records are left to the top bar and Quick links,
+ * and the GAD Quest card to the right rail, rather than listed twice. A
+ * plain list on the page, without cards, so the feed stays the centre of
+ * attention.
  *
  * The column is at least as tall as the screen beside the feed, so the
  * footer rests at its bottom, as on Facebook; open groups that outgrow it
@@ -49,12 +46,9 @@ const rowClass =
 export function HomeRail({
     hei,
     surveys,
-    quest,
 }: {
     hei: HeiRef | null;
     surveys: HeiSurvey[];
-    /** The newest quest open to them; null when none is. */
-    quest: QuestCard | null;
 }) {
     const { auth } = usePage().props;
 
@@ -152,12 +146,8 @@ export function HomeRail({
                 </ul>
             </Group>
 
-            <Group
-                id="resources"
-                title="Resources"
-                icon={LibraryBig}
-                defaultOpen
-            >
+            {/* Reference, opened now and then: it starts folded. */}
+            <Group id="resources" title="Resources" icon={LibraryBig}>
                 <ul className="space-y-0.5 pb-1">
                     {resources.map((resource) => {
                         const Icon = resourceIcons[resource.id];
@@ -202,10 +192,6 @@ export function HomeRail({
                     })}
                 </ul>
             </Group>
-
-            <hr className="mx-2 border-border" />
-
-            <GadQuestCard quest={quest} />
 
             <div className="mt-auto space-y-3 pt-3">
                 <hr className="mx-2 border-border" />
@@ -281,77 +267,19 @@ function Group({
     );
 }
 
-/** The open GAD Quest and where they stand with it, or that none is open. */
-function GadQuestCard({ quest: open }: { quest: QuestCard | null }) {
-    return (
-        <section
-            aria-labelledby="gad-quest-title"
-            className="relative mx-1 flex items-center gap-2 overflow-hidden rounded-xl border bg-card p-4"
-        >
-            <div className="min-w-0 flex-1">
-                <h2
-                    id="gad-quest-title"
-                    className="flex items-center gap-2 font-medium"
-                >
-                    GAD Quest
-                    <BetaTag />
-                </h2>
-                {open ? (
-                    <>
-                        <p className="mt-1 line-clamp-2 text-[13px] leading-snug">
-                            {open.title}
-                        </p>
-                        {open.best && (
-                            <p className="mt-1.5 flex items-center gap-1.5 text-[13px] text-muted-foreground">
-                                <LevelMark
-                                    level={open.best.level}
-                                    image={open.best.image}
-                                    className="size-5"
-                                />
-                                {open.best.level_label} badge
-                            </p>
-                        )}
-                        <Button asChild size="sm" className="mt-3">
-                            <Link
-                                href={quest(open.id)}
-                                aria-label={`${questAction(open)}: ${open.title}`}
-                            >
-                                {questAction(open)}
-                            </Link>
-                        </Button>
-                    </>
-                ) : (
-                    <p className="mt-1 text-[13px] leading-snug text-muted-foreground">
-                        No quest is open right now.{' '}
-                        <Link
-                            href={quests()}
-                            className="text-foreground underline underline-offset-2"
-                        >
-                            See your badges
-                        </Link>
-                    </p>
-                )}
-            </div>
-            <img
-                src="/assets/img/persona-card.webp"
-                alt=""
-                width="240"
-                height="201"
-                loading="lazy"
-                decoding="async"
-                className="w-20 shrink-0"
-            />
-        </section>
-    );
-}
-
-/** A small footer, as Facebook's left column ends with one. */
+/**
+ * A small footer, as Facebook's left column ends with one. From 1280px it is
+ * where help lives (FAQ, Feedback, Rate PHLGADIS), so the right rail needs
+ * no "Need help?" card beside it.
+ */
 function RailFooter() {
     const links = [
         { label: 'About', href: about.url() },
         { label: 'Resources', href: `${home.url()}#resources` },
         { label: 'FAQ', href: faq.url() },
         { label: 'Feedback', href: feedback.url() },
+        // The homepage opens its Rate PHLGADIS card for #rate.
+        { label: 'Rate PHLGADIS', href: `${home.url()}#rate` },
     ];
 
     return (

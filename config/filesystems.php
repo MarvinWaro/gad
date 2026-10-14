@@ -1,9 +1,10 @@
 <?php
 
 /*
-| Uploads (photos, carousel slides, badges and signed monitoring files) stay
-| on this machine unless FILESYSTEM_UPLOADS=spaces sends them to a
-| DigitalOcean Spaces bucket. App Platform empties its own disk on every
+| Uploads (photos, carousel slides, badges, signed monitoring files, and
+| certificate signatures and logos) stay on this machine unless
+| FILESYSTEM_UPLOADS=spaces sends them to a DigitalOcean Spaces
+| bucket. App Platform empties its own disk on every
 | deploy, so production keeps them in Spaces. Each environment writes under
 | its own folder (SPACES_ROOT, the environment's name by default), so local
 | tests never mix with live files.
@@ -62,6 +63,21 @@ return [
         ] : [
             'driver' => 'local',
             'root' => storage_path('app/private/monitoring-files'),
+            'throw' => true,
+            'visibility' => 'private',
+        ],
+
+        // Private either way: signatures and certificate logos are only
+        // handed out through signed links (CertificateFileController).
+        'certificates' => $spaces ? [
+            ...$bucket,
+            'http' => ['connect_timeout' => 5],
+            'root' => $folder.'/certificate-files',
+            'throw' => true,
+            'visibility' => 'private',
+        ] : [
+            'driver' => 'local',
+            'root' => storage_path('app/private/certificate-files'),
             'throw' => true,
             'visibility' => 'private',
         ],

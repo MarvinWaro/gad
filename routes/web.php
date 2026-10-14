@@ -1,14 +1,24 @@
 <?php
 
 use App\Http\Controllers\Admin\CarouselSlideController;
+use App\Http\Controllers\Admin\EventCancellationController;
+use App\Http\Controllers\Admin\EventCheckInController;
+use App\Http\Controllers\Admin\EventGuestController;
+use App\Http\Controllers\Admin\EventRegistrationController as EventRegistrantController;
+use App\Http\Controllers\Admin\EventScannerController;
 use App\Http\Controllers\Admin\GadEventController;
 use App\Http\Controllers\Admin\SiteFeedbackController as AdminSiteFeedbackController;
 use App\Http\Controllers\Admin\SurveyController;
 use App\Http\Controllers\Admin\SurveyResponseController;
 use App\Http\Controllers\Admin\SurveySummaryController;
+use App\Http\Controllers\CertificateDocumentController;
+use App\Http\Controllers\CertificateFileController;
+use App\Http\Controllers\CertificateRequestController;
+use App\Http\Controllers\CertificateVerificationController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\MyProfileController;
 use App\Http\Controllers\NewerPostsController;
@@ -21,14 +31,18 @@ use App\Http\Controllers\PostHomepageController;
 use App\Http\Controllers\PostReactionController;
 use App\Http\Controllers\PostShareController;
 use App\Http\Controllers\PostTagSuggestionController;
+use App\Http\Controllers\PublicEventController;
 use App\Http\Controllers\PublicSurveyController;
 use App\Http\Controllers\SiteFeedbackController;
 use App\Http\Controllers\SiteRatingController;
+use App\Http\Resources\PublicEventResource;
 use App\Models\CarouselSlide;
 use App\Models\GadEvent;
 use App\Models\SiteSetting;
 use App\Models\Survey;
+use App\Support\CertificateFiles;
 use App\Support\HomepageStories;
+use App\Support\PublicEvents;
 use App\Support\StudentStatistics;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -67,6 +81,17 @@ Route::get('/', function (Request $request) {
         // The statistics section: imported enrollment and graduates by sex,
         // for the region in ?region= or every region.
         'statistics' => fn () => StudentStatistics::forHomepage($request->integer('region') ?: null),
+        // The next GAD events still on, those on now first, for the region
+        // in ?events_region= or every region (docs/event-registration.md).
+        'events' => function () use ($request): array {
+            $region = PublicEvents::region($request->integer('events_region') ?: null);
+
+            return [
+                'region' => $region,
+                'regions' => PublicEvents::regions(),
+                'events' => PublicEventResource::collection(PublicEvents::upcoming($region))->resolve($request),
+            ];
+        },
     ]);
 })->name('home');
 
@@ -85,10 +110,29 @@ Route::post('/feedback', [SiteFeedbackController::class, 'store'])
     ->middleware('throttle:feedback')
     ->name('feedback.store');
 
+// Where a certificate's QR leads: whether PHLGADIS gave it (docs/certificates.md).
+Route::get('/verify', [CertificateVerificationController::class, 'show'])
+    ->middleware('throttle:30,1')
+    ->name('verify.index');
+Route::get('/verify/{number}', [CertificateVerificationController::class, 'show'])
+    ->where('number', '[A-Za-z0-9 -]{1,30}')
+    ->middleware('throttle:30,1')
+    ->name('verify.show');
+
 Route::inertia('/resources/definition-of-terms', 'resources/definition-of-terms')->name('resources.terms');
 Route::inertia('/resources/gad-enabling-republic-acts', 'resources/gad-enabling-republic-acts')->name('resources.acts');
 Route::inertia('/resources/issuances', 'resources/issuances')->name('resources.issuances');
 Route::inertia('/resources/manuals', 'resources/manuals')->name('resources.manuals');
+
+// The public website's GAD events (docs/event-registration.md): the list,
+// and each event's page, addressed by its public ULID.
+Route::get('/gad-events', [PublicEventController::class, 'index'])
+    ->middleware('throttle:60,1')
+    ->name('public-events.index');
+Route::get('/gad-events/{event:ulid}', [PublicEventController::class, 'show'])
+    ->whereUlid('event')
+    ->middleware('throttle:60,1')
+    ->name('public-events.show');
 
 Route::inertia('/about', 'about')->name('about');
 Route::inertia('/about/gad-herstory', 'about/gad-herstory')->name('about.herstory');
@@ -105,23 +149,53 @@ Route::post('/surveys/{survey:slug}/responses', [PublicSurveyController::class, 
     ->name('surveys.responses.store');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // A certificate's printed contents, for its holder or the staff who
+    // release it; its signatures and logos come through signed links.
+    Route::get('certificates/{certificate}/document', [CertificateDocumentController::class, 'show'])
+        ->whereUlid('certificate')
+        ->middleware(['can:download,certificate', 'throttle:30,1'])
+        ->name('certificates.document');
+    Route::get('certificate-files/{folder}/{file}', [CertificateFileController::class, 'show'])
+        ->whereIn('folder', CertificateFiles::FOLDERS)
+        ->where('file', '[A-Za-z0-9]{1,64}\.(png|jpe?g)')
+        ->middleware('signed')
+        ->name('certificate-files.show');
+
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('events', [EventController::class, 'index'])->name('events.index');
+    // An event's page, and joining or leaving it (docs/event-registration.md).
+    // Addressed by its public ULID, so its link can be shared.
+    Route::whereUlid('event')->group(function () {
+        Route::get('events/{event:ulid}', [EventController::class, 'show'])
+            ->middleware('can:view,event')
+            ->name('events.show');
+        Route::post('events/{event:ulid}/registration', [EventRegistrationController::class, 'store'])
+            ->middleware(['can:join,event', 'throttle:30,1'])
+            ->name('events.registration.store');
+        Route::delete('events/{event:ulid}/registration', [EventRegistrationController::class, 'destroy'])
+            ->middleware(['can:join,event', 'throttle:30,1'])
+            ->name('events.registration.destroy');
+        // Asking for a certificate after missing a day (docs/certificates.md).
+        Route::post('events/{event:ulid}/certificate-requests', [CertificateRequestController::class, 'store'])
+            ->middleware(['can:view,event', 'throttle:10,1'])
+            ->name('events.certificate-requests.store');
+    });
     Route::get('profile', MyProfileController::class)->name('my-profile');
 
     // People: profiles, following and search (docs/people-and-following.md).
-    Route::whereNumber('person')->group(function () {
-        Route::get('people/{person}', [PersonProfileController::class, 'show'])->name('people.show');
-        Route::get('people/{person}/followers', [PersonProfileController::class, 'followers'])
+    // Addressed by the account's public ULID, never its number.
+    Route::whereUlid('person')->group(function () {
+        Route::get('people/{person:ulid}', [PersonProfileController::class, 'show'])->name('people.show');
+        Route::get('people/{person:ulid}/followers', [PersonProfileController::class, 'followers'])
             ->middleware('throttle:60,1')
             ->name('people.followers');
-        Route::get('people/{person}/following', [PersonProfileController::class, 'following'])
+        Route::get('people/{person:ulid}/following', [PersonProfileController::class, 'following'])
             ->middleware('throttle:60,1')
             ->name('people.following');
-        Route::post('people/{person}/follow', [FollowController::class, 'store'])
+        Route::post('people/{person:ulid}/follow', [FollowController::class, 'store'])
             ->middleware('throttle:30,1')
             ->name('people.follow');
-        Route::delete('people/{person}/follow', [FollowController::class, 'destroy'])
+        Route::delete('people/{person:ulid}/follow', [FollowController::class, 'destroy'])
             ->middleware('throttle:30,1')
             ->name('people.unfollow');
     });
@@ -183,6 +257,54 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('events', [GadEventController::class, 'store'])->middleware('can:create,'.GadEvent::class)->name('events.store');
         Route::put('events/{event}', [GadEventController::class, 'update'])->middleware('can:update,event')->name('events.update');
         Route::delete('events/{event}', [GadEventController::class, 'destroy'])->middleware('can:delete,event')->name('events.destroy');
+        // Who joined, and closing or reopening registration (docs/event-registration.md).
+        Route::get('events/{event}/registrations', [EventRegistrantController::class, 'index'])
+            ->middleware('can:viewRegistrations,event')
+            ->name('events.registrations.index');
+        Route::put('events/{event}/registration', [EventRegistrantController::class, 'update'])
+            ->middleware('can:update,event')
+            ->name('events.registration.update');
+        // Keeping the list by hand: people with accounts, and guests without.
+        Route::middleware('can:update,event')->group(function () {
+            Route::get('events/{event}/people', [EventRegistrantController::class, 'people'])
+                ->middleware('throttle:90,1')
+                ->name('events.people');
+            Route::post('events/{event}/registrations', [EventRegistrantController::class, 'store'])
+                ->name('events.registrations.store');
+            Route::put('events/{event}/registrations/{registration}/attendance', [EventRegistrantController::class, 'attendance'])
+                ->whereUlid('registration')->scopeBindings()
+                ->name('events.registrations.attendance');
+            Route::delete('events/{event}/registrations/{registration}', [EventRegistrantController::class, 'destroy'])
+                ->whereUlid('registration')->scopeBindings()
+                ->name('events.registrations.destroy');
+            Route::post('events/{event}/guests', [EventGuestController::class, 'store'])->name('events.guests.store');
+            Route::put('events/{event}/guests/{guest}', [EventGuestController::class, 'update'])
+                ->whereUlid('guest')->scopeBindings()
+                ->name('events.guests.update');
+            Route::delete('events/{event}/guests/{guest}', [EventGuestController::class, 'destroy'])
+                ->whereUlid('guest')->scopeBindings()
+                ->name('events.guests.destroy');
+            Route::post('events/{event}/guests/{guest}/certificates', [EventGuestController::class, 'certificate'])
+                ->whereUlid('guest')->scopeBindings()
+                ->name('events.guests.certificates.store');
+            // Calling it off, or putting it back on.
+            Route::put('events/{event}/cancellation', [EventCancellationController::class, 'update'])
+                ->name('events.cancellation.update');
+        });
+
+        // The QR scanner (docs/event-check-in.md). GadEventPolicy::checkIn:
+        // staff check people in at the events they see, today only.
+        Route::get('scanner', [EventScannerController::class, 'show'])->middleware('can:events.check-in')->name('scanner');
+        Route::get('events/{event}/check-ins', [EventCheckInController::class, 'index'])
+            ->middleware(['can:checkIn,event', 'throttle:60,1'])
+            ->name('events.check-ins.index');
+        Route::post('events/{event}/check-ins', [EventCheckInController::class, 'store'])
+            ->middleware(['can:checkIn,event', 'throttle:120,1'])
+            ->name('events.check-ins.store');
+        Route::delete('events/{event}/check-ins/{checkIn}', [EventCheckInController::class, 'destroy'])
+            ->whereUlid('checkIn')->scopeBindings()
+            ->middleware(['can:checkIn,event', 'throttle:60,1'])
+            ->name('events.check-ins.destroy');
 
         Route::get('carousels', [CarouselSlideController::class, 'index'])
             ->middleware('can:carousel.view')

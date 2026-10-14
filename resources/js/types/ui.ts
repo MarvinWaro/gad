@@ -4,6 +4,8 @@ import type { BreadcrumbItem } from '@/types/navigation';
 export type AppLayoutProps = {
     children: ReactNode;
     breadcrumbs?: BreadcrumbItem[];
+    /** The page fills the screen without the app's navigation (the QR scanner's kiosk mode). */
+    kiosk?: boolean;
 };
 
 export type AppVariant = 'header' | 'sidebar';

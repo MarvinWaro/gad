@@ -1,9 +1,15 @@
 import Api from './Api'
 import SiteRatingController from './SiteRatingController'
 import SiteFeedbackController from './SiteFeedbackController'
+import CertificateVerificationController from './CertificateVerificationController'
+import PublicEventController from './PublicEventController'
 import PublicSurveyController from './PublicSurveyController'
+import CertificateDocumentController from './CertificateDocumentController'
+import CertificateFileController from './CertificateFileController'
 import DashboardController from './DashboardController'
 import EventController from './EventController'
+import EventRegistrationController from './EventRegistrationController'
+import CertificateRequestController from './CertificateRequestController'
 import MyProfileController from './MyProfileController'
 import PersonProfileController from './PersonProfileController'
 import FollowController from './FollowController'
@@ -27,9 +33,15 @@ const Controllers = {
     Api: Object.assign(Api, Api),
 SiteRatingController: Object.assign(SiteRatingController, SiteRatingController),
 SiteFeedbackController: Object.assign(SiteFeedbackController, SiteFeedbackController),
+CertificateVerificationController: Object.assign(CertificateVerificationController, CertificateVerificationController),
+PublicEventController: Object.assign(PublicEventController, PublicEventController),
 PublicSurveyController: Object.assign(PublicSurveyController, PublicSurveyController),
+CertificateDocumentController: Object.assign(CertificateDocumentController, CertificateDocumentController),
+CertificateFileController: Object.assign(CertificateFileController, CertificateFileController),
 DashboardController: Object.assign(DashboardController, DashboardController),
 EventController: Object.assign(EventController, EventController),
+EventRegistrationController: Object.assign(EventRegistrationController, EventRegistrationController),
+CertificateRequestController: Object.assign(CertificateRequestController, CertificateRequestController),
 MyProfileController: Object.assign(MyProfileController, MyProfileController),
 PersonProfileController: Object.assign(PersonProfileController, PersonProfileController),
 FollowController: Object.assign(FollowController, FollowController),

@@ -28,6 +28,14 @@ enum NotificationKind: string
     case BadgeAwarded = 'badge_awarded';
     case BadgeEarned = 'badge_earned';
     case UserFollowed = 'user_followed';
+    case CertificateReleased = 'certificate_released';
+    case EventPersonAdded = 'event_person_added';
+    case EventChanged = 'event_changed';
+    case EventCancelled = 'event_cancelled';
+    case EventRestored = 'event_restored';
+    case CertificateReady = 'certificate_ready';
+    case CertificateRequested = 'certificate_requested';
+    case CertificateRequestDeclined = 'certificate_request_declined';
 
     /** Its name in the Type filter. */
     public function label(): string
@@ -52,6 +60,14 @@ enum NotificationKind: string
             self::BadgeAwarded => 'Badges awarded to you',
             self::BadgeEarned => 'Badges you earned',
             self::UserFollowed => 'New followers',
+            self::CertificateReleased => 'Certificates released to you',
+            self::EventPersonAdded => 'Events you were added to',
+            self::EventChanged => 'Changes to events you joined',
+            self::EventCancelled => 'Events cancelled',
+            self::EventRestored => 'Events back on',
+            self::CertificateReady => 'Certificates ready for you',
+            self::CertificateRequested => 'Certificate requests',
+            self::CertificateRequestDeclined => 'Certificate requests declined',
         };
     }
 
@@ -63,11 +79,12 @@ enum NotificationKind: string
             self::ReportSubmitted, self::ReportReviewed, self::ReportReturned => ActivityModule::Monitoring,
             self::GadSurveySubmitted => ActivityModule::GadSurveys,
             self::AccountPending, self::AccountApproved => ActivityModule::Users,
-            self::EventCreated => ActivityModule::Events,
+            self::EventCreated, self::EventPersonAdded, self::EventChanged, self::EventCancelled, self::EventRestored => ActivityModule::Events,
             self::SurveyResponses => ActivityModule::SurveyResponses,
             self::SiteFeedback => ActivityModule::SiteFeedback,
             self::BadgeAwarded, self::BadgeEarned => ActivityModule::Badges,
             self::UserFollowed => ActivityModule::People,
+            self::CertificateReleased, self::CertificateReady, self::CertificateRequested, self::CertificateRequestDeclined => ActivityModule::Certificates,
         };
     }
 
@@ -76,8 +93,10 @@ enum NotificationKind: string
     {
         return match ($this) {
             self::ReportSubmitted, self::ReportReviewed, self::GadSurveySubmitted,
-            self::AccountApproved, self::BadgeAwarded, self::BadgeEarned => 'positive',
-            self::ReportReturned, self::AccountPending => 'warning',
+            self::AccountApproved, self::BadgeAwarded, self::BadgeEarned, self::CertificateReleased,
+            self::CertificateReady, self::EventPersonAdded, self::EventRestored => 'positive',
+            self::ReportReturned, self::AccountPending, self::EventChanged, self::CertificateRequestDeclined => 'warning',
+            self::EventCancelled => 'danger',
             self::PostRemoved, self::CommentRemoved => 'danger',
             default => 'info',
         };
@@ -110,16 +129,25 @@ enum NotificationKind: string
             self::BadgeAwarded => 'awarded you the :subject badge',
             self::BadgeEarned => 'You earned the :subject badge. See it on your profile.',
             self::UserFollowed => 'started following you',
+            self::CertificateReleased => 'released your :subject. Download it from My certificates.',
+            self::EventPersonAdded => 'added you to the GAD event :subject',
+            self::EventChanged => 'changed the GAD event :subject',
+            self::EventCancelled => 'cancelled the GAD event :subject',
+            self::EventRestored => 'put the GAD event :subject back on',
+            self::CertificateReady => 'Your :subject is ready. Download it from My certificates.',
+            self::CertificateRequested => 'asked for a :subject',
+            self::CertificateRequestDeclined => 'declined your request for a :subject',
         };
     }
 
     /**
-     * Whether it names who acted. A badge someone earns is the system's
-     * doing, so it speaks to them instead ("You earned …").
+     * Whether it names who acted. A badge someone earns, and certificates
+     * that go out when an event ends, are the system's doing, so they speak
+     * to them instead ("You earned …").
      */
     public function showsActor(): bool
     {
-        return $this !== self::BadgeEarned;
+        return ! in_array($this, [self::BadgeEarned, self::CertificateReady], true);
     }
 
     /**

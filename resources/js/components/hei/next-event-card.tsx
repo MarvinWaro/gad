@@ -1,8 +1,13 @@
 import { Link } from '@inertiajs/react';
 import { ArrowRight, MapPin } from 'lucide-react';
+import { JoinedMark } from '@/components/events/joined-mark';
 import { formatEventTime, parseWallClock } from '@/lib/event-dates';
 import { cn } from '@/lib/utils';
+import { show as eventPage } from '@/routes/events';
 import type { CalendarEvent } from '@/types';
+
+const linkClass =
+    'inline-flex items-center gap-1.5 rounded-sm text-sm text-on-signature underline decoration-on-signature/40 underline-offset-4 outline-none hover:decoration-on-signature focus-visible:ring-[3px] focus-visible:ring-on-signature/50';
 
 const longDate = new Intl.DateTimeFormat('en-PH', {
     weekday: 'long',
@@ -41,6 +46,11 @@ export function NextEventCard({
     }
 
     const start = parseWallClock(event.starts_at);
+    // Its page is where people join it (docs/event-registration.md).
+    const viewLabel =
+        event.joined || event.category === 'deadline'
+            ? 'View event'
+            : 'View and join';
 
     return (
         <section
@@ -79,15 +89,26 @@ export function NextEventCard({
                             {event.location}
                         </p>
                     )}
+                    {event.joined && (
+                        <p className="mt-2">
+                            <JoinedMark onSignature />
+                        </p>
+                    )}
                 </div>
             </div>
-            <Link
-                href="/events"
-                className="mt-5 inline-flex items-center gap-1.5 rounded-sm text-sm text-on-signature underline decoration-on-signature/40 underline-offset-4 outline-none hover:decoration-on-signature focus-visible:ring-[3px] focus-visible:ring-on-signature/50"
-            >
-                See all events
-                <ArrowRight aria-hidden className="size-3.5" />
-            </Link>
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2">
+                <Link
+                    href={eventPage(event)}
+                    className={linkClass}
+                    aria-label={`${viewLabel}: ${event.title}`}
+                >
+                    {viewLabel}
+                    <ArrowRight aria-hidden className="size-3.5" />
+                </Link>
+                <Link href="/events" className={linkClass}>
+                    See all events
+                </Link>
+            </div>
         </section>
     );
 }

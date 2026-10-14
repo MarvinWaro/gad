@@ -3,6 +3,7 @@ import { EventCalendar } from '@/components/hei/event-calendar';
 import { Feed } from '@/components/hei/feed';
 import { FeedBanner } from '@/components/hei/feed-banner';
 import { FeedTabs } from '@/components/hei/feed-tabs';
+import { GadQuestCard } from '@/components/hei/gad-quest-card';
 import { HomeRail } from '@/components/hei/home-rail';
 import { InstitutionPeople } from '@/components/hei/institution-people';
 import { NextEventCard } from '@/components/hei/next-event-card';
@@ -59,9 +60,9 @@ const railOffset = { top: 57 + 24, bottom: 24 };
 /**
  * The HEI home, the community feed, laid out like Facebook from 1280px: you,
  * the places to go, the law surveys and resources on the left, the posts in
- * the middle, events and links on the right, both rails staying in view
- * beside the feed. Narrower, the rails fold into one column (and, from
- * 1024px, the right rail beside it).
+ * the middle, and on the right what's on now (events, the GAD Quest), Quick
+ * links and people, both rails staying in view beside the feed. Narrower,
+ * the rails fold into one column (and, from 1024px, the right rail beside it).
  */
 export default function HeiHome({
     hei,
@@ -98,7 +99,7 @@ export default function HeiHome({
                         aria-label="Your institution, law surveys and resources"
                         className="hidden min-w-0 xl:sticky xl:block xl:self-start"
                     >
-                        <HomeRail hei={hei} surveys={surveys} quest={quest} />
+                        <HomeRail hei={hei} surveys={surveys} />
                     </aside>
 
                     <div className="min-w-0 space-y-10">
@@ -152,11 +153,17 @@ export default function HeiHome({
                                 title="Later"
                             />
                         )}
+                        {/* What's on now, beside the events. */}
+                        <GadQuestCard quest={quest} />
                         <QuickLinks links={quickLinks} />
-                        {/* Everyone at the HEI: people to ask, and where
-                            to find help. */}
+                        {/* Everyone at the HEI: people to ask. */}
                         <InstitutionPeople summary={people} />
-                        <QuickLinks title="Need help?" links={helpLinks} />
+                        {/* From 1280px the left rail's footer links to
+                            help; narrower, where that rail is hidden, this
+                            card does. */}
+                        <div className="xl:hidden">
+                            <QuickLinks title="Need help?" links={helpLinks} />
+                        </div>
                     </aside>
                 </div>
             </div>

@@ -47,6 +47,18 @@ enum ActivityAction: string
     case Awarded = 'awarded';
     case Followed = 'followed';
     case Unfollowed = 'unfollowed';
+    case CheckedIn = 'checked_in';
+    case Released = 'released';
+    case Withdrawn = 'withdrawn';
+    case Restored = 'restored';
+    case Joined = 'joined';
+    case Left = 'left';
+    case Added = 'added';
+    case Removed = 'removed';
+    case Cancelled = 'cancelled';
+    case CheckInUndone = 'check_in_undone';
+    case Requested = 'requested';
+    case Declined = 'declined';
 
     /** The entry's badge. */
     public function label(): string
@@ -91,6 +103,18 @@ enum ActivityAction: string
             self::Awarded => 'Awarded',
             self::Followed => 'Followed',
             self::Unfollowed => 'Unfollowed',
+            self::CheckedIn => 'Checked in',
+            self::Released => 'Released',
+            self::Withdrawn => 'Withdrawn',
+            self::Restored => 'Restored',
+            self::Joined => 'Joined',
+            self::Left => 'Left',
+            self::Added => 'Added',
+            self::Removed => 'Removed',
+            self::Cancelled => 'Cancelled',
+            self::CheckInUndone => 'Check-in undone',
+            self::Requested => 'Requested',
+            self::Declined => 'Declined',
         };
     }
 
@@ -140,6 +164,18 @@ enum ActivityAction: string
             self::Awarded => 'Awarded :noun :subject',
             self::Followed => 'Followed :subject',
             self::Unfollowed => 'Stopped following :subject',
+            self::CheckedIn => 'Checked in :subject',
+            self::Released => 'Released :noun :subject',
+            self::Withdrawn => 'Withdrew :noun :subject',
+            self::Restored => 'Restored :noun :subject',
+            self::Joined => 'Joined :subject',
+            self::Left => 'Left :subject',
+            self::Added => 'Added :noun :subject',
+            self::Removed => 'Removed :noun :subject',
+            self::Cancelled => 'Cancelled :noun :subject',
+            self::CheckInUndone => 'Undid the check-in of :subject',
+            self::Requested => 'Asked for a :subject',
+            self::Declined => 'Declined :noun :subject',
         };
     }
 
@@ -153,11 +189,12 @@ enum ActivityAction: string
         return match ($this) {
             self::Login, self::Registered, self::Created, self::Activated, self::Approved,
             self::Published, self::Submitted, self::Reviewed, self::Completed,
-            self::Earned, self::Awarded => 'positive',
+            self::Earned, self::Awarded, self::CheckedIn, self::Released, self::Restored, self::Joined, self::Added => 'positive',
             self::Deactivated, self::MarkedPending, self::Archived, self::Reopened, self::Returned, self::Closed,
-            self::Unreacted, self::TwoFactorDisabled, self::PasskeyRemoved => 'warning',
-            self::Deleted, self::LoginFailed => 'danger',
-            self::Logout, self::Exported, self::Downloaded, self::Unfollowed => 'neutral',
+            self::Unreacted, self::TwoFactorDisabled, self::PasskeyRemoved, self::Withdrawn,
+            self::Cancelled, self::CheckInUndone, self::Declined => 'warning',
+            self::Deleted, self::LoginFailed, self::Removed => 'danger',
+            self::Logout, self::Exported, self::Downloaded, self::Unfollowed, self::Left => 'neutral',
             default => 'info',
         };
     }

@@ -8,6 +8,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 /**
  * A GAD event as staff enter it. A regional office's event is always for its
@@ -30,12 +31,16 @@ class SaveGadEventRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:160'],
             'category' => ['required', 'string', Rule::in(GadEvent::CATEGORIES)],
+            // On the public website unless turned off; deadlines never are.
+            'is_public' => ['sometimes', 'boolean'],
             'region' => $this->writer()->national_access
                 ? ['nullable', 'integer', 'exists:survey_regions,id']
                 : ['nullable'],
             'is_all_day' => ['required', 'boolean'],
             'starts_at' => ['required', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
+            // Null: open until the event ends (docs/event-registration.md).
+            'registration_closes_at' => ['nullable', 'date'],
             'location' => ['nullable', 'string', 'max:160'],
             'description' => ['nullable', 'string', 'max:2000'],
         ];
@@ -50,10 +55,35 @@ class SaveGadEventRequest extends FormRequest
     }
 
     /**
-     * Validated attributes ready to save. All-day events span whole days so
-     * the calendar and the upcoming list treat them alike.
+     * Registration can't outlast the event.
      *
-     * @return array<string, mixed>
+     * @return array<int, callable(Validator): void>
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                if ($validator->errors()->isNotEmpty()) {
+                    return;
+                }
+
+                $attributes = $this->eventAttributes();
+                $closes = $attributes['registration_closes_at'];
+                $end = $attributes['ends_at'] ?? $attributes['starts_at']->endOfDay()->startOfSecond();
+
+                if ($closes !== null && $closes->greaterThan($end)) {
+                    $validator->errors()->add('registration_closes_at', __('Registration must close by the time the event ends.'));
+                }
+            },
+        ];
+    }
+
+    /**
+     * Validated attributes ready to save. All-day events span whole days so
+     * the calendar and the upcoming list treat them alike. A deadline has no
+     * registration: nobody attends it.
+     *
+     * @return array{survey_region_id: int|null, title: string, category: string, is_public: bool, is_all_day: bool, starts_at: CarbonImmutable, ends_at: CarbonImmutable|null, registration_closes_at: CarbonImmutable|null, location: string|null, description: string|null}
      */
     public function eventAttributes(): array
     {
@@ -70,9 +100,14 @@ class SaveGadEventRequest extends FormRequest
             'survey_region_id' => $this->regionId(),
             'title' => $validated['title'],
             'category' => $validated['category'],
+            // Left out, a new event is public and a saved one keeps its choice.
+            'is_public' => (bool) ($validated['is_public'] ?? ($this->route('event') instanceof GadEvent ? $this->route('event')->is_public : true)),
             'is_all_day' => (bool) $validated['is_all_day'],
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
+            'registration_closes_at' => isset($validated['registration_closes_at']) && $validated['category'] !== 'deadline'
+                ? CarbonImmutable::parse($validated['registration_closes_at'])->startOfMinute()
+                : null,
             'location' => $validated['location'] ?? null,
             'description' => $validated['description'] ?? null,
         ];

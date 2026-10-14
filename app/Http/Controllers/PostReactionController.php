@@ -28,7 +28,7 @@ class PostReactionController extends Controller
         return PostReactorResource::collection(
             $post->reactions()
                 ->when($request->reaction(), fn ($query, $type) => $query->where('type', $type))
-                ->with(['user:id,name,survey_hei_id,survey_region_id,avatar_path', 'user.hei:id,name', 'user.officeRegion:id,name'])
+                ->with(['user:id,ulid,name,survey_hei_id,survey_region_id,avatar_path', 'user.hei:id,name', 'user.officeRegion:id,name'])
                 ->orderByDesc('id')
                 ->cursorPaginate(self::PER_PAGE),
         );

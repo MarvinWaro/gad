@@ -16,6 +16,7 @@ import { useOperator } from '@/hooks/use-operator';
 import { dashboard, login, register } from '@/routes';
 import { create as feedback } from '@/routes/feedback';
 import { faq } from '@/routes/help';
+import { index as publicEvents } from '@/routes/public-events';
 
 // In the order the sections appear on the homepage.
 const navigation = [
@@ -26,8 +27,10 @@ const navigation = [
     ['About', '#about'],
 ];
 
-// After the sections comes the FAQ, a page of its own. The old site put it
-// in a one-item help menu; a plain link does the same job.
+// After the sections come two pages of their own: the GAD events
+// (docs/event-registration.md), then the FAQ. The old site put the FAQ in a
+// one-item help menu; a plain link does the same job.
+const eventsHref = publicEvents.url();
 const faqHref = faq.url();
 // The old site's footer asked "We value your feedback" too.
 const feedbackHref = feedback.url();
@@ -72,6 +75,7 @@ export function SiteHeader({
                             {label}
                         </a>
                     ))}
+                    <Link href={eventsHref}>Events</Link>
                     <Link href={faqHref}>FAQ</Link>
                 </nav>
                 <div className="header-actions">
@@ -128,6 +132,12 @@ export function SiteHeader({
                                     </a>
                                 </SheetClose>
                             ))}
+                            <SheetClose asChild>
+                                <Link href={eventsHref}>
+                                    Events
+                                    <ArrowUpRight size={16} />
+                                </Link>
+                            </SheetClose>
                             <SheetClose asChild>
                                 <Link href={faqHref}>
                                     FAQ

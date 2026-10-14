@@ -44,19 +44,22 @@ class PlaceFilters
 
     /**
      * The places the staff account can pick from. A regional office has its
-     * one region; only the Central Office picks. HEIs list once a region is
-     * set. Clusters stay out of sight: they only link an HEI to its region.
+     * one region; only the Central Office picks, or anyone when the list
+     * holds every region (`$everyRegion`, such as who joined an event for
+     * every region). HEIs list once a region is set. Clusters stay out of
+     * sight: they only link an HEI to its region.
      *
      * @param  array<string, mixed>  $filters
      * @return array{regions: Collection<int, SurveyRegion>, heis: Collection<int, SurveyHei>}
      */
-    public static function options(User $user, array $filters): array
+    public static function options(User $user, array $filters, bool $everyRegion = false): array
     {
+        $picks = $user->national_access || $everyRegion;
         $regions = SurveyRegion::query()
-            ->withinReachOf($user)
+            ->when(! $everyRegion, fn (Builder $query) => $query->withinReachOf($user))
             ->orderBy('name')
             ->get(['id', 'name']);
-        $regionId = $user->national_access ? (int) ($filters['region'] ?? 0) : (int) $user->survey_region_id;
+        $regionId = $picks ? (int) ($filters['region'] ?? 0) : (int) $user->survey_region_id;
         $regionId = $regions->contains('id', $regionId) ? $regionId : null;
 
         return [

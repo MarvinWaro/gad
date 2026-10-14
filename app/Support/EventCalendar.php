@@ -8,9 +8,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Month and upcoming views of the GAD events a viewer sees
- * (GadEvent::scopeVisibleTo), in Philippine wall-clock time (see
- * GadEvent::TIMEZONE).
+ * Month and upcoming views of the GAD events a viewer sees, and those they
+ * were added to (GadEvent::scopeOnCalendarOf), in Philippine wall-clock time (see
+ * GadEvent::TIMEZONE), each saying whether the viewer joined it.
  */
 class EventCalendar
 {
@@ -29,7 +29,8 @@ class EventCalendar
             'month' => $start->format('Y-m'),
             'today' => $today->toDateString(),
             'events' => GadEvent::query()
-                ->visibleTo($viewer)
+                ->onCalendarOf($viewer)
+                ->withJoinedBy($viewer)
                 ->between($start, $end)
                 ->orderBy('starts_at')
                 ->get()
@@ -39,7 +40,8 @@ class EventCalendar
     }
 
     /**
-     * Events that have not finished yet, soonest first.
+     * Events that have not finished yet, soonest first. Cancelled ones stay
+     * on the month grid only.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -48,7 +50,9 @@ class EventCalendar
         $now = GadEvent::localNow();
 
         return GadEvent::query()
-            ->visibleTo($viewer)
+            ->onCalendarOf($viewer)
+            ->withJoinedBy($viewer)
+            ->whereNull('cancelled_at')
             ->where(fn (Builder $query) => $query
                 ->where('starts_at', '>=', $now->startOfDay())
                 ->orWhere('ends_at', '>=', $now))
@@ -70,7 +74,9 @@ class EventCalendar
         $end = self::resolveMonth($month, GadEvent::localNow())->endOfMonth();
 
         return GadEvent::query()
-            ->visibleTo($viewer)
+            ->onCalendarOf($viewer)
+            ->withJoinedBy($viewer)
+            ->whereNull('cancelled_at')
             ->where('starts_at', '>', $end)
             ->orderBy('starts_at')
             ->limit($limit)

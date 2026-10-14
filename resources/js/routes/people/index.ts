@@ -4,7 +4,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
  * @see app/Http/Controllers/PersonProfileController.php:25
  * @route '/people/{person}'
  */
-export const show = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+export const show = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
 })
@@ -19,13 +19,13 @@ show.definition = {
  * @see app/Http/Controllers/PersonProfileController.php:25
  * @route '/people/{person}'
  */
-show.url = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+show.url = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { person: args }
     }
 
-            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
-            args = { person: args.id }
+            if (typeof args === 'object' && !Array.isArray(args) && 'ulid' in args) {
+            args = { person: args.ulid }
         }
     
     if (Array.isArray(args)) {
@@ -38,7 +38,7 @@ show.url = (args: { person: number | { id: number } } | [person: number | { id: 
 
     const parsedArgs = {
                         person: typeof args.person === 'object'
-                ? args.person.id
+                ? args.person.ulid
                 : args.person,
                 }
 
@@ -52,7 +52,7 @@ show.url = (args: { person: number | { id: number } } | [person: number | { id: 
  * @see app/Http/Controllers/PersonProfileController.php:25
  * @route '/people/{person}'
  */
-show.get = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+show.get = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
 })
@@ -61,7 +61,7 @@ show.get = (args: { person: number | { id: number } } | [person: number | { id: 
  * @see app/Http/Controllers/PersonProfileController.php:25
  * @route '/people/{person}'
  */
-show.head = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+show.head = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: show.url(args, options),
     method: 'head',
 })
@@ -71,7 +71,7 @@ show.head = (args: { person: number | { id: number } } | [person: number | { id:
  * @see app/Http/Controllers/PersonProfileController.php:25
  * @route '/people/{person}'
  */
-    const showForm = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    const showForm = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: show.url(args, options),
         method: 'get',
     })
@@ -81,7 +81,7 @@ show.head = (args: { person: number | { id: number } } | [person: number | { id:
  * @see app/Http/Controllers/PersonProfileController.php:25
  * @route '/people/{person}'
  */
-        showForm.get = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        showForm.get = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: show.url(args, options),
             method: 'get',
         })
@@ -90,7 +90,7 @@ show.head = (args: { person: number | { id: number } } | [person: number | { id:
  * @see app/Http/Controllers/PersonProfileController.php:25
  * @route '/people/{person}'
  */
-        showForm.head = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        showForm.head = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: show.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
@@ -106,7 +106,7 @@ show.head = (args: { person: number | { id: number } } | [person: number | { id:
  * @see app/Http/Controllers/PersonProfileController.php:36
  * @route '/people/{person}/followers'
  */
-export const followers = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+export const followers = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: followers.url(args, options),
     method: 'get',
 })
@@ -121,13 +121,13 @@ followers.definition = {
  * @see app/Http/Controllers/PersonProfileController.php:36
  * @route '/people/{person}/followers'
  */
-followers.url = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+followers.url = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { person: args }
     }
 
-            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
-            args = { person: args.id }
+            if (typeof args === 'object' && !Array.isArray(args) && 'ulid' in args) {
+            args = { person: args.ulid }
         }
     
     if (Array.isArray(args)) {
@@ -140,7 +140,7 @@ followers.url = (args: { person: number | { id: number } } | [person: number | {
 
     const parsedArgs = {
                         person: typeof args.person === 'object'
-                ? args.person.id
+                ? args.person.ulid
                 : args.person,
                 }
 
@@ -154,7 +154,7 @@ followers.url = (args: { person: number | { id: number } } | [person: number | {
  * @see app/Http/Controllers/PersonProfileController.php:36
  * @route '/people/{person}/followers'
  */
-followers.get = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+followers.get = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: followers.url(args, options),
     method: 'get',
 })
@@ -163,7 +163,7 @@ followers.get = (args: { person: number | { id: number } } | [person: number | {
  * @see app/Http/Controllers/PersonProfileController.php:36
  * @route '/people/{person}/followers'
  */
-followers.head = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+followers.head = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: followers.url(args, options),
     method: 'head',
 })
@@ -173,7 +173,7 @@ followers.head = (args: { person: number | { id: number } } | [person: number | 
  * @see app/Http/Controllers/PersonProfileController.php:36
  * @route '/people/{person}/followers'
  */
-    const followersForm = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    const followersForm = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: followers.url(args, options),
         method: 'get',
     })
@@ -183,7 +183,7 @@ followers.head = (args: { person: number | { id: number } } | [person: number | 
  * @see app/Http/Controllers/PersonProfileController.php:36
  * @route '/people/{person}/followers'
  */
-        followersForm.get = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        followersForm.get = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: followers.url(args, options),
             method: 'get',
         })
@@ -192,7 +192,7 @@ followers.head = (args: { person: number | { id: number } } | [person: number | 
  * @see app/Http/Controllers/PersonProfileController.php:36
  * @route '/people/{person}/followers'
  */
-        followersForm.head = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        followersForm.head = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: followers.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
@@ -208,7 +208,7 @@ followers.head = (args: { person: number | { id: number } } | [person: number | 
  * @see app/Http/Controllers/PersonProfileController.php:43
  * @route '/people/{person}/following'
  */
-export const following = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+export const following = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: following.url(args, options),
     method: 'get',
 })
@@ -223,13 +223,13 @@ following.definition = {
  * @see app/Http/Controllers/PersonProfileController.php:43
  * @route '/people/{person}/following'
  */
-following.url = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+following.url = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { person: args }
     }
 
-            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
-            args = { person: args.id }
+            if (typeof args === 'object' && !Array.isArray(args) && 'ulid' in args) {
+            args = { person: args.ulid }
         }
     
     if (Array.isArray(args)) {
@@ -242,7 +242,7 @@ following.url = (args: { person: number | { id: number } } | [person: number | {
 
     const parsedArgs = {
                         person: typeof args.person === 'object'
-                ? args.person.id
+                ? args.person.ulid
                 : args.person,
                 }
 
@@ -256,7 +256,7 @@ following.url = (args: { person: number | { id: number } } | [person: number | {
  * @see app/Http/Controllers/PersonProfileController.php:43
  * @route '/people/{person}/following'
  */
-following.get = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+following.get = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: following.url(args, options),
     method: 'get',
 })
@@ -265,7 +265,7 @@ following.get = (args: { person: number | { id: number } } | [person: number | {
  * @see app/Http/Controllers/PersonProfileController.php:43
  * @route '/people/{person}/following'
  */
-following.head = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+following.head = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: following.url(args, options),
     method: 'head',
 })
@@ -275,7 +275,7 @@ following.head = (args: { person: number | { id: number } } | [person: number | 
  * @see app/Http/Controllers/PersonProfileController.php:43
  * @route '/people/{person}/following'
  */
-    const followingForm = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    const followingForm = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: following.url(args, options),
         method: 'get',
     })
@@ -285,7 +285,7 @@ following.head = (args: { person: number | { id: number } } | [person: number | 
  * @see app/Http/Controllers/PersonProfileController.php:43
  * @route '/people/{person}/following'
  */
-        followingForm.get = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        followingForm.get = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: following.url(args, options),
             method: 'get',
         })
@@ -294,7 +294,7 @@ following.head = (args: { person: number | { id: number } } | [person: number | 
  * @see app/Http/Controllers/PersonProfileController.php:43
  * @route '/people/{person}/following'
  */
-        followingForm.head = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        followingForm.head = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: following.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
@@ -310,7 +310,7 @@ following.head = (args: { person: number | { id: number } } | [person: number | 
  * @see app/Http/Controllers/FollowController.php:17
  * @route '/people/{person}/follow'
  */
-export const follow = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+export const follow = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: follow.url(args, options),
     method: 'post',
 })
@@ -325,13 +325,13 @@ follow.definition = {
  * @see app/Http/Controllers/FollowController.php:17
  * @route '/people/{person}/follow'
  */
-follow.url = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+follow.url = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { person: args }
     }
 
-            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
-            args = { person: args.id }
+            if (typeof args === 'object' && !Array.isArray(args) && 'ulid' in args) {
+            args = { person: args.ulid }
         }
     
     if (Array.isArray(args)) {
@@ -344,7 +344,7 @@ follow.url = (args: { person: number | { id: number } } | [person: number | { id
 
     const parsedArgs = {
                         person: typeof args.person === 'object'
-                ? args.person.id
+                ? args.person.ulid
                 : args.person,
                 }
 
@@ -358,7 +358,7 @@ follow.url = (args: { person: number | { id: number } } | [person: number | { id
  * @see app/Http/Controllers/FollowController.php:17
  * @route '/people/{person}/follow'
  */
-follow.post = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+follow.post = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: follow.url(args, options),
     method: 'post',
 })
@@ -368,7 +368,7 @@ follow.post = (args: { person: number | { id: number } } | [person: number | { i
  * @see app/Http/Controllers/FollowController.php:17
  * @route '/people/{person}/follow'
  */
-    const followForm = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const followForm = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: follow.url(args, options),
         method: 'post',
     })
@@ -378,7 +378,7 @@ follow.post = (args: { person: number | { id: number } } | [person: number | { i
  * @see app/Http/Controllers/FollowController.php:17
  * @route '/people/{person}/follow'
  */
-        followForm.post = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        followForm.post = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: follow.url(args, options),
             method: 'post',
         })
@@ -389,7 +389,7 @@ follow.post = (args: { person: number | { id: number } } | [person: number | { i
  * @see app/Http/Controllers/FollowController.php:28
  * @route '/people/{person}/follow'
  */
-export const unfollow = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+export const unfollow = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: unfollow.url(args, options),
     method: 'delete',
 })
@@ -404,13 +404,13 @@ unfollow.definition = {
  * @see app/Http/Controllers/FollowController.php:28
  * @route '/people/{person}/follow'
  */
-unfollow.url = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+unfollow.url = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { person: args }
     }
 
-            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
-            args = { person: args.id }
+            if (typeof args === 'object' && !Array.isArray(args) && 'ulid' in args) {
+            args = { person: args.ulid }
         }
     
     if (Array.isArray(args)) {
@@ -423,7 +423,7 @@ unfollow.url = (args: { person: number | { id: number } } | [person: number | { 
 
     const parsedArgs = {
                         person: typeof args.person === 'object'
-                ? args.person.id
+                ? args.person.ulid
                 : args.person,
                 }
 
@@ -437,7 +437,7 @@ unfollow.url = (args: { person: number | { id: number } } | [person: number | { 
  * @see app/Http/Controllers/FollowController.php:28
  * @route '/people/{person}/follow'
  */
-unfollow.delete = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+unfollow.delete = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: unfollow.url(args, options),
     method: 'delete',
 })
@@ -447,7 +447,7 @@ unfollow.delete = (args: { person: number | { id: number } } | [person: number |
  * @see app/Http/Controllers/FollowController.php:28
  * @route '/people/{person}/follow'
  */
-    const unfollowForm = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const unfollowForm = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: unfollow.url(args, {
                     [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                         _method: 'DELETE',
@@ -462,7 +462,7 @@ unfollow.delete = (args: { person: number | { id: number } } | [person: number |
  * @see app/Http/Controllers/FollowController.php:28
  * @route '/people/{person}/follow'
  */
-        unfollowForm.delete = (args: { person: number | { id: number } } | [person: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        unfollowForm.delete = (args: { person: string | { ulid: string } } | [person: string | { ulid: string } ] | string | { ulid: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: unfollow.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'DELETE',

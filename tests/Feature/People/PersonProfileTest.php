@@ -3,6 +3,8 @@
 use App\Models\Post;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -67,4 +69,41 @@ test('CHED staff are placed by their office', function () {
 test('guests are sent to log in', function () {
     $this->get(route('people.show', $this->ana))->assertRedirect(route('login'));
     $this->postJson(route('people.follow', $this->ana))->assertUnauthorized();
+});
+
+test('a profile is addressed by its ULID, never its number', function () {
+    expect($this->ana->ulid)->toMatch('/^[0-9a-hjkmnp-tv-z]{26}$/')
+        ->and(route('people.show', $this->ana))->toEndWith('/people/'.$this->ana->ulid);
+
+    $this->actingAs($this->reader)->get('/people/'.$this->ana->ulid)->assertOk();
+    // Counting through numbers opens nothing, and neither does an unknown ULID.
+    $this->actingAs($this->reader)->get('/people/'.$this->ana->id)->assertNotFound();
+    $this->actingAs($this->reader)->get('/people/'.strtolower((string) Str::ulid()))->assertNotFound();
+    $this->actingAs($this->reader)->post('/people/'.$this->ana->id.'/follow')->assertNotFound();
+});
+
+test('the links people are shown with carry their ULID', function () {
+    $this->actingAs($this->reader)->get(route('people.show', $this->ana))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('person.ulid', $this->ana->ulid)
+            ->where('auth.user.ulid', $this->reader->ulid));
+
+    $this->actingAs($this->reader)->getJson(route('search.people', ['q' => 'Ana']))
+        ->assertOk()
+        ->assertJsonPath('data.0.ulid', $this->ana->ulid);
+});
+
+test('the migration gives every existing account its own ULID, leaving ids and links alone', function () {
+    Post::query()->create(['user_id' => $this->ana->id, 'survey_hei_id' => $this->hei->id, 'body' => 'Kept']);
+    $ids = User::query()->orderBy('id')->pluck('id')->all();
+    $migration = require database_path('migrations/2026_10_18_000000_add_ulid_to_users_table.php');
+
+    $migration->down();
+    $migration->up();
+
+    $ulids = DB::table('users')->orderBy('id')->pluck('ulid', 'id');
+    expect($ulids->keys()->all())->toBe($ids)
+        ->and($ulids->unique()->count())->toBe(count($ids))
+        ->and($ulids->every(fn (string $ulid): bool => (bool) preg_match('/^[0-9a-hjkmnp-tv-z]{26}$/', $ulid)))->toBeTrue()
+        ->and(Post::query()->where('user_id', $this->ana->id)->exists())->toBeTrue();
 });

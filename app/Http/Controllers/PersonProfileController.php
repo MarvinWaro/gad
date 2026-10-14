@@ -59,7 +59,7 @@ class PersonProfileController extends Controller
 
         return PersonResource::collection($people
             ->active()
-            ->select(['users.id', 'users.name', 'users.avatar_path', 'users.survey_hei_id', 'users.survey_region_id', 'users.status'])
+            ->select(['users.id', 'users.ulid', 'users.name', 'users.avatar_path', 'users.survey_hei_id', 'users.survey_region_id', 'users.status'])
             ->with(['hei:id,name', 'officeRegion:id,name'])
             ->withExists(PersonResource::viewerFlags($viewer))
             ->orderByPivot('created_at', 'desc')

@@ -45,6 +45,9 @@ class RbacSeeder extends Seeder
             ['name' => 'Create GAD events', 'slug' => 'events.create', 'group' => 'GAD events'],
             ['name' => 'Update GAD events', 'slug' => 'events.update', 'group' => 'GAD events'],
             ['name' => 'Delete GAD events', 'slug' => 'events.delete', 'group' => 'GAD events'],
+            ['name' => 'Check people in to GAD events', 'slug' => 'events.check-in', 'group' => 'GAD events'],
+            // The CHED Focal of the event's region, and Administrators (GadEventPolicy::viewRegistrations).
+            ['name' => 'See who joined GAD events', 'slug' => 'events.view-registrations', 'group' => 'GAD events'],
             ['name' => 'View and post in Gender Mainstreaming', 'slug' => 'posts.view', 'group' => 'Community'],
             ['name' => 'Moderate community posts', 'slug' => 'posts.moderate', 'group' => 'Community'],
             ['name' => 'View site ratings', 'slug' => 'site-ratings.view', 'group' => 'Site ratings'],
@@ -71,6 +74,11 @@ class RbacSeeder extends Seeder
             ['name' => 'Edit badges and switch them on or off', 'slug' => 'badges.update', 'group' => 'Badges'],
             ['name' => 'Delete badges', 'slug' => 'badges.delete', 'group' => 'Badges'],
             ['name' => 'Award badges by hand', 'slug' => 'badges.award', 'group' => 'Badges'],
+            ['name' => 'View certificates and signatories', 'slug' => 'certificates.view', 'group' => 'Certificates'],
+            ['name' => 'Create certificates and signatories', 'slug' => 'certificates.create', 'group' => 'Certificates'],
+            ['name' => 'Edit certificates and signatories', 'slug' => 'certificates.update', 'group' => 'Certificates'],
+            ['name' => 'Delete certificates and signatories', 'slug' => 'certificates.delete', 'group' => 'Certificates'],
+            ['name' => 'Release and withdraw event certificates', 'slug' => 'certificates.release', 'group' => 'Certificates'],
         ])->mapWithKeys(function (array $attributes): array {
             $permission = Permission::query()->updateOrCreate(
                 ['slug' => $attributes['slug']],
@@ -92,7 +100,8 @@ class RbacSeeder extends Seeder
                 'permissions' => [
                     'carousel.view', 'carousel.create', 'carousel.update',
                     'surveys.view', 'surveys.create', 'surveys.update',
-                    'events.view', 'events.create', 'events.update',
+                    // Events belong to the CHED Focal and the Admin; they check people in.
+                    'events.view', 'events.check-in',
                     'site-ratings.view',
                     'monitoring.view', 'monitoring.review',
                     'quests.play',
@@ -102,7 +111,8 @@ class RbacSeeder extends Seeder
             // Office) decides whose reports it sees.
             'ched-focal' => [
                 'name' => 'CHED Focal',
-                'description' => 'Reviews its region\'s monitoring reports and GAD surveys, posts in Gender Mainstreaming, writes GAD quests, reads its region\'s law survey responses, and manages its region\'s HEI and CHED Employee accounts and office details.',
+                // At most 255 characters, as roles.description and the Roles form allow.
+                'description' => 'Reviews its region\'s reports and GAD surveys, reads its law survey responses, manages its HEI and CHED Employee accounts and office details, writes GAD quests, posts in Gender Mainstreaming, and runs its events, who joined them and their certificates.',
                 'permissions' => [
                     'monitoring.view', 'monitoring.review', 'posts.view', 'surveys.view',
                     // Their own region's responses only (SurveyResponse::scopeReachableBy).
@@ -112,12 +122,18 @@ class RbacSeeder extends Seeder
                     'users.view', 'users.create', 'users.update',
                     // Their own region's letterhead only (SurveyRegionPolicy::updateOffice).
                     'region-offices.update',
+                    // Their own region's events and who joined them, and the QR
+                    // scanner at the events they see (GadEventPolicy). Deleting
+                    // stays with the admin.
+                    'events.view', 'events.create', 'events.update', 'events.check-in', 'events.view-registrations',
+                    // Their own region's certificates and signatories (docs/certificates.md).
+                    'certificates.view', 'certificates.create', 'certificates.update', 'certificates.delete', 'certificates.release',
                 ],
             ],
             'ched-employee' => [
                 'name' => 'CHED Employee',
                 'description' => 'Views the monitoring reports and GAD surveys of their office\'s region and posts in Gender Mainstreaming.',
-                'permissions' => ['monitoring.view', 'posts.view', 'quests.play'],
+                'permissions' => ['monitoring.view', 'posts.view', 'quests.play', 'events.check-in'],
             ],
             // An HEI's own people (Role::HEI_SLUGS), placed through their HEI.
             'hei' => [

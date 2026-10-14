@@ -6,8 +6,11 @@ import {
     ContactRound,
     GraduationCap,
     History,
+    IdCard,
     Map,
     Palette,
+    ScrollText,
+    Signature,
     ShieldCheck,
     Star,
     UserRound,
@@ -22,6 +25,8 @@ import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
+import { index as myCertificates } from '@/routes/my-certificates';
+import { show as showVirtualId } from '@/routes/virtual-id';
 import type { Auth, NavItem } from '@/types';
 
 const accountNavItems: NavItem[] = [
@@ -29,6 +34,16 @@ const accountNavItems: NavItem[] = [
         title: 'Profile',
         href: edit(),
         icon: UserRound,
+    },
+    {
+        title: 'Virtual ID',
+        href: showVirtualId(),
+        icon: IdCard,
+    },
+    {
+        title: 'My certificates',
+        href: myCertificates(),
+        icon: ScrollText,
     },
     {
         title: 'Security',
@@ -76,7 +91,10 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
         isCurrentOrParentUrl('/settings/activity-logs') ||
         isCurrentOrParentUrl('/settings/ratings') ||
         isCurrentOrParentUrl('/settings/student-counts') ||
-        isCurrentOrParentUrl('/settings/badges');
+        isCurrentOrParentUrl('/settings/badges') ||
+        isCurrentOrParentUrl('/settings/certificates') ||
+        isCurrentOrParentUrl('/settings/certificate-signatories') ||
+        isCurrentOrParentUrl('/settings/event-certificates');
     const isAppearancePage = isCurrentOrParentUrl('/settings/appearance');
     const configurationNavItems: NavItem[] = [
         ...(auth.permissions.includes('academic-years.view')
@@ -141,6 +159,23 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     )
         ? [{ title: 'Badges', href: '/settings/badges', icon: Award }]
         : [];
+    // The certificates an office gives at its GAD events (docs/certificates.md).
+    const eventNavItems: NavItem[] = auth.permissions.includes(
+        'certificates.view',
+    )
+        ? [
+              {
+                  title: 'Certificates',
+                  href: '/settings/certificates',
+                  icon: ScrollText,
+              },
+              {
+                  title: 'Signatories',
+                  href: '/settings/certificate-signatories',
+                  icon: Signature,
+              },
+          ]
+        : [];
     // What the public site collects: the homepage's Rate PHLGADIS answers.
     const publicSiteNavItems: NavItem[] = auth.permissions.includes(
         'site-ratings.view',
@@ -191,6 +226,13 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                             <SettingsNavGroup
                                 label="Community"
                                 items={communityNavItems}
+                                isCurrentOrParentUrl={isCurrentOrParentUrl}
+                            />
+                        )}
+                        {eventNavItems.length > 0 && (
+                            <SettingsNavGroup
+                                label="Events"
+                                items={eventNavItems}
                                 isCurrentOrParentUrl={isCurrentOrParentUrl}
                             />
                         )}
