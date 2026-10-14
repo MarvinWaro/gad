@@ -59,6 +59,28 @@ function joinAnd(parts: string[]): string {
 }
 
 /**
+ * The pictures a certificate couldn't load, as one clause: "The e-signature
+ * of Maria Santos couldn't be loaded", "Extra logo 1 and the e-signature of
+ * Jose Cruz couldn't be loaded".
+ */
+export function missingPictures(missing: string[]): string {
+    const names = joinAnd(missing);
+
+    return `${names.charAt(0).toUpperCase()}${names.slice(1)} couldn't be loaded`;
+}
+
+/** A download refused because pictures couldn't be loaded (`MissingPicturesError`). */
+export function isMissingPictures(
+    error: unknown,
+): error is Error & { missing: string[] } {
+    return (
+        error instanceof Error &&
+        error.name === 'MissingPicturesError' &&
+        Array.isArray((error as { missing?: unknown }).missing)
+    );
+}
+
+/**
  * An event's dates: "October 14, 2026", "October 14–16, 2026",
  * "October 30 – November 2, 2026" or "December 30, 2026 – January 2, 2027".
  */

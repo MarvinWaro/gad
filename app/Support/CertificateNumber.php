@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Certificate;
+use BaconQrCode\Common\ErrorCorrectionLevel;
 
 /**
  * A certificate's number, such as "CERT-7K2M-Q9XA", printed on it and in its
@@ -12,6 +13,20 @@ use App\Models\Certificate;
 final class CertificateNumber
 {
     public const PREFIX = 'CERT';
+
+    /** What the design editor's sample prints; no certificate is given it. */
+    public const SAMPLE = 'CERT-0000-0000';
+
+    /**
+     * A certificate's verify QR, opening its verify page: level M, which
+     * reads through about 15% damage, as on a photocopy or a phone screen.
+     *
+     * @return list<string>
+     */
+    public static function qrRows(string $verifyUrl): array
+    {
+        return QrCode::rows($verifyUrl, ErrorCorrectionLevel::M());
+    }
 
     /** Eight random characters: 40 bits, about 1.1 trillion numbers. */
     public static function generate(): string

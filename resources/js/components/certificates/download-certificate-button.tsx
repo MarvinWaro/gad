@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { getJson } from '@/hooks/use-inbox';
+import { isMissingPictures } from '@/lib/certificate-text';
 import { toast } from '@/lib/toast';
 import { document as certificateDocument } from '@/routes/certificates';
 import type { CertificateDocument } from '@/types/certificates';
@@ -38,9 +39,11 @@ export function DownloadCertificateButton({
             }
 
             await pdf.downloadCertificatePdf(certificate);
-        } catch {
+        } catch (error) {
             toast.error(
-                'The certificate could not be made. Check the connection, then try again.',
+                isMissingPictures(error)
+                    ? `${error.message}, so the certificate wasn’t made. The office that gave it needs to upload ${error.missing.length === 1 ? 'it' : 'them'} again.`
+                    : 'The certificate could not be made. Check the connection, then try again.',
             );
         } finally {
             setBusy(false);

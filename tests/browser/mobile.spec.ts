@@ -117,6 +117,8 @@ test('the public pages fit a 360px phone', async ({ browser }) => {
         '/about',
         '/about/gad-herstory',
         '/help/faq',
+        '/gad-events',
+        '/gad-events?when=past',
         '/feedback',
         '/resources/definition-of-terms',
         '/resources/gad-enabling-republic-acts',
@@ -131,6 +133,14 @@ test('the public pages fit a 360px phone', async ({ browser }) => {
     ]) {
         await checkPage(page, path);
     }
+
+    // An event's public page, opened from the list.
+    await page.goto('/gad-events');
+    const event = await page
+        .locator('a[href*="/gad-events/"]')
+        .first()
+        .getAttribute('href');
+    await checkPage(page, event!);
 });
 
 test('the HEI pages fit a 360px phone', async ({ browser }) => {
@@ -160,6 +170,14 @@ test('the HEI pages fit a 360px phone', async ({ browser }) => {
         .first()
         .getAttribute('href');
     await checkPage(page, quest!);
+
+    // An event's page, opened from the calendar.
+    await page.goto('/events');
+    const event = await page
+        .locator('a[href*="/events/"]')
+        .first()
+        .getAttribute('href');
+    await checkPage(page, event!);
 
     // The Following feed, the search, and someone's profile from it.
     await checkPage(page, '/dashboard?feed=following');
@@ -215,6 +233,19 @@ test('the staff pages fit a 360px phone', async ({ browser }) => {
         .first()
         .getAttribute('href');
     await checkPage(page, results!);
+
+    // An event's page and who joined it, opened from the events table.
+    await page.goto('/admin/events');
+    const joined = await page
+        .locator('a[href*="/registrations"]')
+        .first()
+        .getAttribute('href');
+    const eventPage = await page
+        .locator('tbody a[href*="/events/"]:not([href*="/admin/"])')
+        .first()
+        .getAttribute('href');
+    await checkPage(page, joined!);
+    await checkPage(page, eventPage!);
 
     // The survey builder, opened from the list.
     await page.goto('/admin/surveys');

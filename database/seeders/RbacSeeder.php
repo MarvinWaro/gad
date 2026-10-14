@@ -46,6 +46,8 @@ class RbacSeeder extends Seeder
             ['name' => 'Update GAD events', 'slug' => 'events.update', 'group' => 'GAD events'],
             ['name' => 'Delete GAD events', 'slug' => 'events.delete', 'group' => 'GAD events'],
             ['name' => 'Check people in to GAD events', 'slug' => 'events.check-in', 'group' => 'GAD events'],
+            // The CHED Focal of the event's region, and Administrators (GadEventPolicy::viewRegistrations).
+            ['name' => 'See who joined GAD events', 'slug' => 'events.view-registrations', 'group' => 'GAD events'],
             ['name' => 'View and post in Gender Mainstreaming', 'slug' => 'posts.view', 'group' => 'Community'],
             ['name' => 'Moderate community posts', 'slug' => 'posts.moderate', 'group' => 'Community'],
             ['name' => 'View site ratings', 'slug' => 'site-ratings.view', 'group' => 'Site ratings'],
@@ -98,7 +100,8 @@ class RbacSeeder extends Seeder
                 'permissions' => [
                     'carousel.view', 'carousel.create', 'carousel.update',
                     'surveys.view', 'surveys.create', 'surveys.update',
-                    'events.view', 'events.create', 'events.update', 'events.check-in',
+                    // Events belong to the CHED Focal and the Admin; they check people in.
+                    'events.view', 'events.check-in',
                     'site-ratings.view',
                     'monitoring.view', 'monitoring.review',
                     'quests.play',
@@ -108,7 +111,7 @@ class RbacSeeder extends Seeder
             // Office) decides whose reports it sees.
             'ched-focal' => [
                 'name' => 'CHED Focal',
-                'description' => 'Reviews its region\'s monitoring reports and GAD surveys, posts in Gender Mainstreaming, writes GAD quests, reads its region\'s law survey responses, and manages its region\'s HEI and CHED Employee accounts and office details, and gives its region\'s GAD event certificates.',
+                'description' => 'Reviews its region\'s monitoring reports and GAD surveys, posts in Gender Mainstreaming, writes GAD quests, reads its region\'s law survey responses, and manages its region\'s HEI and CHED Employee accounts and office details, and runs its region\'s GAD events, sees who joined them and gives their certificates.',
                 'permissions' => [
                     'monitoring.view', 'monitoring.review', 'posts.view', 'surveys.view',
                     // Their own region's responses only (SurveyResponse::scopeReachableBy).
@@ -118,8 +121,10 @@ class RbacSeeder extends Seeder
                     'users.view', 'users.create', 'users.update',
                     // Their own region's letterhead only (SurveyRegionPolicy::updateOffice).
                     'region-offices.update',
-                    // The QR scanner, at the events they see (GadEventPolicy::checkIn).
-                    'events.check-in',
+                    // Their own region's events and who joined them, and the QR
+                    // scanner at the events they see (GadEventPolicy). Deleting
+                    // stays with the admin.
+                    'events.view', 'events.create', 'events.update', 'events.check-in', 'events.view-registrations',
                     // Their own region's certificates and signatories (docs/certificates.md).
                     'certificates.view', 'certificates.create', 'certificates.update', 'certificates.delete', 'certificates.release',
                 ],

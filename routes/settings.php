@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CertificateRequestController;
 use App\Http\Controllers\Settings\AcademicYearController;
 use App\Http\Controllers\Settings\ActivityLogController;
 use App\Http\Controllers\Settings\BadgeController;
@@ -196,6 +197,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware(['can:update,design', 'throttle:20,1'])->name('settings.certificates.update');
         Route::post('settings/certificates/{design}/duplicate', [CertificateDesignController::class, 'duplicate'])
             ->middleware(['can:view,design', 'can:create,'.CertificateDesign::class])->name('settings.certificates.duplicate');
+        // Its pair, of the other kind: chosen for events and released together.
+        Route::post('settings/certificates/{design}/pair', [CertificateDesignController::class, 'pair'])
+            ->middleware(['can:view,design', 'can:create,'.CertificateDesign::class])->name('settings.certificates.pair');
         Route::delete('settings/certificates/{design}', [CertificateDesignController::class, 'destroy'])
             ->middleware('can:delete,design')->name('settings.certificates.destroy');
         Route::get('settings/certificates/{design}/events', [CertificateDesignController::class, 'events'])
@@ -216,6 +220,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('settings/event-certificates/{eventCertificate}/certificates/{certificate}/status', [EventCertificateController::class, 'status'])
             ->whereUlid('certificate')
             ->middleware('can:release,eventCertificate')->scopeBindings()->name('settings.event-certificates.status');
+        // Answering a request from someone who missed a day (docs/certificates.md).
+        Route::put('settings/event-certificates/{eventCertificate}/requests/{certificateRequest}', [CertificateRequestController::class, 'update'])
+            ->whereUlid('certificateRequest')
+            ->middleware('can:release,eventCertificate')->scopeBindings()->name('settings.event-certificates.requests.update');
     });
 });
 

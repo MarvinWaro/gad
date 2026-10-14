@@ -24,32 +24,47 @@ class GadEventController extends Controller
         /** @var User $user */
         $user = $request->user();
         $search = trim((string) $request->query('search', ''));
+        // Where they stand now: happening, upcoming, ended or cancelled (GadEvent::statusAt).
+        $status = in_array($request->query('status'), GadEvent::STATUSES, true) ? (string) $request->query('status') : '';
+        $now = GadEvent::localNow();
 
-        $events = PageRange::within(GadEvent::query()
-            // A regional office lists its own region's events and those for
-            // every region; the Central Office lists them all.
+        // A regional office lists its own region's events and those for every
+        // region; the Central Office lists them all.
+        $listed = GadEvent::query()
             ->visibleTo($user)
-            ->with(['creator:id,name', 'region:id,name'])
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                 ->where('title', 'like', "%{$search}%")
-                ->orWhere('location', 'like', "%{$search}%")))
+                ->orWhere('location', 'like', "%{$search}%")));
+        $ongoing = (clone $listed)->inStatus('ongoing', $now)->count();
+
+        $events = PageRange::within($listed
+            ->when($status !== '', fn ($query) => $query->inStatus($status, $now))
+            ->with(['creator:id,name', 'region:id,name'])
+            ->withCount('registrations')
             ->orderByDesc('starts_at')
             ->paginate(15)
             ->withQueryString()
             ->through(fn (GadEvent $event): array => [
                 ...$event->toCalendarArray(),
+                'status' => $event->statusAt($now),
                 'created_by' => $event->creator?->name,
                 'region' => $event->region?->only(['id', 'name']),
+                // How many joined is for the CHED Focal of its region and Administrators.
+                'joined_count' => $user->can('viewRegistrations', $event) ? (int) $event->getAttribute('registrations_count') : null,
+                'is_public' => $event->is_public,
                 'can' => [
                     'update' => $user->can('update', $event),
                     'delete' => $user->can('delete', $event),
+                    'viewRegistrations' => $user->can('viewRegistrations', $event),
                 ],
             ]));
 
         return Inertia::render('admin/events/index', [
             'events' => $events,
+            // How many of those listed are happening now, whatever the status filter.
+            'ongoing' => $ongoing,
             'categories' => GadEvent::CATEGORIES,
-            'filters' => ['search' => $search],
+            'filters' => ['search' => $search, 'status' => $status],
             // Where an event can be for: any region from the Central Office,
             // otherwise the office's own.
             'regions' => PlaceFilters::options($user, [])['regions'],
@@ -75,25 +90,28 @@ class GadEventController extends Controller
         return $this->backToList('admin.events.index');
     }
 
-    public function update(SaveGadEventRequest $request, GadEvent $event, ActivityRecorder $activity): RedirectResponse
+    public function update(SaveGadEventRequest $request, GadEvent $event, ActivityRecorder $activity, Notifier $notifier): RedirectResponse
     {
         $event->update($request->eventAttributes());
-        $activity->recordSave(ActivityModule::Events, $event);
+        // People on its list hear of a new date, time, venue or region.
+        $notifier->eventChanged($event, $activity->recordSave(ActivityModule::Events, $event));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Event updated.')]);
 
         return $this->backToList('admin.events.index');
     }
 
-    public function destroy(GadEvent $event, ActivityRecorder $activity): RedirectResponse
+    public function destroy(GadEvent $event, ActivityRecorder $activity, Notifier $notifier): RedirectResponse
     {
         // Their verify pages must keep working (docs/certificates.md).
         if ($event->certificates()->whereNotNull('released_at')->exists()) {
             return $this->refuse(__('Certificates were released for :event, so it stays. Deleting it would void them.', ['event' => $event->title]));
         }
 
+        // Read before the list goes with the event: they are told it is off.
+        $people = $event->registrations()->pluck('user_id')->all();
         $event->delete();
-        $activity->record(ActivityAction::Deleted, ActivityModule::Events, $event);
+        $notifier->eventCancelled($activity->record(ActivityAction::Deleted, ActivityModule::Events, $event), $people);
 
         Inertia::flash('toast', ['type' => 'deleted', 'message' => __('Event deleted.')]);
 

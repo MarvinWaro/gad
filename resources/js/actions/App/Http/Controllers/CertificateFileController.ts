@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\CertificateFileController::show
- * @see app/Http/Controllers/CertificateFileController.php:17
+ * @see app/Http/Controllers/CertificateFileController.php:19
  * @route '/certificate-files/{folder}/{file}'
  */
 export const show = (args: { folder: string | number, file: string | number } | [folder: string | number, file: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\CertificateFileController::show
- * @see app/Http/Controllers/CertificateFileController.php:17
+ * @see app/Http/Controllers/CertificateFileController.php:19
  * @route '/certificate-files/{folder}/{file}'
  */
 show.url = (args: { folder: string | number, file: string | number } | [folder: string | number, file: string | number ], options?: RouteQueryOptions) => {
@@ -42,7 +42,7 @@ show.url = (args: { folder: string | number, file: string | number } | [folder: 
 
 /**
 * @see \App\Http\Controllers\CertificateFileController::show
- * @see app/Http/Controllers/CertificateFileController.php:17
+ * @see app/Http/Controllers/CertificateFileController.php:19
  * @route '/certificate-files/{folder}/{file}'
  */
 show.get = (args: { folder: string | number, file: string | number } | [folder: string | number, file: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -51,7 +51,7 @@ show.get = (args: { folder: string | number, file: string | number } | [folder: 
 })
 /**
 * @see \App\Http\Controllers\CertificateFileController::show
- * @see app/Http/Controllers/CertificateFileController.php:17
+ * @see app/Http/Controllers/CertificateFileController.php:19
  * @route '/certificate-files/{folder}/{file}'
  */
 show.head = (args: { folder: string | number, file: string | number } | [folder: string | number, file: string | number ], options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -61,7 +61,7 @@ show.head = (args: { folder: string | number, file: string | number } | [folder:
 
     /**
 * @see \App\Http\Controllers\CertificateFileController::show
- * @see app/Http/Controllers/CertificateFileController.php:17
+ * @see app/Http/Controllers/CertificateFileController.php:19
  * @route '/certificate-files/{folder}/{file}'
  */
     const showForm = (args: { folder: string | number, file: string | number } | [folder: string | number, file: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -71,7 +71,7 @@ show.head = (args: { folder: string | number, file: string | number } | [folder:
 
             /**
 * @see \App\Http\Controllers\CertificateFileController::show
- * @see app/Http/Controllers/CertificateFileController.php:17
+ * @see app/Http/Controllers/CertificateFileController.php:19
  * @route '/certificate-files/{folder}/{file}'
  */
         showForm.get = (args: { folder: string | number, file: string | number } | [folder: string | number, file: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -80,7 +80,7 @@ show.head = (args: { folder: string | number, file: string | number } | [folder:
         })
             /**
 * @see \App\Http\Controllers\CertificateFileController::show
- * @see app/Http/Controllers/CertificateFileController.php:17
+ * @see app/Http/Controllers/CertificateFileController.php:19
  * @route '/certificate-files/{folder}/{file}'
  */
         showForm.head = (args: { folder: string | number, file: string | number } | [folder: string | number, file: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

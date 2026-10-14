@@ -4,7 +4,6 @@ namespace App\Support;
 
 use App\Models\User;
 use BaconQrCode\Common\ErrorCorrectionLevel;
-use BaconQrCode\Encoder\Encoder;
 
 /**
  * The Virtual ID's participant code, such as "GAD-7K2M-Q9XA" (docs/virtual-id.md).
@@ -74,16 +73,6 @@ final class ParticipantCode
      */
     public static function qrRows(string $code): array
     {
-        $matrix = Encoder::encode($code, ErrorCorrectionLevel::Q(), Encoder::DEFAULT_BYTE_MODE_ENCODING)->getMatrix();
-        $rows = [];
-        for ($y = 0; $y < $matrix->getHeight(); $y++) {
-            $row = '';
-            for ($x = 0; $x < $matrix->getWidth(); $x++) {
-                $row .= $matrix->get($x, $y) === 1 ? '1' : '0';
-            }
-            $rows[] = $row;
-        }
-
-        return $rows;
+        return QrCode::rows($code, ErrorCorrectionLevel::Q());
     }
 }

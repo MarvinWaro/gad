@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Enums\NotificationKind;
 use App\Models\Notification;
 use App\Support\ActivitySubjects;
+use App\Support\EventChanges;
 use App\Support\InstitutionName;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -45,10 +46,14 @@ class NotificationResource extends JsonResource
                 'avatar' => $entry->user?->avatar,
             ],
             'sentence' => $this->sentence(),
-            // The reviewer's comment on a report.
-            'quote' => in_array($this->kind, [NotificationKind::ReportReviewed, NotificationKind::ReportReturned], true)
-                ? $this->property('comment')
-                : null,
+            // The reviewer's comment on a report, what an event now says,
+            // or why a certificate request was declined.
+            'quote' => match ($this->kind) {
+                NotificationKind::ReportReviewed, NotificationKind::ReportReturned => $this->property('comment'),
+                NotificationKind::EventChanged => EventChanges::summary($entry->changes ?? []),
+                NotificationKind::CertificateRequestDeclined => $this->property('note'),
+                default => null,
+            },
             'reaction' => $this->kind === NotificationKind::PostReacted ? $this->property('reaction') : null,
             'count' => $this->count,
             'url' => $viewer !== null ? $this->linkFor($viewer) : null,
@@ -66,9 +71,12 @@ class NotificationResource extends JsonResource
     private function sentence(): array
     {
         $entry = $this->activity;
-        $about = $entry !== null
-            ? $entry->subject_label
-            : ($this->subject !== null ? ActivitySubjects::label($this->subject) : null);
+        $about = match (true) {
+            // The log names who was added; their notice names the event.
+            $this->kind === NotificationKind::EventPersonAdded => $this->property('event') ?? $entry?->subject_label,
+            $entry !== null => $entry->subject_label,
+            default => $this->subject !== null ? ActivitySubjects::label($this->subject) : null,
+        };
         $place = $entry?->hei !== null ? InstitutionName::display($entry->hei->name) : null;
         $text = $this->kind->sentence($entry?->action, $this->count);
         $text = $place === null

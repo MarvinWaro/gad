@@ -1,4 +1,4 @@
-import type { CalendarEvent, EventCategory } from '@/types';
+import type { CalendarEvent, EventCategory, EventStatus } from '@/types';
 
 /**
  * Event times arrive as Philippine wall-clock strings (`2026-10-02T09:00:00`)
@@ -59,7 +59,9 @@ const timeFormat = new Intl.DateTimeFormat('en-PH', {
 });
 
 /** "All day", "9:00 AM – 4:00 PM", or "Nov 25 – Dec 12" for multi-day events. */
-export function formatEventTime(event: CalendarEvent): string {
+export function formatEventTime(
+    event: Pick<CalendarEvent, 'starts_at' | 'ends_at' | 'is_all_day'>,
+): string {
     const start = parseWallClock(event.starts_at);
     const end = event.ends_at ? parseWallClock(event.ends_at) : null;
     const multiDay = end !== null && dateKey(start) !== dateKey(end);
@@ -78,6 +80,60 @@ export function formatEventTime(event: CalendarEvent): string {
         ? `${timeFormat.format(start)} – ${timeFormat.format(end)}`
         : timeFormat.format(start);
 }
+
+const longDay = new Intl.DateTimeFormat('en-PH', {
+    month: 'long',
+    day: 'numeric',
+});
+
+/** A wall-clock moment as a sentence names it: "October 20, 5:00 PM". */
+export function formatMoment(value: string): string {
+    const date = parseWallClock(value);
+
+    return `${longDay.format(date)}, ${timeFormat.format(date)}`;
+}
+
+/** What an event's page says about joining it, by where registration stands. */
+export function registrationNote(event: {
+    registration_closes_at: string | null;
+    registration_open: boolean;
+    ended: boolean;
+    cancelled?: boolean;
+}): string {
+    if (event.cancelled) {
+        return 'This event was cancelled.';
+    }
+
+    if (event.ended) {
+        return 'This event has ended.';
+    }
+
+    if (event.registration_open) {
+        return event.registration_closes_at
+            ? `Registration closes ${formatMoment(event.registration_closes_at)}.`
+            : 'Registration is open until the event ends.';
+    }
+
+    return event.registration_closes_at
+        ? `Registration closed ${formatMoment(event.registration_closes_at)}.`
+        : 'Registration is closed.';
+}
+
+/** Whose event it is: "For Regional Office XII", or "For every region". */
+export function eventPlace(region: string | null): string {
+    return region ? `For ${region}` : 'For every region';
+}
+
+/** How each status reads, in its tone (`lib/tones.ts`). */
+export const eventStatuses: Record<
+    EventStatus,
+    { label: string; tone: 'positive' | 'info' | 'neutral' | 'danger' }
+> = {
+    ongoing: { label: 'Happening now', tone: 'positive' },
+    upcoming: { label: 'Upcoming', tone: 'info' },
+    ended: { label: 'Ended', tone: 'neutral' },
+    cancelled: { label: 'Cancelled', tone: 'danger' },
+};
 
 export const eventCategories: Record<
     EventCategory,

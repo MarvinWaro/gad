@@ -11,11 +11,12 @@ use App\Models\GadEventCheckIn;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**
- * The scanner's requests: checking someone in, and the Recent list of who
- * has been checked in today (docs/event-check-in.md).
+ * The scanner's requests: checking someone in, the Recent list of who has
+ * been checked in today, and undoing one of those (docs/event-check-in.md).
  */
 class EventCheckInController extends Controller
 {
@@ -47,6 +48,16 @@ class EventCheckInController extends Controller
             'check_in' => GadEventCheckInResource::make($outcome['checkIn'])->resolve($request),
             'count' => $outcome['count'],
         ], $outcome['status'] === 'checked_in' ? 201 : 200);
+    }
+
+    /** Undoes one of today's check-ins made by mistake: `{count}` checked in today now. */
+    public function destroy(Request $request, GadEvent $event, GadEventCheckIn $checkIn, CheckInParticipant $checkIns): JsonResponse
+    {
+        /** @var User $staff */
+        $staff = $request->user();
+        $checkIn->setRelation('event', $event)->load('user');
+
+        return response()->json(['count' => $checkIns->undo($staff, $checkIn)]);
     }
 
     /** @return HasMany<GadEventCheckIn, GadEvent> */

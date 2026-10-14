@@ -7,11 +7,14 @@ use App\Models\Badge;
 use App\Models\CarouselSlide;
 use App\Models\Certificate;
 use App\Models\CertificateDesign;
+use App\Models\CertificateRequest;
 use App\Models\CertificateSignatory;
 use App\Models\ChecklistResponse;
 use App\Models\GadEvent;
 use App\Models\GadEventCertificate;
 use App\Models\GadEventCheckIn;
+use App\Models\GadEventGuest;
+use App\Models\GadEventRegistration;
 use App\Models\MonitoringReport;
 use App\Models\Post;
 use App\Models\PostComment;
@@ -53,6 +56,7 @@ class ActivitySubjects
         'survey-response' => SurveyResponse::class,
         'event' => GadEvent::class,
         'event-check-in' => GadEventCheckIn::class,
+        'event-registration' => GadEventRegistration::class,
         'carousel-slide' => CarouselSlide::class,
         'post' => Post::class,
         'comment' => PostComment::class,
@@ -66,6 +70,8 @@ class ActivitySubjects
         'certificate-design' => CertificateDesign::class,
         'event-certificate' => GadEventCertificate::class,
         'certificate' => Certificate::class,
+        'event-guest' => GadEventGuest::class,
+        'certificate-request' => CertificateRequest::class,
     ];
 
     /** The kind of record, as the entry's sentence names it. */
@@ -86,6 +92,10 @@ class ActivitySubjects
             'certificate-signatory' => 'signatory',
             'certificate-design' => 'certificate design',
             'event-certificate' => 'the',
+            // Its label names the person: "Ana Reyes to GAD Orientation".
+            'event-registration' => '',
+            'event-guest' => 'guest',
+            'certificate-request' => 'a request for a',
             null => '',
             default => $type,
         };
@@ -114,9 +124,13 @@ class ActivitySubjects
             $subject instanceof SiteRating => sprintf('%d-star rating', (int) $subject->getAttribute('rating')),
             $subject instanceof SiteFeedback => self::excerpt($subject->feedback),
             $subject instanceof GadEventCheckIn => sprintf('%s at %s', $subject->user->name ?? 'Someone', $subject->event->title ?? 'a GAD event'),
+            // "Joined <event>": the person is the entry's actor.
+            $subject instanceof GadEventRegistration => $subject->event->title ?? 'a GAD event',
             $subject instanceof CertificateSignatory, $subject instanceof CertificateDesign => (string) $subject->getAttribute('name'),
             $subject instanceof GadEventCertificate => sprintf('%s for %s', $subject->design->kind->title(), $subject->event->title ?? 'a GAD event'),
             $subject instanceof Certificate => sprintf('%s of %s', $subject->number, $subject->name),
+            $subject instanceof GadEventGuest => sprintf('%s at %s', $subject->name, $subject->event->title ?? 'a GAD event'),
+            $subject instanceof CertificateRequest => $subject->eventCertificate !== null ? self::label($subject->eventCertificate) : 'a certificate',
             default => (string) $subject->getKey(),
         };
     }
@@ -135,14 +149,18 @@ class ActivitySubjects
             $subject instanceof Quest, $subject instanceof Badge, $subject instanceof GadEvent,
             $subject instanceof CertificateSignatory, $subject instanceof CertificateDesign => $subject->survey_region_id !== null ? new ActivityPlace($subject->survey_region_id) : null,
             $subject instanceof GadEventCertificate => $subject->event !== null ? self::place($subject->event) : null,
+            // A guest has no place of their own: the event's.
+            $subject instanceof GadEventGuest => $subject->event !== null ? self::place($subject->event) : null,
+            $subject instanceof CertificateRequest => $subject->user !== null ? self::place($subject->user) : null,
             // Where its holder belonged, so their region's office sees it.
             $subject instanceof Certificate => $subject->survey_hei_id !== null
                 ? ActivityPlace::ofHei($subject->survey_hei_id)
                 : ($subject->survey_region_id !== null ? new ActivityPlace($subject->survey_region_id) : null),
             $subject instanceof Post => ActivityPlace::ofHei($subject->getAttribute('survey_hei_id')),
             $subject instanceof PostComment => $subject->post !== null ? self::place($subject->post) : null,
-            // Where the person checked in belonged, so their region's office sees it.
-            $subject instanceof GadEventCheckIn => $subject->survey_hei_id !== null
+            // Where the person checked in or joining belonged, so their
+            // region's office sees it.
+            $subject instanceof GadEventCheckIn, $subject instanceof GadEventRegistration => $subject->survey_hei_id !== null
                 ? ActivityPlace::ofHei($subject->survey_hei_id)
                 : ($subject->survey_region_id !== null ? new ActivityPlace($subject->survey_region_id) : null),
             $subject instanceof MonitoringReport, $subject instanceof ChecklistResponse,
@@ -181,8 +199,22 @@ class ActivitySubjects
             $subject instanceof SurveyHei => route('settings.heis.index', ['search' => $subject->name]),
             $subject instanceof SurveyRespondentGroup => route('settings.respondent-groups.index'),
             $subject instanceof Survey => $viewer->can('surveys.view') ? route('admin.surveys.edit', $subject) : null,
-            $subject instanceof GadEvent => route($viewer->can('events.view') ? 'admin.events.index' : 'events.index'),
+            // Its page, where people join it and staff see who did.
+            $subject instanceof GadEvent => $viewer->can('view', $subject) ? route('events.show', $subject) : null,
             $subject instanceof GadEventCheckIn => $viewer->can('events.view') ? route('admin.events.index') : null,
+            $subject instanceof GadEventRegistration => $subject->event !== null && $viewer->can('view', $subject->event)
+                ? route('events.show', $subject->event)
+                : null,
+            $subject instanceof GadEventGuest => $subject->event !== null && $viewer->can('viewRegistrations', $subject->event)
+                ? route('admin.events.registrations.index', $subject->event)
+                : null,
+            // The office decides it on the release page; its asker reads it on the event's page.
+            $subject instanceof CertificateRequest => match (true) {
+                $subject->eventCertificate === null => null,
+                $viewer->can('release', $subject->eventCertificate) => route('settings.event-certificates.show', $subject->eventCertificate),
+                $subject->user_id === $viewer->id && $subject->eventCertificate->event !== null => route('events.show', $subject->eventCertificate->event),
+                default => null,
+            },
             $subject instanceof CarouselSlide => $viewer->can('carousel.view') ? route('admin.carousels.index') : null,
             $subject instanceof Post => route('posts.show', $subject),
             $subject instanceof PostComment => route('posts.show', $subject->getAttribute('post_id')),

@@ -1,4 +1,7 @@
 import GadEventController from './GadEventController'
+import EventRegistrationController from './EventRegistrationController'
+import EventGuestController from './EventGuestController'
+import EventCancellationController from './EventCancellationController'
 import EventScannerController from './EventScannerController'
 import EventCheckInController from './EventCheckInController'
 import CarouselSlideController from './CarouselSlideController'
@@ -10,6 +13,9 @@ import MonitoringReviewController from './MonitoringReviewController'
 import ChecklistResponseController from './ChecklistResponseController'
 const Admin = {
     GadEventController: Object.assign(GadEventController, GadEventController),
+EventRegistrationController: Object.assign(EventRegistrationController, EventRegistrationController),
+EventGuestController: Object.assign(EventGuestController, EventGuestController),
+EventCancellationController: Object.assign(EventCancellationController, EventCancellationController),
 EventScannerController: Object.assign(EventScannerController, EventScannerController),
 EventCheckInController: Object.assign(EventCheckInController, EventCheckInController),
 CarouselSlideController: Object.assign(CarouselSlideController, CarouselSlideController),

@@ -1,7 +1,9 @@
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import { useId, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
+import { EventStatusBadge } from '@/components/events/event-status-badge';
+import { JoinedMark } from '@/components/events/joined-mark';
 import {
     EventCategoryDot,
     EventCategoryLabel,
@@ -16,6 +18,7 @@ import {
     parseWallClock,
 } from '@/lib/event-dates';
 import { cn } from '@/lib/utils';
+import { show as eventPage } from '@/routes/events';
 import type { CalendarEvent, CalendarMonth } from '@/types';
 
 const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -301,7 +304,14 @@ export function EventCalendar({
                     <ul className="mt-2 space-y-3">
                         {selectedEvents.map((event) => (
                             <li key={event.id} className="text-sm">
-                                <p className="leading-snug">{event.title}</p>
+                                <p className="leading-snug">
+                                    <Link
+                                        href={eventPage(event)}
+                                        className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                    >
+                                        {event.title}
+                                    </Link>
+                                </p>
                                 <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
                                     {formatEventTime(event)}
                                 </p>
@@ -309,6 +319,10 @@ export function EventCalendar({
                                     <EventCategoryLabel
                                         category={event.category}
                                     />
+                                    {event.cancelled && (
+                                        <EventStatusBadge status="cancelled" />
+                                    )}
+                                    {event.joined && <JoinedMark />}
                                     {event.location && (
                                         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                                             <MapPin

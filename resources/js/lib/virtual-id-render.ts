@@ -1,6 +1,13 @@
 import { loadPdfMake } from './monitoring-pdf-download';
 import { PDF_FONTS } from './monitoring-pdf';
-import { CARD_MM, CARD_RATIO, layoutCard, paintCard } from './virtual-id';
+import {
+    CARD_MM,
+    CARD_RATIO,
+    layoutCard,
+    layoutCardBack,
+    paintCard,
+    paintCardBack,
+} from './virtual-id';
 import type { CardColors, CardFonts, CardImages, CardText } from './virtual-id';
 
 /** The official marks on the card, used as they are. */
@@ -84,6 +91,31 @@ export async function renderCard(
     canvas.width = Math.round(layout.width);
     canvas.height = Math.round(layout.height);
     paintCard(context, layout, text, images, colors, qr);
+}
+
+/** Draws the card's back on `canvas`, `width` pixels wide. */
+export async function renderCardBack(
+    canvas: HTMLCanvasElement,
+    width: number,
+    name: string,
+    images: CardImages,
+): Promise<void> {
+    await document.fonts.ready;
+    const context = canvas.getContext('2d');
+
+    if (!context) {
+        return;
+    }
+
+    const { colors, fonts } = tokens();
+    const layout = layoutCardBack(name, width, fonts, (line, font) => {
+        context.font = font;
+
+        return context.measureText(line).width;
+    });
+    canvas.width = Math.round(layout.width);
+    canvas.height = Math.round(layout.height);
+    paintCardBack(context, layout, images.mark, colors);
 }
 
 async function exportCanvas(

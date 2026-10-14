@@ -150,6 +150,29 @@ test('an office designs, releases and its certificate is downloaded and verified
     ).toBeVisible({ timeout: 30_000 });
     await checkBothThemes(staff, testInfo, 'certificate-editor');
 
+    // An e-signature gone from storage: the preview is still drawn, without
+    // it, and says so; a sample isn't made without it.
+    await staff.route('**/certificate-files/signatures/**', (route) =>
+        route.fulfill({ status: 404 }),
+    );
+    await staff.reload();
+    await expect(
+        staff.getByRole('img', {
+            name: /^Preview of the Certificate of Participation/,
+        }),
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(
+        staff.getByText(
+            "The e-signature of Fictional Regional Director couldn't be loaded, so the preview leaves it out",
+        ),
+    ).toBeVisible();
+    await staff.getByRole('button', { name: 'Download sample PDF' }).click();
+    await expect(
+        staff.getByText(/so the sample wasn’t made\. Upload it again\./),
+    ).toBeVisible();
+    await staff.unroute('**/certificate-files/signatures/**');
+    await staff.reload();
+
     // Used on the workshop, then released to the one person checked in.
     await staff.getByRole('button', { name: 'Use on an event' }).click();
     const useDialog = staff.getByRole('dialog');
@@ -159,14 +182,17 @@ test('an office designs, releases and its certificate is downloaded and verified
     await useDialog.getByLabel(/Fixture Certificate Workshop/).check();
     await useDialog.getByRole('button', { name: 'Use on this event' }).click();
     await expect(staff).toHaveURL(/\/settings\/event-certificates\//);
+    // It goes out by itself; the browser run has no scheduler, so staff release it now.
     await expect(
-        staff.getByText('1 person checked in will get this certificate'),
+        staff.getByText(
+            /goes out by itself within a minute to everyone present on every day: 1 person/,
+        ),
     ).toBeVisible();
 
-    await staff.getByRole('button', { name: 'Release certificates' }).click();
+    await staff.getByRole('button', { name: 'Release now' }).click();
     await staff
         .getByRole('alertdialog')
-        .getByRole('button', { name: 'Release' })
+        .getByRole('button', { name: 'Release now' })
         .click();
     await expect(
         staff.getByText('Fictional Certificate Participant', { exact: true }),
@@ -197,8 +223,14 @@ test('an office designs, releases and its certificate is downloaded and verified
         attendee.getByText('Certificate of Participation'),
     ).toBeVisible();
     await expect(
-        attendee.getByText('Fixture Certificate Workshop'),
+        attendee
+            .getByRole('region', { name: 'Certificates', exact: true })
+            .getByText('Fixture Certificate Workshop'),
     ).toBeVisible();
+    // The event they joined says it gave them one.
+    await expect(
+        attendee.getByRole('region', { name: 'Events you joined' }),
+    ).toContainText('Certificate ready');
     const download = attendee.waitForEvent('download');
     await attendee
         .getByRole('button', { name: /^Download Certificate of Participation/ })

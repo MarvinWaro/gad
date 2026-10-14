@@ -1,6 +1,12 @@
 import AxeBuilder from '@axe-core/playwright';
 import { readFileSync } from 'node:fs';
-import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import {
+    expect,
+    test,
+    type Locator,
+    type Page,
+    type TestInfo,
+} from '@playwright/test';
 
 /**
  * The Virtual ID in Settings: a wallet-size card (a bank card held upright)
@@ -70,6 +76,32 @@ async function drawnCard(page: Page, name: string) {
     return card;
 }
 
+/**
+ * The lanyard swings as the page opens: wait until the card hangs upright
+ * (its box a bank card's shape again) and stays put.
+ */
+async function settled(card: Locator) {
+    const upright = 85.6 / 53.98;
+
+    await expect
+        .poll(
+            async () => {
+                const before = await card.boundingBox();
+                await card.page().waitForTimeout(300);
+                const after = await card.boundingBox();
+
+                return (
+                    before !== null &&
+                    after !== null &&
+                    Math.abs(after.height / after.width - upright) < 0.005 &&
+                    Math.abs(before.x - after.x) < 0.5
+                );
+            },
+            { timeout: 20_000 },
+        )
+        .toBe(true);
+}
+
 test('everyone has a wallet-size Virtual ID in Settings, with their code as a QR', async ({
     page,
 }, testInfo) => {
@@ -81,11 +113,77 @@ test('everyone has a wallet-size Virtual ID in Settings, with their code as a QR
     const card = await drawnCard(page, 'Fictional Quest Player');
     await expect(card).toHaveAttribute('aria-label', /Browser Test HEI/);
     await expect(card).toHaveAttribute('aria-label', CODE);
-    // A bank card held upright: 53.98 × 85.60 mm.
-    const box = await card.boundingBox();
-    expect((box?.height ?? 0) / (box?.width ?? 1)).toBeCloseTo(85.6 / 53.98, 2);
+    // A bank card held upright, 53.98 × 85.60 mm, once the lanyard settles.
+    await expect
+        .poll(
+            async () => {
+                const box = await card.boundingBox();
+
+                return (box?.height ?? 0) / (box?.width ?? 1);
+            },
+            { timeout: 15_000 },
+        )
+        .toBeCloseTo(85.6 / 53.98, 2);
 
     await checkBothThemes(page, testInfo, 'virtual-id');
+});
+
+test('the card hangs from a lanyard: it swings when dragged, turns over, and opens full view', async ({
+    page,
+}, testInfo) => {
+    await logIn(page, 'browser-quest-player@example.test');
+    await page.goto('/settings/virtual-id');
+    const card = await drawnCard(page, 'Fictional Quest Player');
+    const turnOver = page.getByRole('button', { name: 'Turn over' });
+
+    // Dragged sideways, it tilts; let go, it swings back and hangs straight.
+    await settled(card);
+    const rest = await card.boundingBox();
+    await page.mouse.move(
+        rest!.x + rest!.width / 2,
+        rest!.y + rest!.height / 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+        rest!.x + rest!.width / 2 + 160,
+        rest!.y + rest!.height / 2,
+        {
+            steps: 8,
+        },
+    );
+    const dragged = await card.boundingBox();
+    expect(dragged!.width).toBeGreaterThan(rest!.width + 10);
+    await page.mouse.up();
+    await settled(card);
+    expect(
+        Math.abs((await card.boundingBox())!.width - rest!.width),
+    ).toBeLessThan(2);
+
+    // A tap turns it over, as the button does.
+    await expect(turnOver).toHaveAttribute('aria-pressed', 'false');
+    await card.click();
+    await expect(turnOver).toHaveAttribute('aria-pressed', 'true');
+    await turnOver.click();
+    await expect(turnOver).toHaveAttribute('aria-pressed', 'false');
+
+    // The full view shows the card flat and large, to hold up for staff.
+    await page.getByRole('button', { name: 'View full ID' }).click();
+    const full = page.getByRole('dialog', {
+        name: 'Virtual ID of Fictional Quest Player',
+    });
+    await expect(full).toBeVisible();
+    const large = full.getByRole('img', {
+        name: /^Virtual ID of Fictional Quest Player, /,
+    });
+    await expect
+        .poll(() =>
+            large.evaluate((canvas) => (canvas as HTMLCanvasElement).width),
+        )
+        .toBeGreaterThan(100);
+    expect((await large.boundingBox())!.width).toBeGreaterThan(rest!.width);
+    await checkBothThemes(page, testInfo, 'virtual-id-full');
+    await page.keyboard.press('Escape');
+    await expect(full).toHaveCount(0);
 });
 
 test('the card saves as an image and as a wallet-size PDF', async ({

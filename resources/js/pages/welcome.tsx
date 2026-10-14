@@ -8,12 +8,14 @@ import {
     Rights,
     Stories,
 } from '@/components/home/content-sections';
+import { Events } from '@/components/home/events';
 import { RateWidget } from '@/components/home/rate-widget';
 import { Statistics } from '@/components/home/statistics';
 import { SiteFooter, SiteHeader } from '@/components/public/site-layout';
 import { heroSlides, laws, resources } from '@/data/phlgadis-demo';
 import type { HeroSlideRecord, HomepageStatistics } from '@/data/phlgadis-demo';
 import type { HomepageStory } from '@/types';
+import type { HomepageEvents } from '@/types/events';
 import '../../css/public.css';
 
 export default function Welcome({
@@ -28,6 +30,7 @@ export default function Welcome({
         region: '',
         place: null,
     },
+    events = { region: null, regions: [], events: [] },
 }: {
     carouselSlides?: HeroSlideRecord[];
     openSurveys?: string[];
@@ -37,6 +40,8 @@ export default function Welcome({
     ratingButton?: boolean;
     /** Imported enrollment and graduates by sex (App\Support\StudentStatistics). */
     statistics?: HomepageStatistics;
+    /** The next GAD events still on, by region (App\Support\PublicEvents). */
+    events?: HomepageEvents;
 }) {
     const { auth } = usePage().props;
     const mainRef = useRef<HTMLElement>(null);
@@ -127,6 +132,7 @@ export default function Welcome({
                 <Hero slides={slides} />
                 <QuickAccess />
                 <Rights laws={laws} openSurveys={openSurveys} />
+                <Events {...events} />
                 <Statistics {...statistics} />
                 <Stories stories={stories} signedIn={Boolean(auth.user)} />
                 <Resources resources={resources} />

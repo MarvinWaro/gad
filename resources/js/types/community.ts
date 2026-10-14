@@ -144,16 +144,27 @@ export type EventCategory =
     | 'meeting'
     | 'other';
 
+/** Where an event stands now (`GadEvent::statusAt`). */
+export type EventStatus = 'ongoing' | 'upcoming' | 'ended' | 'cancelled';
+
 /** Event times are Philippine wall-clock strings without an offset. */
 export type CalendarEvent = {
     id: number;
+    /** Its page's address: /events/{ulid}. */
+    ulid: string;
     title: string;
     description: string | null;
     location: string | null;
     category: EventCategory;
     starts_at: string;
     ends_at: string | null;
+    /** When joining stops, as staff set it; null: when the event ends. */
+    registration_closes_at: string | null;
     is_all_day: boolean;
+    /** Called off by staff; its list stays. */
+    cancelled: boolean;
+    /** Whether the viewer joined it, where the list says. */
+    joined?: boolean;
 };
 
 export type CalendarMonth = {

@@ -11,6 +11,7 @@ use App\Models\AcademicYear;
 use App\Models\DisciplineGroup;
 use App\Models\GadEvent;
 use App\Models\GadEventCheckIn;
+use App\Models\GadEventRegistration;
 use App\Models\Notification;
 use App\Models\Permission;
 use App\Models\Post;
@@ -264,11 +265,12 @@ $national->assignRole('admin');
 
 // The QR scanner (tests/browser/scanner.spec.ts): a Region XII training that
 // runs from yesterday to tomorrow in Philippine time, so it is one of today's
-// events whenever the tests run, and two HEI users with known Virtual ID
-// codes: one typed in, one shown to a fake camera. Plain HEI users, so the
-// HEI home still lists the institution's focal person first.
+// events whenever the tests run, and three HEI users with known Virtual ID
+// codes: two who joined it (one typed in, one shown to a fake camera) and a
+// walk-in who didn't. Plain HEI users, so the HEI home still lists the
+// institution's focal person first.
 $today = GadEvent::localNow();
-GadEvent::query()->create([
+$checkInTraining = GadEvent::query()->create([
     'title' => 'Fixture Check-in Training',
     'category' => 'training',
     'survey_region_id' => $region->id,
@@ -276,7 +278,7 @@ GadEvent::query()->create([
     'starts_at' => $today->subDay()->startOfDay(),
     'ends_at' => $today->addDay()->endOfDay()->startOfSecond(),
 ]);
-foreach (['Fictional Scan Participant' => 'GAD-SCAN-2026', 'Fictional Camera Participant' => 'GAD-CAM0-2026'] as $name => $code) {
+foreach (['Fictional Scan Participant' => 'GAD-SCAN-2026', 'Fictional Camera Participant' => 'GAD-CAM0-2026', 'Fictional Walk-in Guest' => 'GAD-GVST-2026'] as $name => $code) {
     $participant = User::factory()->create([
         'name' => $name,
         'email' => strtolower(str_replace(' ', '-', $name)).'@example.test',
@@ -285,7 +287,37 @@ foreach (['Fictional Scan Participant' => 'GAD-SCAN-2026', 'Fictional Camera Par
     ]);
     $participant->forceFill(['participant_code' => $code])->save();
     $participant->assignRole('hei');
+
+    if ($code !== 'GAD-GVST-2026') {
+        GadEventRegistration::query()->create([
+            'gad_event_id' => $checkInTraining->id,
+            'user_id' => $participant->id,
+            'survey_region_id' => $region->id,
+            'survey_hei_id' => $hei->id,
+        ]);
+    }
 }
+
+// Join (tests/browser/events.spec.ts): a Region XII workshop a week away,
+// added by the CHED Focal (so they see who joined), and an HEI user who
+// joins and leaves it. It is on the public site too (public-events.spec.ts).
+GadEvent::query()->create([
+    'created_by' => $questFocal->id,
+    'title' => 'Fixture Join Workshop',
+    'category' => 'training',
+    'survey_region_id' => $region->id,
+    'location' => 'Fixture Training Room',
+    'description' => "A placeholder workshop for the browser tests.\nBring your Virtual ID.",
+    'is_all_day' => false,
+    'starts_at' => $today->addDays(7)->setTime(8, 0),
+    'ends_at' => $today->addDays(7)->setTime(17, 0),
+]);
+User::factory()->create([
+    'name' => 'Fictional Join Participant',
+    'email' => 'fictional-join-participant@example.test',
+    'password' => 'browser-password',
+    'survey_hei_id' => $hei->id,
+])->assignRole('hei');
 
 // Certificates (tests/browser/certificates.spec.ts): a Region XII workshop,
 // with its venue, that ended two days ago, and an HEI user checked in on
@@ -306,6 +338,12 @@ $attendee = User::factory()->create([
     'survey_hei_id' => $hei->id,
 ]);
 $attendee->assignRole('hei');
+GadEventRegistration::query()->create([
+    'gad_event_id' => $workshop->id,
+    'user_id' => $attendee->id,
+    'survey_region_id' => $region->id,
+    'survey_hei_id' => $hei->id,
+]);
 foreach ([3, 2] as $daysAgo) {
     GadEventCheckIn::query()->create([
         'gad_event_id' => $workshop->id,

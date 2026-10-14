@@ -23,6 +23,7 @@ import { DashboardFilterBar } from '@/components/dashboard/dashboard-filters';
 import { GoalInsights } from '@/components/dashboard/goal-insights';
 import { ReachTable } from '@/components/dashboard/reach-table';
 import { StudentFigures } from '@/components/dashboard/student-figures';
+import { JoinedMark } from '@/components/events/joined-mark';
 import { EventCategoryLabel } from '@/components/hei/event-category';
 import { EventDateBlock } from '@/components/hei/upcoming-events';
 import { NoOfficeNotice } from '@/components/record-filters';
@@ -30,6 +31,7 @@ import { Button } from '@/components/ui/button';
 import { changeLabel, formatCount, percentOf } from '@/lib/dashboard';
 import { formatEventTime } from '@/lib/event-dates';
 import { dashboard } from '@/routes';
+import { show as eventPage } from '@/routes/events';
 import type { DashboardProps } from '@/types/dashboard';
 
 function ModuleLink({ href, children }: { href: string; children: ReactNode }) {
@@ -425,17 +427,24 @@ export default function Dashboard(props: DashboardProps) {
                                         />
                                         <div className="min-w-0">
                                             <h3 className="truncate text-sm font-medium">
-                                                {event.title}
+                                                <Link
+                                                    href={eventPage(event)}
+                                                    className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                >
+                                                    {event.title}
+                                                </Link>
                                             </h3>
                                             <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                                 {formatEventTime(event)}
                                                 {event.location &&
                                                     ` · ${event.location}`}
                                             </p>
-                                            <EventCategoryLabel
-                                                category={event.category}
-                                                className="mt-1"
-                                            />
+                                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                                                <EventCategoryLabel
+                                                    category={event.category}
+                                                />
+                                                {event.joined && <JoinedMark />}
+                                            </div>
                                         </div>
                                     </article>
                                 ))}

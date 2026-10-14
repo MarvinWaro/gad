@@ -4,6 +4,7 @@ use App\Enums\CertificateKind;
 use App\Models\CertificateDesign;
 use App\Models\GadEventCertificate;
 use App\Models\SurveyRegion;
+use App\Support\CertificateNumber;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -58,7 +59,11 @@ test('a CHED Focal makes a design signed by their own office, with logos', funct
             ->has('design.logos', 1)
             ->has('kinds', 2)
             ->where('backgrounds', CertificateDesign::BACKGROUNDS)
-            ->has('signatories', 2));
+            ->has('signatories', 2)
+            // The preview's sample number, with its address and QR.
+            ->where('sample.number', CertificateNumber::SAMPLE)
+            ->where('sample.verify_url', route('verify.show', CertificateNumber::SAMPLE))
+            ->where('sample.qr', CertificateNumber::qrRows(route('verify.show', CertificateNumber::SAMPLE))));
 });
 
 test('the wording uses only the blanks certificates fill in', function () {

@@ -186,6 +186,8 @@ function UseOnEventDialog({ design }: { design: CertificateDesign }) {
                     <DialogDescription>
                         Your office&apos;s events that don&apos;t give a{' '}
                         {design.title} yet. Deadlines aren&apos;t listed.
+                        {design.partner &&
+                            ` Its ${design.partner.title}, ${design.partner.name}, goes on the event with it.`}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="relative">

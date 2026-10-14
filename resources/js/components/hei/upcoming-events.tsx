@@ -1,9 +1,11 @@
 import { Link } from '@inertiajs/react';
 import { ArrowRight, MapPin } from 'lucide-react';
 import { useId } from 'react';
+import { JoinedMark } from '@/components/events/joined-mark';
 import { EventCategoryLabel } from '@/components/hei/event-category';
 import { formatEventTime, parseWallClock } from '@/lib/event-dates';
 import { cn } from '@/lib/utils';
+import { show as eventPage } from '@/routes/events';
 import type { CalendarEvent } from '@/types';
 
 const monthShort = new Intl.DateTimeFormat('en-PH', { month: 'short' });
@@ -84,7 +86,12 @@ export function UpcomingEvents({
                             <EventDateBlock value={event.starts_at} />
                             <div className="min-w-0 flex-1">
                                 <p className="text-sm leading-snug">
-                                    {event.title}
+                                    <Link
+                                        href={eventPage(event)}
+                                        className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                    >
+                                        {event.title}
+                                    </Link>
                                 </p>
                                 <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
                                     <span className="sr-only">
@@ -99,6 +106,7 @@ export function UpcomingEvents({
                                     <EventCategoryLabel
                                         category={event.category}
                                     />
+                                    {event.joined && <JoinedMark />}
                                     {event.location && (
                                         <span className="inline-flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
                                             <MapPin

@@ -60,8 +60,7 @@ export function KindPicker({
             </div>
             {locked && (
                 <p className="text-[13px] text-muted-foreground">
-                    Used on events, so its kind stays. Duplicate it to make the
-                    other kind.
+                    Used on events, so its kind stays.
                 </p>
             )}
         </fieldset>

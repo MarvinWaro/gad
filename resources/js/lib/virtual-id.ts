@@ -506,6 +506,182 @@ export function paintCard(
     context.restore();
 }
 
+/** The system's full name, as the public site's footer writes it. */
+export const BACK_TITLE =
+    'Philippine Higher Education Gender and Development Information System';
+export const BACK_HINT = 'Show the front to staff at the registration table.';
+
+export type CardBackLayout = {
+    width: number;
+    height: number;
+    radius: number;
+    corner: number;
+    foot: number;
+    mark: { x: number; y: number; size: number };
+    brand: TextBlock;
+    title: TextBlock;
+    rule: { x: number; y: number; width: number; thickness: number };
+    name: TextBlock;
+    hint: TextBlock;
+};
+
+/**
+ * The card's back, as the lanyard turns it over: the ⚥ mark and the
+ * system's name, whose card it is, and where to show the front. No QR: the
+ * front, with the photo beside it, is the one staff scan.
+ */
+export function layoutCardBack(
+    name: string,
+    width: number,
+    fonts: CardFonts,
+    measure: Measure,
+): CardBackLayout {
+    const w = width;
+    const h = w * CARD_RATIO;
+    const textWidth = w - 2 * 0.1 * w;
+    const sans = (weight: number) => (size: number) =>
+        `${weight} ${size}px ${fonts.sans}`;
+    const markSize = 0.26 * w;
+    const mark = { x: (w - markSize) / 2, y: 0.36 * w, size: markSize };
+    const brandSize = 0.075 * w;
+    const brand: TextBlock = {
+        top: mark.y + markSize + 0.05 * w,
+        size: brandSize,
+        lineHeight: 1.2,
+        font: sans(700)(brandSize),
+        lines: ['PHLGADIS'],
+    };
+    const titleFit = fitText(
+        BACK_TITLE,
+        [0.042 * w, 0.038 * w],
+        textWidth,
+        sans(400),
+        measure,
+    );
+    const title: TextBlock = {
+        top: brand.top + brandSize * 1.2 + 0.02 * w,
+        size: titleFit.size,
+        lineHeight: 1.3,
+        font: sans(400)(titleFit.size),
+        lines: titleFit.lines,
+    };
+    const titleBottom =
+        title.top + title.lines.length * title.size * title.lineHeight;
+    const rule = {
+        x: (w - 0.18 * w) / 2,
+        y: titleBottom + 0.06 * w,
+        width: 0.18 * w,
+        thickness: Math.max(1, 0.008 * w),
+    };
+    const nameFit = fitText(
+        name,
+        [0.05 * w, 0.045 * w],
+        textWidth,
+        sans(600),
+        measure,
+    );
+    const nameBlock: TextBlock = {
+        top: rule.y + 0.06 * w,
+        size: nameFit.size,
+        lineHeight: 1.2,
+        font: sans(600)(nameFit.size),
+        lines: nameFit.lines,
+    };
+    const foot = 0.1 * w;
+    const hintSize = 0.0375 * w;
+    const hintLines = fitText(
+        BACK_HINT,
+        [hintSize],
+        textWidth,
+        sans(400),
+        measure,
+    ).lines;
+
+    return {
+        width: w,
+        height: h,
+        radius: (3.18 / CARD_MM.width) * w,
+        corner: 0.42 * w,
+        foot,
+        mark,
+        brand,
+        title,
+        rule,
+        name: nameBlock,
+        hint: {
+            top: h - foot - 0.06 * w - hintLines.length * hintSize * 1.25,
+            size: hintSize,
+            lineHeight: 1.25,
+            font: sans(400)(hintSize),
+            lines: hintLines,
+        },
+    };
+}
+
+/** Draws the back on a 2D context whose size is the layout's, in pixels. */
+export function paintCardBack(
+    context: CanvasRenderingContext2D,
+    layout: CardBackLayout,
+    mark: HTMLImageElement | null,
+    colors: CardColors,
+): void {
+    const { width: w, height: h } = layout;
+    context.clearRect(0, 0, w, h);
+    context.save();
+    roundedRect(context, 0, 0, w, h, layout.radius);
+    context.clip();
+    context.fillStyle = colors.paper;
+    context.fillRect(0, 0, w, h);
+    context.imageSmoothingQuality = 'high';
+
+    // The front's shapes, mirrored, as the back of a printed card would be.
+    shapes(
+        context,
+        CORNER,
+        colors,
+        w,
+        0,
+        -layout.corner / 150,
+        layout.corner / 150,
+    );
+    shapes(
+        context,
+        FOOT,
+        colors,
+        w,
+        h - layout.foot,
+        -w / 320,
+        layout.foot / 72,
+    );
+
+    if (mark) {
+        const height = layout.mark.size;
+        const width = (mark.naturalWidth / mark.naturalHeight) * height;
+        context.drawImage(mark, (w - width) / 2, layout.mark.y, width, height);
+    }
+
+    writeLines(context, layout.brand, colors.ink, 1, 'center', w / 2);
+    writeLines(context, layout.title, colors.ink, 0.7, 'center', w / 2);
+    context.fillStyle = colors.accent;
+    context.fillRect(
+        layout.rule.x,
+        layout.rule.y,
+        layout.rule.width,
+        layout.rule.thickness,
+    );
+    writeLines(context, layout.name, colors.ink, 1, 'center', w / 2);
+    writeLines(context, layout.hint, colors.ink, 0.7, 'center', w / 2);
+    context.restore();
+
+    context.save();
+    roundedRect(context, 0.5, 0.5, w - 1, h - 1, layout.radius);
+    context.strokeStyle = colors.ink;
+    context.globalAlpha = 0.12;
+    context.lineWidth = Math.max(1, w * 0.002);
+    context.stroke();
+    context.restore();
+}
+
 function shapes(
     context: CanvasRenderingContext2D,
     paths: [keyof CardColors, string][],

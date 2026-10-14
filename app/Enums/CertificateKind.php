@@ -21,6 +21,15 @@ enum CertificateKind: string
         };
     }
 
+    /** The kind a pair is made of with this one (CertificateDesign::partner). */
+    public function other(): self
+    {
+        return match ($this) {
+            self::Participation => self::Appearance,
+            self::Appearance => self::Participation,
+        };
+    }
+
     /** The line between the title and the person's name. */
     public function lead(): string
     {

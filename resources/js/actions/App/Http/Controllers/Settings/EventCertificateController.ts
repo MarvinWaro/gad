@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::show
- * @see app/Http/Controllers/Settings/EventCertificateController.php:29
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:35
  * @route '/settings/event-certificates/{eventCertificate}'
  */
 export const show = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::show
- * @see app/Http/Controllers/Settings/EventCertificateController.php:29
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:35
  * @route '/settings/event-certificates/{eventCertificate}'
  */
 show.url = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ show.url = (args: { eventCertificate: string | { id: string } } | [eventCertific
 
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::show
- * @see app/Http/Controllers/Settings/EventCertificateController.php:29
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:35
  * @route '/settings/event-certificates/{eventCertificate}'
  */
 show.get = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -58,7 +58,7 @@ show.get = (args: { eventCertificate: string | { id: string } } | [eventCertific
 })
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::show
- * @see app/Http/Controllers/Settings/EventCertificateController.php:29
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:35
  * @route '/settings/event-certificates/{eventCertificate}'
  */
 show.head = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -68,7 +68,7 @@ show.head = (args: { eventCertificate: string | { id: string } } | [eventCertifi
 
     /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::show
- * @see app/Http/Controllers/Settings/EventCertificateController.php:29
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:35
  * @route '/settings/event-certificates/{eventCertificate}'
  */
     const showForm = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -78,7 +78,7 @@ show.head = (args: { eventCertificate: string | { id: string } } | [eventCertifi
 
             /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::show
- * @see app/Http/Controllers/Settings/EventCertificateController.php:29
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:35
  * @route '/settings/event-certificates/{eventCertificate}'
  */
         showForm.get = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -87,7 +87,7 @@ show.head = (args: { eventCertificate: string | { id: string } } | [eventCertifi
         })
             /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::show
- * @see app/Http/Controllers/Settings/EventCertificateController.php:29
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:35
  * @route '/settings/event-certificates/{eventCertificate}'
  */
         showForm.head = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -103,7 +103,7 @@ show.head = (args: { eventCertificate: string | { id: string } } | [eventCertifi
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::destroy
- * @see app/Http/Controllers/Settings/EventCertificateController.php:63
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:102
  * @route '/settings/event-certificates/{eventCertificate}'
  */
 export const destroy = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -118,7 +118,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::destroy
- * @see app/Http/Controllers/Settings/EventCertificateController.php:63
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:102
  * @route '/settings/event-certificates/{eventCertificate}'
  */
 destroy.url = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -151,7 +151,7 @@ destroy.url = (args: { eventCertificate: string | { id: string } } | [eventCerti
 
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::destroy
- * @see app/Http/Controllers/Settings/EventCertificateController.php:63
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:102
  * @route '/settings/event-certificates/{eventCertificate}'
  */
 destroy.delete = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -161,7 +161,7 @@ destroy.delete = (args: { eventCertificate: string | { id: string } } | [eventCe
 
     /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::destroy
- * @see app/Http/Controllers/Settings/EventCertificateController.php:63
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:102
  * @route '/settings/event-certificates/{eventCertificate}'
  */
     const destroyForm = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -176,7 +176,7 @@ destroy.delete = (args: { eventCertificate: string | { id: string } } | [eventCe
 
             /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::destroy
- * @see app/Http/Controllers/Settings/EventCertificateController.php:63
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:102
  * @route '/settings/event-certificates/{eventCertificate}'
  */
         destroyForm.delete = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -192,7 +192,7 @@ destroy.delete = (args: { eventCertificate: string | { id: string } } | [eventCe
     destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::release
- * @see app/Http/Controllers/Settings/EventCertificateController.php:73
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:112
  * @route '/settings/event-certificates/{eventCertificate}/release'
  */
 export const release = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -207,7 +207,7 @@ release.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::release
- * @see app/Http/Controllers/Settings/EventCertificateController.php:73
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:112
  * @route '/settings/event-certificates/{eventCertificate}/release'
  */
 release.url = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -240,7 +240,7 @@ release.url = (args: { eventCertificate: string | { id: string } } | [eventCerti
 
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::release
- * @see app/Http/Controllers/Settings/EventCertificateController.php:73
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:112
  * @route '/settings/event-certificates/{eventCertificate}/release'
  */
 release.post = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -250,7 +250,7 @@ release.post = (args: { eventCertificate: string | { id: string } } | [eventCert
 
     /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::release
- * @see app/Http/Controllers/Settings/EventCertificateController.php:73
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:112
  * @route '/settings/event-certificates/{eventCertificate}/release'
  */
     const releaseForm = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -260,7 +260,7 @@ release.post = (args: { eventCertificate: string | { id: string } } | [eventCert
 
             /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::release
- * @see app/Http/Controllers/Settings/EventCertificateController.php:73
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:112
  * @route '/settings/event-certificates/{eventCertificate}/release'
  */
         releaseForm.post = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -271,7 +271,7 @@ release.post = (args: { eventCertificate: string | { id: string } } | [eventCert
     release.form = releaseForm
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::refresh
- * @see app/Http/Controllers/Settings/EventCertificateController.php:87
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:127
  * @route '/settings/event-certificates/{eventCertificate}/refresh'
  */
 export const refresh = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -286,7 +286,7 @@ refresh.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::refresh
- * @see app/Http/Controllers/Settings/EventCertificateController.php:87
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:127
  * @route '/settings/event-certificates/{eventCertificate}/refresh'
  */
 refresh.url = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -319,7 +319,7 @@ refresh.url = (args: { eventCertificate: string | { id: string } } | [eventCerti
 
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::refresh
- * @see app/Http/Controllers/Settings/EventCertificateController.php:87
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:127
  * @route '/settings/event-certificates/{eventCertificate}/refresh'
  */
 refresh.post = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -329,7 +329,7 @@ refresh.post = (args: { eventCertificate: string | { id: string } } | [eventCert
 
     /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::refresh
- * @see app/Http/Controllers/Settings/EventCertificateController.php:87
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:127
  * @route '/settings/event-certificates/{eventCertificate}/refresh'
  */
     const refreshForm = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -339,7 +339,7 @@ refresh.post = (args: { eventCertificate: string | { id: string } } | [eventCert
 
             /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::refresh
- * @see app/Http/Controllers/Settings/EventCertificateController.php:87
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:127
  * @route '/settings/event-certificates/{eventCertificate}/refresh'
  */
         refreshForm.post = (args: { eventCertificate: string | { id: string } } | [eventCertificate: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -350,7 +350,7 @@ refresh.post = (args: { eventCertificate: string | { id: string } } | [eventCert
     refresh.form = refreshForm
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::status
- * @see app/Http/Controllers/Settings/EventCertificateController.php:99
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:139
  * @route '/settings/event-certificates/{eventCertificate}/certificates/{certificate}/status'
  */
 export const status = (args: { eventCertificate: string | { id: string }, certificate: string | { id: string } } | [eventCertificate: string | { id: string }, certificate: string | { id: string } ], options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -365,7 +365,7 @@ status.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::status
- * @see app/Http/Controllers/Settings/EventCertificateController.php:99
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:139
  * @route '/settings/event-certificates/{eventCertificate}/certificates/{certificate}/status'
  */
 status.url = (args: { eventCertificate: string | { id: string }, certificate: string | { id: string } } | [eventCertificate: string | { id: string }, certificate: string | { id: string } ], options?: RouteQueryOptions) => {
@@ -395,7 +395,7 @@ status.url = (args: { eventCertificate: string | { id: string }, certificate: st
 
 /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::status
- * @see app/Http/Controllers/Settings/EventCertificateController.php:99
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:139
  * @route '/settings/event-certificates/{eventCertificate}/certificates/{certificate}/status'
  */
 status.put = (args: { eventCertificate: string | { id: string }, certificate: string | { id: string } } | [eventCertificate: string | { id: string }, certificate: string | { id: string } ], options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -405,7 +405,7 @@ status.put = (args: { eventCertificate: string | { id: string }, certificate: st
 
     /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::status
- * @see app/Http/Controllers/Settings/EventCertificateController.php:99
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:139
  * @route '/settings/event-certificates/{eventCertificate}/certificates/{certificate}/status'
  */
     const statusForm = (args: { eventCertificate: string | { id: string }, certificate: string | { id: string } } | [eventCertificate: string | { id: string }, certificate: string | { id: string } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -420,7 +420,7 @@ status.put = (args: { eventCertificate: string | { id: string }, certificate: st
 
             /**
 * @see \App\Http\Controllers\Settings\EventCertificateController::status
- * @see app/Http/Controllers/Settings/EventCertificateController.php:99
+ * @see app/Http/Controllers/Settings/EventCertificateController.php:139
  * @route '/settings/event-certificates/{eventCertificate}/certificates/{certificate}/status'
  */
         statusForm.put = (args: { eventCertificate: string | { id: string }, certificate: string | { id: string } } | [eventCertificate: string | { id: string }, certificate: string | { id: string } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

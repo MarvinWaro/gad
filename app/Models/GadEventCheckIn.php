@@ -10,7 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Someone checked in to a GAD event on one of its days, by a staff member
- * who scanned their Virtual ID or typed its code (docs/event-check-in.md).
+ * who scanned their Virtual ID, typed its code, or marked the day on the list
+ * of who joined, as from the paper sheet (docs/event-check-in.md).
  * The place is where they belonged when checked in.
  *
  * @property string $id
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $attended_on The Philippine day, Y-m-d. Kept as text, never cast: `createOrFirst` looks it up as written.
  * @property CarbonImmutable $checked_in_at
  * @property int|null $checked_in_by
- * @property string $method One of METHODS.
+ * @property string $method One of METHODS, or MANUAL.
  * @property int|null $survey_region_id
  * @property int|null $survey_hei_id
  */
@@ -31,7 +32,10 @@ class GadEventCheckIn extends Model
     /** How the code reached the scanner: its camera, or typed by hand. */
     public const METHODS = ['scan', 'typed'];
 
-    /** The check-in's own time is its creation; it is never edited. */
+    /** A day staff marked on the list of who joined (ManageEventRegistration::setAttendance). */
+    public const MANUAL = 'manual';
+
+    /** The check-in's own time is its creation; it is never edited, only undone. */
     public const CREATED_AT = 'checked_in_at';
 
     public const UPDATED_AT = null;

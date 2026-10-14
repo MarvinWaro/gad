@@ -10,9 +10,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * A certificate design as Settings shows it, with signed links to its logos
- * and its signatories' e-signatures. Load `region` first, and `signatories`
- * for the editor; `uses_count` and `released_uses_count` are added when
- * counted.
+ * and its signatories' e-signatures. Load `region` first, and `signatories`,
+ * `pairedWith` and `pairedBy` for the editor; `uses_count` and
+ * `released_uses_count` are added when counted.
  *
  * @mixin CertificateDesign
  */
@@ -41,6 +41,13 @@ class CertificateDesignResource extends JsonResource
                 'position' => $signatory->position,
                 'signature' => CertificateFiles::url($signatory->signature_path),
             ])->values()->all()),
+            // Its pair, of the other kind: chosen for events and released with it.
+            'partner' => $this->when(
+                $this->relationLoaded('pairedWith') && $this->relationLoaded('pairedBy'),
+                fn (): ?array => ($partner = $this->resource->partner()) !== null
+                    ? ['id' => $partner->id, 'name' => $partner->name, 'title' => $partner->kind->title()]
+                    : null,
+            ),
             'uses' => $this->whenCounted('uses'),
             'released_uses' => $this->whenCounted('released_uses'),
             'updated_at' => $this->updated_at?->toIso8601ZuluString(),
@@ -48,6 +55,7 @@ class CertificateDesignResource extends JsonResource
                 'update' => $user?->can('update', $this->resource) ?? false,
                 'delete' => $user?->can('delete', $this->resource) ?? false,
                 'use' => $user?->can('use', $this->resource) ?? false,
+                'pair' => ($user?->can('view', $this->resource) ?? false) && $user->can('create', CertificateDesign::class),
             ],
         ];
     }

@@ -122,6 +122,43 @@ final class ManageCertificateDesign
         return $copy;
     }
 
+    /**
+     * Makes its pair, of the other kind (docs/certificates.md): the same
+     * office, background, logos and signatories, with that kind's own
+     * wording to edit. The two are used on events and released together.
+     *
+     * @throws ValidationException
+     */
+    public function pair(User $author, CertificateDesign $design): CertificateDesign
+    {
+        if ($design->partner() !== null) {
+            throw ValidationException::withMessages([
+                'design' => __(':name already has its :kind.', ['name' => $design->name, 'kind' => $design->kind->other()->title()]),
+            ]);
+        }
+
+        $kind = $design->kind->other();
+        $pair = DB::transaction(function () use ($author, $design, $kind): CertificateDesign {
+            $pair = CertificateDesign::query()->create([
+                'survey_region_id' => $design->survey_region_id,
+                'kind' => $kind,
+                'paired_with_id' => $design->id,
+                'name' => Str::limit($design->name.' ('.Str::after($kind->title(), 'Certificate of ').')', 120, ''),
+                'background' => $design->background,
+                'body' => $kind->defaultBody(),
+                // The same files: they are never deleted.
+                'logo_paths' => $design->logo_paths,
+                'created_by' => $author->id,
+            ]);
+            $this->sign($pair, $design->signatories()->get()->all());
+
+            return $pair;
+        });
+        $this->activity->record(ActivityAction::Created, ActivityModule::Certificates, $pair);
+
+        return $pair;
+    }
+
     /** Taken off the events it waits on; released certificates keep it. */
     public function delete(CertificateDesign $design): void
     {

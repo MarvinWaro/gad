@@ -218,6 +218,7 @@ test('checking someone in to an event is logged once, under the place they belon
     ]);
     $guest = User::factory()->create(['name' => 'Ana Guest', 'survey_hei_id' => $this->hei->id]);
     $guest->assignRole('hei');
+    joinEvent($event, $guest);
 
     // A second scan the same day finds the first check-in and logs nothing.
     foreach (['scan', 'typed'] as $method) {
@@ -236,6 +237,34 @@ test('checking someone in to an event is logged once, under the place they belon
         ->assertInertia(fn (Assert $page) => $page
             ->where('logs.data.0.sentence', ['before' => 'Checked in', 'subject' => 'Ana Guest at Fictional Training', 'after' => ''])
             ->where('logs.data.0.action.tone', 'positive'));
+
+    CarbonImmutable::setTestNow();
+});
+
+test('joining and leaving an event are logged under the place the person belongs to', function () {
+    CarbonImmutable::setTestNow('2026-10-15 01:00:00');
+    $event = GadEvent::query()->create([
+        'title' => 'Fictional Training', 'category' => 'training', 'is_all_day' => false,
+        'starts_at' => '2026-10-20 08:00:00', 'ends_at' => '2026-10-20 17:00:00',
+    ]);
+    $guest = User::factory()->create(['name' => 'Ana Guest', 'survey_hei_id' => $this->hei->id]);
+    $guest->assignRole('hei');
+
+    $this->actingAs($guest)->post(route('events.registration.store', $event));
+    $this->actingAs($guest)->post(route('events.registration.store', $event));
+    $this->actingAs($guest)->delete(route('events.registration.destroy', $event));
+
+    $logs = ActivityLog::query()->orderBy('id')->get();
+    expect($logs->pluck('action')->all())->toBe([ActivityAction::Joined, ActivityAction::Left])
+        ->and($logs->pluck('subject_type')->unique()->all())->toBe(['event-registration'])
+        ->and($logs->pluck('subject_label')->unique()->all())->toBe(['Fictional Training'])
+        ->and($logs->pluck('user_id')->unique()->all())->toBe([$guest->id])
+        ->and($logs->pluck('survey_hei_id')->unique()->all())->toBe([$this->hei->id]);
+    $this->actingAs($this->admin)->get(route('settings.activity-logs.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('logs.data.0.sentence', ['before' => 'Left', 'subject' => 'Fictional Training', 'after' => ''])
+            ->where('logs.data.1.sentence', ['before' => 'Joined', 'subject' => 'Fictional Training', 'after' => ''])
+            ->where('logs.data.1.action.tone', 'positive'));
 
     CarbonImmutable::setTestNow();
 });

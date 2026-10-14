@@ -52,13 +52,24 @@ test('the e-signature needs the signatory\'s consent and a picture that prints',
         ->post(route('settings.certificate-signatories.store'), signatoryPayload(['signature' => UploadedFile::fake()->create('signature.svg', 10, 'image/svg+xml')]))
         ->assertSessionHasErrors('signature');
     $this->actingAs($focal)
-        ->post(route('settings.certificate-signatories.store'), signatoryPayload(['signature' => UploadedFile::fake()->image('tiny.png', 100, 40)]))
-        ->assertSessionHasErrors('signature');
+        ->post(route('settings.certificate-signatories.store'), signatoryPayload(['signature' => UploadedFile::fake()->image('tiny.png', 80, 24)]))
+        ->assertSessionHasErrors(['signature' => 'Choose a picture at least 100 pixels wide and 30 tall, and at most 8000 either way.']);
+    $this->actingAs($focal)
+        ->post(route('settings.certificate-signatories.store'), signatoryPayload(['signature' => UploadedFile::fake()->image('huge.png', 600, 200)->size(6000)]))
+        ->assertSessionHasErrors(['signature' => 'Choose a picture under 5 MB.']);
     $this->actingAs($focal)
         ->post(route('settings.certificate-signatories.store'), signatoryPayload(['signature' => null]))
         ->assertSessionHasErrors('signature');
 
     expect(CertificateSignatory::query()->count())->toBe(0);
+
+    // Loose on purpose: a small phone crop or a big scan goes through.
+    foreach ([[120, 40], [4500, 1500]] as [$width, $height]) {
+        $this->actingAs($focal)
+            ->post(route('settings.certificate-signatories.store'), signatoryPayload(['signature' => UploadedFile::fake()->image('signature.png', $width, $height)]))
+            ->assertSessionHasNoErrors();
+    }
+    expect(CertificateSignatory::query()->count())->toBe(2);
 });
 
 test('staff see and change only their own office\'s signatories', function () {

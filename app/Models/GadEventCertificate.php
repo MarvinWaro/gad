@@ -89,17 +89,56 @@ class GadEventCertificate extends Model
     }
 
     /**
-     * Who earns this certificate: everyone checked in to the event on at
-     * least one of its days. The one place this rule lives, for now, until
-     * the GAD Secretariat settles it (docs/certificates.md).
+     * The check-ins of people who joined the event: its attendance
+     * (docs/event-registration.md). Who earns its certificates is
+     * eligibleUsers.
+     *
+     * @return Builder<GadEventCheckIn>
+     */
+    public static function earningCheckIns(): Builder
+    {
+        return GadEventCheckIn::query()->whereExists(fn ($query) => $query
+            ->selectRaw('1')
+            ->from('gad_event_registrations')
+            ->whereColumn('gad_event_registrations.gad_event_id', 'gad_event_check_ins.gad_event_id')
+            ->whereColumn('gad_event_registrations.user_id', 'gad_event_check_ins.user_id'));
+    }
+
+    /**
+     * Who earns this certificate (docs/certificates.md, decided 2026-10-14):
+     * people who joined and were checked in on every one of the event's
+     * days. Anyone who missed a day asks for it (CertificateRequest).
      *
      * @return Builder<User>
      */
     public function eligibleUsers(): Builder
     {
-        return User::query()->whereIn('id', GadEventCheckIn::query()
-            ->select('user_id')
-            ->where('gad_event_id', $this->gad_event_id));
+        $days = $this->event->days();
+
+        return User::query()->whereIn('id', self::earningCheckIns()
+            ->select('gad_event_check_ins.user_id')
+            ->where('gad_event_check_ins.gad_event_id', $this->gad_event_id)
+            ->whereIn('gad_event_check_ins.attended_on', $days)
+            ->groupBy('gad_event_check_ins.user_id')
+            ->havingRaw('count(distinct gad_event_check_ins.attended_on) >= ?', [count($days)]));
+    }
+
+    /**
+     * The event's guests who earn it, by the same rule: present every day.
+     *
+     * @return Builder<GadEventGuest>
+     */
+    public function eligibleGuests(): Builder
+    {
+        $days = $this->event->days();
+
+        return GadEventGuest::query()
+            ->where('gad_event_id', $this->gad_event_id)
+            ->whereIn('id', GadEventGuestDay::query()
+                ->select('gad_event_guest_id')
+                ->whereIn('attended_on', $days)
+                ->groupBy('gad_event_guest_id')
+                ->havingRaw('count(*) >= ?', [count($days)]));
     }
 
     /**
@@ -110,8 +149,33 @@ class GadEventCertificate extends Model
      */
     public function awaitingUsers(): Builder
     {
+        // Never a NOT IN over a null: guests' certificates have no account.
         return $this->eligibleUsers()->whereNotIn('id', Certificate::query()
             ->select('user_id')
-            ->where('gad_event_certificate_id', $this->id));
+            ->where('gad_event_certificate_id', $this->id)
+            ->whereNotNull('user_id'));
+    }
+
+    /**
+     * Guests who earn it but haven't been given it yet.
+     *
+     * @return Builder<GadEventGuest>
+     */
+    public function awaitingGuests(): Builder
+    {
+        return $this->eligibleGuests()->whereNotIn('id', Certificate::query()
+            ->select('gad_event_guest_id')
+            ->where('gad_event_certificate_id', $this->id)
+            ->whereNotNull('gad_event_guest_id'));
+    }
+
+    /**
+     * Requests for it from people who missed a day.
+     *
+     * @return HasMany<CertificateRequest, $this>
+     */
+    public function certificateRequests(): HasMany
+    {
+        return $this->hasMany(CertificateRequest::class);
     }
 }

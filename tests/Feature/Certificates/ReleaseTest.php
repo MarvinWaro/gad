@@ -12,6 +12,7 @@ use Carbon\CarbonImmutable;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -75,9 +76,10 @@ test('a design is used on its office\'s events, one of each kind, never at a dea
         ->assertJsonPath('0.title', 'Second training');
 });
 
-test('releasing gives a certificate to everyone checked in, once, and tells them', function () {
+test('releasing gives a certificate to everyone present on every day, once, and tells them', function () {
     $use = useCertificateDesign($this);
     $twoDays = certificateGuest($this->xii, ['name' => 'Ana Reyes']);
+    // Missed a day: they ask for it instead (CertificateRequestTest).
     $oneDay = certificateGuest($this->xii, ['name' => 'Jose Cruz']);
     $absent = certificateGuest($this->xii, ['name' => 'Not Here']);
     certificateCheckIn($this->event, $twoDays, '2026-10-14');
@@ -96,30 +98,51 @@ test('releasing gives a certificate to everyone checked in, once, and tells them
         ->and($use->snapshot['event']['title'])->toBe('GAD Orientation');
 
     $certificates = Certificate::query()->orderBy('name')->get();
-    expect($certificates->pluck('name')->all())->toBe(['Ana Reyes', 'Jose Cruz'])
-        ->and($certificates->pluck('number')->unique())->toHaveCount(2)
+    expect($certificates->pluck('name')->all())->toBe(['Ana Reyes'])
+        ->and($certificates[0]->number)->toStartWith('CERT-')
         ->and($certificates[0]->affiliation)->toBe('Regional Office XII College')
         ->and($certificates[0]->survey_region_id)->toBe($this->xii->id);
-    expect(Notification::query()->where('kind', NotificationKind::CertificateReleased)->pluck('user_id')->sort()->values()->all())
-        ->toBe(collect([$twoDays->id, $oneDay->id])->sort()->values()->all());
+    expect(Notification::query()->where('kind', NotificationKind::CertificateReleased)->pluck('user_id')->all())
+        ->toBe([$twoDays->id]);
     $this->assertDatabaseHas('activity_logs', ['subject_type' => 'event-certificate', 'action' => 'released']);
 
     // Nobody new: nothing to release.
     $this->actingAs($this->focal)->post(route('settings.event-certificates.release', $use))
         ->assertSessionHasErrors('certificate');
-    expect(Certificate::query()->where('user_id', $absent->id)->exists())->toBeFalse();
+    expect(Certificate::query()->whereIn('user_id', [$absent->id, $oneDay->id])->exists())->toBeFalse();
+});
+
+test('only people who joined and came every day earn it; the design page counts who came', function () {
+    $use = useCertificateDesign($this);
+    $joined = certificateGuest($this->xii, ['name' => 'Joined Person']);
+    $walkIn = certificateGuest($this->xii, ['name' => 'Walk In']);
+    $noShow = certificateGuest($this->xii, ['name' => 'No Show']);
+    attendEveryDay($this->event, $joined);
+    joinEvent($this->event, $noShow);
+    // Checked in without joining, as the scanner no longer allows.
+    DB::table('gad_event_check_ins')->insert([
+        'id' => strtolower((string) Str::ulid()), 'gad_event_id' => $this->event->id, 'user_id' => $walkIn->id,
+        'attended_on' => '2026-10-14', 'checked_in_at' => now(), 'method' => 'scan',
+    ]);
+
+    expect($use->eligibleUsers()->pluck('name')->all())->toBe(['Joined Person']);
+    $this->actingAs($this->focal)->get(route('settings.certificates.show', $this->design))
+        ->assertInertia(fn (Assert $page) => $page->where('uses.0.eligible', 1));
+
+    $this->actingAs($this->focal)->post(route('settings.event-certificates.release', $use))->assertSessionDoesntHaveErrors();
+    expect(Certificate::query()->pluck('name')->all())->toBe(['Joined Person']);
 });
 
 test('releasing again reaches only those checked in since, and keeps what was released', function () {
     $use = useCertificateDesign($this);
     $early = certificateGuest($this->xii, ['name' => 'Early Person']);
-    certificateCheckIn($this->event, $early, '2026-10-14');
+    attendEveryDay($this->event, $early);
     $this->actingAs($this->focal)->post(route('settings.event-certificates.release', $use));
 
     // The director changes on the design; the released certificate keeps the old one.
     $this->director->update(['name' => 'New Director']);
     $late = certificateGuest($this->xii, ['name' => 'Late Person']);
-    certificateCheckIn($this->event, $late, '2026-10-15');
+    attendEveryDay($this->event, $late);
     CarbonImmutable::setTestNow('2026-10-15 03:00:00');
 
     $this->actingAs($this->focal)->post(route('settings.event-certificates.release', $use))
@@ -131,13 +154,14 @@ test('releasing again reaches only those checked in since, and keeps what was re
         ->and(Notification::query()->where('kind', NotificationKind::CertificateReleased)->where('user_id', $late->id)->count())->toBe(1);
 });
 
-test('a certificate can\'t be released without someone checked in, a signatory, or the venue its wording names', function () {
+test('a certificate can\'t be released without someone present every day, a signatory, or the venue its wording names', function () {
     $use = useCertificateDesign($this);
+    certificateCheckIn($this->event, certificateGuest($this->xii), '2026-10-14');
 
     $this->actingAs($this->focal)->post(route('settings.event-certificates.release', $use))
-        ->assertSessionHasErrors(['certificate' => 'No one has been checked in to this event yet.']);
+        ->assertSessionHasErrors(['certificate' => 'No one has been present on every day of this event yet.']);
 
-    certificateCheckIn($this->event, certificateGuest($this->xii));
+    attendEveryDay($this->event, certificateGuest($this->xii));
     $this->event->update(['location' => null]);
     $this->actingAs($this->focal)->post(route('settings.event-certificates.release', $use))
         ->assertSessionHasErrors('certificate');
@@ -149,7 +173,7 @@ test('a certificate can\'t be released without someone checked in, a signatory, 
 test('updating released certificates prints the design, event and names as they are now', function () {
     $use = useCertificateDesign($this);
     $guest = certificateGuest($this->xii, ['name' => 'Ana Reyez']);
-    certificateCheckIn($this->event, $guest);
+    attendEveryDay($this->event, $guest);
     $this->actingAs($this->focal)->post(route('settings.event-certificates.release', $use));
 
     $this->event->update(['title' => 'GAD Orientation Seminar']);
@@ -163,7 +187,7 @@ test('updating released certificates prints the design, event and names as they 
 
 test('a certificate given by mistake is withdrawn, and can be restored', function () {
     $use = useCertificateDesign($this);
-    certificateCheckIn($this->event, certificateGuest($this->xii));
+    attendEveryDay($this->event, certificateGuest($this->xii));
     $this->actingAs($this->focal)->post(route('settings.event-certificates.release', $use));
     $certificate = Certificate::query()->sole();
 
@@ -185,8 +209,8 @@ test('a certificate given by mistake is withdrawn, and can be restored', functio
 
 test('the release page lists the people given it, by name, region and HEI', function () {
     $use = useCertificateDesign($this);
-    certificateCheckIn($this->event, certificateGuest($this->xii, ['name' => 'Ana Reyes']));
-    certificateCheckIn($this->event, certificateGuest($this->ix, ['name' => 'Walk-in From IX']));
+    attendEveryDay($this->event, certificateGuest($this->xii, ['name' => 'Ana Reyes']));
+    attendEveryDay($this->event, certificateGuest($this->ix, ['name' => 'Walk-in From IX']));
     $this->actingAs($this->focal)->post(route('settings.event-certificates.release', $use));
 
     $this->actingAs($this->focal)->get(route('settings.event-certificates.show', $use))
@@ -206,7 +230,7 @@ test('the release page lists the people given it, by name, region and HEI', func
 
 test('only the event\'s office releases its certificates', function () {
     $use = useCertificateDesign($this);
-    certificateCheckIn($this->event, certificateGuest($this->xii));
+    attendEveryDay($this->event, certificateGuest($this->xii));
 
     $this->actingAs(certificateStaff('ched-focal', $this->ix))->post(route('settings.event-certificates.release', $use))->assertForbidden();
     $this->actingAs(certificateStaff('ched-employee', $this->xii))->get(route('settings.event-certificates.show', $use))->assertForbidden();
@@ -218,7 +242,7 @@ test('only the event\'s office releases its certificates', function () {
 test('an event whose certificates were released can\'t be deleted', function () {
     $admin = certificateStaff('admin');
     $use = useCertificateDesign($this);
-    certificateCheckIn($this->event, certificateGuest($this->xii));
+    attendEveryDay($this->event, certificateGuest($this->xii));
     $this->actingAs($this->focal)->post(route('settings.event-certificates.release', $use));
 
     $this->actingAs($admin)->delete(route('admin.events.destroy', $this->event))->assertRedirect();

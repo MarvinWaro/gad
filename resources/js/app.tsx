@@ -28,6 +28,7 @@ void createInertiaApp({
                 name.startsWith('about/') ||
                 name.startsWith('surveys/') ||
                 name.startsWith('certificates/') ||
+                name.startsWith('gad-events/') ||
                 name.startsWith('resources/') ||
                 name.startsWith('help/'):
                 return null;

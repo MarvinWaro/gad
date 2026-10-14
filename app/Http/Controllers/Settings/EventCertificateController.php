@@ -3,13 +3,18 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Actions\Certificates\ManageEventCertificate;
+use App\Console\Commands\ReleaseDueCertificates;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\CertificateFilterRequest;
 use App\Http\Requests\Settings\CertificateStatusRequest;
 use App\Http\Resources\CertificateHolderResource;
+use App\Http\Resources\CertificateRequestResource;
 use App\Http\Resources\EventCertificateResource;
 use App\Models\Certificate;
+use App\Models\CertificateRequest;
+use App\Models\GadEvent;
 use App\Models\GadEventCertificate;
+use App\Models\GadEventCheckIn;
 use App\Models\User;
 use App\Support\PageRange;
 use App\Support\PlaceFilters;
@@ -20,22 +25,42 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * An event's certificate (docs/certificates.md): releasing it to everyone
- * checked in, the people given it, and withdrawing one given by mistake. The
- * rules live in ManageEventCertificate.
+ * An event's certificate (docs/certificates.md): when it goes out by itself,
+ * releasing it early to everyone present on every day, the requests of
+ * those who missed a day, the people given it, and withdrawing one given by
+ * mistake. The rules live in ManageEventCertificate.
  */
 class EventCertificateController extends Controller
 {
-    public function show(CertificateFilterRequest $request, GadEventCertificate $eventCertificate): Response
+    public function show(CertificateFilterRequest $request, GadEventCertificate $eventCertificate, ManageEventCertificate $manager): Response
     {
         /** @var User $user */
         $user = $request->user();
         $filters = $request->filters();
         $search = $filters['search'] ?? '';
-        $eventCertificate->load(['design', 'event.region:id,name', 'releaser:id,name'])
+        $eventCertificate->load(['design.signatories', 'event.region:id,name', 'releaser:id,name'])
             ->loadCount(['certificates', 'certificates as withdrawn_count' => fn (Builder $query) => $query->whereNotNull('withdrawn_at')]);
-        $eventCertificate->setAttribute('eligible_count', $eventCertificate->eligibleUsers()->count());
-        $awaiting = $eventCertificate->awaitingUsers()->count();
+        // Present on every day: people and guests alike.
+        $eventCertificate->setAttribute('eligible_count', $eventCertificate->eligibleUsers()->count() + $eventCertificate->eligibleGuests()->count());
+        $awaiting = $eventCertificate->awaitingUsers()->count() + $eventCertificate->awaitingGuests()->count();
+
+        $requests = $eventCertificate->certificateRequests()
+            ->with(['user:id,name,avatar_path,survey_hei_id,survey_region_id', 'user.hei:id,name', 'user.officeRegion:id,name'])
+            ->orderByRaw("case when status = 'pending' then 0 else 1 end")
+            ->latest()
+            ->latest('id')
+            ->paginate(20, pageName: 'requests_page')
+            ->withQueryString();
+        $days = GadEventCheckIn::query()
+            ->where('gad_event_id', $eventCertificate->gad_event_id)
+            ->whereIn('user_id', $requests->getCollection()->pluck('user_id'))
+            ->orderBy('attended_on')
+            ->get(['user_id', 'attended_on'])
+            ->groupBy('user_id');
+        $requests->getCollection()->each(fn (CertificateRequest $asked) => $asked->setAttribute(
+            'days',
+            $days->get($asked->user_id)?->pluck('attended_on')->values()->all() ?? [],
+        ));
 
         $holders = Certificate::query()
             ->whereBelongsTo($eventCertificate, 'eventCertificate')
@@ -47,6 +72,20 @@ class EventCertificateController extends Controller
         return Inertia::render('settings/event-certificate', [
             'certificate' => EventCertificateResource::make($eventCertificate)->resolve($request),
             'awaiting' => $awaiting,
+            // It goes out by itself when the event ends, unless this stops it.
+            'goesOutAt' => $eventCertificate->event->finishesAt()->format('Y-m-d\TH:i:s'),
+            'ended' => GadEvent::localNow()->greaterThanOrEqualTo($eventCertificate->event->finishesAt()),
+            'automatic' => ReleaseDueCertificates::stillAutomatic($eventCertificate->event),
+            'problem' => $manager->printProblem($eventCertificate),
+            // The event's other certificates, released and removed with this one.
+            'together' => $eventCertificate->event->certificates()
+                ->whereKeyNot($eventCertificate->id)
+                ->with('design:id,kind')
+                ->get()
+                ->map(fn (GadEventCertificate $other): string => $other->design->kind->title())
+                ->values()
+                ->all(),
+            'requests' => CertificateRequestResource::collection($requests),
             'holders' => CertificateHolderResource::collection(PageRange::within($holders
                 ->with(['region:id,name', 'withdrawer:id,name'])
                 ->orderBy('name')
@@ -74,10 +113,11 @@ class EventCertificateController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
-        $issued = $manager->release($user, $eventCertificate);
+        // Every kind the event gives goes out together.
+        $issued = $manager->releaseTogether($user, $eventCertificate);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => trans_choice(
-            '{1} Released to 1 person, who was notified.|[2,*] Released to :count people, who were notified.',
+            '{1} Gave 1 certificate. Its holder was notified.|[2,*] Gave :count certificates. Their holders were notified.',
             $issued,
         )]);
 

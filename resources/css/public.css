@@ -2777,9 +2777,9 @@
         gap: 25px;
     }
 }
-/* The full header (five sections, FAQ, the theme toggle, Log in and
-   Register) needs about 910px, so below 940px it folds into the menu. */
-@media (max-width: 940px) {
+/* The full header (five sections, Events, FAQ, the theme toggle, Log in
+   and Register) needs about 970px, so below 1000px it folds into the menu. */
+@media (max-width: 1000px) {
     .desktop-nav {
         display: none;
     }

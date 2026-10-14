@@ -9,14 +9,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * A certificate given to someone checked in to a GAD event, when its office
- * released the event's certificate (docs/certificates.md). Its random number
- * opens the public verify page. The name, affiliation and place are as they
- * were when it was given; staff withdraw one given by mistake.
+ * A certificate given to someone checked in to a GAD event, or to one of its
+ * guests, when the event's certificate was released or a request approved
+ * (docs/certificates.md). Its random number opens the public verify page.
+ * The name, affiliation and place are as they were when it was given; staff
+ * withdraw one given by mistake.
  *
  * @property string $id
  * @property string $gad_event_certificate_id
- * @property int $user_id
+ * @property int|null $user_id The holder's account; null for a guest's.
+ * @property string|null $gad_event_guest_id The guest it was given to, who has no account.
  * @property string $number Such as "CERT-7K2M-Q9XA".
  * @property string $name
  * @property string|null $affiliation
@@ -26,7 +28,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|null $withdrawn_at
  * @property int|null $withdrawn_by
  */
-#[Fillable(['gad_event_certificate_id', 'user_id', 'number', 'name', 'affiliation', 'survey_region_id', 'survey_hei_id', 'withdrawn_at', 'withdrawn_by'])]
+#[Fillable(['gad_event_certificate_id', 'user_id', 'gad_event_guest_id', 'number', 'name', 'affiliation', 'survey_region_id', 'survey_hei_id', 'withdrawn_at', 'withdrawn_by'])]
 class Certificate extends Model
 {
     use HasUlids;
@@ -54,6 +56,12 @@ class Certificate extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** @return BelongsTo<GadEventGuest, $this> */
+    public function guest(): BelongsTo
+    {
+        return $this->belongsTo(GadEventGuest::class, 'gad_event_guest_id');
     }
 
     /** @return BelongsTo<SurveyRegion, $this> */

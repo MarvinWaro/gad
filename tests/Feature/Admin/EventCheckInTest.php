@@ -121,6 +121,7 @@ test('scanning a Virtual ID checks the person in, once a day', function () {
     $staff = checkInStaff('ched-focal', $this->xii);
     $event = checkInEvent('Three-day writeshop', $this->xii, '2026-10-15 08:00:00', '2026-10-17 17:00:00');
     $guest = checkInGuest($this->xii, ['name' => 'Ana Dela Cruz'], 'hei-focal');
+    joinEvent($event, $guest);
 
     $this->actingAs($staff)->postJson(route('admin.events.check-ins.store', $event), checkInPayload($guest))
         ->assertCreated()
@@ -166,6 +167,7 @@ test('a typed code is forgiving about case, spaces, dashes and look-alike letter
     $event = checkInEvent('Region XII training', $this->xii);
     $guest = checkInGuest($this->xii);
     $guest->forceFill(['participant_code' => 'GAD-10K2-M0XA'])->save();
+    joinEvent($event, $guest);
 
     $this->actingAs($staff)->postJson(route('admin.events.check-ins.store', $event), ['code' => 'gad 1ok2 moxa', 'method' => 'typed'])
         ->assertCreated()
@@ -203,6 +205,27 @@ test('unknown, pending and deactivated accounts are turned away with a reason', 
     expect(GadEventCheckIn::query()->exists())->toBeFalse();
 });
 
+test('only people who joined are checked in; walk-ins are told where to sign', function () {
+    $staff = checkInStaff('ched-employee', $this->xii);
+    $guest = checkInGuest($this->xii, ['name' => 'Walk In']);
+    $open = checkInEvent('Region XII training', $this->xii);
+    // Its registration closed at 8:00 AM, an hour ago.
+    $closed = checkInEvent('Region XII forum', $this->xii);
+    $closed->forceFill(['registration_closes_at' => '2026-10-15 08:00:00'])->save();
+
+    $this->actingAs($staff)->postJson(route('admin.events.check-ins.store', $open), checkInPayload($guest))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['code' => "Walk In hasn't joined this event. They can join it on PHLGADIS now, then scan again."]);
+    $this->actingAs($staff)->postJson(route('admin.events.check-ins.store', $closed), checkInPayload($guest))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['code' => "Walk In didn't join this event. Ask them to sign the paper attendance sheet."]);
+    expect(GadEventCheckIn::query()->exists())->toBeFalse();
+
+    // Joined on their phone at the table, they are checked in.
+    joinEvent($open, $guest);
+    $this->actingAs($staff)->postJson(route('admin.events.check-ins.store', $open), checkInPayload($guest))->assertCreated();
+});
+
 test('check-in runs only on the event\'s own days, and never at a deadline', function () {
     $staff = checkInStaff('ched-employee', $this->xii);
     $guest = checkInGuest($this->xii);
@@ -222,6 +245,7 @@ test('check-in runs only on the event\'s own days, and never at a deadline', fun
     // An event with no end time stays open for the rest of its day.
     CarbonImmutable::setTestNow('2026-10-15 15:30:00');
     $evening = checkInEvent('Evening forum', $this->xii, '2026-10-15 18:00:00', null);
+    joinEvent($evening, $guest);
     $this->actingAs($staff)->postJson(route('admin.events.check-ins.store', $evening), checkInPayload($guest))->assertCreated();
 
     expect(GadEventCheckIn::query()->count())->toBe(1);
@@ -234,6 +258,8 @@ test('regional staff check people in at their region\'s events and every region\
     $everyone = checkInEvent('National summit', null);
     // People come from anywhere: a Region IX guest at a national event.
     $guest = checkInGuest($this->ix);
+    joinEvent($theirs, $guest);
+    joinEvent($everyone, $guest);
 
     $this->actingAs($regional)->postJson(route('admin.events.check-ins.store', $theirs), checkInPayload($guest))->assertForbidden();
     $this->actingAs($regional)->getJson(route('admin.events.check-ins.index', $theirs))->assertForbidden();
@@ -260,8 +286,11 @@ test('only staff who check people in may open the scanner', function () {
         checkInStaff('gad-focal-person', $this->xii),
         checkInStaff('admin'),
     ] as $staff) {
+        $guest = checkInGuest($this->xii);
+        joinEvent($event, $guest);
+
         $this->actingAs($staff)->get(route('admin.scanner'))->assertOk();
-        $this->actingAs($staff)->postJson(route('admin.events.check-ins.store', $event), checkInPayload(checkInGuest($this->xii)))->assertCreated();
+        $this->actingAs($staff)->postJson(route('admin.events.check-ins.store', $event), checkInPayload($guest))->assertCreated();
     }
     expect(GadEventCheckIn::query()->count())->toBe(4);
 });
@@ -281,7 +310,9 @@ test('the Recent list holds today\'s check-ins at that event, newest first, a pa
     ]);
     foreach (range(1, 21) as $minute) {
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-15 01:00:00')->addMinutes($minute));
-        $this->actingAs($staff)->postJson(route('admin.events.check-ins.store', $event), checkInPayload(checkInGuest($this->xii, ['name' => "Guest {$minute}"])))->assertCreated();
+        $guest = checkInGuest($this->xii, ['name' => "Guest {$minute}"]);
+        joinEvent($event, $guest);
+        $this->actingAs($staff)->postJson(route('admin.events.check-ins.store', $event), checkInPayload($guest))->assertCreated();
     }
 
     $first = $this->actingAs($staff)->getJson(route('admin.events.check-ins.index', $event))

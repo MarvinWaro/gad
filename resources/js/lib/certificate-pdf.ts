@@ -9,6 +9,8 @@ import {
     MARGIN,
     nameSize,
     PAGE,
+    QR_LEFT,
+    qrSvg,
     signatoryRowLeft,
 } from './certificate-page';
 import type { CertificateColors } from './certificate-page';
@@ -37,8 +39,8 @@ export type CertificateImages = {
     chedSeal: CertificateImage;
     bagongPilipinas: CertificateImage;
     logos: CertificateImage[];
-    /** One per signatory, in order. */
-    signatures: CertificateImage[];
+    /** One per signatory, in order; null when it couldn't be loaded. */
+    signatures: (CertificateImage | null)[];
 };
 
 function logoRow(images: CertificateImages): Content {
@@ -173,39 +175,26 @@ function affiliation(text: string | null): Content[] {
     return text ? [{ text, fontSize: 13, margin: [0, 4, 0, 0] }] : [];
 }
 
-/** The number and its QR, which opens the public verify page. */
+/**
+ * The number and its QR, which opens the public verify page. The QR is the
+ * server's modules (`CertificateNumber::qrRows`) drawn as one path on its
+ * own paper square, so any background leaves it readable.
+ */
 function verification(
     document: CertificateDocument,
     colors: CertificateColors,
 ): Content[] {
-    const qrLeft = PAGE.width - MARGIN.x - LAYOUT.qr;
     const address = document.verify_url.replace(/^https?:\/\//, '');
 
     return [
-        // A plain square behind the QR, so any background leaves it readable.
         {
-            canvas: [
-                {
-                    type: 'rect',
-                    x: 0,
-                    y: 0,
-                    w: LAYOUT.qr + 8,
-                    h: LAYOUT.qr + 8,
-                    r: 4,
-                    color: colors.paper,
-                },
-            ],
-            absolutePosition: { x: qrLeft - 4, y: LAYOUT.qrTop - 4 },
+            svg: qrSvg(document.qr, LAYOUT.qr, colors),
+            width: LAYOUT.qr,
+            height: LAYOUT.qr,
+            absolutePosition: { x: QR_LEFT, y: LAYOUT.qrTop },
         },
-        {
-            qr: document.verify_url,
-            fit: LAYOUT.qr,
-            eccLevel: 'M',
-            foreground: colors.ink,
-            background: colors.paper,
-            absolutePosition: { x: qrLeft, y: LAYOUT.qrTop },
-        },
-        // Beside the QR: the second column keeps the words clear of it.
+        // Beside the QR, level with its foot, below even a position that
+        // wraps: the second column keeps the words 10 pt clear of it.
         {
             columns: [
                 {
@@ -224,13 +213,13 @@ function verification(
                     ],
                     alignment: 'right',
                 },
-                { width: LAYOUT.qr, text: '' },
+                { width: PAGE.width - MARGIN.x - QR_LEFT, text: '' },
             ],
             columnGap: 10,
             font: PDF_FONTS.body,
             absolutePosition: {
                 x: PAGE.width / 2,
-                y: LAYOUT.qrTop + LAYOUT.qr / 2 - 10,
+                y: LAYOUT.qrTop + LAYOUT.qr - 28,
             },
         },
     ];
@@ -307,8 +296,10 @@ export function buildCertificateDocument(
                 lineHeight: 1.25,
                 margin: [70, 10, 70, 0],
             },
-            signatories(document, images, colors),
+            // Before the signatories, so a long position that wraps stays on
+            // top of the QR's quiet zone, never under it.
             ...verification(document, colors),
+            signatories(document, images, colors),
         ],
     };
 }

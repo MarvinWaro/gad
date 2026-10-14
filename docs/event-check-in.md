@@ -1,6 +1,6 @@
 # Event check-in
 
-Staff check people in at GAD events with the **QR Scanner** (`/admin/scanner`, `admin.scanner`). They pick one of today's events, then scan the person's Virtual ID (`docs/virtual-id.md`) or type its code. This is the second step of event registration by QR, after the Virtual ID. The people checked in can then be given certificates (`docs/certificates.md`).
+Staff check people in at GAD events with the **QR Scanner** (`/admin/scanner`, `admin.scanner`). They pick one of today's events, then scan the person's Virtual ID (`docs/virtual-id.md`) or type its code. Only people who joined the event are checked in (`docs/event-registration.md`). The people checked in can then be given certificates (`docs/certificates.md`).
 
 ## Who can scan
 
@@ -19,7 +19,8 @@ Staff check people in at GAD events with the **QR Scanner** (`/admin/scanner`, `
     - Each person can be checked in once per event per Philippine day. The table's unique key enforces this, so two scanners at once still make one row (`createOrFirst`).
     - A second scan says "Already checked in today", with the first time and who checked them in.
     - On the next day of a multi-day event, they check in again.
-- **Anyone with an active account.** That includes walk-ins, since Join is not built yet, and people from any region.
+- **People who joined, with an active account,** from any region (`docs/event-registration.md`).
+    - Someone who didn't join is refused by name. While registration is open, the message says they can join on PHLGADIS now and scan again. After it closes, it says to sign the paper attendance sheet.
     - Pending and deactivated accounts are refused, each with its own reason.
     - A code no account holds is refused with "No account has this Participant ID."
 - **Typed codes are forgiving** (`ParticipantCode::parse`): case, spaces, dashes and the `GAD-` prefix don't matter, and I and L read as 1, O as 0. The prefix is dropped only when eight characters follow it, because a code's own characters may begin with G, A and D.
@@ -29,7 +30,7 @@ Staff check people in at GAD events with the **QR Scanner** (`/admin/scanner`, `
 - **`gad_event_check_ins`.** One row per person per event per day:
     - the event, the person, and `attended_on` (the Philippine day, `Y-m-d`). It is kept as text with no date cast, so `createOrFirst` finds the row it wrote on SQLite too.
     - `checked_in_at` (UTC, the model's `CREATED_AT`) and `checked_in_by`.
-    - `method`, which is `scan` or `typed`.
+    - `method`, which is `scan` or `typed`, or `manual` for a day staff marked on the list of who joined (`docs/event-registration.md`).
     - The person's region and HEI at that moment, as `quest_attempts` keeps them, for attendance by place later.
     - Deleting the event or the account deletes its check-ins. Deleting the staff member leaves the check-in with no checker.
 - **The activity log.** Each new check-in is logged as "Checked in Ana Dela Cruz at <event>" (`ActivityAction::CheckedIn` under GAD events, subject type `event-check-in`), filed under the place the person belongs to. A repeat is not logged. Nobody is notified.
@@ -55,6 +56,12 @@ Staff check people in at GAD events with the **QR Scanner** (`/admin/scanner`, `
     - It is green for checked in, amber for already checked in today, and red for why not (`lib/scanner.ts` holds the plain-language messages).
     - The camera's outline takes the same colour for a moment, and screen readers hear each result.
 - **Recent:** a drawer, from the right on a computer and from the bottom on a phone. It lists today's check-ins at the event from every scanner, newest first, 20 at a time with "Show more". It reloads each time it opens.
+    - **Undo** on each row takes back a check-in made by mistake, after asking (`CheckInParticipant::undo`). Only today's, and never once the person holds the event's certificate. It is logged as "Undid the check-in of …" (`ActivityAction::CheckInUndone`). Earlier days are put right on the list of who joined. A cancelled event takes no check-ins.
+- **Sound** (`lib/scan-sounds.ts`, `hooks/use-scan-sound.ts`): each result sounds, so staff at a busy table hear it without looking.
+    - **The sounds:** a bright rising chirp for checked in, one soft tone for already checked in today, and a low falling double buzz when it did not go through.
+    - **How they are made:** short tones made by the browser (Web Audio), with no sound files to load, kept quiet for a day at the table.
+    - **Turning it off:** "Sound on" / "Sound off" in the header. This browser remembers the choice, and sound is on by default. Turning it on chirps once.
+    - **Browsers keep a page silent until someone touches it,** so results before the first tap, click or key on the page make no sound.
 - **Kiosk mode** (computers only, from 1024 px; `hooks/use-kiosk-mode.ts`):
     - The browser goes fullscreen, and `setLayoutProps({ kiosk })` makes the app layouts drop the sidebar and the top bar (`AppLayout`'s `kiosk`).
     - The page keeps its place in the tree, so the camera and the result stay.
@@ -65,11 +72,12 @@ Staff check people in at GAD events with the **QR Scanner** (`/admin/scanner`, `
 
 These are session-authenticated, on the web routes, and ready to move under `/api/v1`. They run the same action (`App\Actions\Events\CheckInParticipant`) and send the same resource.
 
-| Request                                | Name                           | What it does                                                                                                                                                   |
-| -------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /admin/scanner`                   | `admin.scanner`                | The page: `events` (today's, each `toCalendarArray()` plus its region's name), `event` (the one in `?event=`, or the only one) and `checkedIn` (today's count) |
-| `POST /admin/events/{event}/check-ins` | `admin.events.check-ins.store` | `{code, method: scan\|typed}`. Returns 201 `{status: 'checked_in', check_in, count}` or 200 `already_checked_in`; 422 on `code` or `event`; 403; 120 a minute  |
-| `GET /admin/events/{event}/check-ins`  | `admin.events.check-ins.index` | Today's check-ins, newest first, 20 per cursor page, with `count`; 60 a minute                                                                                 |
+| Request                                            | Name                             | What it does                                                                                                                                                   |
+| -------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /admin/scanner`                               | `admin.scanner`                  | The page: `events` (today's, each `toCalendarArray()` plus its region's name), `event` (the one in `?event=`, or the only one) and `checkedIn` (today's count) |
+| `POST /admin/events/{event}/check-ins`             | `admin.events.check-ins.store`   | `{code, method: scan\|typed}`. Returns 201 `{status: 'checked_in', check_in, count}` or 200 `already_checked_in`; 422 on `code` or `event`; 403; 120 a minute  |
+| `DELETE /admin/events/{event}/check-ins/{checkIn}` | `admin.events.check-ins.destroy` | Undo one of today's. Returns `{count}`; 422 on `check_in` for another day or once a certificate was given; 60 a minute                                         |
+| `GET /admin/events/{event}/check-ins`              | `admin.events.check-ins.index`   | Today's check-ins, newest first, 20 per cursor page, with `count`; 60 a minute                                                                                 |
 
 `GadEventCheckInResource` sends:
 
@@ -81,7 +89,7 @@ It never sends the participant code, email, mobile or sex.
 
 ## Tests
 
-- `tests/Feature/Admin/EventCheckInTest.php`: the list, once a day, typed codes, refusals, the event's own days, access by place, permissions, the Recent list and its privacy, and the migration.
+- `tests/Feature/Admin/EventCheckInTest.php`: the list, once a day, typed codes, refusals (walk-ins among them), the event's own days, access by place, permissions, the Recent list and its privacy, and the migration.
 - `tests/Unit/ParticipantCodeTest.php`
 - `tests/Feature/Settings/ActivityLogTest.php`
 - `tests/frontend/scanner.test.ts`
@@ -91,7 +99,5 @@ It never sends the participant code, email, mobile or sex.
 
 ## Not built yet
 
-- **Join:** registering for an event before it. Today everyone checks in as a walk-in.
-- Undoing a check-in made by mistake.
-- Sound or vibration on a scan.
+- Vibration on a scan.
 - Attendance lists and exports by event, region and HEI.

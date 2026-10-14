@@ -62,16 +62,35 @@ function loadPdfJs(): Promise<PdfJs> {
     return loading;
 }
 
-/** Draws page 1 of a PDF as an image `width` pixels wide. */
-export async function renderFirstPage(
-    url: string,
+let worker: InstanceType<PdfJs['PDFWorker']> | null = null;
+
+/**
+ * One pdf.js worker for every page drawn, started once: a worker per
+ * document would load and start pdf.js again each time, which is most of a
+ * redraw's wait.
+ */
+function sharedWorker(pdfjs: PdfJs): InstanceType<PdfJs['PDFWorker']> {
+    if (!worker || worker.destroyed) {
+        worker = new pdfjs.PDFWorker();
+    }
+
+    return worker;
+}
+
+/**
+ * Draws page 1 of a PDF, from its address or its bytes, onto a new canvas
+ * `width` pixels wide.
+ */
+export async function drawFirstPage(
+    source: { url: string } | { data: Uint8Array },
     width: number,
     signal: AbortSignal,
-): Promise<FirstPage> {
+): Promise<{ canvas: HTMLCanvasElement; pages: number }> {
     const pdfjs = await loadPdfJs();
     signal.throwIfAborted();
     const task = pdfjs.getDocument({
-        url,
+        ...source,
+        worker: sharedWorker(pdfjs),
         verbosity: pdfjs.VerbosityLevel.ERRORS,
         BinaryDataFactory: BundledBinaryData,
     });
@@ -88,17 +107,28 @@ export async function renderFirstPage(
         canvas.width = Math.round(viewport.width);
         canvas.height = Math.round(viewport.height);
         await page.render({ canvas, viewport }).promise;
-        const image = await new Promise<Blob | null>((resolve) =>
-            canvas.toBlob(resolve, 'image/webp', 0.9),
-        );
 
-        if (!image) {
-            throw new Error('The page could not be drawn.');
-        }
-
-        return { src: URL.createObjectURL(image), pages: pdf.numPages };
+        return { canvas, pages: pdf.numPages };
     } finally {
         signal.removeEventListener('abort', cancel);
         await task.destroy();
     }
+}
+
+/** Draws page 1 of a PDF as an image `width` pixels wide. */
+export async function renderFirstPage(
+    url: string,
+    width: number,
+    signal: AbortSignal,
+): Promise<FirstPage> {
+    const { canvas, pages } = await drawFirstPage({ url }, width, signal);
+    const image = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, 'image/webp', 0.9),
+    );
+
+    if (!image) {
+        throw new Error('The page could not be drawn.');
+    }
+
+    return { src: URL.createObjectURL(image), pages };
 }

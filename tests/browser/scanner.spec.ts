@@ -6,7 +6,8 @@ import { expect, test, type Page, type TestInfo } from '@playwright/test';
  * in from their Virtual ID, with the camera or by typing its code. The camera
  * here is a canvas stream showing a participant's own Virtual ID. The
  * fixtures are in tests/browser/server.php: today's "Fixture Check-in
- * Training" in Region XII, and two HEI users with known codes.
+ * Training" in Region XII, two HEI users with known codes who joined it,
+ * and a walk-in who didn't.
  */
 
 /** A CHED Focal of Region XII. */
@@ -66,6 +67,25 @@ test('staff open the scanner from the sidebar and check someone in by typing the
     page,
 }, testInfo) => {
     await page.setViewportSize({ width: 1440, height: 900 });
+    // Every tone the page plays, by its pitch, as no one hears a test.
+    await page.addInitScript(() => {
+        const heard: number[] = [];
+        (window as unknown as { tones: number[] }).tones = heard;
+        const create = Object.getOwnPropertyDescriptor(
+            BaseAudioContext.prototype,
+            'createOscillator',
+        )?.value as (this: BaseAudioContext) => OscillatorNode;
+        AudioContext.prototype.createOscillator = function () {
+            const oscillator = create.call(this);
+            const start = oscillator.start.bind(oscillator);
+            oscillator.start = (when?: number) => {
+                heard.push(oscillator.frequency.value);
+                start(when);
+            };
+
+            return oscillator;
+        };
+    });
     await logIn(page, STAFF);
     await page
         .locator('[data-sidebar="footer"]')
@@ -99,6 +119,20 @@ test('staff open the scanner from the sidebar and check someone in by typing the
     await expect(result(page)).toContainText('Already checked in today');
     await expect(result(page)).toContainText('First checked in at');
 
+    // Each result sounds, unless the sound is turned off.
+    const tones = () =>
+        page.evaluate(() => (window as unknown as { tones: number[] }).tones);
+    await expect.poll(tones).toContain(1320);
+    await expect.poll(tones).toContain(660);
+    await page.getByRole('button', { name: 'Sound on' }).click();
+    await expect(page.getByRole('button', { name: 'Sound off' })).toBeVisible();
+    const heard = (await tones()).length;
+    await participantId(page).fill('SCAN2026');
+    await page.keyboard.press('Enter');
+    await expect(result(page)).toContainText('Already checked in today');
+    await page.waitForTimeout(300);
+    expect(await tones()).toHaveLength(heard);
+
     // Recent, a drawer, lists who came today at every scanner.
     await page.getByRole('button', { name: /^Recent/ }).click();
     const drawer = page.getByRole('dialog', { name: 'Checked in today' });
@@ -109,6 +143,16 @@ test('staff open the scanner from the sidebar and check someone in by typing the
     await page.screenshot({ path: testInfo.outputPath('scanner-recent.png') });
     await page.keyboard.press('Escape');
     await expect(drawer).toHaveCount(0);
+
+    // Only people who joined are checked in; a walk-in is told what to do.
+    // A refusal keeps the code in the boxes, to fix a typo.
+    await participantId(page).fill('GVST2026');
+    await page.keyboard.press('Enter');
+    await expect(result(page)).toContainText('Not checked in');
+    await expect(result(page)).toContainText(
+        "Fictional Walk-in Guest hasn't joined this event. They can join it on PHLGADIS now, then scan again.",
+    );
+    await expect(participantId(page)).toHaveValue('GVST2026');
 });
 
 test('the camera reads a Virtual ID and checks the person in', async ({
@@ -270,4 +314,38 @@ test('the scanner fits phones and computers in both themes', async ({
     await page.screenshot({
         path: testInfo.outputPath('scanner-recent-375.png'),
     });
+});
+
+test('a check-in made by mistake is undone from Recent, after asking', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await logIn(page, STAFF);
+    await page.goto('/admin/scanner');
+    await participantId(page).fill('SCAN2026');
+    await page.getByRole('button', { name: 'Check in' }).click();
+    await expect(result(page)).toContainText('Fictional Scan Participant');
+
+    await page.getByRole('button', { name: /^Recent/ }).click();
+    const drawer = page.getByRole('dialog', { name: 'Checked in today' });
+    await expect(drawer).toContainText('Fictional Scan Participant');
+    await drawer
+        .getByRole('button', {
+            name: 'Undo the check-in of Fictional Scan Participant',
+        })
+        .click();
+    await page
+        .getByRole('alertdialog', {
+            name: 'Undo the check-in of Fictional Scan Participant?',
+        })
+        .getByRole('button', { name: 'Undo check-in' })
+        .click();
+    await expect(drawer).not.toContainText('Fictional Scan Participant');
+    await page.keyboard.press('Escape');
+
+    // Scanned again, they are checked in afresh.
+    await participantId(page).fill('SCAN2026');
+    await page.getByRole('button', { name: 'Check in' }).click();
+    await expect(result(page)).toContainText('Checked in');
+    await expect(result(page)).not.toContainText('Already checked in today');
 });

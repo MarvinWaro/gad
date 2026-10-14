@@ -16,9 +16,9 @@ use App\Models\CertificateDesign;
 use App\Models\CertificateSignatory;
 use App\Models\GadEvent;
 use App\Models\GadEventCertificate;
-use App\Models\GadEventCheckIn;
 use App\Models\SurveyRegion;
 use App\Models\User;
+use App\Support\CertificateNumber;
 use App\Support\PageRange;
 use App\Support\PlaceFilters;
 use Illuminate\Database\Eloquent\Builder;
@@ -95,12 +95,12 @@ class CertificateDesignController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
-        $design->load(['region:id,name', 'signatories'])->loadCount('uses');
+        $design->load(['region:id,name', 'signatories', 'pairedWith:id,kind,name', 'pairedBy:id,kind,name,paired_with_id'])->loadCount('uses');
         $uses = $design->uses()
             ->with(['event.region:id,name', 'releaser:id,name'])
             ->withCount('certificates')
-            ->addSelect(['eligible_count' => GadEventCheckIn::query()
-                ->selectRaw('count(distinct user_id)')
+            ->addSelect(['eligible_count' => GadEventCertificate::earningCheckIns()
+                ->selectRaw('count(distinct gad_event_check_ins.user_id)')
                 ->whereColumn('gad_event_check_ins.gad_event_id', 'gad_event_certificates.gad_event_id')])
             ->latest()
             ->get()
@@ -131,6 +131,18 @@ class CertificateDesignController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name created.', ['name' => $copy->name])]);
 
         return to_route('settings.certificates.show', $copy);
+    }
+
+    /** Its pair, of the other kind, to edit on its own and give with it. */
+    public function pair(Request $request, CertificateDesign $design, ManageCertificateDesign $manager): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $pair = $manager->pair($user, $design);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __(':name created. Its wording is its own; events get both.', ['name' => $pair->name])]);
+
+        return to_route('settings.certificates.show', $pair);
     }
 
     public function destroy(CertificateDesign $design, ManageCertificateDesign $manager): RedirectResponse
@@ -173,9 +185,12 @@ class CertificateDesignController extends Controller
     public function use(UseCertificateDesignRequest $request, CertificateDesign $design, ManageEventCertificate $certificates): RedirectResponse
     {
         $event = $request->event();
-        $use = $certificates->attach($design, $event);
+        // With its pair, the other kind, when it has one.
+        $use = $certificates->attachWithPair($design, $event);
+        $kinds = $event->certificates()->with('design:id,kind')->get()
+            ->map(fn (GadEventCertificate $each): string => $each->design->kind->title())->sort()->join(' and ');
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __(':kind for :event is ready to release.', ['kind' => $design->kind->title(), 'event' => $event->title])]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __(':kinds for :event will go out when it ends.', ['kinds' => $kinds, 'event' => $event->title])]);
 
         return to_route('settings.event-certificates.show', $use);
     }
@@ -190,8 +205,15 @@ class CertificateDesignController extends Controller
     private function editor(User $user): array
     {
         $offices = SurveyRegion::query()->withinReachOf($user)->orderBy('name')->get(['id', 'name', 'office_city']);
+        $sampleUrl = route('verify.show', CertificateNumber::SAMPLE);
 
         return [
+            // What the preview prints in place of a real number, with its QR.
+            'sample' => [
+                'number' => CertificateNumber::SAMPLE,
+                'verify_url' => $sampleUrl,
+                'qr' => CertificateNumber::qrRows($sampleUrl),
+            ],
             'kinds' => array_map(fn (CertificateKind $kind): array => [
                 'value' => $kind->value,
                 'title' => $kind->title(),

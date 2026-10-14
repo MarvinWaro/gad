@@ -1,5 +1,5 @@
 import { Head, router, useHttp, usePage } from '@inertiajs/react';
-import { Maximize, Minimize } from 'lucide-react';
+import { Maximize, Minimize, Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { CameraPanel } from '@/components/scanner/camera-panel';
 import { EventPicker } from '@/components/scanner/event-picker';
@@ -10,8 +10,10 @@ import type { ScanOutcome } from '@/components/scanner/scan-result';
 import { Button } from '@/components/ui/button';
 import { useKioskMode } from '@/hooks/use-kiosk-mode';
 import { useQrScanner } from '@/hooks/use-qr-scanner';
+import { useScanSound } from '@/hooks/use-scan-sound';
 import type { CameraStatus } from '@/hooks/use-qr-scanner';
 import { manilaInputNow } from '@/lib/manila-time';
+import { soundFor } from '@/lib/scan-sounds';
 import {
     checkInProblem,
     isCoolingDown,
@@ -83,6 +85,7 @@ export default function Scanner({
     const { auth } = usePage().props;
     const selected = events.find((item) => item.id === event) ?? null;
     const kiosk = useKioskMode();
+    const sound = useScanSound();
     const video = useRef<HTMLVideoElement>(null);
     const [outcome, setOutcome] = useState<ScanOutcome>({ kind: 'idle' });
     const [last, setLast] = useState<CheckIn | null>(null);
@@ -130,6 +133,11 @@ export default function Scanner({
     function show(next: ScanOutcome) {
         setOutcome(next);
         setFlash(next.kind === 'checking' ? null : outcomeTone(next));
+        const tone = soundFor(next.kind);
+
+        if (tone) {
+            sound.play(tone);
+        }
     }
 
     /** Resolves true once the person is checked in, or already was. */
@@ -244,6 +252,14 @@ export default function Scanner({
                     </div>
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
                         <CameraBadge status={camera.status} />
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={sound.toggle}
+                        >
+                            {sound.enabled ? <Volume2 /> : <VolumeX />}
+                            {sound.enabled ? 'Sound on' : 'Sound off'}
+                        </Button>
                         {kiosk.kiosk ? (
                             <Button
                                 type="button"
@@ -300,7 +316,17 @@ export default function Scanner({
                             >
                                 &nbsp;
                             </span>
-                            <RecentCheckIns event={selected} count={count} />
+                            <RecentCheckIns
+                                event={selected}
+                                count={count}
+                                onUndone={(undone, left) => {
+                                    setCount(left);
+
+                                    if (last?.id === undone.id) {
+                                        setLast(null);
+                                    }
+                                }}
+                            />
                         </div>
                     </div>
                     <div className="order-2 min-w-0 lg:order-none">

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Admin\EventCheckInController::index
- * @see app/Http/Controllers/Admin/EventCheckInController.php:26
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:27
  * @route '/admin/events/{event}/check-ins'
  */
 export const index = (args: { event: number | { id: number } } | [event: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\EventCheckInController::index
- * @see app/Http/Controllers/Admin/EventCheckInController.php:26
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:27
  * @route '/admin/events/{event}/check-ins'
  */
 index.url = (args: { event: number | { id: number } } | [event: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ index.url = (args: { event: number | { id: number } } | [event: number | { id: n
 
 /**
 * @see \App\Http\Controllers\Admin\EventCheckInController::index
- * @see app/Http/Controllers/Admin/EventCheckInController.php:26
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:27
  * @route '/admin/events/{event}/check-ins'
  */
 index.get = (args: { event: number | { id: number } } | [event: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -58,7 +58,7 @@ index.get = (args: { event: number | { id: number } } | [event: number | { id: n
 })
 /**
 * @see \App\Http\Controllers\Admin\EventCheckInController::index
- * @see app/Http/Controllers/Admin/EventCheckInController.php:26
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:27
  * @route '/admin/events/{event}/check-ins'
  */
 index.head = (args: { event: number | { id: number } } | [event: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -68,7 +68,7 @@ index.head = (args: { event: number | { id: number } } | [event: number | { id: 
 
     /**
 * @see \App\Http\Controllers\Admin\EventCheckInController::index
- * @see app/Http/Controllers/Admin/EventCheckInController.php:26
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:27
  * @route '/admin/events/{event}/check-ins'
  */
     const indexForm = (args: { event: number | { id: number } } | [event: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -78,7 +78,7 @@ index.head = (args: { event: number | { id: number } } | [event: number | { id: 
 
             /**
 * @see \App\Http\Controllers\Admin\EventCheckInController::index
- * @see app/Http/Controllers/Admin/EventCheckInController.php:26
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:27
  * @route '/admin/events/{event}/check-ins'
  */
         indexForm.get = (args: { event: number | { id: number } } | [event: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -87,7 +87,7 @@ index.head = (args: { event: number | { id: number } } | [event: number | { id: 
         })
             /**
 * @see \App\Http\Controllers\Admin\EventCheckInController::index
- * @see app/Http/Controllers/Admin/EventCheckInController.php:26
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:27
  * @route '/admin/events/{event}/check-ins'
  */
         indexForm.head = (args: { event: number | { id: number } } | [event: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -103,7 +103,7 @@ index.head = (args: { event: number | { id: number } } | [event: number | { id: 
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Admin\EventCheckInController::store
- * @see app/Http/Controllers/Admin/EventCheckInController.php:38
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:39
  * @route '/admin/events/{event}/check-ins'
  */
 export const store = (args: { event: number | { id: number } } | [event: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -118,7 +118,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\EventCheckInController::store
- * @see app/Http/Controllers/Admin/EventCheckInController.php:38
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:39
  * @route '/admin/events/{event}/check-ins'
  */
 store.url = (args: { event: number | { id: number } } | [event: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -151,7 +151,7 @@ store.url = (args: { event: number | { id: number } } | [event: number | { id: n
 
 /**
 * @see \App\Http\Controllers\Admin\EventCheckInController::store
- * @see app/Http/Controllers/Admin/EventCheckInController.php:38
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:39
  * @route '/admin/events/{event}/check-ins'
  */
 store.post = (args: { event: number | { id: number } } | [event: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -161,7 +161,7 @@ store.post = (args: { event: number | { id: number } } | [event: number | { id: 
 
     /**
 * @see \App\Http\Controllers\Admin\EventCheckInController::store
- * @see app/Http/Controllers/Admin/EventCheckInController.php:38
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:39
  * @route '/admin/events/{event}/check-ins'
  */
     const storeForm = (args: { event: number | { id: number } } | [event: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -171,7 +171,7 @@ store.post = (args: { event: number | { id: number } } | [event: number | { id: 
 
             /**
 * @see \App\Http\Controllers\Admin\EventCheckInController::store
- * @see app/Http/Controllers/Admin/EventCheckInController.php:38
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:39
  * @route '/admin/events/{event}/check-ins'
  */
         storeForm.post = (args: { event: number | { id: number } } | [event: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -180,9 +180,96 @@ store.post = (args: { event: number | { id: number } } | [event: number | { id: 
         })
     
     store.form = storeForm
+/**
+* @see \App\Http\Controllers\Admin\EventCheckInController::destroy
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:54
+ * @route '/admin/events/{event}/check-ins/{checkIn}'
+ */
+export const destroy = (args: { event: number | { id: number }, checkIn: string | { id: string } } | [event: number | { id: number }, checkIn: string | { id: string } ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: destroy.url(args, options),
+    method: 'delete',
+})
+
+destroy.definition = {
+    methods: ["delete"],
+    url: '/admin/events/{event}/check-ins/{checkIn}',
+} satisfies RouteDefinition<["delete"]>
+
+/**
+* @see \App\Http\Controllers\Admin\EventCheckInController::destroy
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:54
+ * @route '/admin/events/{event}/check-ins/{checkIn}'
+ */
+destroy.url = (args: { event: number | { id: number }, checkIn: string | { id: string } } | [event: number | { id: number }, checkIn: string | { id: string } ], options?: RouteQueryOptions) => {
+    if (Array.isArray(args)) {
+        args = {
+                    event: args[0],
+                    checkIn: args[1],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        event: typeof args.event === 'object'
+                ? args.event.id
+                : args.event,
+                                checkIn: typeof args.checkIn === 'object'
+                ? args.checkIn.id
+                : args.checkIn,
+                }
+
+    return destroy.definition.url
+            .replace('{event}', parsedArgs.event.toString())
+            .replace('{checkIn}', parsedArgs.checkIn.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Admin\EventCheckInController::destroy
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:54
+ * @route '/admin/events/{event}/check-ins/{checkIn}'
+ */
+destroy.delete = (args: { event: number | { id: number }, checkIn: string | { id: string } } | [event: number | { id: number }, checkIn: string | { id: string } ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: destroy.url(args, options),
+    method: 'delete',
+})
+
+    /**
+* @see \App\Http\Controllers\Admin\EventCheckInController::destroy
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:54
+ * @route '/admin/events/{event}/check-ins/{checkIn}'
+ */
+    const destroyForm = (args: { event: number | { id: number }, checkIn: string | { id: string } } | [event: number | { id: number }, checkIn: string | { id: string } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Admin\EventCheckInController::destroy
+ * @see app/Http/Controllers/Admin/EventCheckInController.php:54
+ * @route '/admin/events/{event}/check-ins/{checkIn}'
+ */
+        destroyForm.delete = (args: { event: number | { id: number }, checkIn: string | { id: string } } | [event: number | { id: number }, checkIn: string | { id: string } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 const checkIns = {
     index: Object.assign(index, index),
 store: Object.assign(store, store),
+destroy: Object.assign(destroy, destroy),
 }
 
 export default checkIns

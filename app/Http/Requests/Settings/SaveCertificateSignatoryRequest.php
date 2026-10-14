@@ -37,7 +37,9 @@ class SaveCertificateSignatoryRequest extends FormRequest
                 ? ['nullable', 'integer', 'exists:survey_regions,id']
                 : ['nullable'],
             // Raster pictures only: SVG can carry scripts. PDFs print PNG and JPG.
-            'signature' => [$creating ? 'required' : 'nullable', 'file', 'mimes:png,jpg,jpeg', 'max:2048', 'dimensions:min_width=300,min_height=80,max_width=4000,max_height=4000'],
+            // Kept loose, so a phone photo or a quick scan goes through: only
+            // pictures too small to read, or too big for a certificate, are turned away.
+            'signature' => [$creating ? 'required' : 'nullable', 'file', 'mimes:png,jpg,jpeg', 'max:5120', 'dimensions:min_width=100,min_height=30,max_width=8000,max_height=8000'],
             'consent' => [$this->hasFile('signature') ? 'accepted' : 'nullable'],
         ];
     }
@@ -48,8 +50,8 @@ class SaveCertificateSignatoryRequest extends FormRequest
         return [
             'signature.required' => __('Upload the signatory\'s e-signature.'),
             'signature.mimes' => __('Choose a PNG or JPG picture of the signature.'),
-            'signature.max' => __('Choose a picture under 2 MB.'),
-            'signature.dimensions' => __('Choose a picture at least 300 pixels wide and 80 tall, and at most 4000 either way.'),
+            'signature.max' => __('Choose a picture under 5 MB.'),
+            'signature.dimensions' => __('Choose a picture at least 100 pixels wide and 30 tall, and at most 8000 either way.'),
             'consent.accepted' => __('Confirm that the signatory allowed their e-signature to be used.'),
         ];
     }

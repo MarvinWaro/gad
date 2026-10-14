@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ChevronLeft, RefreshCw, Send, Trash2, Undo2 } from 'lucide-react';
 import { DownloadCertificateButton } from '@/components/certificates/download-certificate-button';
+import { CertificateRequests } from '@/components/certificates/certificate-requests';
 import { ReleaseBadge } from '@/components/certificates/event-uses';
 import { ConfirmPopover } from '@/components/confirm-popover';
 import { Pagination } from '@/components/pagination';
@@ -15,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { certificateDates } from '@/lib/certificate-text';
 import { formatCount } from '@/lib/dashboard';
+import { formatMoment } from '@/lib/event-dates';
 import { localDay } from '@/lib/manila-time';
 import { tones } from '@/lib/tones';
 import { cn } from '@/lib/utils';
@@ -32,6 +34,7 @@ import {
 import type {
     CertificateHolder,
     CertificateHolderPage,
+    CertificateRequestPage,
     EventCertificate,
 } from '@/types/certificates';
 import type { DirectoryOption } from '@/types/monitoring';
@@ -43,13 +46,21 @@ function people(count: number): string {
 }
 
 /**
- * An event's certificate (docs/certificates.md): release it to everyone
- * checked in, again to those checked in since, update what released
- * certificates print, and see, download or withdraw each one given.
+ * An event's certificate (docs/certificates.md): it goes out by itself when
+ * the event ends to everyone present every day, guests included; staff may
+ * release it early, answer requests from those who missed a day, update
+ * what released certificates print, and see, download or withdraw each one
+ * given.
  */
 export default function EventCertificatePage({
     certificate,
     awaiting,
+    goesOutAt,
+    together,
+    ended,
+    automatic,
+    problem: waits,
+    requests,
     holders,
     filters,
     regions,
@@ -57,6 +68,17 @@ export default function EventCertificatePage({
 }: {
     certificate: EventCertificate;
     awaiting: number;
+    /** When it goes out by itself: the event's end, Philippine time. */
+    goesOutAt: string;
+    /** The event's other certificates, released and removed with this one. */
+    together: string[];
+    /** Whether the event is over. */
+    ended: boolean;
+    /** Whether it still goes out by itself; an event long over waits for staff. */
+    automatic: boolean;
+    /** What keeps it from going out, or null. */
+    problem: string | null;
+    requests: CertificateRequestPage;
     holders: CertificateHolderPage;
     filters: Filters;
     regions: DirectoryOption[];
@@ -125,16 +147,17 @@ export default function EventCertificatePage({
                     {released ? (
                         <>
                             <p className="text-sm text-pretty">
-                                Released{' '}
-                                {localDay(certificate.released_at ?? '')}
-                                {certificate.released_by &&
-                                    ` by ${certificate.released_by}`}
-                                . Each person was notified and downloads theirs
-                                from My certificates.
+                                {certificate.released_by
+                                    ? `Released ${localDay(certificate.released_at ?? '')} by ${certificate.released_by}.`
+                                    : `Went out ${localDay(certificate.released_at ?? '')}, when the event ended.`}{' '}
+                                Each person was notified and downloads theirs
+                                from My certificates; staff download a
+                                guest&apos;s to hand over. Anyone who earns it
+                                later gets it by itself.
                             </p>
                             <dl className="grid grid-cols-3 gap-3 text-center sm:max-w-md">
                                 {[
-                                    ['Checked in', eligible],
+                                    ['Present every day', eligible],
                                     ['Given', issued],
                                     ['Withdrawn', withdrawn],
                                 ].map(([label, count]) => (
@@ -155,7 +178,7 @@ export default function EventCertificatePage({
                                 {awaiting > 0 && (
                                     <ConfirmPopover
                                         title={`Release to ${people(awaiting)} more?`}
-                                        description="They were checked in after the release. Each is notified."
+                                        description={`They earned it after the release, such as days marked from the paper sheet.${together.length > 0 ? ` The ${together.join(' and ')} goes to them too.` : ''} Each is notified.`}
                                         confirmLabel="Release"
                                         onConfirm={(visit) =>
                                             router.post(
@@ -198,16 +221,31 @@ export default function EventCertificatePage({
                         </>
                     ) : (
                         <>
-                            <p className="text-sm text-pretty">
-                                {eligible > 0
-                                    ? `${people(eligible)} checked in will get this certificate. Release it once the attendance is right; it keeps the design as it is then.`
-                                    : 'No one is checked in yet. Release it once people are checked in at the event.'}
-                            </p>
+                            {waits ? (
+                                <p
+                                    role="status"
+                                    className={cn(
+                                        'rounded-lg px-3 py-2 text-sm text-pretty',
+                                        tones.warning.badge,
+                                    )}
+                                >
+                                    It can&apos;t go out yet. {waits}
+                                </p>
+                            ) : (
+                                <p className="text-sm text-pretty">
+                                    {releaseNote({
+                                        ended,
+                                        automatic,
+                                        goesOutAt,
+                                        eligible,
+                                    })}
+                                </p>
+                            )}
                             <div className="flex flex-wrap gap-2">
                                 <ConfirmPopover
-                                    title={`Release to ${people(eligible)}?`}
-                                    description="Each is notified and can download it from My certificates. People checked in later can be given it after."
-                                    confirmLabel="Release"
+                                    title={`Release now to ${people(eligible)}?`}
+                                    description={`It won't wait for the event to end.${together.length > 0 ? ` The ${together.join(' and ')} goes out with it.` : ''} Each person is notified; anyone who earns it later gets it by itself.`}
+                                    confirmLabel="Release now"
                                     confirmDisabled={eligible === 0}
                                     onConfirm={(visit) =>
                                         router.post(
@@ -220,14 +258,17 @@ export default function EventCertificatePage({
                                         )
                                     }
                                 >
-                                    <Button disabled={eligible === 0}>
+                                    <Button
+                                        variant="outline"
+                                        disabled={eligible === 0}
+                                    >
                                         <Send />
-                                        Release certificates
+                                        Release now
                                     </Button>
                                 </ConfirmPopover>
                                 <ConfirmPopover
                                     title="Remove it from this event?"
-                                    description="The design stays in your list. You can use it on the event again."
+                                    description={`The design stays in your list. You can use it on the event again.${together.length > 0 ? ` Its pair comes off too, if it hasn't gone out.` : ''}`}
                                     confirmLabel="Remove"
                                     onConfirm={(visit) =>
                                         router.delete(
@@ -248,6 +289,13 @@ export default function EventCertificatePage({
                         </>
                     )}
                 </section>
+
+                {requests.meta.total > 0 && (
+                    <CertificateRequests
+                        certificate={certificate}
+                        requests={requests}
+                    />
+                )}
 
                 {released && (
                     <>
@@ -306,7 +354,7 @@ export default function EventCertificatePage({
                                     text={
                                         filtered
                                             ? 'Try another name, or clear the filters.'
-                                            : 'Release it to the people checked in.'
+                                            : 'It goes to everyone present on every day.'
                                     }
                                     onClear={() => change({})}
                                 />
@@ -326,6 +374,36 @@ export default function EventCertificatePage({
     );
 }
 
+/**
+ * When an unreleased certificate goes out: by itself at the event's end, or
+ * within a minute once it has ended, unless the event ended so long ago that
+ * it waits for staff.
+ */
+function releaseNote({
+    ended,
+    automatic,
+    goesOutAt,
+    eligible,
+}: {
+    ended: boolean;
+    automatic: boolean;
+    goesOutAt: string;
+    eligible: number;
+}): string {
+    const who =
+        eligible > 0
+            ? `everyone present on every day: ${people(eligible)}`
+            : 'everyone present on every day';
+
+    if (!automatic) {
+        return `The event ended over 30 days ago, so it waits for you. Release it to ${who}.`;
+    }
+
+    return ended
+        ? `The event has ended, so it goes out by itself within a minute to ${who}. It keeps the design as it is then.`
+        : `It goes out by itself when the event ends, ${formatMoment(goesOutAt)}, to ${who} by then. It keeps the design as it is then.`;
+}
+
 function HolderItem({
     certificate,
     holder,
@@ -340,6 +418,16 @@ function HolderItem({
             <div className={cn('min-w-0 flex-1', withdrawn && 'opacity-70')}>
                 <p className="flex flex-wrap items-center gap-2 font-medium">
                     {holder.name}
+                    {holder.guest && (
+                        <span
+                            className={cn(
+                                'rounded-full px-2 py-0.5 text-xs font-medium',
+                                tones.neutral.badge,
+                            )}
+                        >
+                            Guest
+                        </span>
+                    )}
                     {withdrawn && (
                         <span
                             className={cn(

@@ -17,7 +17,7 @@ beforeEach(function () {
     $focal = certificateStaff('ched-focal', $region);
     $event = certificateEvent('GAD Orientation', $region);
     $guest = certificateGuest($region, ['name' => 'Ana Reyes', 'email' => 'ana@example.test']);
-    certificateCheckIn($event, $guest);
+    attendEveryDay($event, $guest);
     $use = GadEventCertificate::query()->create([
         'gad_event_id' => $event->id,
         'certificate_design_id' => certificateDesign($region, [certificateSignatory($region)])->id,

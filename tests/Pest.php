@@ -9,6 +9,7 @@ use App\Models\CertificateDesign;
 use App\Models\CertificateSignatory;
 use App\Models\GadEvent;
 use App\Models\GadEventCheckIn;
+use App\Models\GadEventRegistration;
 use App\Models\Quest;
 use App\Models\QuestAttempt;
 use App\Models\SurveyCluster;
@@ -289,9 +290,28 @@ function certificateEvent(string $title, ?SurveyRegion $region, string $startsAt
     ]);
 }
 
-/** Someone checked in to the event on a Philippine day. */
+/** Someone who joined the event (docs/event-registration.md). */
+function joinEvent(GadEvent $event, User $person): GadEventRegistration
+{
+    return GadEventRegistration::query()->firstOrCreate(
+        ['gad_event_id' => $event->id, 'user_id' => $person->id],
+        ['survey_region_id' => $person->regionId(), 'survey_hei_id' => $person->survey_hei_id],
+    );
+}
+
+/** Someone who joined the event and was checked in on every one of its days, so they earn its certificates. */
+function attendEveryDay(GadEvent $event, User $person): void
+{
+    foreach ($event->days() as $day) {
+        certificateCheckIn($event, $person, $day);
+    }
+}
+
+/** Someone who joined the event, checked in to it on a Philippine day. */
 function certificateCheckIn(GadEvent $event, User $person, string $day = '2026-10-14'): GadEventCheckIn
 {
+    joinEvent($event, $person);
+
     return GadEventCheckIn::query()->create([
         'gad_event_id' => $event->id,
         'user_id' => $person->id,

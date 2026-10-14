@@ -59,14 +59,7 @@ for (const width of [1440, 1280]) {
             left.getByRole('button', { name: 'Copy link for RA 7877' }),
         ).toBeVisible();
         await expect(left.getByText('RA 11313', { exact: true })).toBeVisible();
-        // The GAD Quest card (Beta) offers the newest open quest: the
-        // fixture from tests/browser/server.php, or one gad-quest.spec.ts
-        // opened. The footer closes the column.
-        const quest = left.getByRole('region', { name: 'GAD Quest' });
-        await expect(quest).toContainText('Beta');
-        await expect(
-            quest.getByRole('link', { name: /^Play: / }),
-        ).toHaveAttribute('href', /\/quests\/[0-9A-Z]{26}$/i);
+        // The footer closes the column, and holds where to find help.
         const footer = left.getByRole('navigation', { name: 'About PHLGADIS' });
         await expect(footer.getByRole('link', { name: 'FAQ' })).toHaveAttribute(
             'href',
@@ -75,6 +68,26 @@ for (const width of [1440, 1280]) {
         await expect(
             footer.getByRole('link', { name: 'Feedback' }),
         ).toHaveAttribute('href', '/feedback');
+        await expect(
+            footer.getByRole('link', { name: 'Rate PHLGADIS' }),
+        ).toHaveAttribute('href', '/#rate');
+        // The GAD Quest card (Beta) sits on the right with the other things
+        // on now, offering the newest open quest: the fixture from
+        // tests/browser/server.php, or one gad-quest.spec.ts opened.
+        await expect(
+            left.getByRole('region', { name: 'GAD Quest' }),
+        ).toHaveCount(0);
+        const quest = rightRail(page).getByRole('region', {
+            name: 'GAD Quest',
+        });
+        await expect(quest).toContainText('Beta');
+        await expect(
+            quest.getByRole('link', { name: /^Play: / }),
+        ).toHaveAttribute('href', /\/quests\/[0-9A-Z]{26}$/i);
+        // Help is the left footer's, so the right rail has no card for it.
+        await expect(
+            rightRail(page).getByRole('region', { name: 'Need help?' }),
+        ).toHaveCount(0);
         // Middle: the feed's banner over its illustration, then the posts.
         await expect(
             feed(page).getByRole('heading', {
@@ -128,12 +141,18 @@ test('the left menu folds its groups and remembers them', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await logIn(page);
     const left = leftRail(page);
-    // Both groups start open, so the column reads full.
+    // The law surveys, the HEI's work, start open; the resources, for
+    // reference now and then, start folded.
     const resources = left.getByRole('button', { name: 'Resources' });
-    await expect(resources).toHaveAttribute('aria-expanded', 'true');
+    await expect(resources).toHaveAttribute('aria-expanded', 'false');
     await expect(
         left.getByRole('button', { name: 'Law surveys' }),
     ).toHaveAttribute('aria-expanded', 'true');
+    await expect(
+        left.getByRole('link', { name: /Definition of Terms/ }),
+    ).toHaveCount(0);
+    await resources.click();
+    await expect(resources).toHaveAttribute('aria-expanded', 'true');
     await expect(
         left.getByRole('link', { name: /Definition of Terms/ }),
     ).toHaveAttribute('href', '/resources/definition-of-terms');
@@ -142,7 +161,8 @@ test('the left menu folds its groups and remembers them', async ({ page }) => {
     await expect(left.getByText('GAD Videos')).toBeVisible();
     await expect(left.getByRole('link', { name: /GAD Videos/ })).toHaveCount(0);
 
-    // Folding Law surveys and reloading keeps both as they were left.
+    // Folding Law surveys and reloading keeps both as they were left,
+    // Resources open.
     await left.getByRole('button', { name: 'Law surveys' }).click();
     await page.reload();
     await expect(
@@ -161,12 +181,13 @@ test('the footer rests at the bottom of the screen until the groups outgrow it',
     const left = leftRail(page);
     // The whole footer: its links and the copyright line under them.
     const footer = left.locator('footer');
-    const quest = left.getByRole('region', { name: 'GAD Quest' });
 
-    // Both groups folded: the footer sits 24px above the screen's bottom,
-    // the GAD Quest card well above it.
+    // Both groups folded (Resources starts so): the footer sits 24px above
+    // the screen's bottom, well below the folded groups.
     await left.getByRole('button', { name: 'Law surveys' }).click();
-    await left.getByRole('button', { name: 'Resources' }).click();
+    await expect(
+        left.getByRole('button', { name: 'Resources' }),
+    ).toHaveAttribute('aria-expanded', 'false');
     await expect
         .poll(async () => {
             const box = (await footer.boundingBox())!;
@@ -177,9 +198,11 @@ test('the footer rests at the bottom of the screen until the groups outgrow it',
     const column = (await left.boundingBox())!;
     const links = (await footer.boundingBox())!;
     expect(links.x + links.width).toBeLessThanOrEqual(column.x + column.width);
-    const card = (await quest.boundingBox())!;
+    const folded = (await left
+        .getByRole('button', { name: 'Resources' })
+        .boundingBox())!;
     expect(
-        (await footer.boundingBox())!.y - (card.y + card.height),
+        (await footer.boundingBox())!.y - (folded.y + folded.height),
     ).toBeGreaterThan(48);
 
     // Both open: the footer follows the Resources list, never under it.
@@ -199,6 +222,9 @@ test('plain HEI users get people to ask and help, without Quick links', async ({
     await page.setViewportSize({ width: 1440, height: 1000 });
     await logIn(page, 'browser-member@example.test');
     const right = rightRail(page);
+    const footer = leftRail(page).getByRole('navigation', {
+        name: 'About PHLGADIS',
+    });
     await expect(
         right.getByRole('region', { name: 'Quick links' }),
     ).toHaveCount(0);
@@ -217,7 +243,31 @@ test('plain HEI users get people to ask and help, without Quick links', async ({
     await expect(people).not.toContainText('Browser Test Member');
     await expect(people).not.toContainText('Preview');
 
-    const help = right.getByRole('region', { name: 'Need help?' });
+    // Help is in the left rail's footer from 1280px.
+    await expect(footer.getByRole('link', { name: 'FAQ' })).toHaveAttribute(
+        'href',
+        '/help/faq',
+    );
+    await expect(
+        footer.getByRole('link', { name: 'Feedback' }),
+    ).toHaveAttribute('href', '/feedback');
+    await right.screenshot({
+        path: testInfo.outputPath('hei-home-member-rail.png'),
+    });
+
+    // "Rate PHLGADIS" opens the homepage's rating card.
+    await footer.getByRole('link', { name: 'Rate PHLGADIS' }).click();
+    await expect(
+        page.getByRole('dialog', { name: 'How would you rate PHLGADIS?' }),
+    ).toBeVisible();
+});
+
+test('narrower than 1280px, where the left rail is hidden, the right rail has the help card', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1024, height: 1000 });
+    await logIn(page, 'browser-member@example.test');
+    const help = rightRail(page).getByRole('region', { name: 'Need help?' });
     await expect(help.getByRole('link', { name: 'FAQ' })).toHaveAttribute(
         'href',
         '/help/faq',
@@ -225,18 +275,16 @@ test('plain HEI users get people to ask and help, without Quick links', async ({
     await expect(
         help.getByRole('link', { name: 'Send feedback' }),
     ).toHaveAttribute('href', '/feedback');
-    await right.screenshot({
-        path: testInfo.outputPath('hei-home-member-rail.png'),
-    });
-
-    // "Rate PHLGADIS" opens the homepage's rating card.
-    await help.getByRole('link', { name: 'Rate PHLGADIS' }).click();
     await expect(
-        page.getByRole('dialog', { name: 'How would you rate PHLGADIS?' }),
+        help.getByRole('link', { name: 'Rate PHLGADIS' }),
+    ).toHaveAttribute('href', '/#rate');
+    // The GAD Quest card shows here too, where it once had no room.
+    await expect(
+        rightRail(page).getByRole('region', { name: 'GAD Quest' }),
     ).toBeVisible();
 });
 
-test('HEI Focals get the same cards under their Quick links', async ({
+test('HEI Focals get the GAD Quest, their Quick links and their people', async ({
     page,
 }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -244,9 +292,9 @@ test('HEI Focals get the same cards under their Quick links', async ({
     const right = rightRail(page);
     const cards = right.getByRole('region');
     await expect(cards.getByRole('heading', { level: 2 })).toContainText([
+        'GAD Quest',
         'Quick links',
         'People at your institution',
-        'Need help?',
     ]);
 });
 

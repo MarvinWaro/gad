@@ -46,7 +46,7 @@
         @php
             $publicCss = \Illuminate\Support\Facades\Vite::isRunningHot()
                 && (in_array($page['component'], ['welcome', 'about'], true)
-                    || \Illuminate\Support\Str::startsWith($page['component'], ['surveys/', 'resources/', 'help/', 'about/']))
+                    || \Illuminate\Support\Str::startsWith($page['component'], ['surveys/', 'resources/', 'help/', 'about/', 'gad-events/']))
                 ? ['resources/css/public.css']
                 : [];
         @endphp

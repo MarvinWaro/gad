@@ -40,6 +40,32 @@ Every account has a Virtual ID: a wallet-size card in **Settings → Virtual ID*
     - `tests/frontend/virtual-id.test.ts` covers this, and the browser test checks a 50-character name at 320 and 375 px.
 - **The photo comes from this site.** `GET /settings/virtual-id/photo` (`virtual-id.photo`) streams the owner's own photo from storage, because a canvas can only save pictures from its own site. The live photos are in the Spaces bucket.
 
+## The lanyard and the full view
+
+On the page the card hangs from a lanyard (`components/virtual-id-lanyard.tsx`, physics in `lib/lanyard.ts`).
+
+- **How it moves:**
+    - Drag the card to swing it. A tap, or the "Turn over" button, turns it over.
+    - It swings in a little when the page opens, then settles hanging straight.
+    - **The physics:** a few points joined by fixed lengths, moved by Verlet steps at 60 a second.
+        - The strap doesn't stretch.
+        - A throw is capped at 900 px a second, so a fling doesn't send the card spinning.
+        - It stops drawing once the card hangs still, so it costs nothing at rest.
+        - It adds no library: no 3D engine and no physics package.
+    - **People who ask for less motion** (`prefers-reduced-motion`) get a still card. The tap still turns it, without the turning animation.
+- **The strap** is GAD purple with "PHLGADIS" along it. A grey clip holds the card.
+- **The back** is painted by the same painter (`layoutCardBack`, `paintCardBack`):
+    - the front's shapes, mirrored
+    - the ⚥ mark as it is
+    - "PHLGADIS" and the system's full name
+    - the holder's name
+    - "Show the front to staff at the registration table."
+    - It has no QR. Staff scan the front, where the photo is, so they can see whose ID it is.
+- **View full ID** opens the card large, flat and still, on white, in a dialog. This is the view to hold up for staff to scan.
+    - While it is open, the screen stays on wherever the browser allows it (the Wake Lock API).
+    - It suggests a brighter screen, which scans faster.
+- **What doesn't change:** the saved image and the PDF are still the flat front.
+
 ## Saving it
 
 - **Save as image:** a PNG, 1080 × 1713 px (about 500 dpi on the card). PNG is lossless, so the QR's edges stay sharp, which a JPG would blur.
@@ -49,4 +75,5 @@ Every account has a Virtual ID: a wallet-size card in **Settings → Virtual ID*
 ## Not built yet
 
 - Resetting a code whose screenshot leaked.
-- Join. The staff scanner (`docs/event-check-in.md`) and certificates (`docs/certificates.md`) are built.
+
+Join (`docs/event-registration.md`), the staff scanner (`docs/event-check-in.md`) and certificates (`docs/certificates.md`) are built.

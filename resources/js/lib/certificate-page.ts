@@ -25,9 +25,46 @@ export const LAYOUT = {
     signature: { width: 150, height: 46 },
     signatoryWidth: 190,
     signatoryGap: 24,
-    qr: 50,
-    qrTop: 516,
+    /** The verify QR's square, quiet zone included: about 25 mm. */
+    qr: 72,
+    qrTop: 496,
+    /**
+     * From the page's right edge: clear of the widest signatories' row on
+     * its left and of the frame's corner on its right.
+     */
+    qrRight: 34,
 } as const;
+
+/** Where the verify QR's square starts. */
+export const QR_LEFT = PAGE.width - LAYOUT.qrRight - LAYOUT.qr;
+
+/** The quiet zone round a QR, in modules, as the standard asks. */
+const QUIET_ZONE = 4;
+
+/**
+ * A QR's modules (rows of 0s and 1s, from the server) as one vector drawing
+ * `size` points square: a paper square with the quiet zone, and the dark
+ * modules as a single path, each row's runs merged, so it prints and shows
+ * crisp, without the seams separate squares leave between them.
+ */
+export function qrSvg(
+    rows: string[],
+    size: number,
+    colors: CertificateColors,
+): string {
+    const modules = rows.length + 2 * QUIET_ZONE;
+    const corner = (4 / size) * modules;
+    const path = rows
+        .flatMap((row, y) =>
+            [...row.matchAll(/1+/g)].map(
+                (run) =>
+                    `M${(run.index ?? 0) + QUIET_ZONE} ${y + QUIET_ZONE}h${run[0].length}v1h-${run[0].length}z`,
+            ),
+        )
+        .join('');
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${modules} ${modules}"><rect width="${modules}" height="${modules}" rx="${corner}" fill="${colors.paper}"/><path d="${path}" fill="${colors.ink}"/></svg>`;
+}
 
 /** The name on one line: smaller as it grows, never below a readable size. */
 export function nameSize(name: string): number {

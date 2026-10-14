@@ -24,6 +24,8 @@ class CertificateHolderResource extends JsonResource
             'name' => $this->name,
             'affiliation' => $this->affiliation,
             'region' => $this->region?->name,
+            // A guest without an account, whose certificate staff hand over.
+            'guest' => $this->gad_event_guest_id !== null,
             'issued_at' => $this->issued_at->toIso8601ZuluString(),
             'withdrawn_at' => $this->withdrawn_at?->toIso8601ZuluString(),
             'withdrawn_by' => $this->withdrawer?->name,

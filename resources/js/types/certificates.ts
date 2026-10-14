@@ -46,10 +46,12 @@ export type CertificateDesign = {
     /** `key` names the logo when saving which ones stay. */
     logos: { key: string; url: string }[];
     signatories?: Pick<Signatory, 'id' | 'name' | 'position' | 'signature'>[];
+    /** Its pair, of the other kind, in the editor: chosen and released with it. */
+    partner?: { id: string; name: string; title: string } | null;
     uses?: number;
     released_uses?: number;
     updated_at: string | null;
-    can: { update: boolean; delete: boolean; use: boolean };
+    can: { update: boolean; delete: boolean; use: boolean; pair: boolean };
 };
 
 export type CertificateDesignPage = {
@@ -80,6 +82,8 @@ export type CertificateHolder = {
     name: string;
     affiliation: string | null;
     region: string | null;
+    /** A guest without an account, whose certificate staff hand over. */
+    guest: boolean;
     issued_at: string;
     withdrawn_at: string | null;
     withdrawn_by: string | null;
@@ -89,6 +93,37 @@ export type CertificateHolderPage = {
     data: CertificateHolder[];
     meta: PaginationMeta;
 };
+
+/** `CertificateRequestResource`: someone who missed a day asking for a certificate. */
+export type CertificateRequest = {
+    id: string;
+    /** The event certificate asked for. */
+    certificate_id: string;
+    /** Its kind, on the asker's event page. */
+    title?: string | null;
+    reason: string;
+    status: 'pending' | 'approved' | 'declined';
+    /** The office's note when it declined. */
+    note: string | null;
+    requested_at: string;
+    decided_at: string | null;
+    /** For staff. */
+    person?: {
+        name: string;
+        avatar: string | null;
+        affiliation: string | null;
+    };
+    /** The days they were checked in, Y-m-d, for staff. */
+    days?: string[];
+};
+
+export type CertificateRequestPage = {
+    data: CertificateRequest[];
+    meta: PaginationMeta;
+};
+
+/** A released certificate of an event someone may ask for. */
+export type RequestableCertificate = { id: string; title: string };
 
 /** What a certificate printed about its event, as it was released. */
 export type CertificateEvent = {
@@ -117,6 +152,8 @@ export type MyCertificatePage = { data: MyCertificate[]; meta: PaginationMeta };
 export type CertificateDocument = {
     number: string;
     verify_url: string;
+    /** The verify QR's modules, a string of 0s and 1s per row (1 is dark). */
+    qr: string[];
     kind: CertificateKind;
     title: string;
     lead: string;

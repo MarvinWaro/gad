@@ -9,6 +9,8 @@ import {
     LAYOUT,
     nameSize,
     PAGE,
+    QR_LEFT,
+    qrSvg,
     signatoryRowLeft,
 } from '../../resources/js/lib/certificate-page.ts';
 import {
@@ -17,7 +19,16 @@ import {
     certificateDates,
     fillBlanks,
     formalDate,
+    isMissingPictures,
+    missingPictures,
 } from '../../resources/js/lib/certificate-text.ts';
+import {
+    drawWidth,
+    MAX_DRAW_WIDTH,
+    redrawDelay,
+    TYPING_DELAY_MS,
+} from '../../resources/js/lib/certificate-preview.ts';
+import type { CertificateDocument } from '../../resources/js/types/certificates.ts';
 
 const colors = {
     paper: '#ffffff',
@@ -137,8 +148,8 @@ void test('one, two or three signatories sit centred on the page', () => {
             count * LAYOUT.signatoryWidth + (count - 1) * LAYOUT.signatoryGap;
 
         assert.ok(Math.abs(left + width / 2 - PAGE.width / 2) < 0.01);
-        // Clear of the verify block in the bottom-right corner.
-        assert.ok(left + width < PAGE.width - LAYOUT.qr - 30);
+        // Clear of the verify QR in the bottom-right corner.
+        assert.ok(left + width < QR_LEFT);
     }
     assert.deepEqual(fit({ width: 600, height: 200 }, 150, 46), {
         width: 138,
@@ -157,4 +168,92 @@ void test('each background is a page-sized drawing in the paper colours', () => 
     }
     assert.equal(backgroundOf('gold'), 'frame');
     assert.equal(backgroundSvg('gold', colors), backgroundSvg('frame', colors));
+});
+
+void test('pictures that could not be loaded are named, in one clause', () => {
+    assert.equal(
+        missingPictures(['the e-signature of Maria Santos']),
+        "The e-signature of Maria Santos couldn't be loaded",
+    );
+    assert.equal(
+        missingPictures(['extra logo 1', 'the e-signature of Jose Cruz']),
+        "Extra logo 1 and the e-signature of Jose Cruz couldn't be loaded",
+    );
+
+    const refused = Object.assign(
+        new Error("Extra logo 1 couldn't be loaded"),
+        {
+            name: 'MissingPicturesError',
+            missing: ['extra logo 1'],
+        },
+    );
+    assert.equal(isMissingPictures(refused), true);
+    assert.equal(isMissingPictures(new Error('offline')), false);
+    assert.equal(isMissingPictures('MissingPicturesError'), false);
+});
+
+void test('the preview redraws a pick at once, and waits for a pause in typing', () => {
+    const page = {
+        number: 'CERT-0000-0000',
+        verify_url: 'https://example.test/verify/CERT-0000-0000',
+        qr: [],
+        kind: 'participation',
+        title: 'Certificate of Participation',
+        lead: 'is presented to',
+        name: 'JUAN DELA CRUZ',
+        affiliation: null,
+        background: 'frame',
+        body: 'for participating in the {event}.',
+        event: null,
+        office: null,
+        days: [],
+        released_on: '2026-10-15',
+        logos: [],
+        signatories: [],
+    } as const satisfies CertificateDocument;
+
+    assert.equal(redrawDelay(null, page), 0);
+    assert.equal(redrawDelay(page, { ...page, background: 'flow' }), 0);
+    assert.equal(
+        redrawDelay(page, { ...page, body: `${page.body} Thank you.` }),
+        TYPING_DELAY_MS,
+    );
+    // Wording replaced along with the kind: a pick.
+    assert.equal(
+        redrawDelay(page, {
+            ...page,
+            kind: 'appearance',
+            body: 'appeared at the {event}.',
+        }),
+        0,
+    );
+});
+
+void test('the preview is drawn as wide as it shows, sharp on dense screens, within a limit', () => {
+    assert.equal(drawWidth(730, 1), 730);
+    assert.equal(drawWidth(447.5, 2), 895);
+    assert.equal(drawWidth(900, 2), MAX_DRAW_WIDTH);
+    // Not laid out yet: the widest.
+    assert.equal(drawWidth(0, 1), MAX_DRAW_WIDTH);
+});
+
+void test('the verify QR is one crisp path on its own paper square, with a quiet zone', () => {
+    const rows = ['1110', '0011', '1001', '0000'];
+    const svg = qrSvg(rows, LAYOUT.qr, colors);
+
+    // Four modules a side plus four of quiet zone on each, scaled to 72 pt.
+    assert.match(svg, /width="72" height="72" viewBox="0 0 12 12"/);
+    assert.match(
+        svg,
+        /<rect width="12" height="12" rx="[\d.]+" fill="#ffffff"\/>/,
+    );
+    assert.equal(svg.match(/<path /g)?.length, 1);
+    // Each row's dark runs, merged, offset by the quiet zone.
+    assert.match(
+        svg,
+        /d="M4 4h3v1h-3zM6 5h2v1h-2zM4 6h1v1h-1zM7 6h1v1h-1z" fill="#000000"/,
+    );
+    // Clear of the widest signatories' row and the page's foot.
+    assert.ok(QR_LEFT + LAYOUT.qr < PAGE.width - 30);
+    assert.ok(LAYOUT.qrTop + LAYOUT.qr < PAGE.height - 24);
 });

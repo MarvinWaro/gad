@@ -14,6 +14,7 @@ import {
     KindPicker,
     SignatoryPicker,
 } from '@/components/certificates/design-pickers';
+import { DesignPair } from '@/components/certificates/design-pair';
 import { EventUses } from '@/components/certificates/event-uses';
 import InputError from '@/components/input-error';
 import { fieldClass, selectClass } from '@/components/monitoring/shared';
@@ -23,7 +24,6 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { index, store, update } from '@/routes/settings/certificates';
 import { index as signatoriesIndex } from '@/routes/settings/certificate-signatories';
-import { show as verify } from '@/routes/verify';
 import type {
     CertificateDesign,
     CertificateDocument,
@@ -37,9 +37,11 @@ import type {
 const MAX_LOGOS = 3;
 const MAX_SIGNATORIES = 3;
 
-/** What the preview prints in place of a person and their event. */
+/**
+ * What the preview prints in place of a person and their event; the number
+ * and its QR come from the server (`sample`).
+ */
 const SAMPLE = {
-    number: 'CERT-0000-0000',
     name: 'JUAN DELA CRUZ',
     affiliation: 'Sample State University',
     event: {
@@ -78,6 +80,7 @@ export default function CertificateEditor({
     offices,
     nationalAccess,
     ownRegion,
+    sample,
 }: {
     design: CertificateDesign | null;
     uses: EventCertificate[];
@@ -88,6 +91,7 @@ export default function CertificateEditor({
     offices: CertificateOffice[];
     nationalAccess: boolean;
     ownRegion: number | null;
+    sample: Pick<CertificateDocument, 'number' | 'verify_url' | 'qr'>;
 }) {
     const id = useId();
     const first = kinds[0];
@@ -149,8 +153,7 @@ export default function CertificateEditor({
     const preview: CertificateDocument = {
         ...SAMPLE,
         days: [...SAMPLE.days],
-        verify_url: new URL(verify.url(SAMPLE.number), window.location.origin)
-            .href,
+        ...sample,
         kind: kind.value,
         title: kind.title,
         lead: kind.lead,
@@ -297,6 +300,16 @@ export default function CertificateEditor({
                             onChange={pickKind}
                         />
                         <InputError message={form.errors.kind} />
+                        {design && (
+                            <DesignPair
+                                design={design}
+                                otherTitle={
+                                    kinds.find(
+                                        (kind) => kind.value !== design.kind,
+                                    )?.title ?? 'other kind'
+                                }
+                            />
+                        )}
 
                         <div className="grid gap-2">
                             <Label htmlFor={`${id}-name`}>

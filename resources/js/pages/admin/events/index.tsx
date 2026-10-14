@@ -1,14 +1,17 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
+    Ban,
     CalendarDays,
     MapPin,
     Pencil,
     Plus,
+    RotateCcw,
     Search,
     Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { EventStatusBadge } from '@/components/events/event-status-badge';
 import { EventCategoryLabel } from '@/components/hei/event-category';
 import InputError from '@/components/input-error';
 import { ConfirmPopover } from '@/components/confirm-popover';
@@ -35,18 +38,31 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     eventCategories,
+    eventStatuses,
     formatEventTime,
     parseWallClock,
 } from '@/lib/event-dates';
-import type { CalendarEvent, EventCategory } from '@/types';
+import { formatCount } from '@/lib/dashboard';
+import { tones } from '@/lib/tones';
+import { cn } from '@/lib/utils';
+import { update as cancellation } from '@/routes/admin/events/cancellation';
+import { index as registrations } from '@/routes/admin/events/registrations';
+import { show as eventPage } from '@/routes/events';
+import type { CalendarEvent, EventCategory, EventStatus } from '@/types';
 import type { DirectoryOption } from '@/types/monitoring';
 
 type AdminEvent = CalendarEvent & {
+    /** Where it stands now. */
+    status: EventStatus;
     created_by: string | null;
     /** Null: for every region. */
     region: DirectoryOption | null;
+    /** Null for staff other than its region's CHED Focal and Administrators. */
+    joined_count: number | null;
+    /** Shown on the public website; deadlines never are. */
+    is_public: boolean;
     /** Staff change their own region's events; every region's are the Central Office's. */
-    can: { update: boolean; delete: boolean };
+    can: { update: boolean; delete: boolean; viewRegistrations: boolean };
 };
 
 type PaginationLink = { url: string | null; label: string; active: boolean };
@@ -70,9 +86,13 @@ type EventForm = {
     category: EventCategory;
     /** The Central Office's pick; empty for every region. */
     region: string;
+    /** On the public website's GAD events page and homepage. */
+    is_public: boolean;
     is_all_day: boolean;
     starts_at: string;
     ends_at: string;
+    /** Empty: open until the event ends. */
+    registration_closes_at: string;
     location: string;
     description: string;
 };
@@ -84,8 +104,11 @@ const dateFormat = new Intl.DateTimeFormat('en-PH', {
     year: 'numeric',
 });
 
+type Filters = { search: string; status: EventStatus | '' };
+
 export default function EventsIndex({
     events,
+    ongoing,
     categories,
     filters,
     regions,
@@ -93,20 +116,30 @@ export default function EventsIndex({
     permissions,
 }: {
     events: PaginatedEvents;
+    /** How many of the events listed are happening now. */
+    ongoing: number;
     categories: EventCategory[];
-    filters: { search: string };
+    filters: Filters;
     permissions: Permissions;
 } & Places) {
     const [search, setSearch] = useState(filters.search);
     const places = { regions, nationalAccess };
 
-    function submitSearch(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
+    function list(next: Filters) {
         router.get(
             '/admin/events',
-            search.trim() ? { search: search.trim() } : {},
+            Object.fromEntries(
+                Object.entries({ ...next, search: next.search.trim() }).filter(
+                    ([, value]) => value,
+                ),
+            ),
             { preserveState: true, replace: true },
         );
+    }
+
+    function submitSearch(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        list({ ...filters, search });
     }
 
     return (
@@ -140,13 +173,37 @@ export default function EventsIndex({
                                 {events.total}{' '}
                                 {events.total === 1 ? 'event' : 'events'},
                                 newest first
+                                {ongoing > 0 && ` · ${ongoing} happening now`}
                             </CardDescription>
                         </div>
                         <form
-                            className="flex w-full gap-2 sm:w-auto"
+                            className="flex w-full flex-wrap gap-2 sm:w-auto sm:flex-nowrap"
                             onSubmit={submitSearch}
                             role="search"
                         >
+                            <Label htmlFor="event-status" className="sr-only">
+                                Status
+                            </Label>
+                            <FormSelect
+                                id="event-status"
+                                value={filters.status}
+                                onChange={(status) =>
+                                    list({
+                                        search,
+                                        status: status as Filters['status'],
+                                    })
+                                }
+                                placeholder="All events"
+                                allowEmpty
+                                emptyLabel="All events"
+                                options={(
+                                    Object.keys(eventStatuses) as EventStatus[]
+                                ).map((status) => ({
+                                    value: status,
+                                    label: eventStatuses[status].label,
+                                }))}
+                                className="w-full rounded-[6px] data-[size=default]:h-11 sm:w-44"
+                            />
                             <Label htmlFor="event-search" className="sr-only">
                                 Search events
                             </Label>
@@ -157,7 +214,7 @@ export default function EventsIndex({
                                     setSearch(event.target.value)
                                 }
                                 placeholder="Search title or location"
-                                className="sm:w-64"
+                                className="min-w-0 flex-1 sm:w-64 sm:flex-none"
                             />
                             <Button type="submit" variant="outline" size="icon">
                                 <Search />
@@ -172,23 +229,23 @@ export default function EventsIndex({
                                     <CalendarDays className="size-5 text-muted-foreground" />
                                 </span>
                                 <h2 className="mt-4 font-medium">
-                                    {filters.search
+                                    {filters.search || filters.status
                                         ? 'No matching events'
                                         : 'No events yet'}
                                 </h2>
                                 <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                                    {filters.search
-                                        ? 'Try a different search term.'
+                                    {filters.search || filters.status
+                                        ? 'Try a different search term or status.'
                                         : 'Add the first event. It appears on the HEI home calendars of its region right away.'}
                                 </p>
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="w-full min-w-[880px] text-left text-sm">
+                                <table className="w-full min-w-[1080px] text-left text-sm">
                                     <caption className="sr-only">
                                         GAD events, newest first
                                     </caption>
-                                    <thead className="border-b bg-muted/50 text-xs text-muted-foreground">
+                                    <thead className="border-b bg-muted/50 text-xs whitespace-nowrap text-muted-foreground">
                                         <tr>
                                             <th className="px-5 py-3 font-medium">
                                                 Event
@@ -197,10 +254,16 @@ export default function EventsIndex({
                                                 When
                                             </th>
                                             <th className="px-5 py-3 font-medium">
+                                                Status
+                                            </th>
+                                            <th className="px-5 py-3 font-medium">
                                                 Category
                                             </th>
                                             <th className="px-5 py-3 font-medium">
                                                 For
+                                            </th>
+                                            <th className="px-5 py-3 font-medium">
+                                                Joined
                                             </th>
                                             <th className="px-5 py-3 font-medium">
                                                 Added by
@@ -217,9 +280,12 @@ export default function EventsIndex({
                                         {events.data.map((event) => (
                                             <tr key={event.id}>
                                                 <td className="max-w-80 px-5 py-4">
-                                                    <p className="font-medium">
+                                                    <Link
+                                                        href={eventPage(event)}
+                                                        className="rounded-sm font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                    >
                                                         {event.title}
-                                                    </p>
+                                                    </Link>
                                                     {event.location && (
                                                         <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
                                                             <MapPin
@@ -230,7 +296,7 @@ export default function EventsIndex({
                                                         </p>
                                                     )}
                                                 </td>
-                                                <td className="px-5 py-4 tabular-nums">
+                                                <td className="px-5 py-4 whitespace-nowrap tabular-nums">
                                                     <p>
                                                         {dateFormat.format(
                                                             parseWallClock(
@@ -243,6 +309,11 @@ export default function EventsIndex({
                                                     </p>
                                                 </td>
                                                 <td className="px-5 py-4">
+                                                    <EventStatusBadge
+                                                        status={event.status}
+                                                    />
+                                                </td>
+                                                <td className="px-5 py-4">
                                                     <EventCategoryLabel
                                                         category={
                                                             event.category
@@ -253,6 +324,37 @@ export default function EventsIndex({
                                                 <td className="px-5 py-4">
                                                     {event.region?.name ??
                                                         'All regions'}
+                                                    {!event.is_public &&
+                                                        event.category !==
+                                                            'deadline' && (
+                                                            <span className="mt-0.5 block text-xs text-muted-foreground">
+                                                                Not on the
+                                                                public site
+                                                            </span>
+                                                        )}
+                                                </td>
+                                                <td className="px-5 py-4 tabular-nums">
+                                                    {/* For its region's CHED Focal and Administrators. */}
+                                                    {event.category ===
+                                                        'deadline' ||
+                                                    event.joined_count ===
+                                                        null ? (
+                                                        <span className="text-muted-foreground">
+                                                            —
+                                                        </span>
+                                                    ) : (
+                                                        <Link
+                                                            href={registrations.url(
+                                                                event.id,
+                                                            )}
+                                                            aria-label={`See who joined ${event.title}: ${formatCount(event.joined_count)}`}
+                                                            className="rounded-sm underline underline-offset-4 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                        >
+                                                            {formatCount(
+                                                                event.joined_count,
+                                                            )}
+                                                        </Link>
+                                                    )}
                                                 </td>
                                                 <td className="px-5 py-4 text-muted-foreground">
                                                     {event.created_by ?? '—'}
@@ -272,6 +374,14 @@ export default function EventsIndex({
                                                                         categories
                                                                     }
                                                                     {...places}
+                                                                />
+                                                            )}
+                                                            {event.can
+                                                                .update && (
+                                                                <CancelEventButton
+                                                                    event={
+                                                                        event
+                                                                    }
                                                                 />
                                                             )}
                                                             {event.can
@@ -357,6 +467,7 @@ function EventDialog({
     const form = useForm<EventForm>({
         title: event?.title ?? '',
         category: event?.category ?? 'training',
+        is_public: event?.is_public ?? true,
         region: event?.region ? String(event.region.id) : '',
         is_all_day: event?.is_all_day ?? false,
         starts_at: toInputValue(
@@ -366,6 +477,10 @@ function EventDialog({
         ends_at: toInputValue(
             event?.ends_at ?? null,
             event?.is_all_day ?? false,
+        ),
+        registration_closes_at: toInputValue(
+            event?.registration_closes_at ?? null,
+            false,
         ),
         location: event?.location ?? '',
         description: event?.description ?? '',
@@ -383,6 +498,23 @@ function EventDialog({
                 : data.ends_at && `${data.ends_at.slice(0, 10)}T17:00`,
         }));
     }
+
+    // People on its list are told of a new date, time, venue or region
+    // (docs/event-registration.md): say so before saving.
+    const joined = event?.joined_count ?? 0;
+    const changed = event
+        ? [
+              (form.data.starts_at !==
+                  toInputValue(event.starts_at, event.is_all_day) ||
+                  form.data.ends_at !==
+                      toInputValue(event.ends_at, event.is_all_day) ||
+                  form.data.is_all_day !== event.is_all_day) &&
+                  'date and time',
+              form.data.location.trim() !== (event.location ?? '') && 'venue',
+              form.data.region !==
+                  (event.region ? String(event.region.id) : '') && 'region',
+          ].filter((change): change is string => change !== false)
+        : [];
 
     function submit(submitEvent: FormEvent<HTMLFormElement>) {
         submitEvent.preventDefault();
@@ -549,6 +681,70 @@ function EventDialog({
                             <InputError message={form.errors.ends_at} />
                         </div>
                     </div>
+                    {form.data.category !== 'deadline' && (
+                        <div className="grid gap-2">
+                            <Label htmlFor={`${id}-registration`}>
+                                Registration closes (optional)
+                            </Label>
+                            <Input
+                                id={`${id}-registration`}
+                                type="datetime-local"
+                                value={form.data.registration_closes_at}
+                                max={
+                                    form.data.ends_at
+                                        ? form.data.is_all_day
+                                            ? `${form.data.ends_at.slice(0, 10)}T23:59`
+                                            : form.data.ends_at
+                                        : undefined
+                                }
+                                onChange={(e) =>
+                                    form.setData(
+                                        'registration_closes_at',
+                                        e.target.value,
+                                    )
+                                }
+                                aria-describedby={`${id}-registration-help`}
+                            />
+                            <p
+                                id={`${id}-registration-help`}
+                                className="text-[13px] text-muted-foreground"
+                            >
+                                When people can no longer join. Empty: open
+                                until the event ends. Only people who join can
+                                be checked in.
+                            </p>
+                            <InputError
+                                message={form.errors.registration_closes_at}
+                            />
+                        </div>
+                    )}
+                    {/* Deadlines are for HEIs alone, never on the public site. */}
+                    {form.data.category !== 'deadline' && (
+                        <div className="grid gap-1.5">
+                            <label className="flex cursor-pointer items-center gap-3 text-sm">
+                                <Checkbox
+                                    checked={form.data.is_public}
+                                    onCheckedChange={(checked) =>
+                                        form.setData(
+                                            'is_public',
+                                            checked === true,
+                                        )
+                                    }
+                                    aria-describedby={`${id}-public-help`}
+                                />
+                                Show on the public website
+                            </label>
+                            <p
+                                id={`${id}-public-help`}
+                                className="pl-7 text-[13px] text-muted-foreground"
+                            >
+                                Anyone can see it on the public GAD events page
+                                and the homepage. Turn this off for an internal
+                                meeting.
+                            </p>
+                            <InputError message={form.errors.is_public} />
+                        </div>
+                    )}
                     <div className="grid gap-2">
                         <Label htmlFor={`${id}-location`}>
                             Location (optional)
@@ -580,6 +776,18 @@ function EventDialog({
                         />
                         <InputError message={form.errors.description} />
                     </div>
+                    {joined > 0 && changed.length > 0 && (
+                        <p
+                            role="status"
+                            className={cn(
+                                'rounded-lg px-3 py-2 text-sm',
+                                tones.warning.badge,
+                            )}
+                        >
+                            {people(joined)} joined. They stay on the list and
+                            will be told of the new {changed.join(' and ')}.
+                        </p>
+                    )}
                     <DialogFooter>
                         <Button
                             type="button"
@@ -602,11 +810,69 @@ function EventDialog({
     );
 }
 
+/** "3 people", for what the people who joined are told. */
+function people(count: number): string {
+    return count === 1 ? '1 person' : `${formatCount(count)} people`;
+}
+
+/**
+ * Calling it off keeps its list, and everyone on it is told; putting it
+ * back on needs no confirmation.
+ */
+function CancelEventButton({ event }: { event: AdminEvent }) {
+    if (event.cancelled) {
+        return (
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={() =>
+                    router.put(
+                        cancellation.url(event.id),
+                        { cancelled: false },
+                        { preserveScroll: true },
+                    )
+                }
+            >
+                <RotateCcw />
+                <span className="sr-only">Restore {event.title}</span>
+            </Button>
+        );
+    }
+
+    const told = event.joined_count
+        ? ` The ${people(event.joined_count)} who joined will be told.`
+        : '';
+
+    return (
+        <ConfirmPopover
+            title="Cancel this event?"
+            description={`Its list stays, and nobody can join or be checked in.${told} You can restore it later.`}
+            confirmLabel="Cancel event"
+            onConfirm={(visit) =>
+                router.put(
+                    cancellation.url(event.id),
+                    { cancelled: true },
+                    { preserveScroll: true, ...visit },
+                )
+            }
+        >
+            <Button variant="ghost" size="icon">
+                <Ban />
+                <span className="sr-only">Cancel {event.title}</span>
+            </Button>
+        </ConfirmPopover>
+    );
+}
+
 function DeleteEventDialog({ event }: { event: AdminEvent }) {
+    const told = event.joined_count
+        ? ` The ${people(event.joined_count)} who joined will be told it is off.`
+        : '';
+
     return (
         <ConfirmPopover
             title="Delete this event?"
-            description={`“${event.title}” will be removed from HEI calendars.`}
+            description={`“${event.title}” will be removed from HEI calendars.${told}`}
             confirmLabel="Delete event"
             onConfirm={(visit) =>
                 router.delete(`/admin/events/${event.id}`, {

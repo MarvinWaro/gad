@@ -42,6 +42,9 @@ export function SignatureTile({
     name: string;
     className?: string;
 }) {
+    // A file gone from storage says so, instead of a broken picture.
+    const [missing, setMissing] = useState<string | null>(null);
+
     return (
         <span
             className={cn(
@@ -49,15 +52,18 @@ export function SignatureTile({
                 className,
             )}
         >
-            {src ? (
+            {src && missing !== src ? (
                 <img
                     src={src}
                     alt={`E-signature of ${name}`}
                     className="max-h-full max-w-full object-contain"
+                    onError={() => setMissing(src)}
                 />
             ) : (
-                <span className="text-xs text-paper-foreground/70">
-                    No signature yet
+                <span className="text-center text-xs text-paper-foreground/70">
+                    {src
+                        ? 'Signature not found. Upload it again.'
+                        : 'No signature yet'}
                 </span>
             )}
         </span>
@@ -255,9 +261,8 @@ export function SignatoryDialog({
                             id={`${id}-signature-hint`}
                             className="text-[13px] text-muted-foreground"
                         >
-                            A PNG or JPG of the signature on a white or
-                            transparent background, at least 300 pixels wide and
-                            under 2 MB.
+                            A PNG or JPG of the signature, under 5 MB. A white
+                            or transparent background prints best.
                         </p>
                         <input
                             ref={input}

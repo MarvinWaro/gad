@@ -106,3 +106,28 @@ void test('camera and check-in failures say what happened in plain words', () =>
     assert.match(checkInProblem(429), /Too many/);
     assert.match(checkInProblem(500), /didn't go through/);
 });
+
+void test('each result has its own short, quiet sound; waiting and checking are silent', async () => {
+    const { scanSounds, soundFor, soundLength } =
+        await import('../../resources/js/lib/scan-sounds.ts');
+
+    assert.equal(soundFor('checked_in'), 'checked_in');
+    assert.equal(soundFor('already_checked_in'), 'already_checked_in');
+    assert.equal(soundFor('problem'), 'problem');
+    assert.equal(soundFor('idle'), null);
+    assert.equal(soundFor('checking'), null);
+
+    for (const [name, tones] of Object.entries(scanSounds)) {
+        assert.ok(tones.length > 0, name);
+        assert.ok(soundLength(name as keyof typeof scanSounds) <= 0.4, name);
+        for (const tone of tones) {
+            assert.ok(tone.gain > 0 && tone.gain <= 0.25, name);
+            assert.ok(tone.frequency >= 100 && tone.frequency <= 2000, name);
+        }
+    }
+    // Checked in rises; a problem falls, so the two never sound alike.
+    const rising = scanSounds.checked_in.map((tone) => tone.frequency);
+    const falling = scanSounds.problem.map((tone) => tone.frequency);
+    assert.ok(rising[1] > rising[0]);
+    assert.ok(falling[1] < falling[0]);
+});

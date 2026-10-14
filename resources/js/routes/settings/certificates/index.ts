@@ -481,8 +481,87 @@ duplicate.post = (args: { design: string | { id: string } } | [design: string | 
     
     duplicate.form = duplicateForm
 /**
+* @see \App\Http\Controllers\Settings\CertificateDesignController::pair
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:137
+ * @route '/settings/certificates/{design}/pair'
+ */
+export const pair = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: pair.url(args, options),
+    method: 'post',
+})
+
+pair.definition = {
+    methods: ["post"],
+    url: '/settings/certificates/{design}/pair',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Settings\CertificateDesignController::pair
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:137
+ * @route '/settings/certificates/{design}/pair'
+ */
+pair.url = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { design: args }
+    }
+
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { design: args.id }
+        }
+    
+    if (Array.isArray(args)) {
+        args = {
+                    design: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        design: typeof args.design === 'object'
+                ? args.design.id
+                : args.design,
+                }
+
+    return pair.definition.url
+            .replace('{design}', parsedArgs.design.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Settings\CertificateDesignController::pair
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:137
+ * @route '/settings/certificates/{design}/pair'
+ */
+pair.post = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: pair.url(args, options),
+    method: 'post',
+})
+
+    /**
+* @see \App\Http\Controllers\Settings\CertificateDesignController::pair
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:137
+ * @route '/settings/certificates/{design}/pair'
+ */
+    const pairForm = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: pair.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Settings\CertificateDesignController::pair
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:137
+ * @route '/settings/certificates/{design}/pair'
+ */
+        pairForm.post = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: pair.url(args, options),
+            method: 'post',
+        })
+    
+    pair.form = pairForm
+/**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::destroy
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:136
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:148
  * @route '/settings/certificates/{design}'
  */
 export const destroy = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -497,7 +576,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::destroy
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:136
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:148
  * @route '/settings/certificates/{design}'
  */
 destroy.url = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -530,7 +609,7 @@ destroy.url = (args: { design: string | { id: string } } | [design: string | { i
 
 /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::destroy
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:136
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:148
  * @route '/settings/certificates/{design}'
  */
 destroy.delete = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -540,7 +619,7 @@ destroy.delete = (args: { design: string | { id: string } } | [design: string | 
 
     /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::destroy
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:136
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:148
  * @route '/settings/certificates/{design}'
  */
     const destroyForm = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -555,7 +634,7 @@ destroy.delete = (args: { design: string | { id: string } } | [design: string | 
 
             /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::destroy
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:136
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:148
  * @route '/settings/certificates/{design}'
  */
         destroyForm.delete = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -571,7 +650,7 @@ destroy.delete = (args: { design: string | { id: string } } | [design: string | 
     destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::events
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:150
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:162
  * @route '/settings/certificates/{design}/events'
  */
 export const events = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -586,7 +665,7 @@ events.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::events
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:150
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:162
  * @route '/settings/certificates/{design}/events'
  */
 events.url = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -619,7 +698,7 @@ events.url = (args: { design: string | { id: string } } | [design: string | { id
 
 /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::events
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:150
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:162
  * @route '/settings/certificates/{design}/events'
  */
 events.get = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -628,7 +707,7 @@ events.get = (args: { design: string | { id: string } } | [design: string | { id
 })
 /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::events
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:150
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:162
  * @route '/settings/certificates/{design}/events'
  */
 events.head = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -638,7 +717,7 @@ events.head = (args: { design: string | { id: string } } | [design: string | { i
 
     /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::events
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:150
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:162
  * @route '/settings/certificates/{design}/events'
  */
     const eventsForm = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -648,7 +727,7 @@ events.head = (args: { design: string | { id: string } } | [design: string | { i
 
             /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::events
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:150
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:162
  * @route '/settings/certificates/{design}/events'
  */
         eventsForm.get = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -657,7 +736,7 @@ events.head = (args: { design: string | { id: string } } | [design: string | { i
         })
             /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::events
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:150
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:162
  * @route '/settings/certificates/{design}/events'
  */
         eventsForm.head = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -673,7 +752,7 @@ events.head = (args: { design: string | { id: string } } | [design: string | { i
     events.form = eventsForm
 /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::use
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:173
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:185
  * @route '/settings/certificates/{design}/events'
  */
 export const use = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -688,7 +767,7 @@ use.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::use
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:173
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:185
  * @route '/settings/certificates/{design}/events'
  */
 use.url = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -721,7 +800,7 @@ use.url = (args: { design: string | { id: string } } | [design: string | { id: s
 
 /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::use
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:173
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:185
  * @route '/settings/certificates/{design}/events'
  */
 use.post = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -731,7 +810,7 @@ use.post = (args: { design: string | { id: string } } | [design: string | { id: 
 
     /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::use
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:173
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:185
  * @route '/settings/certificates/{design}/events'
  */
     const useForm = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -741,7 +820,7 @@ use.post = (args: { design: string | { id: string } } | [design: string | { id: 
 
             /**
 * @see \App\Http\Controllers\Settings\CertificateDesignController::use
- * @see app/Http/Controllers/Settings/CertificateDesignController.php:173
+ * @see app/Http/Controllers/Settings/CertificateDesignController.php:185
  * @route '/settings/certificates/{design}/events'
  */
         useForm.post = (args: { design: string | { id: string } } | [design: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -757,6 +836,7 @@ store: Object.assign(store, store),
 show: Object.assign(show, show),
 update: Object.assign(update, update),
 duplicate: Object.assign(duplicate, duplicate),
+pair: Object.assign(pair, pair),
 destroy: Object.assign(destroy, destroy),
 events: Object.assign(events, events),
 use: Object.assign(use, use),

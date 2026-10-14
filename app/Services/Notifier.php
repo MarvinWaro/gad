@@ -7,7 +7,9 @@ use App\Enums\NotificationKind;
 use App\Enums\UserStatus;
 use App\Jobs\NotifyAllAccounts;
 use App\Models\ActivityLog;
+use App\Models\CertificateRequest;
 use App\Models\ChecklistResponse;
+use App\Models\GadEvent;
 use App\Models\MonitoringReport;
 use App\Models\Notification;
 use App\Models\Post;
@@ -15,6 +17,7 @@ use App\Models\PostComment;
 use App\Models\SiteFeedback;
 use App\Models\SurveyResponse;
 use App\Models\User;
+use App\Support\EventChanges;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
@@ -111,6 +114,72 @@ class Notifier
     public function certificateReleased(?ActivityLog $entry, Builder $holders): void
     {
         $this->send(NotificationKind::CertificateReleased, $entry, $holders);
+    }
+
+    /**
+     * An event's certificates out by themselves at its end
+     * (`certificates:release-due`): the people just given one.
+     *
+     * @param  Builder<User>  $holders
+     */
+    public function certificateReady(?ActivityLog $entry, Builder $holders): void
+    {
+        $this->send(NotificationKind::CertificateReady, $entry, $holders);
+    }
+
+    /**
+     * Someone who missed a day asked for a certificate: its office's staff
+     * who release certificates, and the Central Office.
+     */
+    public function certificateRequested(CertificateRequest $request, ?ActivityLog $entry): void
+    {
+        $this->send(NotificationKind::CertificateRequested, $entry, User::query()
+            ->withPermission('certificates.release')
+            ->reaching($request->eventCertificate?->event?->survey_region_id));
+    }
+
+    /** A certificate request declined: its asker, with the office's note. */
+    public function certificateRequestDeclined(CertificateRequest $request, ?ActivityLog $entry): void
+    {
+        $this->send(NotificationKind::CertificateRequestDeclined, $entry, [$request->user_id]);
+    }
+
+    /** Staff added someone to an event's list: that person. */
+    public function eventPersonAdded(User $person, ?ActivityLog $entry): void
+    {
+        $this->send(NotificationKind::EventPersonAdded, $entry, [$person->id]);
+    }
+
+    /**
+     * An event's date and time, venue or region changed (EventChanges): the
+     * people on its list. Other edits tell no one.
+     */
+    public function eventChanged(GadEvent $event, ?ActivityLog $entry): void
+    {
+        if ($entry !== null && EventChanges::concernPeople($entry->changes ?? [])) {
+            $this->send(NotificationKind::EventChanged, $entry, self::registrants($event));
+        }
+    }
+
+    /**
+     * An event called off, or deleted, or put back on: the people on its
+     * list. A deleted event's people are read before it goes.
+     *
+     * @param  Builder<User>|array<int, int>  $people
+     */
+    public function eventCancelled(?ActivityLog $entry, Builder|array $people, bool $restored = false): void
+    {
+        $this->send($restored ? NotificationKind::EventRestored : NotificationKind::EventCancelled, $entry, $people);
+    }
+
+    /**
+     * Everyone on an event's list, joined or added.
+     *
+     * @return Builder<User>
+     */
+    public static function registrants(GadEvent $event): Builder
+    {
+        return User::query()->whereIn('id', $event->registrations()->select('user_id'));
     }
 
     /** Someone followed a person: that person. */

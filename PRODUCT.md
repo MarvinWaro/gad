@@ -10,7 +10,7 @@ web
 
 - **HEI users.** GAD focal persons and staff of higher education institutions across the Philippines, grouped by CHED region and cluster. The first deployment covers CHED Regional Office XII (South Cotabato, Cotabato, Sarangani, Sultan Kudarat clusters). They register with their institution, wait for approval, then use PHLGADIS to follow regional GAD events, answer and promote the RA surveys, and share their campus's gender-and-development activities with other HEIs.
 - **CHED staff.** Regional office administrators approve accounts, manage users, roles, directories, surveys, carousel content, and regional GAD events for their region, and moderate the community feed. Central office staff oversee every region. GAD focal persons at CHED create and maintain content and events. Today CHED Regional Office XII is the only office using it.
-- **Public visitors.** Students and employees who answer the anonymous law surveys and read the public homepage.
+- **Public visitors.** Students and employees who answer the anonymous law surveys, read the public homepage and browse the GAD events staff make public, by region (signing in to join one).
 
 ## Product Purpose
 
@@ -21,7 +21,7 @@ PHLGADIS (Philippine Higher Education Gender and Development Information System)
 - Accounts are approved by an administrator before first login, except while a region opens on-the-spot registration for an event (Settings → Users → Registration); registration links each HEI user to one institution from the HEI directory (the directory is planned to sync from the CHED portal).
 - Survey responses are anonymous but record the respondent's region, cluster, and HEI, so response counts per institution are real data.
 - The community feed is visible to logged-in users only. Posts publish immediately; administrators can remove any post or comment.
-- Regional GAD events (trainings, campaigns, deadlines, meetings) are created by CHED staff; HEI users view them.
+- Regional GAD events (trainings, campaigns, deadlines, meetings) are created by CHED staff; HEI users view and join them, and only those who joined are checked in and given certificates (`docs/event-registration.md`). Events are on the public website too unless staff turn that off; deadlines never are. How many joined, and who, is for the region's CHED Focal and Administrators only. Staff add invitees from other regions, walk-ins from the paper sheet and guests without an account (such as people from other agencies), and can cancel an event; people on its list are told of changes. Certificates go out by themselves when an event ends to everyone present every day; anyone who missed a day asks for one, and the region's CHED Focal or the Admin decides.
 - National scope: every HEI belongs to a cluster and a region, and the data is meant to cover all 17 CHED regions. Staff access is to be scoped by region, with central office staff seeing all regions. Other systems will read and write the data through a versioned JSON API. Rules for both, and the current gaps, are in CLAUDE.md and docs/national-and-api-readiness.md.
 
 ## Capabilities and Constraints
