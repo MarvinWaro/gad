@@ -88,6 +88,8 @@ Sessions, the cache and the queue can run on the database (the default in `.env.
     - Run it with `maxmemory-policy noeviction` and append-only persistence, so it never drops a session or a job to free memory, and a restart keeps them.
     - Bind it to localhost with a password.
 
+Production runs from the Docker image in `Dockerfile`; its Coolify setup is in `docs/deployment.md`.
+
 If a pre-existing cached Laravel configuration prevents PHP tests from reading their environment, run in PowerShell:
 
 ```powershell

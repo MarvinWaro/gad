@@ -1,0 +1,37 @@
+# Kept out of the Docker build (Dockerfile): secrets, local installs and
+# builds, uploads, tests and docs.
+.git
+.github
+.agents
+.claude
+.codex
+.impeccable
+.idea
+.vscode
+.env
+.env.*
+Dockerfile
+.dockerignore
+
+node_modules
+vendor
+bootstrap/cache/*.php
+bootstrap/ssr
+public/build
+public/hot
+public/storage
+public/fonts-manifest.dev.json
+storage
+database/*.sqlite*
+
+tests
+test-results
+playwright-report
+.phpunit.cache
+.phpunit.result.cache
+phpunit.xml
+phpstan.neon
+pint.json
+playwright.config.ts
+docs
+*.md

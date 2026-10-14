@@ -111,3 +111,18 @@ test('the migration gives every existing account its own code, leaving ids and p
         ->and($codes->every(fn (string $code): bool => (bool) preg_match(PARTICIPANT_CODE, $code)))->toBeTrue()
         ->and(Post::query()->where('user_id', $author->id)->exists())->toBeTrue();
 });
+
+test('a later migration fills in the code and search keys that seeded accounts missed, and keeps the rest', function () {
+    $seeded = User::factory()->create(['name' => 'Administrator']);
+    $other = User::factory()->create();
+    $kept = $other->only(['participant_code', 'search_name', 'search_sounds']);
+    DB::table('users')->where('id', $seeded->id)->update(['participant_code' => null, 'search_name' => '', 'search_sounds' => '']);
+    $migration = require database_path('migrations/2026_10_22_000012_fill_in_seeded_accounts.php');
+
+    $migration->up();
+
+    expect($seeded->fresh()->participant_code)->toMatch(PARTICIPANT_CODE)
+        ->and($seeded->fresh()->search_name)->toBe('administrator')
+        ->and($other->fresh()->only(['participant_code', 'search_name', 'search_sounds']))->toBe($kept);
+    $this->actingAs($seeded->fresh())->get(route('virtual-id.show'))->assertOk();
+});
