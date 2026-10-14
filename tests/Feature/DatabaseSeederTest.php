@@ -54,6 +54,18 @@ test('default seed creates the admin, survey drafts and all 129 supplied HEIs', 
     $this->assertAuthenticatedAs($admin);
 });
 
+test('seeded accounts get what the User model gives every account: a Virtual ID code and search keys', function () {
+    $this->seed(DatabaseSeeder::class);
+    $this->seed(DemoUserSeeder::class);
+
+    foreach (User::query()->get() as $account) {
+        expect($account->participant_code)->toMatch('/^GAD-[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$/')
+            ->and($account->search_name)->not->toBe('');
+    }
+    $this->actingAs(User::query()->where('email', 'admin@gmail.com')->sole())
+        ->get(route('virtual-id.show'))->assertOk();
+});
+
 test('the local demo seed adds one account per role, placed in Region XII', function () {
     // DatabaseSeeder only runs this in the local environment.
     $this->seed(DatabaseSeeder::class);

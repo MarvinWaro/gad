@@ -41,7 +41,9 @@ return Application::configure(basePath: dirname(__DIR__))
             EnsurePasswordIsChanged::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
-            AddLinkHeadersForPreloadedAssets::class,
+            // The first 20 preloads only: the HTML carries every one, and a
+            // header naming all of them outgrows the server's header buffer.
+            AddLinkHeadersForPreloadedAssets::using(20),
             ThrottleAccountForms::class,
         ]);
     })
