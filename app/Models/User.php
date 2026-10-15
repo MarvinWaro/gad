@@ -6,6 +6,7 @@ use App\Enums\UserStatus;
 use App\Support\InstitutionName;
 use App\Support\ParticipantCode;
 use App\Support\PeopleSearch;
+use App\Support\PublicUpload;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -133,7 +134,7 @@ class User extends Authenticatable implements PasskeyUser
     protected function avatar(): Attribute
     {
         return Attribute::get(fn (): ?string => $this->avatar_path !== null
-            ? Storage::disk('public')->url($this->avatar_path)
+            ? PublicUpload::url($this->avatar_path)
             : null);
     }
 

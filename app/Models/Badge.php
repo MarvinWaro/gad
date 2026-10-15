@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\BadgeRule;
 use App\Enums\QuestLevel;
+use App\Support\PublicUpload;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,7 +13,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * A badge for a profile's achievements: earned by its rule (the system
@@ -51,7 +51,7 @@ class Badge extends Model
     protected function image(): Attribute
     {
         return Attribute::get(fn (): ?string => $this->image_path !== null
-            ? Storage::disk('public')->url($this->image_path)
+            ? PublicUpload::url($this->image_path)
             : null);
     }
 

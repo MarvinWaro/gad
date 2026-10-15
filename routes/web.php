@@ -43,10 +43,10 @@ use App\Models\Survey;
 use App\Support\CertificateFiles;
 use App\Support\HomepageStories;
 use App\Support\PublicEvents;
+use App\Support\PublicUpload;
 use App\Support\StudentStatistics;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 Route::get('/', function (Request $request) {
@@ -64,7 +64,7 @@ Route::get('/', function (Request $request) {
                 'description' => $slide->description,
                 'href' => $slide->link,
                 'media' => [
-                    'src' => Storage::disk('public')->url($slide->image_path),
+                    'src' => PublicUpload::url($slide->image_path),
                     'alt' => $slide->title,
                     'variant' => 'campus',
                 ],

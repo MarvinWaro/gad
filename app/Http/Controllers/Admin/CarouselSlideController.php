@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\UpdateCarouselSlideRequest;
 use App\Models\CarouselSlide;
 use App\Services\ActivityRecorder;
 use App\Support\PageRange;
+use App\Support\PublicUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -39,7 +40,7 @@ class CarouselSlideController extends Controller
                 'id' => $slide->id,
                 'title' => $slide->title,
                 'description' => $slide->description,
-                'image_url' => Storage::disk('public')->url($slide->image_path),
+                'image_url' => PublicUpload::url($slide->image_path),
                 'link' => $slide->link,
                 'is_active' => $slide->is_active,
                 'sort_order' => $slide->sort_order,

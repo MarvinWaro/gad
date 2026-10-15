@@ -47,7 +47,9 @@ PHLGADIS ships as one Docker image (`Dockerfile`): Nginx and PHP-FPM on port 808
 
 **Uploads** must outlive a redeploy. Either:
 
-- **Spaces:** `FILESYSTEM_UPLOADS=spaces` and the `SPACES_*` settings, as on DigitalOcean. Nothing is kept on the server.
+- **A bucket:** `FILESYSTEM_UPLOADS=spaces` and the `SPACES_*` settings. Nothing is kept on the server.
+    - **Berth (Garage):** `SPACES_KEY`, `SPACES_SECRET`, `SPACES_BUCKET`, `SPACES_ENDPOINT` and `SPACES_REGION=garage` from Berth's S3 tab, `SPACES_PATH_STYLE=true`, and **no** `SPACES_URL`. The bucket is private and some office firewalls block its address, so the site hands out photos itself at `/files/…`.
+    - **DigitalOcean Spaces:** `SPACES_URL` is the bucket's public address, and browsers load photos from it.
 - **The VPS:** `FILESYSTEM_UPLOADS=local` and a persistent volume at `/var/www/html/storage/app`. It holds the public uploads (avatars, badges, carousel, posts) and the private monitoring and certificate files (e-signatures, logos). Use a Coolify volume mount, not a folder from the host: a host folder belongs to root, and the app runs as `www-data`.
 
 **Scheduled task:** `php artisan schedule:run`, every minute (`* * * * *`), on the application. It drains the queue (event notices), releases certificates when events end, and runs the nightly HEIDA sync and the survey prune (`routes/console.php`). No queue worker or Horizon is needed.

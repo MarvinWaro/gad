@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Support\PublicUpload;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int $id
@@ -35,6 +35,6 @@ class PostImage extends Model
 
     public function url(): string
     {
-        return Storage::disk('public')->url($this->path);
+        return PublicUpload::url($this->path);
     }
 }

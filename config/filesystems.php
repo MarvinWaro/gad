@@ -17,7 +17,9 @@ $bucket = [
     'region' => env('SPACES_REGION', 'sgp1'),
     'bucket' => env('SPACES_BUCKET'),
     'endpoint' => env('SPACES_ENDPOINT', 'https://sgp1.digitaloceanspaces.com'),
-    'use_path_style_endpoint' => false,
+    // Spaces takes the bucket in the host name; Garage and MinIO need it in
+    // the path (endpoint/bucket/file).
+    'use_path_style_endpoint' => (bool) env('SPACES_PATH_STYLE', false),
 ];
 $folder = trim((string) env('SPACES_ROOT', env('APP_ENV', 'production')), '/');
 
@@ -35,6 +37,11 @@ return [
     */
 
     'default' => env('FILESYSTEM_DISK', 'local'),
+
+    // A private bucket (Berth's Garage) gives browsers no address of its own,
+    // so with no SPACES_URL the app serves public uploads at /files/…
+    // (PublicUpload, PublicUploadController).
+    'public_through_app' => $spaces && blank(env('SPACES_URL')),
 
     /*
     |--------------------------------------------------------------------------
