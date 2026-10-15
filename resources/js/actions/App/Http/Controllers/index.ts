@@ -29,6 +29,7 @@ import MonitoringController from './MonitoringController'
 import ChecklistController from './ChecklistController'
 import ManageQuestController from './ManageQuestController'
 import QuestController from './QuestController'
+import PublicUploadController from './PublicUploadController'
 const Controllers = {
     Api: Object.assign(Api, Api),
 SiteRatingController: Object.assign(SiteRatingController, SiteRatingController),
@@ -61,6 +62,7 @@ MonitoringController: Object.assign(MonitoringController, MonitoringController),
 ChecklistController: Object.assign(ChecklistController, ChecklistController),
 ManageQuestController: Object.assign(ManageQuestController, ManageQuestController),
 QuestController: Object.assign(QuestController, QuestController),
+PublicUploadController: Object.assign(PublicUploadController, PublicUploadController),
 }
 
 export default Controllers
