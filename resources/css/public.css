@@ -4060,6 +4060,150 @@
     }
 }
 
+/* Homepage: the objectives scene (components/home/logo-gather.tsx). Four
+   screens of scroll; the stage sticks under the header while points gather
+   into the logo and the objectives step through beside it. */
+.gather {
+    position: relative;
+    height: 400svh;
+}
+/* Edge to edge, so the scattered points fill the screen; the text and the
+   logo's place sit in the page column on top. */
+.gather-stage {
+    position: sticky;
+    top: 88px;
+    height: calc(100svh - 88px);
+}
+.gather-inner {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: center;
+    gap: 32px;
+    width: min(100% - 64px, 1280px);
+    height: 100%;
+    margin-inline: auto;
+}
+/* Under .public-section h2's weight in the still version too. */
+:is(.gather, .gather-still) .gather-label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--subtle-foreground);
+    font-size: 12px;
+    font-weight: 400;
+}
+.gather-label > span {
+    width: 5px;
+    height: 5px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--brand);
+}
+.gather-count {
+    margin-top: 28px;
+    color: var(--brand);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    font-variant-numeric: tabular-nums;
+}
+/* The four lines share one place; the one in step shows. Screen readers
+   read the whole list. */
+.gather-steps {
+    display: grid;
+    margin-top: 14px;
+}
+.gather-steps li {
+    grid-area: 1 / 1;
+    max-width: 18ch;
+    font-size: clamp(30px, 3.6vw, 48px);
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    opacity: 0;
+    translate: 0 10px;
+    transition:
+        opacity 300ms ease,
+        translate 300ms ease;
+}
+.gather-steps li.is-active {
+    opacity: 1;
+    translate: 0;
+}
+.gather-art {
+    height: 100%;
+    min-height: 0;
+}
+.gather-canvas,
+.gather-canvas canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+} /* Reduced motion or no WebGL: the logo beside the four lines. */
+.gather-still {
+    display: flex;
+    align-items: center;
+    gap: 48px;
+}
+.gather-still-logo {
+    width: 120px;
+    height: auto;
+    flex-shrink: 0;
+}
+.gather-still-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 18px;
+    padding-left: 1.25em;
+    font-size: clamp(20px, 2.2vw, 26px);
+    font-weight: 500;
+    line-height: 1.3;
+    list-style: decimal;
+}
+.gather-still-list li::marker {
+    color: var(--brand);
+    font-size: 0.8em;
+}
+@media (max-width: 900px) {
+    .gather-inner {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) auto;
+        gap: 8px;
+        width: calc(100% - 48px);
+        padding-bottom: 40px;
+    }
+    .gather-art {
+        grid-row: 1;
+    }
+    .gather-count {
+        margin-top: 16px;
+    }
+}
+@media (max-width: 600px) {
+    .gather-stage {
+        top: 72px;
+        height: calc(100svh - 72px);
+    }
+    .gather-inner {
+        width: calc(100% - 32px);
+    }
+    .gather-steps li {
+        font-size: 28px;
+    }
+    .gather-still {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 24px;
+    }
+    .gather-still-logo {
+        width: 80px;
+    }
+}
+
 /* Help: Frequently Asked Questions (pages/help/faq.tsx). The old page's
    opening prose, then the questions on hairlines under an ink rule, like the
    resource lists. */

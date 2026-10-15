@@ -9,6 +9,7 @@ import {
     Stories,
 } from '@/components/home/content-sections';
 import { Events } from '@/components/home/events';
+import { LogoGather } from '@/components/home/logo-gather';
 import { RateWidget } from '@/components/home/rate-widget';
 import { Statistics } from '@/components/home/statistics';
 import { SiteFooter, SiteHeader } from '@/components/public/site-layout';
@@ -83,7 +84,8 @@ export default function Welcome({
             return;
 
         const sections = main.querySelectorAll<HTMLElement>(
-            ':scope > section:not(.hero), :scope > nav.quick-access',
+            // The objectives scene runs its own motion.
+            ':scope > section:not(.hero, .gather), :scope > nav.quick-access',
         );
         const observer = new IntersectionObserver(
             (entries) => {
@@ -136,6 +138,7 @@ export default function Welcome({
                 <Statistics {...statistics} />
                 <Stories stories={stories} signedIn={Boolean(auth.user)} />
                 <Resources resources={resources} />
+                <LogoGather />
                 <About />
                 <Feedback />
             </main>

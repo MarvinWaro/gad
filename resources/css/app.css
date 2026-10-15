@@ -397,6 +397,63 @@
     );
 }
 
+/* The sidebar's notch tab (components/nav-notch.tsx): the page's own
+   colour reaching from the open item into the content panel, 4px past the
+   sidebar's edge to cover the panel's shadow, with concave 12px corners
+   where it meets the panel. It glides and settles (ease-out-quint). */
+.nav-notch {
+    --notch-radius: 12px;
+    position: absolute;
+    top: 0;
+    right: -4px;
+    left: var(--notch-x, 8px);
+    height: var(--notch-height, 32px);
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    background: var(--background);
+    pointer-events: none;
+    translate: 0 var(--notch-y, 0);
+    transition:
+        translate 420ms cubic-bezier(0.22, 1, 0.36, 1),
+        height 300ms ease,
+        opacity 150ms ease;
+}
+.nav-notch::before,
+.nav-notch::after {
+    content: '';
+    position: absolute;
+    right: 4px;
+    width: var(--notch-radius);
+    height: var(--notch-radius);
+}
+.nav-notch::before {
+    top: calc(var(--notch-radius) * -1);
+    background: radial-gradient(
+        circle at 0 0,
+        transparent calc(var(--notch-radius) - 0.5px),
+        var(--background) var(--notch-radius)
+    );
+}
+.nav-notch::after {
+    bottom: calc(var(--notch-radius) * -1);
+    background: radial-gradient(
+        circle at 0 100%,
+        transparent calc(var(--notch-radius) - 0.5px),
+        var(--background) var(--notch-radius)
+    );
+}
+.nav-notch[data-hidden] {
+    opacity: 0;
+}
+.nav-notch[data-instant],
+.nav-notch[data-hidden] {
+    transition: opacity 150ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+    .nav-notch {
+        transition: none;
+    }
+}
+
 @layer base {
     * {
         @apply border-border;
