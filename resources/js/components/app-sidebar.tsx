@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
+import { NavNotch } from '@/components/nav-notch';
 import { NavScanner } from '@/components/nav-scanner';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -25,6 +26,8 @@ export function AppSidebar() {
 
     return (
         <Sidebar collapsible="icon" variant="inset">
+            {/* First, so the menu items paint over it. */}
+            <NavNotch />
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>

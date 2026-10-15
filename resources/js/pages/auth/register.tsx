@@ -204,6 +204,7 @@ export default function Register({
                                     name="password"
                                     placeholder="Password"
                                     passwordrules={passwordRules}
+                                    strengthRules={passwordRules}
                                 />
                                 <InputError message={errors.password} />
                             </div>

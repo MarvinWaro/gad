@@ -21,10 +21,15 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
             <SidebarMenu>
                 {group.items.map((item) => (
                     <SidebarMenuItem key={item.title}>
+                        {/* On the full sidebar the open page's item sits on
+                            NavNotch's tab instead of the cream pill; its
+                            icon takes the brand purple everywhere. */}
                         <SidebarMenuButton
                             asChild
                             isActive={item === active}
                             tooltip={{ children: item.title }}
+                            data-notch=""
+                            className="group-data-[state=expanded]:data-[active=true]:bg-transparent group-data-[state=expanded]:data-[active=true]:hover:bg-transparent data-[active=true]:[&>svg]:text-brand"
                         >
                             <Link
                                 href={item.href}

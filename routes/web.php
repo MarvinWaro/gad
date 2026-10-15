@@ -41,6 +41,7 @@ use App\Models\GadEvent;
 use App\Models\SiteSetting;
 use App\Models\Survey;
 use App\Support\CertificateFiles;
+use App\Support\ErrorPage;
 use App\Support\HomepageStories;
 use App\Support\PublicEvents;
 use App\Support\PublicUpload;
@@ -344,6 +345,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('surveys/{survey}/responses/{surveyResponse}', [SurveyResponseController::class, 'destroy'])->middleware('can:survey-responses.delete')->name('surveys.responses.destroy');
     });
 });
+
+// Each error page, to look at while building it (App\Support\ErrorPage).
+if (app()->isLocal()) {
+    Route::get('dev/errors/{status}', fn (string $status) => abort((int) $status, headers: $status === '429' ? ['Retry-After' => 30] : []))
+        ->whereIn('status', ErrorPage::STATUSES);
+}
 
 require __DIR__.'/settings.php';
 require __DIR__.'/monitoring.php';
