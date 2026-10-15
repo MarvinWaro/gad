@@ -4,15 +4,18 @@ PHLGADIS ships as one Docker image (`Dockerfile`): Nginx and PHP-FPM on port 808
 
 ## The image
 
-| Stage               | What it does                                                                   |
-| ------------------- | ------------------------------------------------------------------------------ |
-| `node-dependencies` | `npm ci`                                                                       |
-| `php-dependencies`  | `composer install --no-dev`, then the app's source and an optimized autoloader |
-| `frontend`          | `vp build`, with PHP present so Wayfinder regenerates the typed routes         |
-| `runtime-files`     | Drops the build-only sources (`resources/js`, `resources/css`, Node config)    |
-| `production`        | `serversideup/php:8.5-fpm-nginx-alpine` with the app and `public/build`        |
+| Stage                   | What it does                                                                                       |
+| ----------------------- | -------------------------------------------------------------------------------------------------- |
+| `node-dependencies`     | `npm ci`                                                                                           |
+| `composer-dependencies` | `composer install --no-dev`, keeping only the AWS SDK's S3 part (`extra.aws/aws-sdk-php`)          |
+| `app`                   | The app's source and an optimized autoloader                                                       |
+| `frontend`              | `vp build`, with PHP present so Wayfinder regenerates the typed routes                             |
+| `runtime-files`         | Drops the build-only sources (`resources/js`, `resources/css`, Node config)                        |
+| `production`            | `serversideup/php:8.5-fpm-nginx-alpine` with `public/assets`, `vendor`, the app and `public/build` |
 
 - **Nothing private goes in.** `.dockerignore` keeps `.env`, `vendor`, `node_modules`, `storage`, tests and docs out of the build.
+- **Kept small.** About 110 MB to download. `public/assets`, `vendor`, the app and `public/build` are separate layers, so a code-only release ships and stores only the last two (under 20 MB). The old system's `public/assets/files`, `post`, `slider` and `video` folders stay out: nothing links to them. To use a file from one, take its folder off `.dockerignore`.
+- **Another AWS service** (SES, SQS, …) must be added to `extra.aws/aws-sdk-php` in `composer.json`, then `composer reinstall aws/aws-sdk-php`.
 - **At each start** the container runs `storage:link` and `php artisan optimize` (config, routes, views and events). **Migrations never run by themselves** (`AUTORUN_LARAVEL_MIGRATION=false`).
 - **Health check:** Laravel's `/up`.
 - **Versions:** PHP 8.5 and Node 22, as in CI. OPcache keeps the code in memory, so a code change needs a new image.

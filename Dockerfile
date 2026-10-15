@@ -20,20 +20,23 @@ RUN --mount=type=cache,target=/root/.npm \
 
 
 # ============================================================
-# Composer dependencies and the app's source
+# Composer dependencies
 #
 # Debian, so the Node binary above runs here for the Vite build.
-# Only PHP files leave this stage, so the final image stays Alpine.
+# Only PHP files leave these stages, so the final image stays Alpine.
+# Cached apart from the app's source, so the image's vendor layer
+# only changes with composer.json or composer.lock.
 # ============================================================
-FROM serversideup/php:8.5-cli-bookworm AS php-dependencies
+FROM serversideup/php:8.5-cli-bookworm AS composer-dependencies
 
 WORKDIR /var/www/html
 
 USER www-data
 
-# The manifests first, so vendor stays cached until they change.
 COPY --chown=www-data:www-data composer.json composer.lock ./
 
+# pre-autoload-dump drops every AWS service but the ones composer.json
+# lists (S3, for Spaces): about 70 MB of the SDK.
 RUN --mount=type=cache,target=/tmp/composer-cache,uid=33,gid=33 \
     COMPOSER_CACHE_DIR=/tmp/composer-cache \
     composer install \
@@ -42,7 +45,14 @@ RUN --mount=type=cache,target=/tmp/composer-cache,uid=33,gid=33 \
     --no-interaction \
     --no-progress \
     --no-scripts \
-    --no-autoloader
+    --no-autoloader \
+    && composer run-script pre-autoload-dump
+
+
+# ============================================================
+# The app's source
+# ============================================================
+FROM composer-dependencies AS app
 
 COPY --chown=www-data:www-data . .
 
@@ -68,7 +78,7 @@ RUN mkdir -p \
 # PHP and vendor are here because Wayfinder writes the typed
 # routes through `php artisan` during the Vite build.
 # ============================================================
-FROM php-dependencies AS frontend
+FROM app AS frontend
 
 USER root
 
@@ -92,11 +102,16 @@ RUN node node_modules/vite-plus/bin/vp build
 # Runtime files
 # Drops the build-only sources. Blade's @vite only reads
 # public/build/manifest.json at runtime.
+#
+# public/assets and the vendor packages leave too: each gets its
+# own layer below. Only the autoloader stays, as it maps the app's
+# own classes and changes with them.
 # ============================================================
-FROM php-dependencies AS runtime-files
+FROM app AS runtime-files
 
 RUN rm -rf \
     docker \
+    public/assets \
     resources/css \
     resources/js \
     .npmrc \
@@ -105,7 +120,11 @@ RUN rm -rf \
     package-lock.json \
     pnpm-workspace.yaml \
     tsconfig.json \
-    vite.config.ts
+    vite.config.ts \
+    && find vendor -mindepth 1 -maxdepth 1 \
+    ! -name autoload.php \
+    ! -name composer \
+    -exec rm -rf {} +
 
 
 # ============================================================
@@ -133,7 +152,18 @@ ENV PHP_OPCACHE_ENABLE=1 \
 COPY docker/nginx/mime-types.conf /etc/nginx/conf.d/mime-types.conf
 COPY docker/nginx/build-assets.conf /etc/nginx/server-opts.d/build-assets.conf
 
+# One layer each, from least to most often changed, so a deploy only
+# ships and stores the layers that changed: usually the app and its build.
 # COPY --link cannot resolve user names; 82:82 is www-data on Alpine.
+COPY --link --chown=82:82 \
+    public/assets \
+    /var/www/html/public/assets
+
+COPY --link --from=composer-dependencies \
+    --chown=82:82 \
+    /var/www/html/vendor \
+    /var/www/html/vendor
+
 COPY --link --from=runtime-files \
     --chown=82:82 \
     /var/www/html \
