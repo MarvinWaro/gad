@@ -47,6 +47,7 @@ export default function ChangePassword({
                                 autoFocus
                                 required
                                 passwordrules={passwordRules}
+                                strengthRules={passwordRules}
                             />
                             <InputError message={errors.password} />
                         </div>

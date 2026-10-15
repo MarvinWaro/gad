@@ -4098,8 +4098,32 @@
 .faq-objectives li::marker {
     color: var(--subtle-foreground);
 }
+/* The search sits just above the questions it filters; it borrows the
+   Definition of Terms field (.glossary-search) and marks (.glossary-mark). */
+.faq-questions {
+    display: grid;
+    gap: 20px;
+}
+.faq-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 24px;
+}
 .faq-list {
     border-top: 1px solid var(--foreground);
+}
+/* Once someone searches, answers that come back rise in. */
+@media (prefers-reduced-motion: no-preference) {
+    .faq-list[data-animate] .faq-item {
+        animation: faq-item-in 200ms ease-out;
+    }
+}
+@keyframes faq-item-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
 }
 .faq-item {
     border-bottom: 1px solid var(--border);

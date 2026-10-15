@@ -93,6 +93,36 @@
     --color-mark-blue: var(--mark-blue);
     --color-alert-badge: var(--alert-badge);
     --color-alert-badge-foreground: var(--alert-badge-foreground);
+
+    /* The error page (pages/error-page.tsx): the 404 compass settles once,
+       and the maintenance bar runs while the site updates. */
+    --animate-swing: swing 1.4s ease-in-out 1;
+    --animate-track: track 1.6s ease-in-out infinite;
+
+    @keyframes swing {
+        0%,
+        100% {
+            transform: rotate(0);
+        }
+        20% {
+            transform: rotate(-28deg);
+        }
+        45% {
+            transform: rotate(18deg);
+        }
+        70% {
+            transform: rotate(-8deg);
+        }
+    }
+
+    @keyframes track {
+        from {
+            transform: translateX(-100%);
+        }
+        to {
+            transform: translateX(250%);
+        }
+    }
 }
 
 :root {
