@@ -13,9 +13,10 @@ export function AppContent({ variant = 'sidebar', children, ...props }: Props) {
 
     // Pages read best in a 1280px column; a page that lays out its own
     // columns across the screen (the HEI home) marks itself data-layout="wide".
+    // On phones it keeps clear of the bottom bar (BottomNav).
     return (
         <main
-            className="mx-auto flex h-full w-full max-w-7xl flex-1 flex-col gap-4 rounded-xl has-[>[data-layout=wide]]:max-w-none"
+            className="mx-auto flex h-full w-full max-w-7xl flex-1 flex-col gap-4 rounded-xl pb-[var(--app-bottom-nav,0px)] has-[>[data-layout=wide]]:max-w-none"
             {...props}
         >
             {children}

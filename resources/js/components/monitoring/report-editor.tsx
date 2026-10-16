@@ -151,7 +151,7 @@ export function ReportEditor({
                         conflict={autosave.conflict}
                         onResolve={autosave.resolve}
                     />
-                    <div className="sticky bottom-3 z-10 flex flex-col gap-3 rounded-xl border bg-card/95 p-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-4">
+                    <div className="sticky bottom-[calc(var(--app-bottom-nav,0px)+0.75rem)] z-10 flex flex-col gap-3 rounded-xl border bg-card/95 p-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-4">
                         <SaveState
                             status={autosave.status}
                             message={autosave.message}

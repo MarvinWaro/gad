@@ -13,6 +13,8 @@ export type NavItem = {
     isActive?: boolean;
     /** A first version being tried out: shows a "Beta" tag. */
     beta?: boolean;
+    /** A one-word name for the phone's bottom bar, where the title is too long. */
+    shortTitle?: string;
 };
 
 /** Navigation items under one label, as the sidebar groups them. */
