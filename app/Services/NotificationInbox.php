@@ -20,8 +20,13 @@ class NotificationInbox
     /** Notifications per page on the Notifications page. */
     public const PAGE_SIZE = 15;
 
-    /** What NotificationResource reads. */
-    public const RELATIONS = ['activity.user:id,ulid,avatar_path', 'activity.subject', 'activity.hei:id,name', 'subject'];
+    /**
+     * What NotificationResource reads. The actor's email and status say
+     * where a sign-up's notice opens (Notification::linkFor).
+     */
+    public const RELATIONS = ['activity.user:id,ulid,email,status,avatar_path', 'activity.subject', 'activity.hei:id,name', 'subject'];
+
+    public function __construct(private readonly LiveUpdates $live) {}
 
     /**
      * How many are unread, and when the newest arrived, so the browser can
@@ -70,13 +75,26 @@ class NotificationInbox
             ->all());
     }
 
+    /** Reading one, or making it unread again; their other tabs and devices follow. */
     public function setRead(Notification $notification, bool $read): void
     {
         $notification->forceFill(['read_at' => $read ? ($notification->read_at ?? now()) : null])->save();
+
+        if ($notification->wasChanged('read_at')) {
+            $this->live->inbox([$notification->user_id]);
+        }
     }
 
     public function markAllRead(User $user): void
     {
-        $user->notifications()->unread()->update(['read_at' => now()]);
+        if ($user->notifications()->unread()->update(['read_at' => now()]) > 0) {
+            $this->live->inbox([$user->id]);
+        }
+    }
+
+    public function remove(Notification $notification): void
+    {
+        $notification->delete();
+        $this->live->inbox([$notification->user_id]);
     }
 }

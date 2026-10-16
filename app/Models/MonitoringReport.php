@@ -85,4 +85,13 @@ class MonitoringReport extends Model
     {
         return in_array($this->status, ['draft', 'returned'], true);
     }
+
+    /**
+     * Whether the HEI may delete it: a first draft, never sent to CHED. Once
+     * submitted it stays "submitted", "reviewed" or "returned", on record.
+     */
+    public function isDeletable(): bool
+    {
+        return $this->status === 'draft';
+    }
 }

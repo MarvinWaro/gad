@@ -36,6 +36,7 @@ enum NotificationKind: string
     case CertificateReady = 'certificate_ready';
     case CertificateRequested = 'certificate_requested';
     case CertificateRequestDeclined = 'certificate_request_declined';
+    case AccountJoined = 'account_joined';
 
     /** Its name in the Type filter. */
     public function label(): string
@@ -68,6 +69,7 @@ enum NotificationKind: string
             self::CertificateReady => 'Certificates ready for you',
             self::CertificateRequested => 'Certificate requests',
             self::CertificateRequestDeclined => 'Certificate requests declined',
+            self::AccountJoined => 'New accounts',
         };
     }
 
@@ -78,7 +80,7 @@ enum NotificationKind: string
             self::PostTagged, self::PostRemoved, self::CommentRemoved => ActivityModule::Community,
             self::ReportSubmitted, self::ReportReviewed, self::ReportReturned => ActivityModule::Monitoring,
             self::GadSurveySubmitted => ActivityModule::GadSurveys,
-            self::AccountPending, self::AccountApproved => ActivityModule::Users,
+            self::AccountPending, self::AccountApproved, self::AccountJoined => ActivityModule::Users,
             self::EventCreated, self::EventPersonAdded, self::EventChanged, self::EventCancelled, self::EventRestored => ActivityModule::Events,
             self::SurveyResponses => ActivityModule::SurveyResponses,
             self::SiteFeedback => ActivityModule::SiteFeedback,
@@ -93,7 +95,7 @@ enum NotificationKind: string
     {
         return match ($this) {
             self::ReportSubmitted, self::ReportReviewed, self::GadSurveySubmitted,
-            self::AccountApproved, self::BadgeAwarded, self::BadgeEarned, self::CertificateReleased,
+            self::AccountApproved, self::AccountJoined, self::BadgeAwarded, self::BadgeEarned, self::CertificateReleased,
             self::CertificateReady, self::EventPersonAdded, self::EventRestored => 'positive',
             self::ReportReturned, self::AccountPending, self::EventChanged, self::CertificateRequestDeclined => 'warning',
             self::EventCancelled => 'danger',
@@ -137,6 +139,10 @@ enum NotificationKind: string
             self::CertificateReady => 'Your :subject is ready. Download it from My certificates.',
             self::CertificateRequested => 'asked for a :subject',
             self::CertificateRequestDeclined => 'declined your request for a :subject',
+            // Approved by CHED, or let straight in by instant registration.
+            self::AccountJoined => $action === ActivityAction::Approved
+                ? 'approved the account of :subject from :place'
+                : 'joined PHLGADIS from :place',
         };
     }
 

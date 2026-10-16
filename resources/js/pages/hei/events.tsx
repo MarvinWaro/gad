@@ -3,6 +3,7 @@ import { EventCalendar } from '@/components/hei/event-calendar';
 import { UpcomingEvents } from '@/components/hei/upcoming-events';
 import { parseMonthKey } from '@/lib/event-dates';
 import type { CalendarEvent, CalendarMonth } from '@/types';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 const monthName = new Intl.DateTimeFormat('en-PH', { month: 'long' });
 
@@ -13,6 +14,8 @@ export default function HeiEvents({
     calendar: CalendarMonth;
     after: CalendarEvent[];
 }) {
+    useLiveReload(useLiveModules('events'), ['calendar'], { gap: 5_000 });
+
     const month = monthName.format(parseMonthKey(calendar.month));
 
     return (

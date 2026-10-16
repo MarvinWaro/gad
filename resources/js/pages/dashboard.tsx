@@ -33,6 +33,7 @@ import { formatEventTime } from '@/lib/event-dates';
 import { dashboard } from '@/routes';
 import { show as eventPage } from '@/routes/events';
 import type { DashboardProps } from '@/types/dashboard';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 function ModuleLink({ href, children }: { href: string; children: ReactNode }) {
     return (
@@ -47,6 +48,20 @@ function ModuleLink({ href, children }: { href: string; children: ReactNode }) {
 }
 
 export default function Dashboard(props: DashboardProps) {
+    // Figures from every module; at most once a minute.
+    useLiveReload(
+        useLiveModules(
+            'events',
+            'community',
+            'monitoring',
+            'gad-surveys',
+            'survey-responses',
+            'student-counts',
+        ),
+        [],
+        { gap: 60_000 },
+    );
+
     const {
         period,
         scope,

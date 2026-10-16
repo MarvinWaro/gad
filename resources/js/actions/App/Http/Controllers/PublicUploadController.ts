@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PublicUploadController::__invoke
- * @see app/Http/Controllers/PublicUploadController.php:14
+ * @see app/Http/Controllers/PublicUploadController.php:18
  * @route '/files/{path}'
  */
 const PublicUploadController = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ PublicUploadController.definition = {
 
 /**
 * @see \App\Http\Controllers\PublicUploadController::__invoke
- * @see app/Http/Controllers/PublicUploadController.php:14
+ * @see app/Http/Controllers/PublicUploadController.php:18
  * @route '/files/{path}'
  */
 PublicUploadController.url = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ PublicUploadController.url = (args: { path: string | number } | [path: string | 
 
 /**
 * @see \App\Http\Controllers\PublicUploadController::__invoke
- * @see app/Http/Controllers/PublicUploadController.php:14
+ * @see app/Http/Controllers/PublicUploadController.php:18
  * @route '/files/{path}'
  */
 PublicUploadController.get = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ PublicUploadController.get = (args: { path: string | number } | [path: string | 
 })
 /**
 * @see \App\Http\Controllers\PublicUploadController::__invoke
- * @see app/Http/Controllers/PublicUploadController.php:14
+ * @see app/Http/Controllers/PublicUploadController.php:18
  * @route '/files/{path}'
  */
 PublicUploadController.head = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +63,7 @@ PublicUploadController.head = (args: { path: string | number } | [path: string |
 
     /**
 * @see \App\Http\Controllers\PublicUploadController::__invoke
- * @see app/Http/Controllers/PublicUploadController.php:14
+ * @see app/Http/Controllers/PublicUploadController.php:18
  * @route '/files/{path}'
  */
     const PublicUploadControllerForm = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -73,7 +73,7 @@ PublicUploadController.head = (args: { path: string | number } | [path: string |
 
             /**
 * @see \App\Http\Controllers\PublicUploadController::__invoke
- * @see app/Http/Controllers/PublicUploadController.php:14
+ * @see app/Http/Controllers/PublicUploadController.php:18
  * @route '/files/{path}'
  */
         PublicUploadControllerForm.get = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ PublicUploadController.head = (args: { path: string | number } | [path: string |
         })
             /**
 * @see \App\Http\Controllers\PublicUploadController::__invoke
- * @see app/Http/Controllers/PublicUploadController.php:14
+ * @see app/Http/Controllers/PublicUploadController.php:18
  * @route '/files/{path}'
  */
         PublicUploadControllerForm.head = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

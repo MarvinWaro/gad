@@ -37,6 +37,22 @@ test('administrators approve, deactivate, and reactivate accounts', function () 
     expect($user->fresh()->status)->toBe(UserStatus::Active);
 });
 
+test('names in the users list open their profiles, but a registration waiting for approval has none yet', function () {
+    $pending = User::factory()->pending()->create(['name' => 'Fictional Pending']);
+    $pending->assignRole('hei');
+    $active = User::factory()->create(['name' => 'Fictional Active']);
+    $active->assignRole('hei');
+
+    $this->actingAs($this->admin)->get(route('settings.users.index', ['search' => 'Fictional']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('users.data', 2)
+            ->where('users.data.0.name', 'Fictional Pending')
+            ->where('users.data.0.has_profile', false)
+            ->where('users.data.1.name', 'Fictional Active')
+            ->where('users.data.1.ulid', $active->ulid)
+            ->where('users.data.1.has_profile', true));
+});
+
 test('an approved registration can log in', function () {
     $this->post(route('register.store'), registrationPayload(createSurveyHei()));
     $user = User::query()->where('email', 'test@example.com')->sole();

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Admin\MonitoringReviewController::review
- * @see app/Http/Controllers/Admin/MonitoringReviewController.php:55
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:81
  * @route '/admin/monitoring/{report}/review'
  */
 export const review = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ review.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\MonitoringReviewController::review
- * @see app/Http/Controllers/Admin/MonitoringReviewController.php:55
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:81
  * @route '/admin/monitoring/{report}/review'
  */
 review.url = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ review.url = (args: { report: string | { id: string } } | [report: string | { id
 
 /**
 * @see \App\Http\Controllers\Admin\MonitoringReviewController::review
- * @see app/Http/Controllers/Admin/MonitoringReviewController.php:55
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:81
  * @route '/admin/monitoring/{report}/review'
  */
 review.post = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -59,7 +59,7 @@ review.post = (args: { report: string | { id: string } } | [report: string | { i
 
     /**
 * @see \App\Http\Controllers\Admin\MonitoringReviewController::review
- * @see app/Http/Controllers/Admin/MonitoringReviewController.php:55
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:81
  * @route '/admin/monitoring/{report}/review'
  */
     const reviewForm = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -69,7 +69,7 @@ review.post = (args: { report: string | { id: string } } | [report: string | { i
 
             /**
 * @see \App\Http\Controllers\Admin\MonitoringReviewController::review
- * @see app/Http/Controllers/Admin/MonitoringReviewController.php:55
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:81
  * @route '/admin/monitoring/{report}/review'
  */
         reviewForm.post = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -80,7 +80,7 @@ review.post = (args: { report: string | { id: string } } | [report: string | { i
     review.form = reviewForm
 /**
 * @see \App\Http\Controllers\Admin\MonitoringReviewController::index
- * @see app/Http/Controllers/Admin/MonitoringReviewController.php:21
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:23
  * @route '/admin/monitoring'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -95,7 +95,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\MonitoringReviewController::index
- * @see app/Http/Controllers/Admin/MonitoringReviewController.php:21
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:23
  * @route '/admin/monitoring'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -104,7 +104,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\MonitoringReviewController::index
- * @see app/Http/Controllers/Admin/MonitoringReviewController.php:21
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:23
  * @route '/admin/monitoring'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -113,7 +113,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Admin\MonitoringReviewController::index
- * @see app/Http/Controllers/Admin/MonitoringReviewController.php:21
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:23
  * @route '/admin/monitoring'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -123,7 +123,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Admin\MonitoringReviewController::index
- * @see app/Http/Controllers/Admin/MonitoringReviewController.php:21
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:23
  * @route '/admin/monitoring'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -133,7 +133,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Admin\MonitoringReviewController::index
- * @see app/Http/Controllers/Admin/MonitoringReviewController.php:21
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:23
  * @route '/admin/monitoring'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -142,7 +142,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Admin\MonitoringReviewController::index
- * @see app/Http/Controllers/Admin/MonitoringReviewController.php:21
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:23
  * @route '/admin/monitoring'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -156,9 +156,88 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     index.form = indexForm
+/**
+* @see \App\Http\Controllers\Admin\MonitoringReviewController::notSubmitted
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:61
+ * @route '/admin/monitoring/not-submitted'
+ */
+export const notSubmitted = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: notSubmitted.url(options),
+    method: 'get',
+})
+
+notSubmitted.definition = {
+    methods: ["get","head"],
+    url: '/admin/monitoring/not-submitted',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Admin\MonitoringReviewController::notSubmitted
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:61
+ * @route '/admin/monitoring/not-submitted'
+ */
+notSubmitted.url = (options?: RouteQueryOptions) => {
+    return notSubmitted.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Admin\MonitoringReviewController::notSubmitted
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:61
+ * @route '/admin/monitoring/not-submitted'
+ */
+notSubmitted.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: notSubmitted.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Admin\MonitoringReviewController::notSubmitted
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:61
+ * @route '/admin/monitoring/not-submitted'
+ */
+notSubmitted.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: notSubmitted.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Admin\MonitoringReviewController::notSubmitted
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:61
+ * @route '/admin/monitoring/not-submitted'
+ */
+    const notSubmittedForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: notSubmitted.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Admin\MonitoringReviewController::notSubmitted
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:61
+ * @route '/admin/monitoring/not-submitted'
+ */
+        notSubmittedForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: notSubmitted.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Admin\MonitoringReviewController::notSubmitted
+ * @see app/Http/Controllers/Admin/MonitoringReviewController.php:61
+ * @route '/admin/monitoring/not-submitted'
+ */
+        notSubmittedForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: notSubmitted.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    notSubmitted.form = notSubmittedForm
 const monitoring = {
     review: Object.assign(review, review),
 index: Object.assign(index, index),
+notSubmitted: Object.assign(notSubmitted, notSubmitted),
 }
 
 export default monitoring

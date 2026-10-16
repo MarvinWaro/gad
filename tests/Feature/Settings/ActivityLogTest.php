@@ -203,6 +203,27 @@ test('the list filters by person, action, module and day, and sends no raw user 
     $index(['to' => '2026-09-30'])->assertInertia(fn (Assert $page) => $page->has('logs.data', 0));
 });
 
+test('a regional CHED Focal reads their own region\'s activity log, and no other region\'s', function () {
+    $other = SurveyRegion::query()->create(['name' => 'Regional Office XI', 'is_active' => true]);
+    $otherHei = createSurveyHei([
+        'name' => 'Elsewhere College',
+        'survey_cluster_id' => SurveyCluster::query()->create(['survey_region_id' => $other->id, 'name' => 'Davao', 'is_active' => true])->id,
+    ]);
+    $recorder = app(ActivityRecorder::class);
+    $recorder->record(ActivityAction::Updated, ActivityModule::Heis, $this->hei, actor: $this->admin);
+    $recorder->record(ActivityAction::Updated, ActivityModule::Heis, $otherHei, actor: $this->admin);
+    $focal = User::factory()->regionalOffice($this->region)->create();
+    $focal->assignRole('ched-focal');
+
+    $this->actingAs($focal)->get(route('settings.activity-logs.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('logs.data', 1)
+            ->where('logs.data.0.place.hei', 'Fictional Activity HEI'));
+    $this->get(route('settings.activity-logs.index', ['region' => $other->id]))
+        ->assertInertia(fn (Assert $page) => $page->has('logs.data', 0));
+});
+
 test('HEI accounts cannot open the activity log', function () {
     $member = User::factory()->create(['survey_hei_id' => $this->hei->id]);
     $member->assignRole('hei-focal');

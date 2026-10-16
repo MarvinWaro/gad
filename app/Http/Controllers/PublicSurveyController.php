@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ActivityModule;
 use App\Models\Survey;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\SurveyRespondentGroup;
 use App\Models\SurveyResponse;
+use App\Services\LiveUpdates;
 use App\Services\Notifier;
 use App\Support\RespondentDetails;
 use App\Support\RespondentFollowUps;
@@ -57,11 +59,14 @@ class PublicSurveyController extends Controller
                 ]
                 : ['regions' => [], 'heis' => [], 'respondent_groups' => []],
             'respondentDetails' => RespondentDetails::forForm(),
+            // A signed-in HEI account starts from its own institution; it
+            // can pick another, and the answer is never linked to the account.
+            'ownHeiId' => $request->user()?->survey_hei_id,
             'confirmation' => $request->session()->pull('survey_confirmation'),
         ]);
     }
 
-    public function store(Request $request, Survey $survey, Notifier $notifier): RedirectResponse
+    public function store(Request $request, Survey $survey, Notifier $notifier, LiveUpdates $live): RedirectResponse
     {
         abort_if($survey->status !== 'active', 404);
         $version = $survey->publishedVersion();
@@ -220,6 +225,8 @@ class PublicSurveyController extends Controller
         });
         // Staff hear that answers came in, never who gave them.
         $notifier->surveyResponseReceived($response);
+        // Never logged, so its pages are told here (docs/realtime.md).
+        $live->touched(ActivityModule::SurveyResponses, $response->survey_region_id, $response->survey_hei_id);
 
         return to_route('surveys.show', ['law' => $survey->slug])->with('survey_confirmation', $reference);
     }

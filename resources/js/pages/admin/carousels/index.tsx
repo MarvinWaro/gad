@@ -31,6 +31,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { FormSelect } from '@/components/ui/form-select';
 import { Label } from '@/components/ui/label';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type CarouselSlide = {
     id: number;
@@ -86,6 +87,8 @@ export default function CarouselIndex({
     filters: { search: string };
     permissions: Permissions;
 }) {
+    useLiveReload(useLiveModules('carousel'), ['slides']);
+
     const [search, setSearch] = useState(filters.search);
 
     function submitSearch(event: FormEvent<HTMLFormElement>) {

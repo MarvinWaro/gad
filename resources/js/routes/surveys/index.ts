@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 import responses from './responses'
 /**
 * @see \App\Http\Controllers\PublicSurveyController::show
- * @see app/Http/Controllers/PublicSurveyController.php:26
+ * @see app/Http/Controllers/PublicSurveyController.php:28
  * @route '/surveys/{law}'
  */
 export const show = (args: { law: string | number } | [law: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -17,7 +17,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\PublicSurveyController::show
- * @see app/Http/Controllers/PublicSurveyController.php:26
+ * @see app/Http/Controllers/PublicSurveyController.php:28
  * @route '/surveys/{law}'
  */
 show.url = (args: { law: string | number } | [law: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -45,7 +45,7 @@ show.url = (args: { law: string | number } | [law: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\PublicSurveyController::show
- * @see app/Http/Controllers/PublicSurveyController.php:26
+ * @see app/Http/Controllers/PublicSurveyController.php:28
  * @route '/surveys/{law}'
  */
 show.get = (args: { law: string | number } | [law: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -54,7 +54,7 @@ show.get = (args: { law: string | number } | [law: string | number ] | string | 
 })
 /**
 * @see \App\Http\Controllers\PublicSurveyController::show
- * @see app/Http/Controllers/PublicSurveyController.php:26
+ * @see app/Http/Controllers/PublicSurveyController.php:28
  * @route '/surveys/{law}'
  */
 show.head = (args: { law: string | number } | [law: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -64,7 +64,7 @@ show.head = (args: { law: string | number } | [law: string | number ] | string |
 
     /**
 * @see \App\Http\Controllers\PublicSurveyController::show
- * @see app/Http/Controllers/PublicSurveyController.php:26
+ * @see app/Http/Controllers/PublicSurveyController.php:28
  * @route '/surveys/{law}'
  */
     const showForm = (args: { law: string | number } | [law: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -74,7 +74,7 @@ show.head = (args: { law: string | number } | [law: string | number ] | string |
 
             /**
 * @see \App\Http\Controllers\PublicSurveyController::show
- * @see app/Http/Controllers/PublicSurveyController.php:26
+ * @see app/Http/Controllers/PublicSurveyController.php:28
  * @route '/surveys/{law}'
  */
         showForm.get = (args: { law: string | number } | [law: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -83,7 +83,7 @@ show.head = (args: { law: string | number } | [law: string | number ] | string |
         })
             /**
 * @see \App\Http\Controllers\PublicSurveyController::show
- * @see app/Http/Controllers/PublicSurveyController.php:26
+ * @see app/Http/Controllers/PublicSurveyController.php:28
  * @route '/surveys/{law}'
  */
         showForm.head = (args: { law: string | number } | [law: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

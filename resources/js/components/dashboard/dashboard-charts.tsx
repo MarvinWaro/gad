@@ -14,6 +14,7 @@ import {
 } from 'recharts';
 import { SegmentedSwitch } from '@/components/dashboard/segmented-switch';
 import { Button } from '@/components/ui/button';
+import { CHART_RESIZE_THROTTLE } from '@/components/ui/chart';
 import { formatCount, percentOf } from '@/lib/dashboard';
 import { cn } from '@/lib/utils';
 import type { BreakdownRow, DashboardProps } from '@/types/dashboard';
@@ -177,6 +178,7 @@ export function ActivityChart({
                         width="100%"
                         height="100%"
                         minWidth={0}
+                        debounce={CHART_RESIZE_THROTTLE}
                     >
                         <AreaChart
                             data={trend}
@@ -357,7 +359,11 @@ export function DonutChart({
     return (
         <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] items-center gap-4 sm:grid-cols-[8.5rem_minmax(0,1fr)]">
             <div className="relative aspect-square w-full" aria-hidden="true">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                    debounce={CHART_RESIZE_THROTTLE}
+                >
                     <PieChart accessibilityLayer={false}>
                         <Pie
                             data={shown}

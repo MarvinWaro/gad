@@ -557,6 +557,14 @@ function paragraphs(answer: string): Content[] {
     }));
 }
 
+/**
+ * A signatory's name as the report prints it: always in capitals. The form
+ * shows and saves it the same way.
+ */
+export function signatoryName(text: string): string {
+    return text.toLocaleUpperCase('en-PH');
+}
+
 function signatureBlock(input: MonitoringPdfInput): Content {
     const { template, details } = input;
 
@@ -565,11 +573,11 @@ function signatureBlock(input: MonitoringPdfInput): Content {
         fontSize: 11,
         margin: [0, 60, 0, 0],
         stack: template.signatories.map((signatory, index): Content => ({
-            margin: [0, index === 0 ? 0 : 26, 0, 0],
+            // Room above each name for its signer to sign.
+            margin: [0, index === 0 ? 0 : 48, 0, 0],
             stack: [
-                signatureLine(details[signatory.key].trim()),
+                signatureLine(signatoryName(details[signatory.key].trim())),
                 { text: signatory.role, margin: [0, 1, 0, 0] },
-                { text: template.labels.signature },
             ],
         })),
     };

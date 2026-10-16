@@ -1,9 +1,15 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
-import type { ImgHTMLAttributes, KeyboardEvent, ReactNode } from 'react';
+import type {
+    CSSProperties,
+    ImgHTMLAttributes,
+    KeyboardEvent,
+    ReactNode,
+} from 'react';
 import { PhotoLightboxContent } from '@/components/photo-lightbox';
 import { Dialog } from '@/components/ui/dialog';
 import { singlePhotoHeight } from '@/lib/photo-frame';
+import { bottomTint } from '@/lib/photo-tint';
 import { cn } from '@/lib/utils';
 import type { PostImage } from '@/types';
 
@@ -33,8 +39,9 @@ type PhotoSize = { width: number; height: number };
 
 /**
  * A mosaic photo that shimmers in its tile until it arrives, which on a slow
- * connection is most of what the reader waits for. The shimmer goes once the
- * photo loads (or fails), so a lone photo's bands never pulse.
+ * connection is most of what the reader waits for. The photo stays hidden
+ * while it arrives, so it never paints in bands, then fades in over the
+ * shimmer, which goes once it loads (or fails).
  */
 function TilePhoto({
     onLoad,
@@ -58,7 +65,11 @@ function TilePhoto({
                     onLoad?.(event);
                 }}
                 onError={() => setLoaded(true)}
-                className={cn('relative', className)}
+                className={cn(
+                    'relative transition-opacity duration-300 motion-reduce:transition-none',
+                    !loaded && 'opacity-0',
+                    className,
+                )}
             />
         </>
     );
@@ -72,7 +83,9 @@ function TilePhoto({
  * photo whole. Shared by the feed and the composer preview.
  *
  * `overlay` (a post's goal badges) sits once in the bottom-right corner of
- * the whole frame, over a soft fade. The frame sits in a size container, so
+ * the whole frame, over a band in the colour of the photo beneath them (lib/
+ * photo-tint), which fades in once that photo loads. The frame sits
+ * in a size container, so
  * its height and the overlay scale with its width (cqw).
  */
 export function PhotoMosaic({
@@ -88,6 +101,10 @@ export function PhotoMosaic({
     const [measured, setMeasured] = useState<
         (PhotoSize & { url: string }) | null
     >(null);
+    // The colour of the photo under the badges, once it has loaded.
+    const [tint, setTint] = useState<{ url: string; color: string } | null>(
+        null,
+    );
 
     if (images.length === 0) {
         return null;
@@ -97,6 +114,9 @@ export function PhotoMosaic({
     const hidden = images.length - shown.length;
     const layout = layouts[Math.min(images.length, MOSAIC_TILES)];
     const single = images.length === 1 ? images[0] : null;
+    // The badges sit over the bottom-right tile: the last one shown.
+    const corner = images[Math.min(images.length, MOSAIC_TILES) - 1];
+    const cornerTint = tint?.url === corner.url ? tint.color : null;
     const singleSize: PhotoSize | null =
         single?.width && single.height
             ? { width: single.width, height: single.height }
@@ -138,18 +158,25 @@ export function PhotoMosaic({
                                 alt={image.alt}
                                 loading="lazy"
                                 decoding="async"
-                                onLoad={
-                                    single && !singleSize
-                                        ? (event) =>
-                                              setMeasured({
-                                                  url: image.url,
-                                                  width: event.currentTarget
-                                                      .naturalWidth,
-                                                  height: event.currentTarget
-                                                      .naturalHeight,
-                                              })
-                                        : undefined
-                                }
+                                onLoad={(event) => {
+                                    const photo = event.currentTarget;
+
+                                    if (single && !singleSize) {
+                                        setMeasured({
+                                            url: image.url,
+                                            width: photo.naturalWidth,
+                                            height: photo.naturalHeight,
+                                        });
+                                    }
+
+                                    if (overlay && image.url === corner.url) {
+                                        setTint({
+                                            url: image.url,
+                                            // Unreadable: a neutral dark band.
+                                            color: bottomTint(photo) ?? 'black',
+                                        });
+                                    }
+                                }}
                                 className={cn(
                                     'size-full transition-transform duration-200 ease-out group-hover:scale-[1.015]',
                                     single ? 'object-contain' : 'object-cover',
@@ -186,11 +213,27 @@ export function PhotoMosaic({
                     );
                 })}
                 {overlay && (
-                    // The fade lets clicks through to the photos; only the
+                    // The glow lets clicks through to the photos; only the
                     // overlay itself takes them.
-                    <div className="pointer-events-none absolute right-0 bottom-0 bg-corner-fade pt-[6cqw] pr-[max(8px,2.5cqw)] pb-[max(8px,2.5cqw)] pl-[12cqw]">
-                        <div className="pointer-events-auto">{overlay}</div>
-                    </div>
+                    <>
+                        <div
+                            aria-hidden
+                            style={
+                                cornerTint
+                                    ? ({
+                                          '--photo-tint': cornerTint,
+                                      } as CSSProperties)
+                                    : undefined
+                            }
+                            className={cn(
+                                'pointer-events-none absolute inset-x-0 bottom-0 h-[max(72px,18cqw)] photo-glow transition-opacity duration-300 motion-reduce:transition-none',
+                                !cornerTint && 'opacity-0',
+                            )}
+                        />
+                        <div className="pointer-events-none absolute right-0 bottom-0 pr-[max(8px,2.5cqw)] pb-[max(8px,2.5cqw)]">
+                            <div className="pointer-events-auto">{overlay}</div>
+                        </div>
+                    </>
                 )}
             </div>
         </div>

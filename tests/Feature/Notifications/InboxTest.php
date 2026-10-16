@@ -101,6 +101,43 @@ test('opening a notification reads it and goes to its record, or back when the r
     expect($gone->fresh()->read_at)->not->toBeNull();
 });
 
+test('a sign-up waiting for approval opens that account in the users list', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    $applicant = User::factory()->pending()->create(['email' => 'applicant@example.test', 'survey_hei_id' => $this->hei->id]);
+    // As registration logs it: the new account acted, with no subject.
+    $notice = fn (User $actor) => Notification::query()->create([
+        'user_id' => $admin->id,
+        'kind' => NotificationKind::AccountPending,
+        'activity_log_id' => ActivityLog::query()->create([
+            'user_id' => $actor->id,
+            'actor_name' => $actor->name,
+            'survey_hei_id' => $this->hei->id,
+            'module' => ActivityModule::Authentication,
+            'action' => ActivityAction::Registered,
+        ])->id,
+        'notified_at' => now(),
+    ]);
+    $waiting = $notice($applicant);
+
+    $this->actingAs($admin)->get(route('notifications.open', $waiting))
+        ->assertRedirect(route('settings.users.index', ['search' => 'applicant@example.test']));
+
+    // The HEI's focal person cannot open the account yet: their home.
+    $focal = User::factory()->create(['survey_hei_id' => $this->hei->id]);
+    $focal->assignRole('hei-focal');
+    $toldFocal = $waiting->replicate()->fill(['user_id' => $focal->id]);
+    $toldFocal->save();
+    $this->actingAs($focal)->get(route('notifications.open', $toldFocal))->assertRedirect(route('dashboard'));
+    $this->actingAs($admin);
+
+    // An account deleted since (turned down) has nothing left to open.
+    $turnedDown = $notice($withdrawn = User::factory()->pending()->create(['survey_hei_id' => $this->hei->id]));
+    $withdrawn->delete();
+    $this->get(route('notifications.open', $turnedDown))
+        ->assertRedirect(route('notifications.index'));
+});
+
 test('marking read or unread, all as read, and deleting answer with the new count', function () {
     $one = inboxNotice($this->member, $this->commenter);
     $two = inboxNotice($this->member, $this->commenter);

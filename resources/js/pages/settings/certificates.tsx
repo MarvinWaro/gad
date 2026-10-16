@@ -29,6 +29,7 @@ import type {
     CertificateDesignPage,
 } from '@/types/certificates';
 import type { DirectoryOption } from '@/types/monitoring';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Filters = { search?: string; region?: string };
 
@@ -51,6 +52,8 @@ export default function Certificates({
     hasOffice: boolean;
     permissions: { create: boolean };
 }) {
+    useLiveReload(useLiveModules('certificates'), ['designs']);
+
     const { values, loading, filtered, apply, change, search } =
         useRecordFilters<Filters>(index.url(), filters);
 

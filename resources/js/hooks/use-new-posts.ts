@@ -1,9 +1,15 @@
 import { router } from '@inertiajs/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLive, useLiveModules } from '@/hooks/use-live';
+import { isNavigating } from '@/lib/navigation';
+import { createCatchUp } from '@/lib/realtime';
 import type { FeedScope } from '@/types/people';
 
 /** Away from the page this long, and coming back checks for new posts. */
 export const AWAY_MS = 30_000;
+
+/** With live updates, ask at most this often while the community is busy. */
+const LIVE_GAP = 10_000;
 
 /** Closer to the top than this, new posts load straight in. */
 const TOP_ZONE = 200;
@@ -20,9 +26,10 @@ const BEFORE_ANY_POST = {
 type Waiting = { query: string; count: number };
 
 /**
- * Keeps the community feed fresh, as Facebook does. When the reader comes
- * back after at least 30 seconds away (another tab, a locked phone), ask
- * how many posts arrived after the newest one they have. At the top of the
+ * Keeps the community feed fresh, as Facebook does. As soon as the community
+ * changes (live updates, docs/realtime.md), and when the reader comes back
+ * after at least 30 seconds away (another tab, a locked phone), ask how many
+ * posts arrived after the newest one they have. At the top of the
  * feed they load straight in; further down they wait behind a button, so
  * nothing moves under the reader. `enabled` false skips the check; `scope`
  * counts only the people followed.
@@ -62,37 +69,59 @@ export function useNewPosts(
         });
     }, []);
 
-    useEffect(() => {
-        async function check() {
-            try {
-                const response = await fetch(`/posts/newer?${query}`, {
-                    headers: {
-                        Accept: 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    credentials: 'same-origin',
-                });
-
-                if (!response.ok) {
-                    return;
-                }
-
-                const { count } = (await response.json()) as { count: number };
-
-                if (count === 0) {
-                    return;
-                }
-
-                if (window.scrollY < TOP_ZONE) {
-                    refresh();
-                } else {
-                    setWaiting({ query, count });
-                }
-            } catch {
-                // Offline: the next return checks again.
-            }
+    const check = useCallback(async () => {
+        if (isNavigating()) {
+            return;
         }
 
+        try {
+            const response = await fetch(`/posts/newer?${query}`, {
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const { count } = (await response.json()) as { count: number };
+
+            if (count === 0) {
+                return;
+            }
+
+            if (window.scrollY < TOP_ZONE) {
+                refresh();
+            } else {
+                setWaiting({ query, count });
+            }
+        } catch {
+            // Offline: the next signal or return checks again.
+        }
+    }, [query, refresh]);
+    const latestCheck = useRef(check);
+    const live = useMemo(
+        () =>
+            createCatchUp(() => void latestCheck.current(), { gap: LIVE_GAP }),
+        [],
+    );
+
+    useEffect(() => {
+        latestCheck.current = check;
+    }, [check]);
+
+    useEffect(() => () => live.cancel(), [live]);
+
+    useLive(useLiveModules('community'), 'changed', () => {
+        if (enabled) {
+            live.request();
+        }
+    });
+
+    useEffect(() => {
         function onVisibilityChange() {
             if (document.visibilityState === 'hidden') {
                 hiddenAt.current = Date.now();
@@ -120,7 +149,7 @@ export function useNewPosts(
                 'visibilitychange',
                 onVisibilityChange,
             );
-    }, [enabled, query, refresh]);
+    }, [enabled, check]);
 
     return {
         // Only while the feed still starts where the count was taken; any

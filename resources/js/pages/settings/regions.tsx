@@ -21,6 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Trash2 } from 'lucide-react';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Region = {
     id: number;
@@ -77,6 +78,8 @@ export default function Regions({
     regions: Paginated<Region>;
     permissions: Permissions;
 }) {
+    useLiveReload(useLiveModules('regions'), ['regions']);
+
     return (
         <>
             <Head title="Regions" />

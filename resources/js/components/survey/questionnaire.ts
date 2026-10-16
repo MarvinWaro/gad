@@ -124,9 +124,33 @@ export function isLocked(questionnaire: Questionnaire, id: string): boolean {
 }
 
 /** A blank response, with the answers the questionnaire sets filled in. */
+/**
+ * Where a signed-in HEI account answers from: its institution and region,
+ * when the survey lists them, as the form's starting answer.
+ */
+export function placeOf(
+    directories: Directories,
+    heiId: number | null,
+): Pick<SurveyAnswers, 'region_id' | 'hei_id'> {
+    const hei = directories.heis.find((item) => item.id === heiId);
+    const listed =
+        hei !== undefined &&
+        directories.regions.some(
+            (region) => region.id === hei.survey_region_id,
+        );
+
+    return listed
+        ? { region_id: String(hei.survey_region_id), hei_id: String(hei.id) }
+        : { region_id: '', hei_id: '' };
+}
+
 export function initialAnswers(
     survey: PublishedSurvey,
     questionnaire: Questionnaire,
+    place: Pick<SurveyAnswers, 'region_id' | 'hei_id'> = {
+        region_id: '',
+        hei_id: '',
+    },
 ): SurveyAnswers {
     return {
         version_id: survey.version_id,
@@ -140,8 +164,7 @@ export function initialAnswers(
         email: '',
         group_answers: {},
         group_answer_details: {},
-        region_id: '',
-        hei_id: '',
+        ...place,
         experiences: [],
         selections: Object.fromEntries(
             questionnaire.multiSelects.map((question) => [

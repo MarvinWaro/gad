@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Permission = { id: number; name: string; slug: string; group: string };
 type PermissionGroup = { group: string; permissions: Permission[] };
@@ -58,6 +59,8 @@ export default function Roles({
     filters: { search: string };
     permissions: PagePermissions;
 }) {
+    useLiveReload(useLiveModules('roles'), ['roles']);
+
     const [search, setSearch] = useState(filters.search);
 
     function submitSearch(event: FormEvent<HTMLFormElement>) {

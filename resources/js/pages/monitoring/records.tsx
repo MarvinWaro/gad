@@ -23,6 +23,7 @@ import {
     StagePill,
     statusOptions,
 } from '@/components/monitoring/shared';
+import { ReviewViews } from '@/components/monitoring/review-views';
 import { Pagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
 import { FormSelect } from '@/components/ui/form-select';
@@ -34,6 +35,7 @@ import type {
     MonitoringReport,
     ReportFilters,
 } from '@/types/monitoring';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Props = {
     reports: MonitoringPage;
@@ -56,6 +58,8 @@ export default function Records({
     regions = [],
     heis = [],
 }: Props) {
+    useLiveReload(useLiveModules('monitoring'), ['reports']);
+
     const { values, loading, filtered, apply, change, search, pick } =
         useRecordFilters(
             staff
@@ -98,6 +102,13 @@ export default function Records({
 
                 {staff && !hasOffice && <NoOfficeNotice noun="reports" />}
                 {staff && <OfficeScope noun="Reports" />}
+                {staff && (
+                    <ReviewViews
+                        received={MonitoringReviewController.index.url()}
+                        notSubmitted={MonitoringReviewController.notSubmitted.url()}
+                        current="received"
+                    />
+                )}
 
                 <div className="@container overflow-hidden rounded-xl border bg-card">
                     <FilterBar

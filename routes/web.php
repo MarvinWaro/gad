@@ -20,6 +20,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\FollowController;
+use App\Http\Controllers\LivePostsController;
 use App\Http\Controllers\MyProfileController;
 use App\Http\Controllers\NewerPostsController;
 use App\Http\Controllers\NotificationController;
@@ -228,6 +229,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('posts/newer', NewerPostsController::class)
         ->middleware('throttle:30,1')
         ->name('posts.newer');
+    // Live updates: the posts a feed shows, fresh (docs/realtime.md).
+    Route::get('posts/live', LivePostsController::class)
+        ->middleware('throttle:60,1')
+        ->name('posts.live');
     Route::get('posts/{post}', [PostController::class, 'show'])->whereUlid('post')->name('posts.show');
     Route::put('posts/{post}', [PostController::class, 'update'])->whereUlid('post')->name('posts.update');
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->whereUlid('post')->name('posts.destroy');

@@ -28,6 +28,7 @@ import type {
 } from '@/types';
 import type { FeedRegion, FeedScope } from '@/types/people';
 import type { QuestCard } from '@/types/quests';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Props = {
     hei: HeiRef | null;
@@ -76,6 +77,15 @@ export default function HeiHome({
     people,
     quest,
 }: Props) {
+    useLiveReload(useLiveModules('events'), ['calendar', 'upcoming'], {
+        gap: 5_000,
+    });
+    useLiveReload(useLiveModules('survey-responses'), ['surveys'], {
+        gap: 10_000,
+    });
+    useLiveReload(useLiveModules('quests'), ['quest']);
+    useLiveReload(useLiveModules('colleagues'), ['people']);
+
     const { auth } = usePage().props;
     const [nextEvent, ...laterEvents] = upcoming;
     const leftRail = useStickyRail<HTMLElement>(railOffset);

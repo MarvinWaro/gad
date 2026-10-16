@@ -129,7 +129,7 @@ class NotificationController extends Controller
 
         /** @var User $user */
         $user = $request->user();
-        $notification->delete();
+        $this->inbox->remove($notification);
 
         return response()->json(['inbox' => $this->inbox->summary($user)]);
     }

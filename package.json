@@ -45,6 +45,7 @@
         "lucide-react": "^0.475.0",
         "pdfjs-dist": "^6.3.289",
         "pdfmake": "^0.3.11",
+        "pusher-js": "^8.6.0",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "react-image-crop": "^11.1.2",

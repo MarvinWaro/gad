@@ -29,6 +29,7 @@ import {
     useRecordFilters,
 } from '@/components/record-filters';
 import { cn } from '@/lib/utils';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Region = { id: number; name: string };
 type Hei = {
@@ -70,6 +71,8 @@ export default function Heis({
     filters: HeiFilters;
     permissions: Permissions;
 }) {
+    useLiveReload(useLiveModules('heis', 'regions'), ['heis', 'regions']);
+
     const { values, loading, filtered, apply, change, search } =
         useRecordFilters('/settings/heis', filters);
     // Region, status and ownership; the search takes its own row on phones.

@@ -18,6 +18,7 @@ import NotificationController from './NotificationController'
 import PostController from './PostController'
 import PostTagSuggestionController from './PostTagSuggestionController'
 import NewerPostsController from './NewerPostsController'
+import LivePostsController from './LivePostsController'
 import PostShareController from './PostShareController'
 import PostHomepageController from './PostHomepageController'
 import PostReactionController from './PostReactionController'
@@ -51,6 +52,7 @@ NotificationController: Object.assign(NotificationController, NotificationContro
 PostController: Object.assign(PostController, PostController),
 PostTagSuggestionController: Object.assign(PostTagSuggestionController, PostTagSuggestionController),
 NewerPostsController: Object.assign(NewerPostsController, NewerPostsController),
+LivePostsController: Object.assign(LivePostsController, LivePostsController),
 PostShareController: Object.assign(PostShareController, PostShareController),
 PostHomepageController: Object.assign(PostHomepageController, PostHomepageController),
 PostReactionController: Object.assign(PostReactionController, PostReactionController),

@@ -1,6 +1,8 @@
 import { router, usePage } from '@inertiajs/react';
-import { useEffect, useRef } from 'react';
-import { POLL_MS } from '@/lib/notifications';
+import { useCallback, useEffect, useRef } from 'react';
+import { useLive, useLiveStatus } from '@/hooks/use-live';
+import { isNavigating } from '@/lib/navigation';
+import { POLL_LIVE_MS, POLL_MS } from '@/lib/notifications';
 import { summary } from '@/routes/notifications';
 import type { Inbox } from '@/types/notifications';
 
@@ -15,9 +17,14 @@ export function useInbox(): Inbox {
     return usePage().props.inbox ?? EMPTY;
 }
 
-/** Update the shared count in place: no request, no change to the page. */
+/**
+ * Update the shared count in place: no request, no change to the page. Not
+ * while another page is opening, which brings its own count.
+ */
 export function setInbox(inbox: Inbox): void {
-    router.replaceProp('inbox', inbox);
+    if (!isNavigating()) {
+        router.replaceProp('inbox', inbox);
+    }
 }
 
 /** GET a JSON endpoint as the signed-in person, or null when it fails. */
@@ -35,52 +42,62 @@ export async function getJson<T>(url: string, signal?: AbortSignal) {
 }
 
 /**
- * Keeps the count fresh until PHLGADIS has live updates (Reverb): every 30
- * seconds while the tab is in view, and at once on coming back to it after
- * 30 seconds or more. Mounted once, by the bell.
+ * Keeps the count fresh. With live updates it asks again as soon as the
+ * person's notifications change (docs/realtime.md), and every 2 minutes in
+ * case the server cannot send them (a wrong host, a rotated secret); without
+ * them, or while the connection is down, every 30 seconds. Only while the tab
+ * is in view, and at once on coming back to it after that long. Mounted
+ * once, by the bell.
  */
-export function useInboxPolling(): void {
+export function useInboxUpdates(): void {
     const inbox = useInbox();
     const current = useRef(inbox);
+    const realtime = usePage().props.realtime;
+    const live = useLiveStatus() === 'connected';
 
     useEffect(() => {
         current.current = inbox;
     }, [inbox]);
 
-    useEffect(() => {
-        let checkedAt = Date.now();
+    const check = useCallback(async () => {
+        try {
+            const next = await getJson<Inbox>(summary.url());
+            const shown = current.current;
 
-        async function check() {
-            checkedAt = Date.now();
-
-            try {
-                const next = await getJson<Inbox>(summary.url());
-                const shown = current.current;
-
-                if (
-                    next &&
-                    (next.unread !== shown.unread ||
-                        next.latest_at !== shown.latest_at)
-                ) {
-                    setInbox(next);
-                }
-            } catch {
-                // Offline: the next check tries again.
+            if (
+                next &&
+                (next.unread !== shown.unread ||
+                    next.latest_at !== shown.latest_at)
+            ) {
+                setInbox(next);
             }
+        } catch {
+            // Offline: the next signal or check tries again.
         }
+    }, []);
+
+    useLive(realtime ? [realtime.user] : [], 'inbox', check);
+
+    useEffect(() => {
+        const every = live ? POLL_LIVE_MS : POLL_MS;
+        let checkedAt = Date.now();
+        const poll = () => {
+            checkedAt = Date.now();
+            void check();
+        };
 
         const timer = window.setInterval(() => {
             if (document.visibilityState === 'visible') {
-                void check();
+                poll();
             }
-        }, POLL_MS);
+        }, every);
 
         function onVisibilityChange() {
             if (
                 document.visibilityState === 'visible' &&
-                Date.now() - checkedAt >= POLL_MS
+                Date.now() - checkedAt >= every
             ) {
-                void check();
+                poll();
             }
         }
 
@@ -93,5 +110,5 @@ export function useInboxPolling(): void {
                 onVisibilityChange,
             );
         };
-    }, []);
+    }, [live, check]);
 }

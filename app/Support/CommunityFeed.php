@@ -60,6 +60,21 @@ class CommunityFeed
     }
 
     /**
+     * Some posts as the viewer sees them, for a feed swapping in the ones
+     * that changed (live updates). Those deleted are left out.
+     *
+     * @param  list<string>  $ids
+     * @return list<array<string, mixed>>
+     */
+    public static function many(User $viewer, array $ids): array
+    {
+        return array_map(
+            fn (Post $post): array => self::present($post, $viewer),
+            array_values(self::query($viewer)->whereKey($ids)->get()->all()),
+        );
+    }
+
+    /**
      * How many posts would come before the given one in the viewer's feed
      * (newest first, then by id), so a reader coming back can be offered
      * them. Compared by posting time rather than by ULID, so posts carried

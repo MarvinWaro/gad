@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { index as eventsIndex, show as eventPage } from '@/routes/events';
 import type { MyCertificatePage } from '@/types/certificates';
 import type { JoinedEvent, JoinedEventPage } from '@/types/events';
+import { useLiveReload, useOwnChannel } from '@/hooks/use-live';
 
 /**
  * Settings → My certificates: the certificates released to you for the GAD
@@ -25,6 +26,11 @@ export default function MyCertificates({
     certificates: MyCertificatePage;
     events: JoinedEventPage;
 }) {
+    // Certificates given to them come with a notification.
+    useLiveReload(useOwnChannel(), ['certificates', 'events'], {
+        event: 'inbox',
+    });
+
     return (
         <>
             <Head title="My certificates" />

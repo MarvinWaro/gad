@@ -50,6 +50,7 @@ import { index as registrations } from '@/routes/admin/events/registrations';
 import { show as eventPage } from '@/routes/events';
 import type { CalendarEvent, EventCategory, EventStatus } from '@/types';
 import type { DirectoryOption } from '@/types/monitoring';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type AdminEvent = CalendarEvent & {
     /** Where it stands now. */
@@ -122,6 +123,8 @@ export default function EventsIndex({
     filters: Filters;
     permissions: Permissions;
 } & Places) {
+    useLiveReload(useLiveModules('events'), ['events', 'ongoing']);
+
     const [search, setSearch] = useState(filters.search);
     const places = { regions, nationalAccess };
 

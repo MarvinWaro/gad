@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
+import { NavPublicSite } from '@/components/nav-public-site';
 import { NavScanner } from '@/components/nav-scanner';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -42,6 +43,7 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
+                <NavPublicSite />
                 <NavScanner />
                 <NavUser />
             </SidebarFooter>

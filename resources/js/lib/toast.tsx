@@ -52,4 +52,10 @@ export const toast = {
             message,
             withTime({ icon: <Trash2 size={18} aria-hidden />, ...options }),
         ),
+    /** A toast laid out by its own component, such as a new notification. */
+    custom: (
+        render: (id: string | number) => React.ReactElement,
+        options?: ExternalToast,
+    ) => sonner.custom(render, options),
+    dismiss: (id?: string | number) => sonner.dismiss(id),
 };

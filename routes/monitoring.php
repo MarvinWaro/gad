@@ -13,6 +13,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::whereUlid('report')->group(function () {
         Route::get('/monitoring/{report}', [MonitoringController::class, 'show'])->name('monitoring.show');
+        Route::delete('/monitoring/{report}', [MonitoringController::class, 'destroy'])->name('monitoring.destroy');
         // Autosave; exempt from trimming in bootstrap/app.php.
         Route::patch('/monitoring/{report}/draft', [MonitoringController::class, 'saveDraft'])
             ->middleware('throttle:120,1')->name('monitoring.draft');
@@ -27,6 +28,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/admin/monitoring', [MonitoringReviewController::class, 'index'])
         ->middleware('can:monitoring.view')->name('admin.monitoring.index');
+    // Who has not sent it yet; before the GAD surveys' {type}, which it would match.
+    Route::get('/admin/monitoring/not-submitted', [MonitoringReviewController::class, 'notSubmitted'])
+        ->middleware('can:monitoring.view')->name('admin.monitoring.not-submitted');
 
     // The GAD Training and Compliance Surveys; an unknown type is a 404.
     Route::get('/records/{type}', [ChecklistController::class, 'show'])->name('checklists.show');
@@ -34,4 +38,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:20,1')->name('checklists.store');
     Route::get('/admin/monitoring/{type}', [ChecklistResponseController::class, 'index'])
         ->middleware('can:monitoring.view')->name('admin.checklists.index');
+    Route::get('/admin/monitoring/{type}/not-submitted', [ChecklistResponseController::class, 'notSubmitted'])
+        ->middleware('can:monitoring.view')->name('admin.checklists.not-submitted');
 });

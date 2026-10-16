@@ -72,6 +72,7 @@ class UserManagementController extends Controller
             ->withQueryString()
             ->through(fn (User $user): array => [
                 'id' => $user->id,
+                'ulid' => $user->ulid,
                 'name' => $user->name,
                 'email' => $user->email,
                 'hei' => $user->hei?->only(['id', 'name']),
@@ -84,6 +85,8 @@ class UserManagementController extends Controller
                 ],
                 'created_at' => $user->created_at?->toISOString(),
                 'is_current_user' => $user->is($actor),
+                // A registration waiting for approval has no profile yet.
+                'has_profile' => $actor->can('viewProfile', $user),
                 'can_manage' => array_diff($user->permissionSlugs(), $actorPermissions) === []
                     && $this->reachesOffice($actor, $user),
             ]));

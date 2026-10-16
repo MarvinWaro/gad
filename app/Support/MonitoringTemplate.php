@@ -22,7 +22,7 @@ class MonitoringTemplate
      *     title: string,
      *     subtitle: list<list<array{text: string, bold?: bool}>>,
      *     columns: array{requirements: string, status: string, instruction: string},
-     *     labels: array{institution: string, address: string, accomplished_on: string, signature: string},
+     *     labels: array{institution: string, address: string, accomplished_on: string},
      *     signatories: list<array{key: string, role: string}>,
      *     sections: list<array{key: string, number: string, title: string, bold: bool, layout: string, detail?: string, items: list<array{key: string, label: string}>}>
      * }
@@ -52,7 +52,6 @@ class MonitoringTemplate
                 'institution' => 'Name of HEI',
                 'address' => 'Address',
                 'accomplished_on' => 'Date Accomplished',
-                'signature' => '(Name and signature)',
             ],
             'signatories' => [
                 ['key' => 'president_name', 'role' => 'President'],

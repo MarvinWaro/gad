@@ -21,6 +21,7 @@ import { FormSelect } from '@/components/ui/form-select';
 import { formatCount, percentOf } from '@/lib/dashboard';
 import { index, summary } from '@/routes/admin/surveys';
 import type { SummaryFilters, SurveySummary } from '@/types/survey-insights';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 /**
  * A survey's Summary, like Google Forms': every question's answers as bars,
@@ -29,6 +30,9 @@ import type { SummaryFilters, SurveySummary } from '@/types/survey-insights';
  * picked out of a small group (docs/survey-analytics.md).
  */
 export default function SurveySummaryPage(props: SurveySummary) {
+    // The whole summary: its figures all move together.
+    useLiveReload(useLiveModules('survey-responses'), [], { gap: 10_000 });
+
     const { survey, period, scope, totals, suppressed, questions } = props;
     // Null when only a few responses are in view, so they are not counted out.
     const fewerThan = `Fewer than ${props.minResponses}`;

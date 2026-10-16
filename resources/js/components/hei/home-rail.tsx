@@ -8,8 +8,9 @@ import {
     Users,
     type LucideIcon,
 } from 'lucide-react';
-import { Fragment, type ReactNode, useState } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { BetaTag } from '@/components/beta-tag';
+import { useStoredValue } from '@/hooks/use-stored-value';
 import { responsesLabel, SurveyActions } from '@/components/hei/survey-panel';
 import { firstName, greeting } from '@/components/hei/welcome-band';
 import { PersonAvatar } from '@/components/person-avatar';
@@ -214,26 +215,10 @@ function IconTile({ icon: Icon }: { icon: LucideIcon }) {
 
 /** Whether a group was left open, remembered in this browser. */
 function useRememberedOpen(id: string, initial: boolean) {
-    const key = `hei-rail:${id}`;
-    const [open, setOpen] = useState(() => {
-        try {
-            const saved = window.localStorage.getItem(key);
-            return saved === null ? initial : saved === 'open';
-        } catch {
-            return initial;
-        }
-    });
+    const [saved, store] = useStoredValue(`hei-rail:${id}`);
+    const open = saved === null ? initial : saved === 'open';
 
-    function change(next: boolean) {
-        setOpen(next);
-        try {
-            window.localStorage.setItem(key, next ? 'open' : 'closed');
-        } catch {
-            // A private window may refuse; the group still opens and closes.
-        }
-    }
-
-    return [open, change] as const;
+    return [open, (next: boolean) => store(next ? 'open' : 'closed')] as const;
 }
 
 /** A folding group of the list, like Facebook's "See more". */

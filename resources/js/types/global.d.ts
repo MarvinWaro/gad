@@ -1,5 +1,6 @@
 import type { Auth } from '@/types/auth';
 import type { Inbox } from '@/types/notifications';
+import type { Realtime } from '@/types/realtime';
 import type { SiteOperator } from '@/types/site';
 
 declare module 'react' {
@@ -17,6 +18,8 @@ declare module '@inertiajs/core' {
             auth: Auth;
             /** The bell's count; null when signed out. */
             inbox: Inbox | null;
+            /** Live updates; null when signed out or switched off. */
+            realtime: Realtime | null;
             sidebarOpen: boolean;
             [key: string]: unknown;
         };

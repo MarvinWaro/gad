@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -34,6 +35,16 @@ class SurveyHei extends Model
     public function cluster(): BelongsTo
     {
         return $this->belongsTo(SurveyCluster::class, 'survey_cluster_id');
+    }
+
+    /**
+     * The institution's own accounts.
+     *
+     * @return HasMany<User, $this>
+     */
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class, 'survey_hei_id');
     }
 
     /**

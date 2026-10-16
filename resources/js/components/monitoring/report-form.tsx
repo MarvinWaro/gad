@@ -7,6 +7,7 @@ import {
     isBlank,
     letterOf,
 } from '@/lib/monitoring-draft';
+import { signatoryName } from '@/lib/monitoring-pdf';
 import { formatAccomplishedDate } from '@/lib/monitoring-pdf';
 import { cn } from '@/lib/utils';
 import type {
@@ -215,6 +216,7 @@ function SignatoriesCard({
                         field={signatory.key}
                         label={signatory.role}
                         autoComplete="name"
+                        capitals
                         {...{
                             value,
                             editable,
@@ -241,6 +243,7 @@ function DetailInput({
     multiline = false,
     type = 'text',
     autoComplete,
+    capitals = false,
     value,
     editable,
     onChange,
@@ -253,19 +256,22 @@ function DetailInput({
     multiline?: boolean;
     type?: 'text' | 'date';
     autoComplete?: string;
+    /** A signatory's name: typed, saved and shown in capitals. */
+    capitals?: boolean;
 }) {
     const field = detailField(key);
     const id = fieldId(field);
     const theirs = conflict?.(field);
+    const shown = capitals ? signatoryName(value(field)) : value(field);
 
     if (!editable) {
-        return <ReadOnly label={label} text={value(field)} />;
+        return <ReadOnly label={label} text={shown} />;
     }
 
     const shared = {
         id,
         className: fieldClass,
-        value: value(field),
+        value: shown,
         onBlur,
         'aria-invalid': theirs !== undefined,
         'aria-describedby': theirs !== undefined ? `${id}-conflict` : undefined,
@@ -287,7 +293,25 @@ function DetailInput({
                     type={type}
                     maxLength={type === 'text' ? 255 : undefined}
                     autoComplete={autoComplete}
-                    onChange={(event) => onChange?.(field, event.target.value)}
+                    onChange={(event) => {
+                        const input = event.target;
+
+                        if (!capitals) {
+                            onChange?.(field, input.value);
+
+                            return;
+                        }
+
+                        // Capitals replace the text: the caret stays put.
+                        const { selectionStart, selectionEnd } = input;
+                        onChange?.(field, signatoryName(input.value));
+                        requestAnimationFrame(() =>
+                            input.setSelectionRange(
+                                selectionStart,
+                                selectionEnd,
+                            ),
+                        );
+                    }}
                 />
             )}
             {theirs !== undefined && (

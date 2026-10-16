@@ -25,6 +25,7 @@ import type {
     SiteFeedbackPage,
 } from '@/types/feedback';
 import type { DirectoryOption } from '@/types/monitoring';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Props = {
     feedback: SiteFeedbackPage;
@@ -54,6 +55,8 @@ export default function FeedbackIndex({
     regions,
     heis,
 }: Props) {
+    useLiveReload(useLiveModules('site-feedback'), ['feedback', 'summary']);
+
     const { values, loading, filtered, apply, change, search, pick } =
         useRecordFilters<FeedbackFilters>(index.url(), filters);
     const total = feedback.meta.total;

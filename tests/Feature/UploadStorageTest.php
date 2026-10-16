@@ -77,6 +77,7 @@ test('the site serves public uploads under its own address', function () {
     $response = $this->get('/files/avatars/photo.webp')->assertOk();
     expect($response->streamedContent())->toBe('image-bytes')
         ->and($response->headers->get('Cache-Control'))->toContain('immutable')
+        ->and($response->headers->get('Content-Type'))->toBe('image/webp')
         ->and($response->headers->get('Set-Cookie'))->toBeNull();
 
     $this->get('/files/avatars/missing.webp')->assertNotFound();

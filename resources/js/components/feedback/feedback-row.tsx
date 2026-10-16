@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/react';
 import { ChevronDown, Mail, Trash2 } from 'lucide-react';
+import { Fragment } from 'react';
 import { ConfirmPopover } from '@/components/confirm-popover';
 import { feedbackTypeIcons } from '@/components/feedback/type-tiles';
 import { Button } from '@/components/ui/button';
@@ -37,14 +38,29 @@ export function FeedbackRow({
         <Collapsible asChild>
             <li className="px-4 py-4 sm:px-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                    <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs font-medium sm:w-44">
+                    <span className="inline-flex w-fit shrink-0 items-start gap-1.5 self-start rounded-md bg-muted px-2 py-1 text-xs font-medium sm:w-44">
                         {Icon && (
                             <Icon
                                 aria-hidden="true"
-                                className="size-3.5 shrink-0 text-muted-foreground"
+                                className="mt-px size-3.5 shrink-0 text-muted-foreground"
                             />
                         )}
-                        {feedback.type.label}
+                        {/* "Comments/Recommendations" wraps after its slash
+                            instead of running into the text beside it. */}
+                        <span className="min-w-0">
+                            {feedback.type.label
+                                .split('/')
+                                .map((part, index) => (
+                                    <Fragment key={part}>
+                                        {index > 0 && (
+                                            <>
+                                                /<wbr />
+                                            </>
+                                        )}
+                                        {part}
+                                    </Fragment>
+                                ))}
+                        </span>
                     </span>
                     <div className="min-w-0 flex-1">
                         <p className="line-clamp-2 text-sm break-words whitespace-pre-line">

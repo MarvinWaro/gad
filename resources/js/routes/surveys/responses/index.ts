@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PublicSurveyController::store
- * @see app/Http/Controllers/PublicSurveyController.php:64
+ * @see app/Http/Controllers/PublicSurveyController.php:69
  * @route '/surveys/{survey}/responses'
  */
 export const store = (args: { survey: string | { slug: string } } | [survey: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\PublicSurveyController::store
- * @see app/Http/Controllers/PublicSurveyController.php:64
+ * @see app/Http/Controllers/PublicSurveyController.php:69
  * @route '/surveys/{survey}/responses'
  */
 store.url = (args: { survey: string | { slug: string } } | [survey: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ store.url = (args: { survey: string | { slug: string } } | [survey: string | { s
 
 /**
 * @see \App\Http\Controllers\PublicSurveyController::store
- * @see app/Http/Controllers/PublicSurveyController.php:64
+ * @see app/Http/Controllers/PublicSurveyController.php:69
  * @route '/surveys/{survey}/responses'
  */
 store.post = (args: { survey: string | { slug: string } } | [survey: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -59,7 +59,7 @@ store.post = (args: { survey: string | { slug: string } } | [survey: string | { 
 
     /**
 * @see \App\Http\Controllers\PublicSurveyController::store
- * @see app/Http/Controllers/PublicSurveyController.php:64
+ * @see app/Http/Controllers/PublicSurveyController.php:69
  * @route '/surveys/{survey}/responses'
  */
     const storeForm = (args: { survey: string | { slug: string } } | [survey: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -69,7 +69,7 @@ store.post = (args: { survey: string | { slug: string } } | [survey: string | { 
 
             /**
 * @see \App\Http\Controllers\PublicSurveyController::store
- * @see app/Http/Controllers/PublicSurveyController.php:64
+ * @see app/Http/Controllers/PublicSurveyController.php:69
  * @route '/surveys/{survey}/responses'
  */
         storeForm.post = (args: { survey: string | { slug: string } } | [survey: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

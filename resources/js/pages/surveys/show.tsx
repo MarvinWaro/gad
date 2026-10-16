@@ -16,12 +16,15 @@ export default function SurveyShow({
     survey,
     directories,
     respondentDetails,
+    ownHeiId,
     confirmation,
 }: {
     lawSlug: string;
     survey: PublishedSurvey | null;
     directories: Directories;
     respondentDetails: RespondentDetails;
+    /** The signed-in HEI account's institution; null for visitors. */
+    ownHeiId: number | null;
     confirmation: string | null;
 }) {
     const { auth } = usePage().props;
@@ -52,6 +55,7 @@ export default function SurveyShow({
                             survey={survey}
                             directories={directories}
                             respondentDetails={respondentDetails}
+                            ownHeiId={ownHeiId}
                         />
                     ) : (
                         <Unavailable law={law} />

@@ -29,7 +29,8 @@ import type {
     MonitoringTemplate,
     RegionOffice,
 } from '@/types/monitoring';
-import { PdfButton, pdfInput } from './pdf-button';
+import { pdfInput } from './pdf-button';
+import { PdfPreview } from './pdf-preview';
 import { fieldId, ReportSections, SectionRail } from './report-form';
 import { localDate } from './shared';
 
@@ -158,8 +159,9 @@ export function ReportEditor({
                             onRetry={() => void autosave.save()}
                         />
                         <div className="flex flex-wrap gap-2">
-                            <PdfButton
+                            <PdfPreview
                                 variant="outline"
+                                title="Report preview"
                                 before={saveAll}
                                 input={() =>
                                     pdfInput(
@@ -172,7 +174,7 @@ export function ReportEditor({
                                 }
                             >
                                 Preview PDF
-                            </PdfButton>
+                            </PdfPreview>
                             <Button
                                 type="button"
                                 onClick={() => void reviewBeforeFinalizing()}
