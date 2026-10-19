@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { PostCard } from '@/components/hei/post-card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLivePosts } from '@/hooks/use-live-posts';
 import { useNewPosts } from '@/hooks/use-new-posts';
 import { cn } from '@/lib/utils';
 import type { Post, ScrollPage } from '@/types';
@@ -92,8 +93,9 @@ export function Feed({
 
 /**
  * Older posts load as the reader nears the end; newer ones are checked for
- * when the reader comes back to the page, loading straight in at the top or
- * waiting behind a button further down.
+ * as they are posted and when the reader comes back to the page, loading
+ * straight in at the top or waiting behind a button further down. The posts
+ * shown keep their comments and reactions current (live updates).
  */
 function LoadedFeed({
     posts,
@@ -117,6 +119,7 @@ function LoadedFeed({
         watchForNew,
         scope,
     );
+    useLivePosts(posts.data);
 
     return (
         <div aria-busy={refreshing}>

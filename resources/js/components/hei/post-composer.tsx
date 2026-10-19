@@ -98,6 +98,11 @@ export function PostComposer({
         sdgs: [],
         achieve_items: [],
     });
+    // How much of a photo post has gone up; null for text alone.
+    const uploaded =
+        form.data.images.length > 0 && form.progress?.percentage !== undefined
+            ? Math.round(form.progress.percentage)
+            : null;
 
     const latestPreviews = useRef(previews);
 
@@ -722,9 +727,26 @@ export function PostComposer({
                                         {preparing
                                             ? 'Preparing photos…'
                                             : form.processing
-                                              ? 'Posting…'
+                                              ? `Posting…${uploaded === null ? '' : ` ${uploaded}%`}`
                                               : 'Post'}
                                     </Button>
+                                    {form.processing && uploaded !== null && (
+                                        <div
+                                            role="progressbar"
+                                            aria-label="Uploading photos"
+                                            aria-valuemin={0}
+                                            aria-valuemax={100}
+                                            aria-valuenow={uploaded}
+                                            className="-mt-1 h-1 overflow-hidden rounded-full bg-muted"
+                                        >
+                                            <div
+                                                className="h-full rounded-full bg-primary transition-[width] duration-200 motion-reduce:transition-none"
+                                                style={{
+                                                    width: `${uploaded}%`,
+                                                }}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </form>
                         )}

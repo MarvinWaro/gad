@@ -14,6 +14,7 @@ import {
     YearFilter,
 } from '@/components/record-filters';
 import { localDate } from '@/components/monitoring/shared';
+import { ReviewViews } from '@/components/monitoring/review-views';
 import { Pagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +30,7 @@ import type {
     DirectoryOption,
     ReportFilters,
 } from '@/types/monitoring';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Props = {
     checklist: ChecklistDefinition;
@@ -50,6 +52,8 @@ export default function ChecklistResponses({
     regions,
     heis,
 }: Props) {
+    useLiveReload(useLiveModules('gad-surveys'), ['responses']);
+
     const { values, loading, filtered, apply, change, search, pick } =
         useRecordFilters(
             ChecklistResponseController.index.url(checklist.type),
@@ -76,6 +80,15 @@ export default function ChecklistResponses({
 
                 {!hasOffice && <NoOfficeNotice noun="answers" />}
                 <OfficeScope noun="Answers" />
+                <ReviewViews
+                    received={ChecklistResponseController.index.url(
+                        checklist.type,
+                    )}
+                    notSubmitted={ChecklistResponseController.notSubmitted.url(
+                        checklist.type,
+                    )}
+                    current="received"
+                />
 
                 <div className="@container overflow-hidden rounded-xl border bg-card">
                     <FilterBar

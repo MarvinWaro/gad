@@ -44,6 +44,7 @@ PHLGADIS ships as one Docker image (`Dockerfile`): Nginx and PHP-FPM on port 808
 | `LOG_CHANNEL`                                               | `stderr`, so the logs show in Coolify                                                               |
 | `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, … | The mail account                                                                                    |
 | `FILESYSTEM_UPLOADS`, `SPACES_*`                            | See **Uploads**                                                                                     |
+| `BROADCAST_CONNECTION`, `PUSHER_*`, `VITE_PUSHER_*`         | Live updates: see `docs/realtime.md`                                                                |
 
 **Uploads** must outlive a redeploy. Either:
 

@@ -318,3 +318,19 @@ test('the CSV export never hands a spreadsheet a formula', function () {
 
     expect($csv)->toContain("'=1+1")->not->toContain(',=1+1');
 });
+
+test('a signed-in HEI account starts from its own institution; visitors and staff from none', function () {
+    publishOptionalHeiRa7877();
+    $hei = SurveyHei::query()->sole();
+    $member = User::factory()->create(['survey_hei_id' => $hei->id]);
+    $member->assignRole('hei-focal');
+    $staff = User::factory()->nationalOffice()->create();
+    $staff->assignRole('admin');
+
+    $this->get(route('surveys.show', ['law' => 'ra-7877']))
+        ->assertInertia(fn (Assert $page) => $page->where('ownHeiId', null));
+    $this->actingAs($member)->get(route('surveys.show', ['law' => 'ra-7877']))
+        ->assertInertia(fn (Assert $page) => $page->where('ownHeiId', $hei->id));
+    $this->actingAs($staff)->get(route('surveys.show', ['law' => 'ra-7877']))
+        ->assertInertia(fn (Assert $page) => $page->where('ownHeiId', null));
+});

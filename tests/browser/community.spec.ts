@@ -26,6 +26,15 @@ async function openComposer(page: Page, text: string) {
     return dialog;
 }
 
+/** The picker shows one list at a time: the SDGs, or the A.C.H.I.E.V.E. agenda. */
+async function showList(dialog: Locator, list: 'sdgs' | 'agenda') {
+    await dialog
+        .getByRole('tab', {
+            name: list === 'sdgs' ? /^SDGs/ : /^A\.C\.H\.I\.E\.V\.E\./,
+        })
+        .click();
+}
+
 async function pick(dialog: Locator, names: (string | RegExp)[]) {
     await dialog.getByRole('button', { name: 'SDGs & ACHIEVE' }).click();
     await expect(
@@ -33,6 +42,13 @@ async function pick(dialog: Locator, names: (string | RegExp)[]) {
     ).toBeVisible();
 
     for (const name of names) {
+        // SDGs are named "Goal 5: …"; the agenda's items by their titles.
+        await showList(
+            dialog,
+            typeof name === 'string' && name.startsWith('Goal ')
+                ? 'sdgs'
+                : 'agenda',
+        );
         await dialog.getByRole('button', { name }).click();
     }
 
@@ -198,6 +214,9 @@ test('a post supports at most three SDGs and three agenda items', async ({
     await fourth.click();
     await expect(fourth).toHaveAttribute('aria-pressed', 'true');
 
+    // The other tab still says how many SDGs are picked.
+    await showList(dialog, 'agenda');
+    await expect(dialog.getByRole('tab', { name: /^SDGs 3\/3/ })).toBeVisible();
     for (const name of [
         /Advanced and Accessible/,
         /Centralized One-Nation/,
@@ -226,6 +245,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
         await dialog
             .getByRole('button', { name: 'Goal 13: Climate Action' })
             .click();
+        await showList(dialog, 'agenda');
         await dialog
             .getByRole('button', { name: /Vitalized Policies/ })
             .click();
@@ -740,4 +760,25 @@ test('the four composer shortcuts fit on a phone', async ({ page }) => {
             (element) => element.scrollWidth <= element.clientWidth,
         ),
     ).toBe(true);
+});
+
+test('on a phone, the agenda is one tap away at the top of the picker', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 400, height: 752 });
+    await logIn(page);
+    await page.goto('/community');
+    await page.getByRole('button', { name: 'SDGs & ACHIEVE' }).click();
+    const dialog = page.getByRole('dialog', {
+        name: 'What does this support?',
+    });
+
+    const agendaTab = dialog.getByRole('tab', {
+        name: /^A\.C\.H\.I\.E\.V\.E\./,
+    });
+    await expect(agendaTab).toBeInViewport();
+    await agendaTab.click();
+    await expect(
+        dialog.getByRole('button', { name: /Advanced and Accessible/ }),
+    ).toBeInViewport();
 });

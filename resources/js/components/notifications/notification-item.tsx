@@ -64,6 +64,7 @@ const kindIcons: Record<string, LucideIcon> = {
     badge_earned: Award,
     user_followed: UserPlus,
     certificate_released: ScrollText,
+    account_joined: UserCheck,
 };
 
 export type NotificationChanges = {
@@ -103,7 +104,6 @@ export function NotificationItem({
     onOpen?: () => void;
 }) {
     const unread = notification.read_at === null;
-    const { actor, sentence } = notification;
     const [confirmDelete, setConfirmDelete] = useState(false);
     // Set when "Delete notification" is picked. The confirmation opens once
     // the menu has closed, so the closing menu cannot pull focus from it.
@@ -165,23 +165,7 @@ export function NotificationItem({
                     )}
                 >
                     {unread && <span className="sr-only">Unread: </span>}
-                    {actor && (
-                        <>
-                            <span className="font-medium">
-                                {actor.name}
-                            </span>{' '}
-                        </>
-                    )}
-                    {sentence.before}
-                    {sentence.subject && (
-                        <>
-                            {' '}
-                            <span className="font-medium">
-                                {sentence.subject}
-                            </span>
-                        </>
-                    )}
-                    {sentence.after && ` ${sentence.after}`}
+                    <NotificationSentence notification={notification} />
                 </p>
                 {notification.quote && (
                     <p className="mt-1 line-clamp-2 text-[0.8125rem] text-muted-foreground">
@@ -280,14 +264,23 @@ export function NotificationItem({
  * gave. A notice no one's action explains, such as survey answers, shows
  * the kind's mark alone.
  */
-function NotificationMark({
+export function NotificationMark({
     notification,
     className,
+    ringed = false,
 }: {
     notification: AppNotification;
     className: string;
+    /** Outlined in the notification's colour, as on its toast. */
+    ringed?: boolean;
 }) {
     const Icon = kindIcons[notification.kind.code] ?? Bell;
+    const ring =
+        ringed &&
+        cn(
+            'ring-2 ring-offset-2 ring-offset-popover',
+            tones[notification.kind.tone].ring,
+        );
 
     if (!notification.actor) {
         return (
@@ -295,6 +288,7 @@ function NotificationMark({
                 aria-hidden
                 className={cn(
                     'flex shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground',
+                    ring,
                     className,
                 )}
             >
@@ -308,7 +302,7 @@ function NotificationMark({
             <PersonAvatar
                 name={notification.actor.name}
                 src={notification.actor.avatar}
-                className={className}
+                className={cn(ring, className)}
             />
             {notification.reaction ? (
                 <span className="absolute -right-1 -bottom-1 grid size-5 place-items-center rounded-full bg-card text-xs leading-none ring-2 ring-card">
@@ -325,6 +319,31 @@ function NotificationMark({
                 </span>
             )}
         </span>
+    );
+}
+
+/** What it says: who acted, in bold, then what happened to what, in bold. */
+export function NotificationSentence({
+    notification: { actor, sentence },
+}: {
+    notification: AppNotification;
+}) {
+    return (
+        <>
+            {actor && (
+                <>
+                    <span className="font-medium">{actor.name}</span>{' '}
+                </>
+            )}
+            {sentence.before}
+            {sentence.subject && (
+                <>
+                    {' '}
+                    <span className="font-medium">{sentence.subject}</span>
+                </>
+            )}
+            {sentence.after && ` ${sentence.after}`}
+        </>
     );
 }
 

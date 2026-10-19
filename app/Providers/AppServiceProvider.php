@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Services\LiveUpdates;
 use App\Support\ActivitySubjects;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -22,7 +23,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // One per request, command or job: it gathers the live updates to
+        // send when that is done.
+        $this->app->scoped(LiveUpdates::class);
     }
 
     /**

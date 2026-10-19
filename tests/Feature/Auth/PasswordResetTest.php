@@ -76,3 +76,16 @@ test('password cannot be reset with invalid token', function () {
 
     $response->assertSessionHasErrors('email');
 });
+
+test('the reset email carries the PHLGADIS logo and the partner seals', function () {
+    $user = User::factory()->create();
+
+    $html = (string) (new ResetPassword('token'))->toMail($user)->render();
+
+    expect($html)
+        ->toContain(asset('assets/img/gadlogo2.png'))
+        ->toContain(asset('assets/img/email/ched-seal.png'))
+        ->toContain(asset('assets/img/email/bagong-pilipinas.png'))
+        ->toContain('#7030a8')
+        ->not->toContain('laravel.com');
+});

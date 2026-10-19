@@ -6,6 +6,8 @@ import { BetaTag } from '@/components/beta-tag';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { HeaderActions } from '@/components/header-actions';
 import { HeaderSearch } from '@/components/header-search';
+import { BottomNav } from '@/components/bottom-nav';
+import { NavigationList } from '@/components/navigation-list';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +18,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
     Sheet,
-    SheetClose,
     SheetContent,
     SheetHeader,
     SheetTitle,
@@ -51,8 +52,8 @@ const tabClass =
  * The top header, one row as on Facebook: the icon and the search, the
  * navigation as icon tabs in the middle, then the notifications, the theme
  * and the account. It stays at the top while the page scrolls; AppShell sets
- * --app-header to its height. Below 1024px the tabs give way to the menu
- * button.
+ * --app-header to its height. Below 1024px the tabs give way to the bottom
+ * bar for HEI accounts (BottomNav), and to the menu button for staff.
  */
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const { auth } = usePage().props;
@@ -69,7 +70,11 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
             <div className="sticky top-0 z-30 border-b bg-background">
                 <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center gap-2 px-2 sm:px-4">
                     <div className="flex min-w-0 items-center gap-1 sm:gap-2">
-                        <MobileNavigation groups={groups} active={active} />
+                        {/* HEI accounts move around their phone with the
+                            bottom bar; staff keep the side menu. */}
+                        {!auth.heiOnly && (
+                            <MobileNavigation groups={groups} active={active} />
+                        )}
                         <Link
                             href={dashboard()}
                             prefetch
@@ -112,6 +117,8 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
                 </div>
             </div>
+
+            {auth.heiOnly && <BottomNav groups={groups} active={active} />}
 
             {breadcrumbs.length > 1 && (
                 <div className="flex w-full border-b">
@@ -263,42 +270,7 @@ function MobileNavigation({
                         aria-label="Main"
                         className="flex-1 space-y-4 overflow-y-auto p-3"
                     >
-                        {groups.map((group) => (
-                            <div key={group.label}>
-                                <p className="px-2 pb-1 text-xs font-medium text-muted-foreground">
-                                    {group.label}
-                                </p>
-                                <ul className="space-y-0.5">
-                                    {group.items.map((item) => (
-                                        <li key={item.title}>
-                                            <SheetClose asChild>
-                                                <Link
-                                                    href={item.href}
-                                                    aria-current={
-                                                        item === active
-                                                            ? 'page'
-                                                            : undefined
-                                                    }
-                                                    className={cn(
-                                                        'flex min-h-11 items-center gap-3 rounded-md px-2 text-sm transition-colors outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring',
-                                                        item === active &&
-                                                            'bg-sidebar-accent font-medium text-sidebar-accent-foreground',
-                                                    )}
-                                                >
-                                                    {item.icon && (
-                                                        <item.icon className="size-4 shrink-0" />
-                                                    )}
-                                                    {item.title}
-                                                    {item.beta && (
-                                                        <BetaTag className="ml-auto" />
-                                                    )}
-                                                </Link>
-                                            </SheetClose>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
+                        <NavigationList groups={groups} active={active} />
                     </nav>
                 </SheetContent>
             </Sheet>

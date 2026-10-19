@@ -13,6 +13,7 @@ import {
     exportMethod,
     index,
 } from '@/routes/settings/ratings';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Rating = {
     id: string;
@@ -50,6 +51,8 @@ export default function Ratings({
     buttonEnabled: boolean;
     permissions: { export: boolean; delete: boolean; update: boolean };
 }) {
+    useLiveReload(useLiveModules('site-ratings'), ['summary', 'ratings']);
+
     const filter = (rating: number | null) =>
         router.get(index.url(), rating ? { rating } : {}, {
             preserveState: true,

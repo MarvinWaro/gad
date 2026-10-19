@@ -128,6 +128,8 @@ class RbacSeeder extends Seeder
                     'events.view', 'events.create', 'events.update', 'events.check-in', 'events.view-registrations',
                     // Their own region's certificates and signatories (docs/certificates.md).
                     'certificates.view', 'certificates.create', 'certificates.update', 'certificates.delete', 'certificates.release',
+                    // Their own region's activity log (ActivityLog::scopeWithinReachOf).
+                    'activity-logs.view',
                 ],
             ],
             'ched-employee' => [

@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use App\Services\NotificationInbox;
+use App\Support\LiveChannels;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -58,9 +60,35 @@ class HandleInertiaRequests extends Middleware
                 // Office and HEI accounts.
                 'officeRegion' => fn (): ?string => $user?->officeRegion?->name,
             ],
-            // The bell's count. The browser asks for it again every 30 seconds.
+            // The bell's count, kept fresh by live updates (docs/realtime.md).
             'inbox' => fn (): ?array => $user !== null ? app(NotificationInbox::class)->summary($user) : null,
+            // Live updates (docs/realtime.md): where to listen, and the channels
+            // this person may follow, by module. Null while they are off.
+            'realtime' => fn (): ?array => $user !== null ? $this->realtime($user) : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+        ];
+    }
+
+    /**
+     * @return array{key: string, host: string, port: int, scheme: string, cluster: string, user: string, modules: array<string, list<string>>}|null
+     */
+    private function realtime(User $user): ?array
+    {
+        /** @var array{key: ?string, host: ?string, port: int, scheme: string, cluster: string} $client */
+        $client = config('broadcasting.connections.pusher.client');
+
+        if (config('broadcasting.default') !== 'pusher' || blank($client['key']) || blank($client['host'])) {
+            return null;
+        }
+
+        return [
+            'key' => (string) $client['key'],
+            'host' => (string) $client['host'],
+            'port' => $client['port'],
+            'scheme' => $client['scheme'],
+            'cluster' => $client['cluster'],
+            'user' => "App.Models.User.{$user->id}",
+            'modules' => LiveChannels::followedBy($user),
         ];
     }
 }

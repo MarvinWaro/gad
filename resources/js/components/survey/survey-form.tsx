@@ -7,6 +7,7 @@ import { ExperiencesStep } from '@/components/survey/experiences-step';
 import {
     describeRespondent,
     initialAnswers,
+    placeOf,
     readQuestionnaire,
 } from '@/components/survey/questionnaire';
 import { RespondentStep } from '@/components/survey/respondent-step';
@@ -35,17 +36,23 @@ export function SurveyForm({
     survey,
     directories,
     respondentDetails,
+    ownHeiId = null,
 }: {
     survey: PublishedSurvey;
     directories: Directories;
     respondentDetails: RespondentDetails;
+    /** The signed-in HEI account's institution, filled in to start with. */
+    ownHeiId?: number | null;
 }) {
     const [step, setStep] = useState(1);
     const [stepError, setStepError] = useState('');
     const [attempted, setAttempted] = useState<Record<number, boolean>>({});
     const errorSummary = useRef<HTMLDivElement>(null);
     const questionnaire = readQuestionnaire(survey, directories);
-    const form = useForm<SurveyAnswers>(initialAnswers(survey, questionnaire));
+    const ownPlace = placeOf(directories, ownHeiId);
+    const form = useForm<SurveyAnswers>(
+        initialAnswers(survey, questionnaire, ownPlace),
+    );
     const respondent = describeRespondent(
         survey,
         questionnaire,
@@ -187,6 +194,7 @@ export function SurveyForm({
                     questionnaire={questionnaire}
                     respondent={respondent}
                     directories={directories}
+                    ownHeiId={ownPlace.hei_id}
                     issues={detailIssues}
                 />
             )}

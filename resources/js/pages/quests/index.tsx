@@ -7,6 +7,7 @@ import { QuestCard } from '@/components/quests/quest-card';
 import { QuestTabs } from '@/components/quests/quest-tabs';
 import type { Achievement } from '@/types/badges';
 import type { QuestCardPage } from '@/types/quests';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 /**
  * GAD Quest for its players: the quests open to them (and closed ones they
@@ -22,6 +23,8 @@ export default function Quests({
     achievements: Achievement[];
     canManage: boolean;
 }) {
+    useLiveReload(useLiveModules('quests'), ['quests', 'achievements']);
+
     return (
         <>
             <Head title="GAD Quest" />

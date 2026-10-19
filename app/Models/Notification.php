@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ActivityAction;
 use App\Enums\ActivityModule;
 use App\Enums\NotificationKind;
 use App\Support\ActivitySubjects;
@@ -109,6 +110,19 @@ class Notification extends Model
         return match (true) {
             // An event deleted after it was called off: the calendar.
             $subject === null && $this->kind === NotificationKind::EventCancelled => route('events.index'),
+            // A sign-up is logged with the new account as the one who acted
+            // and no subject: the account itself, in the users list. Its
+            // HEI's focal persons, who cannot open it yet, go home.
+            $this->kind === NotificationKind::AccountPending => $this->activity?->user !== null
+                ? ActivitySubjects::url($this->activity->user, $viewer) ?? ($viewer->isHeiOnly() ? route('dashboard') : null)
+                : null,
+            // An account let straight in (instant registration) acted, with
+            // no subject: the account itself, in the users list for staff
+            // and on its profile for colleagues. One approved is the subject,
+            // opened as any account is (below).
+            $this->kind === NotificationKind::AccountJoined && $this->activity?->action === ActivityAction::Registered => $this->activity->user !== null
+                ? ActivitySubjects::url($this->activity->user, $viewer)
+                : null,
             $subject === null => null,
             // Badges are told to the person who now holds them: their profile.
             in_array($this->kind, [NotificationKind::BadgeAwarded, NotificationKind::BadgeEarned], true) => route('my-profile', ['tab' => 'badges']),

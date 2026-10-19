@@ -7,10 +7,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Monitoring\MonitoringFilterRequest;
 use App\Http\Requests\Monitoring\ReviewMonitoringRequest;
 use App\Http\Resources\MonitoringReportResource;
+use App\Http\Resources\SubmissionGapResource;
 use App\Models\MonitoringReport;
 use App\Models\User;
 use App\Support\AcademicPeriod;
 use App\Support\PlaceFilters;
+use App\Support\SubmissionGaps;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -47,6 +49,30 @@ class MonitoringReviewController extends Controller
             'academicYears' => AcademicPeriod::recordOptions(),
             'staff' => true,
             'canCreate' => false,
+            'hasOffice' => $user->hasOffice(),
+            ...PlaceFilters::options($user, $filters),
+        ]);
+    }
+
+    /**
+     * The institutions that have not sent the report of a semester (the
+     * current one unless chosen): not started, still a draft, or returned.
+     */
+    public function notSubmitted(MonitoringFilterRequest $request): Response
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $filters = $request->validated();
+        $current = AcademicPeriod::current();
+        $academicYear = $filters['academic_year'] ?? $current['academic_year'];
+        $semester = (int) ($filters['semester'] ?? $current['semester']);
+
+        return Inertia::render('monitoring/not-submitted', [
+            'subject' => ['kind' => 'report', 'title' => 'Monitoring reports', 'noun' => 'monitoring report'],
+            'gaps' => SubmissionGapResource::collection(SubmissionGaps::reports($user, $filters, $academicYear, $semester)),
+            'filters' => $filters,
+            'period' => ['academic_year' => $academicYear, 'semester' => $semester],
+            'academicYears' => AcademicPeriod::recordOptions(),
             'hasOffice' => $user->hasOffice(),
             ...PlaceFilters::options($user, $filters),
         ]);

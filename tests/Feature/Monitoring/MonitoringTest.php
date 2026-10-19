@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ActivityLog;
 use App\Models\MonitoringAnswer;
 use App\Models\MonitoringReport;
 use App\Models\MonitoringRevision;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
+use League\Flysystem\UnableToRetrieveMetadata;
 use League\Flysystem\UnableToWriteFile;
 
 beforeEach(function () {
@@ -121,6 +123,21 @@ test('colleagues at an HEI share one report per period', function () {
     $this->post('/monitoring', ['academic_year' => '2019-2020', 'semester' => 1])->assertSessionHasErrors('academic_year');
     $this->post('/monitoring', ['academic_year' => '2026-2028', 'semester' => 1])->assertSessionHasErrors('academic_year');
     $this->post('/monitoring', ['academic_year' => '2026-2027', 'semester' => 3])->assertSessionHasErrors('semester');
+});
+
+test('a new report names the focal person who opened it on their signature line, in capitals', function () {
+    $this->member->update(['name' => 'Franco dela Cruz']);
+    $report = monitoringReport($this);
+    $colleague = User::factory()->create(['survey_hei_id' => $this->hei->id, 'name' => 'Another Focal']);
+    $colleague->assignRole('hei-focal');
+    $this->actingAs($colleague)->post('/monitoring', ['academic_year' => '2026-2027', 'semester' => 1]);
+
+    expect($report->fresh()->currentRevision->focal_person_name)->toBe('FRANCO DELA CRUZ')
+        ->and($report->fresh()->currentRevision->president_name)->toBeNull();
+
+    // Still theirs to change.
+    monitoringSave($this, $report, details: ['focal_person_name' => 'MARIA SANTOS'])->assertOk();
+    expect($report->fresh()->currentRevision->focal_person_name)->toBe('MARIA SANTOS');
 });
 
 test('the start page offers the current period and the HEI\'s open reports', function () {
@@ -465,4 +482,62 @@ test('the template transcribes the official form', function () {
         ->and($template['columns']['instruction'])->toBe('Please state actual situations per item.');
 
     expect(fn () => MonitoringTemplate::definition('2025-v1'))->toThrow(InvalidArgumentException::class);
+});
+
+test('the HEI deletes a draft no one has sent, answers and all, and it is logged', function () {
+    $report = monitoringReport($this);
+    monitoringSave($this, $report, ['gfps-membership' => 'A draft answer'])->assertOk();
+
+    $this->get('/monitoring')->assertInertia(fn (Assert $page) => $page
+        ->where('openReports.0.abilities.delete', true));
+
+    $this->delete('/monitoring/'.$report->id)->assertRedirect('/monitoring');
+
+    expect(MonitoringReport::query()->count())->toBe(0)
+        ->and(MonitoringRevision::query()->count())->toBe(0)
+        ->and(MonitoringAnswer::query()->count())->toBe(0)
+        ->and(ActivityLog::query()->where('module', 'monitoring')->where('action', 'deleted')->exists())->toBeTrue();
+});
+
+test('a report sent to CHED stays on record, and no one else may delete a draft', function () {
+    $submitted = monitoringSubmitted($this);
+
+    $this->actingAs($this->member)->get('/monitoring/'.$submitted->id)
+        ->assertInertia(fn (Assert $page) => $page->where('report.abilities.delete', false));
+    $this->delete('/monitoring/'.$submitted->id)->assertSessionHasErrors('report');
+    expect($submitted->fresh())->not->toBeNull();
+
+    $draft = MonitoringReport::query()->create([
+        'survey_hei_id' => $this->hei->id,
+        'survey_cluster_id' => $this->hei->survey_cluster_id,
+        'survey_region_id' => $this->region->id,
+        'institution_name' => $this->hei->name,
+        'academic_year' => '2025-2026',
+        'semester' => 2,
+        'status' => 'draft',
+    ]);
+    $draft->revisions()->create(['number' => 1, 'template_version' => MonitoringTemplate::VERSION]);
+    $otherFocal = User::factory()->create(['survey_hei_id' => createSurveyHei(['name' => 'Fictional Other HEI'])->id]);
+    $otherFocal->assignRole('hei-focal');
+
+    $this->actingAs($otherFocal)->delete('/monitoring/'.$draft->id)->assertForbidden();
+    $this->actingAs(monitoringStaff(national: true))->delete('/monitoring/'.$draft->id)->assertForbidden();
+    expect($draft->fresh())->not->toBeNull();
+});
+
+test('a signed copy the storage cannot reach sends the reader back to the report to try again', function () {
+    Exceptions::fake();
+    $report = monitoringSubmitted($this);
+    $url = '/monitoring/'.$report->id.'/revisions/'.$report->currentRevision->id.'/attachment';
+    // The bucket's address cannot be found, as on a network that blocks it.
+    Storage::set('monitoring', Mockery::mock(FilesystemAdapter::class)
+        ->shouldReceive('response', 'download')
+        ->andThrow(UnableToRetrieveMetadata::fileSize('monitoring/signed.pdf', 'Could not resolve host'))
+        ->getMock());
+
+    $this->actingAs($this->member)->get($url.'?inline=1')
+        ->assertRedirect('/monitoring/'.$report->id)
+        ->assertSessionHas('inertia.flash_data.toast.type', 'error');
+    $this->get($url)->assertRedirect('/monitoring/'.$report->id);
+    Exceptions::assertReported(UnableToRetrieveMetadata::class);
 });

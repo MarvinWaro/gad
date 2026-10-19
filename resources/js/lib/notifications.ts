@@ -1,5 +1,8 @@
-/** How often the bell asks whether anything new arrived. */
+/** How often the bell asks whether anything new arrived while live updates are off. */
 export const POLL_MS = 30_000;
+
+/** How often it asks anyway while live updates are on, should the server fail to send them. */
+export const POLL_LIVE_MS = 120_000;
 
 /** The bell's count: the number up to 9, then "9+". */
 export function badgeLabel(unread: number): string {

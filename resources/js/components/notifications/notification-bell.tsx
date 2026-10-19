@@ -22,8 +22,9 @@ import {
     getJson,
     setInbox,
     useInbox,
-    useInboxPolling,
+    useInboxUpdates,
 } from '@/hooks/use-inbox';
+import { useArrivalToasts } from '@/hooks/use-arrival-toasts';
 import { badgeLabel, bellLabel, unreadSentence } from '@/lib/notifications';
 import { cn } from '@/lib/utils';
 import { index, readAll, recent } from '@/routes/notifications';
@@ -182,13 +183,15 @@ function useNotificationPanel(open: boolean, latestAt: string | null) {
 /**
  * The header's bell. A red count shows while anything is unread; it opens a
  * panel of the newest notifications that loads more as it scrolls, with
- * "Mark all as read" and a way to the full Notifications page. The count is
- * checked every 30 seconds, and opening the bell checks at once.
+ * "Mark all as read" and a way to the full Notifications page. The count
+ * updates live (useInboxUpdates), and each arrival shows a toast
+ * (useArrivalToasts).
  */
 export function NotificationBell({ className }: { className?: string }) {
-    useInboxPolling();
+    useInboxUpdates();
     const inbox = useInbox();
     const [open, setOpen] = useState(false);
+    useArrivalToasts({ panelOpen: open, showPanel: () => setOpen(true) });
     const titleId = useId();
     const heading = useRef<HTMLHeadingElement>(null);
     const panel = useNotificationPanel(open, inbox.latest_at);

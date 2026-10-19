@@ -4,6 +4,7 @@ import { AgendaTile, SdgCredit } from '@/components/hei/post-goals';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     Tooltip,
     TooltipContent,
@@ -14,6 +15,7 @@ import { achieveAgenda, achievePage, type AchieveCode } from '@/data/achieve';
 import { sdgsFor, sustainableGoals } from '@/data/sdgs';
 import { POST_FEELINGS } from '@/lib/post-feelings';
 import { MAX_ACHIEVE_ITEMS, MAX_SDGS, sdgLabel } from '@/lib/post-goals';
+import { underlineTabs } from '@/lib/underline-tabs';
 import { cn } from '@/lib/utils';
 import type { TaggedUser } from '@/types';
 
@@ -407,23 +409,41 @@ export function GoalsView({
     onToggleSdg: (goal: number) => void;
     onToggleAchieve: (code: AchieveCode) => void;
 }) {
-    const sdgHeading = useId();
-    const agendaHeading = useId();
     const picked = sdgsFor(sdgs);
     const sdgsFull = sdgs.length >= MAX_SDGS;
     const agendaFull = achieveItems.length >= MAX_ACHIEVE_ITEMS;
+    // One list at a time, so the agenda never hides below 17 icons on a phone.
+    const [tab, setTab] = useState<'sdgs' | 'agenda'>('sdgs');
 
     return (
-        <div className="flex min-h-0 flex-col gap-6 overflow-y-auto p-4">
-            <section aria-labelledby={sdgHeading} className="space-y-3">
-                <div className="flex items-baseline justify-between gap-3">
-                    <h3 id={sdgHeading} className="text-sm font-medium">
-                        Sustainable Development Goals
-                    </h3>
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                        {sdgs.length}/{MAX_SDGS}
-                    </span>
-                </div>
+        <Tabs
+            value={tab}
+            onValueChange={(next) =>
+                setTab(next === 'agenda' ? 'agenda' : 'sdgs')
+            }
+            className="flex min-h-0 flex-col gap-0 overflow-y-auto"
+        >
+            <TabsList
+                aria-label="What does this support?"
+                className={cn(
+                    underlineTabs.list,
+                    'sticky top-0 z-10 bg-background px-4',
+                )}
+            >
+                <TabsTrigger value="sdgs" className={underlineTabs.tab}>
+                    SDGs
+                    <PickedCount picked={sdgs.length} max={MAX_SDGS} />
+                </TabsTrigger>
+                <TabsTrigger value="agenda" className={underlineTabs.tab}>
+                    A.C.H.I.E.V.E.
+                    <PickedCount
+                        picked={achieveItems.length}
+                        max={MAX_ACHIEVE_ITEMS}
+                    />
+                </TabsTrigger>
+            </TabsList>
+            <TabsContent value="sdgs" className="space-y-3 p-4">
+                <h3 className="sr-only">Sustainable Development Goals</h3>
                 <ul className="grid grid-cols-4 gap-4 sm:grid-cols-6">
                     {sustainableGoals.map((goal) => {
                         const isPicked = sdgs.includes(goal.number);
@@ -481,17 +501,10 @@ export function GoalsView({
                         ` You can pick up to ${MAX_SDGS} SDGs. Remove one to pick another.`}
                 </p>
                 <SdgCredit />
-            </section>
+            </TabsContent>
 
-            <section aria-labelledby={agendaHeading} className="space-y-2">
-                <div className="flex items-baseline justify-between gap-3">
-                    <h3 id={agendaHeading} className="text-sm font-medium">
-                        A.C.H.I.E.V.E. Agenda
-                    </h3>
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                        {achieveItems.length}/{MAX_ACHIEVE_ITEMS}
-                    </span>
-                </div>
+            <TabsContent value="agenda" className="space-y-2 p-4">
+                <h3 className="sr-only">A.C.H.I.E.V.E. Agenda</h3>
                 <ul className="-mx-2 space-y-0.5">
                     {achieveAgenda.map((item) => {
                         const isPicked = achieveItems.includes(item.code);
@@ -542,7 +555,17 @@ export function GoalsView({
                     <ArrowUpRight aria-hidden className="size-3.5" />
                     <span className="sr-only">(opens in a new tab)</span>
                 </a>
-            </section>
-        </div>
+            </TabsContent>
+        </Tabs>
+    );
+}
+
+/** How many of a list are picked, beside its tab's name: "3/3". */
+function PickedCount({ picked, max }: { picked: number; max: number }) {
+    return (
+        <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">
+            {picked}/{max}
+            <span className="sr-only"> picked</span>
+        </span>
     );
 }

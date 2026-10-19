@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Row = {
     id: string;
@@ -34,6 +35,8 @@ export default function Responses({
     filters: Record<string, string>;
     permissions: { export: boolean; delete: boolean };
 }) {
+    useLiveReload(useLiveModules('survey-responses'), ['responses']);
+
     const [search, setSearch] = useState(filters.search ?? '');
     function submit(e: FormEvent) {
         e.preventDefault();

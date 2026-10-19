@@ -40,7 +40,7 @@ class MonitoringReportResource extends JsonResource
     /**
      * What the viewer can do next, from their access and the report's state.
      *
-     * @return array{edit: bool, sign: bool, review: bool}
+     * @return array{edit: bool, sign: bool, review: bool, delete: bool}
      */
     private function abilities(?User $user): array
     {
@@ -51,6 +51,7 @@ class MonitoringReportResource extends JsonResource
             'edit' => $working && $current->isEditable(),
             'sign' => $working && $current->isAwaitingSignature(),
             'review' => $this->status === 'submitted' && $user?->can('review', $this->resource) === true,
+            'delete' => $this->isDeletable() && $user?->can('edit', $this->resource) === true,
         ];
     }
 }

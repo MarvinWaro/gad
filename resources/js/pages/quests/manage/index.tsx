@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { create, index, show } from '@/routes/quests/manage';
 import type { DirectoryOption } from '@/types/monitoring';
 import type { ManagedQuest } from '@/types/quests';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Filters = { search?: string; region?: string };
 
@@ -44,6 +45,8 @@ export default function ManageQuests({
     canPlay: boolean;
     permissions: { create: boolean };
 }) {
+    useLiveReload(useLiveModules('quests'), ['quests']);
+
     const { values, loading, filtered, apply, change, search } =
         useRecordFilters<Filters>(index.url(), filters);
     const pickRegion = regions.length > 1;

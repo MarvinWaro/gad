@@ -215,6 +215,84 @@ newer.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     newer.form = newerForm
 /**
+* @see \App\Http\Controllers\LivePostsController::__invoke
+ * @see app/Http/Controllers/LivePostsController.php:17
+ * @route '/posts/live'
+ */
+export const live = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: live.url(options),
+    method: 'get',
+})
+
+live.definition = {
+    methods: ["get","head"],
+    url: '/posts/live',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\LivePostsController::__invoke
+ * @see app/Http/Controllers/LivePostsController.php:17
+ * @route '/posts/live'
+ */
+live.url = (options?: RouteQueryOptions) => {
+    return live.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\LivePostsController::__invoke
+ * @see app/Http/Controllers/LivePostsController.php:17
+ * @route '/posts/live'
+ */
+live.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: live.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\LivePostsController::__invoke
+ * @see app/Http/Controllers/LivePostsController.php:17
+ * @route '/posts/live'
+ */
+live.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: live.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\LivePostsController::__invoke
+ * @see app/Http/Controllers/LivePostsController.php:17
+ * @route '/posts/live'
+ */
+    const liveForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: live.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\LivePostsController::__invoke
+ * @see app/Http/Controllers/LivePostsController.php:17
+ * @route '/posts/live'
+ */
+        liveForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: live.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\LivePostsController::__invoke
+ * @see app/Http/Controllers/LivePostsController.php:17
+ * @route '/posts/live'
+ */
+        liveForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: live.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    live.form = liveForm
+/**
 * @see \App\Http\Controllers\PostController::show
  * @see app/Http/Controllers/PostController.php:27
  * @route '/posts/{post}'
@@ -577,6 +655,7 @@ const posts = {
     store: Object.assign(store, store),
 tagSuggestions: Object.assign(tagSuggestions, tagSuggestions),
 newer: Object.assign(newer, newer),
+live: Object.assign(live, live),
 show: Object.assign(show, show),
 update: Object.assign(update, update),
 destroy: Object.assign(destroy, destroy),

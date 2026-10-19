@@ -40,7 +40,6 @@ export type MonitoringTemplate = {
         institution: string;
         address: string;
         accomplished_on: string;
-        signature: string;
     };
     signatories: { key: SignatoryKey; role: string }[];
     sections: TemplateSection[];
@@ -115,7 +114,13 @@ export type MonitoringReport = {
         finalized_at: string | null;
         submitted_at: string | null;
     } | null;
-    abilities: { edit: boolean; sign: boolean; review: boolean };
+    abilities: {
+        edit: boolean;
+        sign: boolean;
+        review: boolean;
+        /** A first draft, never sent to CHED. */
+        delete: boolean;
+    };
     revisions?: MonitoringRevision[];
 };
 
@@ -134,6 +139,22 @@ export type MonitoringPage = {
 };
 
 export type AcademicPeriod = { academic_year: string; semester: 1 | 2 };
+
+/** An institution that has not sent what a period asks of it (App\Support\SubmissionGaps). */
+export type SubmissionGap = {
+    hei: DirectoryOption;
+    region: string;
+    status: 'not_started' | 'draft' | 'returned';
+    /** The report being written or corrected, when there is one. */
+    report_id: string | null;
+    /** Whether anyone there can sign in to send it. */
+    has_focal: boolean;
+};
+
+export type SubmissionGapPage = {
+    data: SubmissionGap[];
+    meta: PaginationMeta;
+};
 
 /** The GAD checklists' stable codes. */
 export type ChecklistType = 'training' | 'compliance';

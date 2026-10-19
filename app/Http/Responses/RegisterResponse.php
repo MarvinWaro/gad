@@ -31,8 +31,14 @@ class RegisterResponse implements RegisterResponseContract
             }
 
             Inertia::flash('toast', ['type' => 'success', 'message' => $message]);
+            // A page someone else was sent away from on this browser, such
+            // as a staff page after their session ended, is not the new
+            // account's to open: it starts at its home.
+            if ($request->hasSession()) {
+                $request->session()->forget('url.intended');
+            }
 
-            return redirect()->intended(route('dashboard'));
+            return redirect()->route('dashboard');
         }
 
         Auth::guard(config('fortify.guard'))->logout();

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Admin\ChecklistResponseController::index
- * @see app/Http/Controllers/Admin/ChecklistResponseController.php:19
+ * @see app/Http/Controllers/Admin/ChecklistResponseController.php:21
  * @route '/admin/monitoring/{type}'
  */
 export const index = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\ChecklistResponseController::index
- * @see app/Http/Controllers/Admin/ChecklistResponseController.php:19
+ * @see app/Http/Controllers/Admin/ChecklistResponseController.php:21
  * @route '/admin/monitoring/{type}'
  */
 index.url = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ index.url = (args: { type: string | number } | [type: string | number ] | string
 
 /**
 * @see \App\Http\Controllers\Admin\ChecklistResponseController::index
- * @see app/Http/Controllers/Admin/ChecklistResponseController.php:19
+ * @see app/Http/Controllers/Admin/ChecklistResponseController.php:21
  * @route '/admin/monitoring/{type}'
  */
 index.get = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ index.get = (args: { type: string | number } | [type: string | number ] | string
 })
 /**
 * @see \App\Http\Controllers\Admin\ChecklistResponseController::index
- * @see app/Http/Controllers/Admin/ChecklistResponseController.php:19
+ * @see app/Http/Controllers/Admin/ChecklistResponseController.php:21
  * @route '/admin/monitoring/{type}'
  */
 index.head = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +63,7 @@ index.head = (args: { type: string | number } | [type: string | number ] | strin
 
     /**
 * @see \App\Http\Controllers\Admin\ChecklistResponseController::index
- * @see app/Http/Controllers/Admin/ChecklistResponseController.php:19
+ * @see app/Http/Controllers/Admin/ChecklistResponseController.php:21
  * @route '/admin/monitoring/{type}'
  */
     const indexForm = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -73,7 +73,7 @@ index.head = (args: { type: string | number } | [type: string | number ] | strin
 
             /**
 * @see \App\Http\Controllers\Admin\ChecklistResponseController::index
- * @see app/Http/Controllers/Admin/ChecklistResponseController.php:19
+ * @see app/Http/Controllers/Admin/ChecklistResponseController.php:21
  * @route '/admin/monitoring/{type}'
  */
         indexForm.get = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.head = (args: { type: string | number } | [type: string | number ] | strin
         })
             /**
 * @see \App\Http\Controllers\Admin\ChecklistResponseController::index
- * @see app/Http/Controllers/Admin/ChecklistResponseController.php:19
+ * @see app/Http/Controllers/Admin/ChecklistResponseController.php:21
  * @route '/admin/monitoring/{type}'
  */
         indexForm.head = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -96,8 +96,106 @@ index.head = (args: { type: string | number } | [type: string | number ] | strin
         })
     
     index.form = indexForm
+/**
+* @see \App\Http\Controllers\Admin\ChecklistResponseController::notSubmitted
+ * @see app/Http/Controllers/Admin/ChecklistResponseController.php:54
+ * @route '/admin/monitoring/{type}/not-submitted'
+ */
+export const notSubmitted = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: notSubmitted.url(args, options),
+    method: 'get',
+})
+
+notSubmitted.definition = {
+    methods: ["get","head"],
+    url: '/admin/monitoring/{type}/not-submitted',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Admin\ChecklistResponseController::notSubmitted
+ * @see app/Http/Controllers/Admin/ChecklistResponseController.php:54
+ * @route '/admin/monitoring/{type}/not-submitted'
+ */
+notSubmitted.url = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { type: args }
+    }
+
+    
+    if (Array.isArray(args)) {
+        args = {
+                    type: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        type: args.type,
+                }
+
+    return notSubmitted.definition.url
+            .replace('{type}', parsedArgs.type.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Admin\ChecklistResponseController::notSubmitted
+ * @see app/Http/Controllers/Admin/ChecklistResponseController.php:54
+ * @route '/admin/monitoring/{type}/not-submitted'
+ */
+notSubmitted.get = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: notSubmitted.url(args, options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Admin\ChecklistResponseController::notSubmitted
+ * @see app/Http/Controllers/Admin/ChecklistResponseController.php:54
+ * @route '/admin/monitoring/{type}/not-submitted'
+ */
+notSubmitted.head = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: notSubmitted.url(args, options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Admin\ChecklistResponseController::notSubmitted
+ * @see app/Http/Controllers/Admin/ChecklistResponseController.php:54
+ * @route '/admin/monitoring/{type}/not-submitted'
+ */
+    const notSubmittedForm = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: notSubmitted.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Admin\ChecklistResponseController::notSubmitted
+ * @see app/Http/Controllers/Admin/ChecklistResponseController.php:54
+ * @route '/admin/monitoring/{type}/not-submitted'
+ */
+        notSubmittedForm.get = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: notSubmitted.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Admin\ChecklistResponseController::notSubmitted
+ * @see app/Http/Controllers/Admin/ChecklistResponseController.php:54
+ * @route '/admin/monitoring/{type}/not-submitted'
+ */
+        notSubmittedForm.head = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: notSubmitted.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    notSubmitted.form = notSubmittedForm
 const checklists = {
     index: Object.assign(index, index),
+notSubmitted: Object.assign(notSubmitted, notSubmitted),
 }
 
 export default checklists

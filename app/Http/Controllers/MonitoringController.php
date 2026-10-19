@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use League\Flysystem\FilesystemException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MonitoringController extends Controller
@@ -152,6 +153,17 @@ class MonitoringController extends Controller
         return back();
     }
 
+    /** A draft deleted from the start page or its own page: back to the start. */
+    public function destroy(Request $request, MonitoringReport $report, ManageMonitoringReport $monitoring): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $monitoring->delete($user, $report);
+        Inertia::flash('toast', ['type' => 'deleted', 'message' => __('Draft deleted.')]);
+
+        return to_route('monitoring.create');
+    }
+
     public function submit(SubmitMonitoringRequest $request, MonitoringReport $report, ManageMonitoringReport $monitoring): RedirectResponse
     {
         /** @var User $user */
@@ -162,8 +174,12 @@ class MonitoringController extends Controller
         return back();
     }
 
-    /** A submitted revision's signed copy: shown in the browser, or downloaded. */
-    public function attachment(Request $request, MonitoringReport $report, MonitoringRevision $revision, ActivityRecorder $activity): StreamedResponse
+    /**
+     * A submitted revision's signed copy: shown in the browser, or downloaded.
+     * When the file store cannot be reached, back to the report with a note
+     * to try again, rather than an error page.
+     */
+    public function attachment(Request $request, MonitoringReport $report, MonitoringRevision $revision, ActivityRecorder $activity): StreamedResponse|RedirectResponse
     {
         Gate::authorize('view', $report);
         abort_unless($revision->monitoring_report_id === $report->id, 404);
@@ -182,8 +198,18 @@ class MonitoringController extends Controller
             ]);
         }
 
-        return $request->boolean('inline')
-            ? Storage::disk('monitoring')->response($attachment->path, $name, $headers + ['X-Frame-Options' => 'SAMEORIGIN'])
-            : Storage::disk('monitoring')->download($attachment->path, $name, $headers);
+        try {
+            return $request->boolean('inline')
+                ? Storage::disk('monitoring')->response($attachment->path, $name, $headers + ['X-Frame-Options' => 'SAMEORIGIN'])
+                : Storage::disk('monitoring')->download($attachment->path, $name, $headers);
+        } catch (FilesystemException $exception) {
+            report($exception);
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => __('The signed copy cannot be reached right now. Please try again in a few minutes.'),
+            ]);
+
+            return to_route('monitoring.show', $report);
+        }
     }
 }

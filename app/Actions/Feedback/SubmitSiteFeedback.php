@@ -2,8 +2,10 @@
 
 namespace App\Actions\Feedback;
 
+use App\Enums\ActivityModule;
 use App\Models\SiteFeedback;
 use App\Models\SurveyHei;
+use App\Services\LiveUpdates;
 use App\Services\Notifier;
 use App\Support\FeedbackQuestions;
 
@@ -14,7 +16,10 @@ use App\Support\FeedbackQuestions;
  */
 class SubmitSiteFeedback
 {
-    public function __construct(private readonly Notifier $notifier) {}
+    public function __construct(
+        private readonly Notifier $notifier,
+        private readonly LiveUpdates $live,
+    ) {}
 
     /** @param  array<string, mixed>  $answers  validated by StoreSiteFeedbackRequest */
     public function handle(array $answers): SiteFeedback
@@ -42,6 +47,8 @@ class SubmitSiteFeedback
         ]);
 
         $this->notifier->siteFeedbackReceived($feedback);
+        // Never logged, so its pages are told here (docs/realtime.md).
+        $this->live->touched(ActivityModule::SiteFeedback, $feedback->survey_region_id, $feedback->survey_hei_id);
 
         return $feedback;
     }

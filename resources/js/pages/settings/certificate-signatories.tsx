@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { destroy, index } from '@/routes/settings/certificate-signatories';
 import type { SignatoryPage } from '@/types/certificates';
 import type { DirectoryOption } from '@/types/monitoring';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Filters = { search?: string; region?: string };
 
@@ -44,6 +45,8 @@ export default function CertificateSignatories({
     hasOffice: boolean;
     permissions: { create: boolean };
 }) {
+    useLiveReload(useLiveModules('certificates'), ['signatories']);
+
     const { values, loading, filtered, apply, change, search } =
         useRecordFilters<Filters>(index.url(), filters);
 

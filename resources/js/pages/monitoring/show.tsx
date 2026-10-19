@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import MonitoringReviewController from '@/actions/App/Http/Controllers/Admin/MonitoringReviewController';
 import MonitoringController from '@/actions/App/Http/Controllers/MonitoringController';
+import { DeleteDraft } from '@/components/monitoring/delete-draft';
 import { ReportEditor } from '@/components/monitoring/report-editor';
 import {
     ReportSections,
@@ -26,6 +27,7 @@ import {
     SubmittedPanel,
 } from '@/components/monitoring/signing-panel';
 import { FormSelect } from '@/components/ui/form-select';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 import { useReloadOnBack } from '@/hooks/use-reload-on-back';
 import { fieldsOf, stageOf } from '@/lib/monitoring-draft';
 import { cn } from '@/lib/utils';
@@ -47,6 +49,13 @@ type Props = {
 export default function Show(props: Props) {
     // Back and Forward rebuild the page from history; fetch the answers anew.
     useReloadOnBack();
+    // CHED's review, the HEI sending a new copy or a colleague's step shows
+    // at once, and puts the page right if a step's own reload was missed.
+    // Never while the report is being filled in or signed here: the form
+    // keeps its own saving.
+    const working = props.report.abilities.edit || props.report.abilities.sign;
+    const monitoring = useLiveModules('monitoring');
+    useLiveReload(working ? [] : monitoring, ['report']);
     const current = props.report.revisions?.[0];
 
     // A new revision (after a return) starts the page afresh.
@@ -102,6 +111,7 @@ function ReportPage({ report, templates, office, viewer }: Props) {
                             {onCurrent && <StagePill stage={stage} />}
                         </div>
                     </div>
+                    <DeleteDraft report={report} />
                     {revisions.length > 1 && (
                         <div className="flex items-center gap-2">
                             <label

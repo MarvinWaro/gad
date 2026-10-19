@@ -29,6 +29,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->name('public-uploads.show');
         },
     )
+    // Live updates (docs/realtime.md): pages join their channels through
+    // /broadcasting/auth, signed in, a few times on each visit.
+    ->withBroadcasting(__DIR__.'/../routes/channels.php', ['middleware' => ['web', 'auth', 'throttle:120,1']])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 

@@ -32,6 +32,7 @@ import { FormSelect } from '@/components/ui/form-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { fromLines, type SurveyOption } from '@/lib/survey-options';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 /**
  * A question asked right after a respondent picks the group
@@ -66,6 +67,8 @@ export default function RespondentGroups({
     respondentGroups: Paginated<RespondentGroup>;
     permissions: Permissions;
 }) {
+    useLiveReload(useLiveModules('respondent-groups'), ['respondentGroups']);
+
     return (
         <>
             <Head title="Respondent groups" />

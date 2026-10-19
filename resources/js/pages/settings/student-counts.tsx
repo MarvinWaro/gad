@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { destroy, index, template } from '@/routes/settings/student-counts';
 import type { DirectoryOption } from '@/types/monitoring';
 import type { DisciplineFigures, StudentCountKind } from '@/types/statistics';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Props = {
     kind: StudentCountKind;
@@ -63,6 +64,8 @@ export default function StudentCounts({
     nationalAccess,
     permissions,
 }: Props) {
+    useLiveReload(useLiveModules('student-counts'), ['figures', 'years']);
+
     const [loading, setLoading] = useState(false);
     const kindLabel = kinds.find((option) => option.value === kind)?.label;
     const filters = { kind, academic_year: academicYear, region };

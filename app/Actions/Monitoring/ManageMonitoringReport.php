@@ -17,6 +17,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use League\Flysystem\FilesystemException;
 use LogicException;
@@ -61,7 +62,7 @@ class ManageMonitoringReport
             ]);
 
             if ($report->wasRecentlyCreated) {
-                $this->startRevision($report, 1);
+                $this->startRevision($report, 1, focalPerson: $user);
                 $this->activity->record(ActivityAction::Created, ActivityModule::Monitoring, $report, actor: $user);
             }
 
@@ -161,6 +162,27 @@ class ManageMonitoringReport
             $this->activity->record(ActivityAction::Reopened, ActivityModule::Monitoring, $report, actor: $user, properties: [
                 'revision' => $revision->number,
             ]);
+        });
+    }
+
+    /**
+     * Delete a draft no one has sent to CHED, with its answers. Colleagues at
+     * the HEI share it, so it goes for them too; a report CHED has received
+     * stays on record.
+     */
+    public function delete(User $user, MonitoringReport $report): void
+    {
+        $this->locked($user, $report, null, 'edit', function (MonitoringReport $report, MonitoringRevision $revision) use ($user): void {
+            if (! $report->isDeletable()) {
+                throw ValidationException::withMessages([
+                    'report' => __('Only a draft that was never sent to CHED can be deleted.'),
+                ]);
+            }
+
+            $this->activity->record(ActivityAction::Deleted, ActivityModule::Monitoring, $report, actor: $user, properties: [
+                'revision' => $revision->number,
+            ]);
+            $report->delete();
         });
     }
 
@@ -297,8 +319,13 @@ class ManageMonitoringReport
         }
     }
 
-    /** A revision with one answer row per requirement, blank or carried over. */
-    private function startRevision(MonitoringReport $report, int $number, ?MonitoringRevision $from = null): void
+    /**
+     * A revision with one answer row per requirement, blank or carried over.
+     * A new report starts with the GAD Focal Person who opened it named on
+     * their signature line, in capitals as the form prints names; they can
+     * change it.
+     */
+    private function startRevision(MonitoringReport $report, int $number, ?MonitoringRevision $from = null, ?User $focalPerson = null): void
     {
         $revision = $report->revisions()->create([
             'number' => $number,
@@ -306,7 +333,7 @@ class ManageMonitoringReport
             'address' => $from?->address,
             'accomplished_on' => $from?->accomplished_on,
             'president_name' => $from?->president_name,
-            'focal_person_name' => $from?->focal_person_name,
+            'focal_person_name' => $from->focal_person_name ?? ($focalPerson !== null ? Str::upper($focalPerson->name) : null),
         ]);
         $previous = $from?->answers->pluck('answer', 'requirement_key') ?? collect();
 

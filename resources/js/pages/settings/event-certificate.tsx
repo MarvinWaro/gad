@@ -38,6 +38,7 @@ import type {
     EventCertificate,
 } from '@/types/certificates';
 import type { DirectoryOption } from '@/types/monitoring';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Filters = { search?: string; region?: string; hei?: string };
 
@@ -84,6 +85,16 @@ export default function EventCertificatePage({
     regions: DirectoryOption[];
     heis: DirectoryOption[];
 }) {
+    useLiveReload(
+        [
+            ...useLiveModules('certificates'),
+            ...(certificate.event
+                ? [`record.event.${certificate.event.id}`]
+                : []),
+        ],
+        ['certificate', 'awaiting', 'problem', 'requests', 'holders'],
+    );
+
     const { errors } = usePage().props;
     const problem = (errors as Partial<Record<string, string>>).certificate;
     const { values, loading, filtered, apply, change, search, pick } =

@@ -23,7 +23,6 @@ const template: MonitoringTemplate = {
         institution: 'Name of HEI',
         address: 'Address',
         accomplished_on: 'Date Accomplished',
-        signature: '(Name and signature)',
     },
     signatories: [
         { key: 'president_name', role: 'President' },
@@ -278,4 +277,24 @@ void test('dates print in words without shifting a day', () => {
     assert.equal(formatAccomplishedDate('2026-09-29'), 'September 29, 2026');
     assert.equal(formatAccomplishedDate('2026-01-01'), 'January 1, 2026');
     assert.equal(formatAccomplishedDate(''), '');
+});
+
+void test('signatories print in capitals, however their names were typed', () => {
+    // Joined: a letter the narrow face lacks (Ñ) prints in its own run.
+    const printed = strings(
+        buildMonitoringDocument(
+            input({
+                details: {
+                    address: 'Polomolok',
+                    accomplished_on: '2026-09-29',
+                    president_name: 'Bong bong Peña',
+                    focal_person_name: '  franco dela cruz ',
+                },
+            }),
+        ),
+    ).join('');
+
+    assert.ok(printed.includes('BONG BONG PEÑA'));
+    assert.ok(printed.includes('FRANCO DELA CRUZ'));
+    assert.ok(!printed.includes('Bong bong Peña'));
 });

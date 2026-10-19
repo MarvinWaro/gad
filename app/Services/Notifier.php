@@ -37,6 +37,8 @@ class Notifier
     /** Notices written per insert. */
     private const CHUNK = 500;
 
+    public function __construct(private readonly LiveUpdates $live) {}
+
     /**
      * A comment: the person a reply answers, and the post's author.
      */
@@ -67,6 +69,7 @@ class Notifier
 
         if ($entry !== null) {
             $this->guarded(fn () => $this->reactionNotices($post, $member)->update(['activity_log_id' => $entry->id]));
+            $this->live->inbox([$post->user_id]);
         }
     }
 
@@ -74,6 +77,7 @@ class Notifier
     public function reactionWithdrawn(Post $post, User $member): void
     {
         $this->guarded(fn () => $this->reactionNotices($post, $member)->delete());
+        $this->live->inbox([$post->user_id]);
     }
 
     public function postShared(Post $original, ?ActivityLog $entry): void
@@ -199,6 +203,7 @@ class Notifier
                 ->where('subject_type', $followed->getMorphClass())
                 ->where('subject_id', (string) $followed->id))
             ->delete());
+        $this->live->inbox([$followed->id]);
     }
 
     /** A post removed by a moderator; removing your own tells no one. */
@@ -226,9 +231,7 @@ class Notifier
     {
         $kind = $entry?->action === ActivityAction::Returned ? NotificationKind::ReportReturned : NotificationKind::ReportReviewed;
 
-        $this->send($kind, $entry, User::query()
-            ->withPermission('monitoring.submit')
-            ->where('survey_hei_id', $report->survey_hei_id));
+        $this->send($kind, $entry, self::focalPersonsOf($report->survey_hei_id));
     }
 
     /** An HEI answered a GAD survey: CHED reviewers whose office covers it. */
@@ -239,21 +242,34 @@ class Notifier
             ->reaching($response->survey_region_id));
     }
 
-    /** A registration waiting for approval: user managers whose office covers its HEI. */
+    /**
+     * A registration tells the user managers whose office covers its HEI,
+     * and the HEI's focal persons: that it waits for approval, or, let
+     * straight in (instant registration), that it joined.
+     */
     public function accountRegistered(User $account, ?ActivityLog $entry): void
     {
-        if ($account->status !== UserStatus::Pending) {
+        $kind = match ($account->status) {
+            UserStatus::Pending => NotificationKind::AccountPending,
+            UserStatus::Active => NotificationKind::AccountJoined,
+            default => null,
+        };
+
+        if ($kind === null) {
             return;
         }
 
-        $this->send(NotificationKind::AccountPending, $entry, User::query()
+        $this->send($kind, $entry, User::query()
             ->withPermission('users.update')
             ->reaching($entry?->survey_region_id));
+        $this->send($kind, $entry, self::focalPersonsOf($account->survey_hei_id));
     }
 
+    /** An approved account: the person, and their HEI's focal persons. */
     public function accountApproved(User $account, ?ActivityLog $entry): void
     {
         $this->send(NotificationKind::AccountApproved, $entry, [$account->id]);
+        $this->send(NotificationKind::AccountJoined, $entry, self::focalPersonsOf($account->survey_hei_id));
     }
 
     /** A new GAD event: everyone who sees it (its region's, or every region's), in the background. */
@@ -331,6 +347,8 @@ class Notifier
                     'created_at' => $now,
                 ])->values()->all());
             }
+
+            $this->live->inbox($recipients);
         });
     }
 
@@ -368,6 +386,8 @@ class Notifier
                     'created_at' => $now,
                 ])->values()->all());
             }
+
+            $this->live->inbox($recipients);
         });
     }
 
@@ -410,6 +430,7 @@ class Notifier
                 'notified_at' => $now,
                 'created_at' => $now,
             ], $chunk));
+            $this->live->inbox($chunk);
         }
     }
 
@@ -427,6 +448,19 @@ class Notifier
                 ->where('user_id', $member->id)
                 ->where('subject_type', $post->getMorphClass())
                 ->where('subject_id', $post->id));
+    }
+
+    /**
+     * An HEI's GAD focal persons: those who send its monitoring report. No
+     * one for an account without an HEI.
+     *
+     * @return Builder<User>|array<int, int>
+     */
+    private static function focalPersonsOf(?int $heiId): Builder|array
+    {
+        return $heiId === null ? [] : User::query()
+            ->withPermission('monitoring.submit')
+            ->where('survey_hei_id', $heiId);
     }
 
     /** Lowercase, as HasUlids makes them. */

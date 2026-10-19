@@ -26,12 +26,15 @@ export function RespondentStep({
     questionnaire,
     respondent,
     directories,
+    ownHeiId,
     issues,
 }: {
     form: SurveyAnswersForm;
     questionnaire: Questionnaire;
     respondent: Respondent;
     directories: Directories;
+    /** The signed-in account's institution, as filled in; empty for visitors. */
+    ownHeiId: string;
     /** What the step check found, shown until the answer is fixed. */
     issues: Issues;
 }) {
@@ -283,6 +286,8 @@ export function RespondentStep({
                                     'contact your CHED regional office so yours can be added.'
                                 )}
                             </>
+                        ) : ownHeiId !== '' && form.data.hei_id === ownHeiId ? (
+                            'Filled in from your account. Change it if you are answering for another institution. Your answer is not linked to your account.'
                         ) : undefined
                     }
                     required={isRequired('hei')}

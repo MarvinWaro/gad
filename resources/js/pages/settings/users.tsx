@@ -19,6 +19,7 @@ import type { HeiOption } from '@/components/hei-combobox';
 import Heading from '@/components/heading';
 import { selectClass } from '@/components/monitoring/shared';
 import InputError from '@/components/input-error';
+import { PersonLink } from '@/components/people/person-link';
 import {
     Filter,
     FilterBar,
@@ -46,6 +47,7 @@ import { FormSelect } from '@/components/ui/form-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Role = { id: number; name: string; slug: string };
 /** A role this manager may assign; `hei` roles never hold an office. */
@@ -58,6 +60,7 @@ type Offices = { national: boolean; regions: Region[] };
 type HeiChoice = HeiOption & { region_id: number };
 type ManagedUser = {
     id: number;
+    ulid: string;
     name: string;
     email: string;
     hei: HeiOption | null;
@@ -67,6 +70,8 @@ type ManagedUser = {
     office: { national: boolean; region: Region | null };
     created_at: string | null;
     is_current_user: boolean;
+    /** False while the registration waits for approval. */
+    has_profile: boolean;
     can_manage: boolean;
 };
 type PaginationLink = { url: string | null; label: string; active: boolean };
@@ -177,6 +182,12 @@ export default function Users({
     /** What a new account signs in with first; for those who create accounts. */
     temporaryPassword: string | null;
 }) {
+    useLiveReload(useLiveModules('users'), [
+        'users',
+        'statusCounts',
+        'registration',
+    ]);
+
     const [search, setSearch] = useState(filters.search);
     const totalUsers =
         statusCounts.pending + statusCounts.active + statusCounts.inactive;
@@ -392,7 +403,13 @@ export default function Users({
                                         <tr key={user.id}>
                                             <td className="px-4 py-4">
                                                 <div className="font-medium">
-                                                    {user.name}
+                                                    {user.has_profile ? (
+                                                        <PersonLink
+                                                            person={user}
+                                                        />
+                                                    ) : (
+                                                        user.name
+                                                    )}
                                                     {user.is_current_user && (
                                                         <Badge
                                                             variant="outline"

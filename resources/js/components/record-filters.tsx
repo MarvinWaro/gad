@@ -181,10 +181,13 @@ export function YearFilter({
     value,
     years,
     onChange,
+    required = false,
 }: {
     value: string;
     years: string[];
     onChange: (value: string) => void;
+    /** One year must be chosen: no "All years". */
+    required?: boolean;
 }) {
     return (
         <Filter label="Academic year" id="year">
@@ -194,7 +197,7 @@ export function YearFilter({
                 value={value}
                 onChange={onChange}
                 placeholder="All years"
-                allowEmpty
+                allowEmpty={!required}
                 options={years.map((year) => ({ value: year, label: year }))}
             />
         </Filter>

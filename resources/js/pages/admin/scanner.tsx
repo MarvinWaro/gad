@@ -32,6 +32,7 @@ import type {
     CheckInResult,
     ScannerEvent,
 } from '@/types/scanner';
+import { useLiveReload } from '@/hooks/use-live';
 
 const cameraBadges: Record<
     CameraStatus,
@@ -82,6 +83,9 @@ export default function Scanner({
     event: number | null;
     checkedIn: number;
 }) {
+    // Other scanners at the same event.
+    useLiveReload(event ? [`record.event.${event}`] : [], ['checkedIn']);
+
     const { auth } = usePage().props;
     const selected = events.find((item) => item.id === event) ?? null;
     const kiosk = useKioskMode();

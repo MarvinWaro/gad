@@ -37,6 +37,7 @@ import type {
     EventRegistrationPage,
 } from '@/types/events';
 import type { DirectoryOption } from '@/types/monitoring';
+import { useLiveReload } from '@/hooks/use-live';
 
 type Filters = { search?: string; region?: string; hei?: string };
 
@@ -70,6 +71,11 @@ export default function EventRegistrations({
     regions: DirectoryOption[];
     heis: DirectoryOption[];
 }) {
+    useLiveReload(
+        [`record.event.${event.id}`],
+        ['event', 'counts', 'registrations', 'guests', 'certificates'],
+    );
+
     const { values, loading, filtered, apply, change, search, pick } =
         useRecordFilters<Filters>(index.url(event.id), filters);
     // The list is kept by hand at any event but a deadline or a cancelled one.

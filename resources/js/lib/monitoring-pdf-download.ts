@@ -85,10 +85,8 @@ export function preloadMonitoringPdf(): void {
     loadPdfMake().catch(() => undefined);
 }
 
-/** Build the report as a PDF and save it to the person's device. */
-export async function downloadMonitoringPdf(
-    input: MonitoringPdfInput,
-): Promise<void> {
+/** The report as a pdfmake document, with the fonts and pictures it needs. */
+async function createMonitoringPdf(input: MonitoringPdfInput) {
     const pdfMake = await loadPdfMake();
 
     if (!fallbackAdded && needsFallbackFont(input)) {
@@ -104,5 +102,21 @@ export async function downloadMonitoringPdf(
         ]),
     );
 
-    await pdfMake.createPdf(document).download(monitoringPdfFileName(input));
+    return pdfMake.createPdf(document);
+}
+
+/** Build the report as a PDF and save it to the person's device. */
+export async function downloadMonitoringPdf(
+    input: MonitoringPdfInput,
+): Promise<void> {
+    await (
+        await createMonitoringPdf(input)
+    ).download(monitoringPdfFileName(input));
+}
+
+/** The report's PDF as bytes, to show on screen without saving it. */
+export async function monitoringPdfBytes(
+    input: MonitoringPdfInput,
+): Promise<Uint8Array> {
+    return new Uint8Array(await (await createMonitoringPdf(input)).getBuffer());
 }

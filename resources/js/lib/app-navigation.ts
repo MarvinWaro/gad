@@ -62,6 +62,7 @@ export function appNavigationGroups(
             ? [
                   {
                       title: 'GAD Quest',
+                      shortTitle: 'Quest',
                       href: playsQuests ? '/quests' : '/quests/manage',
                       icon: Gamepad2,
                       beta: true,
@@ -78,6 +79,7 @@ export function appNavigationGroups(
                       // The HEI home is the community feed.
                       {
                           title: 'Community',
+                          shortTitle: 'Home',
                           href: dashboard(),
                           icon: Users,
                       },

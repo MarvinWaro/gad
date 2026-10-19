@@ -77,15 +77,15 @@ function sharedWorker(pdfjs: PdfJs): InstanceType<PdfJs['PDFWorker']> {
     return worker;
 }
 
-/**
- * Draws page 1 of a PDF, from its address or its bytes, onto a new canvas
- * `width` pixels wide.
- */
-export async function drawFirstPage(
-    source: { url: string } | { data: Uint8Array },
-    width: number,
+type PdfSource = { url: string } | { data: Uint8Array };
+type PdfDocument = Awaited<ReturnType<PdfJs['getDocument']>['promise']>;
+
+/** Opens a PDF for `use`, and closes it after, or when `signal` aborts. */
+async function withPdf<T>(
+    source: PdfSource,
     signal: AbortSignal,
-): Promise<{ canvas: HTMLCanvasElement; pages: number }> {
+    use: (pdf: PdfDocument) => Promise<T>,
+): Promise<T> {
     const pdfjs = await loadPdfJs();
     signal.throwIfAborted();
     const task = pdfjs.getDocument({
@@ -98,21 +98,83 @@ export async function drawFirstPage(
     signal.addEventListener('abort', cancel, { once: true });
 
     try {
-        const pdf = await task.promise;
-        const page = await pdf.getPage(1);
-        const viewport = page.getViewport({
-            scale: width / page.getViewport({ scale: 1 }).width,
-        });
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(viewport.width);
-        canvas.height = Math.round(viewport.height);
-        await page.render({ canvas, viewport }).promise;
-
-        return { canvas, pages: pdf.numPages };
+        return await use(await task.promise);
     } finally {
         signal.removeEventListener('abort', cancel);
         await task.destroy();
     }
+}
+
+/** One page drawn onto a new canvas `width` pixels wide. */
+async function drawPage(
+    pdf: PdfDocument,
+    number: number,
+    width: number,
+): Promise<HTMLCanvasElement> {
+    const page = await pdf.getPage(number);
+    const viewport = page.getViewport({
+        scale: width / page.getViewport({ scale: 1 }).width,
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
+    await page.render({ canvas, viewport }).promise;
+
+    return canvas;
+}
+
+/** A drawn page as an image; revoke the URL when done. */
+async function imageOf(canvas: HTMLCanvasElement): Promise<string> {
+    const image = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, 'image/webp', 0.9),
+    );
+
+    if (!image) {
+        throw new Error('The page could not be drawn.');
+    }
+
+    return URL.createObjectURL(image);
+}
+
+/**
+ * Draws page 1 of a PDF, from its address or its bytes, onto a new canvas
+ * `width` pixels wide.
+ */
+export function drawFirstPage(
+    source: PdfSource,
+    width: number,
+    signal: AbortSignal,
+): Promise<{ canvas: HTMLCanvasElement; pages: number }> {
+    return withPdf(source, signal, async (pdf) => ({
+        canvas: await drawPage(pdf, 1, width),
+        pages: pdf.numPages,
+    }));
+}
+
+/**
+ * Draws every page of a PDF as images `width` pixels wide, in order, to
+ * read on screen without downloading it. Revoke the URLs when done.
+ */
+export function renderPages(
+    data: Uint8Array,
+    width: number,
+    signal: AbortSignal,
+): Promise<string[]> {
+    return withPdf({ data }, signal, async (pdf) => {
+        const pages: string[] = [];
+
+        try {
+            for (let number = 1; number <= pdf.numPages; number++) {
+                signal.throwIfAborted();
+                pages.push(await imageOf(await drawPage(pdf, number, width)));
+            }
+        } catch (error) {
+            pages.forEach((src) => URL.revokeObjectURL(src));
+            throw error;
+        }
+
+        return pages;
+    });
 }
 
 /** Draws page 1 of a PDF as an image `width` pixels wide. */
@@ -122,13 +184,6 @@ export async function renderFirstPage(
     signal: AbortSignal,
 ): Promise<FirstPage> {
     const { canvas, pages } = await drawFirstPage({ url }, width, signal);
-    const image = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, 'image/webp', 0.9),
-    );
 
-    if (!image) {
-        throw new Error('The page could not be drawn.');
-    }
-
-    return { src: URL.createObjectURL(image), pages };
+    return { src: await imageOf(canvas), pages };
 }

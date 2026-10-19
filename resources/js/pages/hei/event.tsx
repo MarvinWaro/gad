@@ -16,6 +16,7 @@ import type {
     RequestableCertificate,
 } from '@/types/certificates';
 import type { EventDetail, EventRegistration } from '@/types/events';
+import { useLiveReload, useOwnChannel } from '@/hooks/use-live';
 
 /**
  * A GAD event's page (docs/event-registration.md): what it is, joining it,
@@ -39,6 +40,18 @@ export default function EventPage({
     requests: CertificateRequest[];
     can: { join: boolean; viewRegistrations: boolean; update: boolean };
 }) {
+    const live = [
+        'event',
+        'registration',
+        'attended',
+        'certificates',
+        'requestable',
+        'requests',
+    ];
+    useLiveReload([`record.event.${event.id}`], live);
+    // Certificates released to them, or their request declined.
+    useLiveReload(useOwnChannel(), live, { event: 'inbox' });
+
     const deadline = event.category === 'deadline';
     const manages = !deadline && (can.viewRegistrations || can.update);
 

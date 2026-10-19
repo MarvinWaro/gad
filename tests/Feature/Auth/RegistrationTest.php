@@ -67,6 +67,17 @@ test('a region open for on-the-spot registration lets its HEIs straight in', fun
         ->and($user->hasRole('hei-focal'))->toBeFalse();
 });
 
+test('a new account starts at its home, not at a page someone else was sent away from', function () {
+    $this->seed(RbacSeeder::class);
+    $hei = createSurveyHei();
+    $hei->cluster->region->update(['instant_registration' => true, 'instant_registration_until' => now()->addHours(3)]);
+
+    $this->withSession(['url.intended' => route('admin.scanner')])
+        ->post(route('register.store'), registrationPayload($hei))
+        ->assertRedirect(route('dashboard', absolute: false))
+        ->assertSessionMissing('url.intended');
+});
+
 test('a closed, lapsed or other region still needs approval', function (Closure $setUp) {
     $hei = createSurveyHei();
     $setUp($hei);

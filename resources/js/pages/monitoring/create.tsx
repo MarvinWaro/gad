@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, FileText } from 'lucide-react';
 import type { FormEvent } from 'react';
 import MonitoringController from '@/actions/App/Http/Controllers/MonitoringController';
+import { DeleteDraft } from '@/components/monitoring/delete-draft';
 import {
     Field,
     localDate,
@@ -71,30 +72,37 @@ export default function Create({
                         </h2>
                         <ul className="grid gap-3 sm:grid-cols-2">
                             {openReports.map((report) => (
-                                <li key={report.id}>
-                                    <Link
-                                        href={MonitoringController.show.url(
-                                            report.id,
-                                        )}
-                                        className="flex h-full flex-col gap-3 rounded-xl border bg-card p-5 transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                                    >
-                                        <span className="flex flex-wrap items-center justify-between gap-2">
-                                            <span className="font-medium">
-                                                {periodLabel(report)}
-                                            </span>
-                                            <StagePill
-                                                stage={stageOf(report)}
+                                <li
+                                    key={report.id}
+                                    className="relative flex h-full flex-col gap-3 rounded-xl border bg-card p-5 transition-shadow hover:shadow-sm has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-ring"
+                                >
+                                    <span className="flex flex-wrap items-center justify-between gap-2">
+                                        {/* The whole card opens the report. */}
+                                        <Link
+                                            href={MonitoringController.show.url(
+                                                report.id,
+                                            )}
+                                            className="font-medium outline-none after:absolute after:inset-0 after:rounded-xl"
+                                        >
+                                            {periodLabel(report)}
+                                        </Link>
+                                        <StagePill stage={stageOf(report)} />
+                                    </span>
+                                    <span className="flex min-h-9 items-center justify-between gap-2 text-sm text-muted-foreground">
+                                        Updated {localDate(report.updated_at)}
+                                        <span className="flex items-center gap-1">
+                                            {/* Above the card's link. */}
+                                            <DeleteDraft
+                                                report={report}
+                                                compact
+                                                className="relative z-10"
                                             />
-                                        </span>
-                                        <span className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
-                                            Updated{' '}
-                                            {localDate(report.updated_at)}
                                             <ArrowUpRight
                                                 aria-hidden
                                                 className="size-4 shrink-0"
                                             />
                                         </span>
-                                    </Link>
+                                    </span>
                                 </li>
                             ))}
                         </ul>

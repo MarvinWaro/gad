@@ -25,6 +25,7 @@ import type { Auth, Post, ScrollPage } from '@/types';
 import type { ActivityPage } from '@/types/activity';
 import type { Achievement, BadgeToEarn, QuestLevelBadge } from '@/types/badges';
 import type { PersonProfile } from '@/types/people';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 /** Badges in the highlights row, before "+N". */
 const HIGHLIGHTS = 6;
@@ -80,6 +81,12 @@ function tabFromUrl(url: string, own: boolean): Tab {
  * you can still earn.
  */
 export default function Profile(props: ProfileProps) {
+    useLiveReload(
+        useLiveModules('badges', 'people'),
+        ['person', 'achievements'],
+        { gap: 10_000 },
+    );
+
     const { person, own } = props;
 
     setLayoutProps({

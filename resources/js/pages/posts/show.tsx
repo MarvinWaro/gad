@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { PostCard } from '@/components/hei/post-card';
 import { sourceOf } from '@/components/hei/post-parts';
 import type { Post } from '@/types';
+import { useLiveReload } from '@/hooks/use-live';
 
 /**
  * A post on its own page: where a link sent by message or email lands.
@@ -15,6 +16,8 @@ export default function PostShow({
     post: Post;
     feedUrl: string;
 }) {
+    useLiveReload([`record.post.${post.id}`], ['post']);
+
     return (
         <>
             <Head title={`${sourceOf(post)}’s post`} />

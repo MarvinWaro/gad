@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\MonitoringController::records
- * @see app/Http/Controllers/MonitoringController.php:73
+ * @see app/Http/Controllers/MonitoringController.php:74
  * @route '/records'
  */
 export const records = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ records.definition = {
 
 /**
 * @see \App\Http\Controllers\MonitoringController::records
- * @see app/Http/Controllers/MonitoringController.php:73
+ * @see app/Http/Controllers/MonitoringController.php:74
  * @route '/records'
  */
 records.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ records.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\MonitoringController::records
- * @see app/Http/Controllers/MonitoringController.php:73
+ * @see app/Http/Controllers/MonitoringController.php:74
  * @route '/records'
  */
 records.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ records.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\MonitoringController::records
- * @see app/Http/Controllers/MonitoringController.php:73
+ * @see app/Http/Controllers/MonitoringController.php:74
  * @route '/records'
  */
 records.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ records.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\MonitoringController::records
- * @see app/Http/Controllers/MonitoringController.php:73
+ * @see app/Http/Controllers/MonitoringController.php:74
  * @route '/records'
  */
     const recordsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ records.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\MonitoringController::records
- * @see app/Http/Controllers/MonitoringController.php:73
+ * @see app/Http/Controllers/MonitoringController.php:74
  * @route '/records'
  */
         recordsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ records.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\MonitoringController::records
- * @see app/Http/Controllers/MonitoringController.php:73
+ * @see app/Http/Controllers/MonitoringController.php:74
  * @route '/records'
  */
         recordsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ records.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     records.form = recordsForm
 /**
 * @see \App\Http\Controllers\MonitoringController::create
- * @see app/Http/Controllers/MonitoringController.php:33
+ * @see app/Http/Controllers/MonitoringController.php:34
  * @route '/monitoring'
  */
 export const create = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ create.definition = {
 
 /**
 * @see \App\Http\Controllers\MonitoringController::create
- * @see app/Http/Controllers/MonitoringController.php:33
+ * @see app/Http/Controllers/MonitoringController.php:34
  * @route '/monitoring'
  */
 create.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ create.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\MonitoringController::create
- * @see app/Http/Controllers/MonitoringController.php:33
+ * @see app/Http/Controllers/MonitoringController.php:34
  * @route '/monitoring'
  */
 create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\MonitoringController::create
- * @see app/Http/Controllers/MonitoringController.php:33
+ * @see app/Http/Controllers/MonitoringController.php:34
  * @route '/monitoring'
  */
 create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\MonitoringController::create
- * @see app/Http/Controllers/MonitoringController.php:33
+ * @see app/Http/Controllers/MonitoringController.php:34
  * @route '/monitoring'
  */
     const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\MonitoringController::create
- * @see app/Http/Controllers/MonitoringController.php:33
+ * @see app/Http/Controllers/MonitoringController.php:34
  * @route '/monitoring'
  */
         createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\MonitoringController::create
- * @see app/Http/Controllers/MonitoringController.php:33
+ * @see app/Http/Controllers/MonitoringController.php:34
  * @route '/monitoring'
  */
         createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     create.form = createForm
 /**
 * @see \App\Http\Controllers\MonitoringController::store
- * @see app/Http/Controllers/MonitoringController.php:60
+ * @see app/Http/Controllers/MonitoringController.php:61
  * @route '/monitoring'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -172,7 +172,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\MonitoringController::store
- * @see app/Http/Controllers/MonitoringController.php:60
+ * @see app/Http/Controllers/MonitoringController.php:61
  * @route '/monitoring'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\MonitoringController::store
- * @see app/Http/Controllers/MonitoringController.php:60
+ * @see app/Http/Controllers/MonitoringController.php:61
  * @route '/monitoring'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -191,7 +191,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\MonitoringController::store
- * @see app/Http/Controllers/MonitoringController.php:60
+ * @see app/Http/Controllers/MonitoringController.php:61
  * @route '/monitoring'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -201,7 +201,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\MonitoringController::store
- * @see app/Http/Controllers/MonitoringController.php:60
+ * @see app/Http/Controllers/MonitoringController.php:61
  * @route '/monitoring'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -212,7 +212,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\MonitoringController::show
- * @see app/Http/Controllers/MonitoringController.php:99
+ * @see app/Http/Controllers/MonitoringController.php:100
  * @route '/monitoring/{report}'
  */
 export const show = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -227,7 +227,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\MonitoringController::show
- * @see app/Http/Controllers/MonitoringController.php:99
+ * @see app/Http/Controllers/MonitoringController.php:100
  * @route '/monitoring/{report}'
  */
 show.url = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -260,7 +260,7 @@ show.url = (args: { report: string | { id: string } } | [report: string | { id: 
 
 /**
 * @see \App\Http\Controllers\MonitoringController::show
- * @see app/Http/Controllers/MonitoringController.php:99
+ * @see app/Http/Controllers/MonitoringController.php:100
  * @route '/monitoring/{report}'
  */
 show.get = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -269,7 +269,7 @@ show.get = (args: { report: string | { id: string } } | [report: string | { id: 
 })
 /**
 * @see \App\Http\Controllers\MonitoringController::show
- * @see app/Http/Controllers/MonitoringController.php:99
+ * @see app/Http/Controllers/MonitoringController.php:100
  * @route '/monitoring/{report}'
  */
 show.head = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -279,7 +279,7 @@ show.head = (args: { report: string | { id: string } } | [report: string | { id:
 
     /**
 * @see \App\Http\Controllers\MonitoringController::show
- * @see app/Http/Controllers/MonitoringController.php:99
+ * @see app/Http/Controllers/MonitoringController.php:100
  * @route '/monitoring/{report}'
  */
     const showForm = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -289,7 +289,7 @@ show.head = (args: { report: string | { id: string } } | [report: string | { id:
 
             /**
 * @see \App\Http\Controllers\MonitoringController::show
- * @see app/Http/Controllers/MonitoringController.php:99
+ * @see app/Http/Controllers/MonitoringController.php:100
  * @route '/monitoring/{report}'
  */
         showForm.get = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -298,7 +298,7 @@ show.head = (args: { report: string | { id: string } } | [report: string | { id:
         })
             /**
 * @see \App\Http\Controllers\MonitoringController::show
- * @see app/Http/Controllers/MonitoringController.php:99
+ * @see app/Http/Controllers/MonitoringController.php:100
  * @route '/monitoring/{report}'
  */
         showForm.head = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -313,8 +313,97 @@ show.head = (args: { report: string | { id: string } } | [report: string | { id:
     
     show.form = showForm
 /**
+* @see \App\Http\Controllers\MonitoringController::destroy
+ * @see app/Http/Controllers/MonitoringController.php:157
+ * @route '/monitoring/{report}'
+ */
+export const destroy = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: destroy.url(args, options),
+    method: 'delete',
+})
+
+destroy.definition = {
+    methods: ["delete"],
+    url: '/monitoring/{report}',
+} satisfies RouteDefinition<["delete"]>
+
+/**
+* @see \App\Http\Controllers\MonitoringController::destroy
+ * @see app/Http/Controllers/MonitoringController.php:157
+ * @route '/monitoring/{report}'
+ */
+destroy.url = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { report: args }
+    }
+
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { report: args.id }
+        }
+    
+    if (Array.isArray(args)) {
+        args = {
+                    report: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        report: typeof args.report === 'object'
+                ? args.report.id
+                : args.report,
+                }
+
+    return destroy.definition.url
+            .replace('{report}', parsedArgs.report.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\MonitoringController::destroy
+ * @see app/Http/Controllers/MonitoringController.php:157
+ * @route '/monitoring/{report}'
+ */
+destroy.delete = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: destroy.url(args, options),
+    method: 'delete',
+})
+
+    /**
+* @see \App\Http\Controllers\MonitoringController::destroy
+ * @see app/Http/Controllers/MonitoringController.php:157
+ * @route '/monitoring/{report}'
+ */
+    const destroyForm = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\MonitoringController::destroy
+ * @see app/Http/Controllers/MonitoringController.php:157
+ * @route '/monitoring/{report}'
+ */
+        destroyForm.delete = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
+/**
 * @see \App\Http\Controllers\MonitoringController::draft
- * @see app/Http/Controllers/MonitoringController.php:127
+ * @see app/Http/Controllers/MonitoringController.php:128
  * @route '/monitoring/{report}/draft'
  */
 export const draft = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -329,7 +418,7 @@ draft.definition = {
 
 /**
 * @see \App\Http\Controllers\MonitoringController::draft
- * @see app/Http/Controllers/MonitoringController.php:127
+ * @see app/Http/Controllers/MonitoringController.php:128
  * @route '/monitoring/{report}/draft'
  */
 draft.url = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -362,7 +451,7 @@ draft.url = (args: { report: string | { id: string } } | [report: string | { id:
 
 /**
 * @see \App\Http\Controllers\MonitoringController::draft
- * @see app/Http/Controllers/MonitoringController.php:127
+ * @see app/Http/Controllers/MonitoringController.php:128
  * @route '/monitoring/{report}/draft'
  */
 draft.patch = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -372,7 +461,7 @@ draft.patch = (args: { report: string | { id: string } } | [report: string | { i
 
     /**
 * @see \App\Http\Controllers\MonitoringController::draft
- * @see app/Http/Controllers/MonitoringController.php:127
+ * @see app/Http/Controllers/MonitoringController.php:128
  * @route '/monitoring/{report}/draft'
  */
     const draftForm = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -387,7 +476,7 @@ draft.patch = (args: { report: string | { id: string } } | [report: string | { i
 
             /**
 * @see \App\Http\Controllers\MonitoringController::draft
- * @see app/Http/Controllers/MonitoringController.php:127
+ * @see app/Http/Controllers/MonitoringController.php:128
  * @route '/monitoring/{report}/draft'
  */
         draftForm.patch = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -403,7 +492,7 @@ draft.patch = (args: { report: string | { id: string } } | [report: string | { i
     draft.form = draftForm
 /**
 * @see \App\Http\Controllers\MonitoringController::finalize
- * @see app/Http/Controllers/MonitoringController.php:135
+ * @see app/Http/Controllers/MonitoringController.php:136
  * @route '/monitoring/{report}/finalize'
  */
 export const finalize = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -418,7 +507,7 @@ finalize.definition = {
 
 /**
 * @see \App\Http\Controllers\MonitoringController::finalize
- * @see app/Http/Controllers/MonitoringController.php:135
+ * @see app/Http/Controllers/MonitoringController.php:136
  * @route '/monitoring/{report}/finalize'
  */
 finalize.url = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -451,7 +540,7 @@ finalize.url = (args: { report: string | { id: string } } | [report: string | { 
 
 /**
 * @see \App\Http\Controllers\MonitoringController::finalize
- * @see app/Http/Controllers/MonitoringController.php:135
+ * @see app/Http/Controllers/MonitoringController.php:136
  * @route '/monitoring/{report}/finalize'
  */
 finalize.post = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -461,7 +550,7 @@ finalize.post = (args: { report: string | { id: string } } | [report: string | {
 
     /**
 * @see \App\Http\Controllers\MonitoringController::finalize
- * @see app/Http/Controllers/MonitoringController.php:135
+ * @see app/Http/Controllers/MonitoringController.php:136
  * @route '/monitoring/{report}/finalize'
  */
     const finalizeForm = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -471,7 +560,7 @@ finalize.post = (args: { report: string | { id: string } } | [report: string | {
 
             /**
 * @see \App\Http\Controllers\MonitoringController::finalize
- * @see app/Http/Controllers/MonitoringController.php:135
+ * @see app/Http/Controllers/MonitoringController.php:136
  * @route '/monitoring/{report}/finalize'
  */
         finalizeForm.post = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -482,7 +571,7 @@ finalize.post = (args: { report: string | { id: string } } | [report: string | {
     finalize.form = finalizeForm
 /**
 * @see \App\Http\Controllers\MonitoringController::reopen
- * @see app/Http/Controllers/MonitoringController.php:145
+ * @see app/Http/Controllers/MonitoringController.php:146
  * @route '/monitoring/{report}/reopen'
  */
 export const reopen = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -497,7 +586,7 @@ reopen.definition = {
 
 /**
 * @see \App\Http\Controllers\MonitoringController::reopen
- * @see app/Http/Controllers/MonitoringController.php:145
+ * @see app/Http/Controllers/MonitoringController.php:146
  * @route '/monitoring/{report}/reopen'
  */
 reopen.url = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -530,7 +619,7 @@ reopen.url = (args: { report: string | { id: string } } | [report: string | { id
 
 /**
 * @see \App\Http\Controllers\MonitoringController::reopen
- * @see app/Http/Controllers/MonitoringController.php:145
+ * @see app/Http/Controllers/MonitoringController.php:146
  * @route '/monitoring/{report}/reopen'
  */
 reopen.post = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -540,7 +629,7 @@ reopen.post = (args: { report: string | { id: string } } | [report: string | { i
 
     /**
 * @see \App\Http\Controllers\MonitoringController::reopen
- * @see app/Http/Controllers/MonitoringController.php:145
+ * @see app/Http/Controllers/MonitoringController.php:146
  * @route '/monitoring/{report}/reopen'
  */
     const reopenForm = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -550,7 +639,7 @@ reopen.post = (args: { report: string | { id: string } } | [report: string | { i
 
             /**
 * @see \App\Http\Controllers\MonitoringController::reopen
- * @see app/Http/Controllers/MonitoringController.php:145
+ * @see app/Http/Controllers/MonitoringController.php:146
  * @route '/monitoring/{report}/reopen'
  */
         reopenForm.post = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -561,7 +650,7 @@ reopen.post = (args: { report: string | { id: string } } | [report: string | { i
     reopen.form = reopenForm
 /**
 * @see \App\Http\Controllers\MonitoringController::submit
- * @see app/Http/Controllers/MonitoringController.php:155
+ * @see app/Http/Controllers/MonitoringController.php:167
  * @route '/monitoring/{report}/submit'
  */
 export const submit = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -576,7 +665,7 @@ submit.definition = {
 
 /**
 * @see \App\Http\Controllers\MonitoringController::submit
- * @see app/Http/Controllers/MonitoringController.php:155
+ * @see app/Http/Controllers/MonitoringController.php:167
  * @route '/monitoring/{report}/submit'
  */
 submit.url = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -609,7 +698,7 @@ submit.url = (args: { report: string | { id: string } } | [report: string | { id
 
 /**
 * @see \App\Http\Controllers\MonitoringController::submit
- * @see app/Http/Controllers/MonitoringController.php:155
+ * @see app/Http/Controllers/MonitoringController.php:167
  * @route '/monitoring/{report}/submit'
  */
 submit.post = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -619,7 +708,7 @@ submit.post = (args: { report: string | { id: string } } | [report: string | { i
 
     /**
 * @see \App\Http\Controllers\MonitoringController::submit
- * @see app/Http/Controllers/MonitoringController.php:155
+ * @see app/Http/Controllers/MonitoringController.php:167
  * @route '/monitoring/{report}/submit'
  */
     const submitForm = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -629,7 +718,7 @@ submit.post = (args: { report: string | { id: string } } | [report: string | { i
 
             /**
 * @see \App\Http\Controllers\MonitoringController::submit
- * @see app/Http/Controllers/MonitoringController.php:155
+ * @see app/Http/Controllers/MonitoringController.php:167
  * @route '/monitoring/{report}/submit'
  */
         submitForm.post = (args: { report: string | { id: string } } | [report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -640,7 +729,7 @@ submit.post = (args: { report: string | { id: string } } | [report: string | { i
     submit.form = submitForm
 /**
 * @see \App\Http\Controllers\MonitoringController::attachment
- * @see app/Http/Controllers/MonitoringController.php:166
+ * @see app/Http/Controllers/MonitoringController.php:182
  * @route '/monitoring/{report}/revisions/{revision}/attachment'
  */
 export const attachment = (args: { report: string | { id: string }, revision: string | { id: string } } | [report: string | { id: string }, revision: string | { id: string } ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -655,7 +744,7 @@ attachment.definition = {
 
 /**
 * @see \App\Http\Controllers\MonitoringController::attachment
- * @see app/Http/Controllers/MonitoringController.php:166
+ * @see app/Http/Controllers/MonitoringController.php:182
  * @route '/monitoring/{report}/revisions/{revision}/attachment'
  */
 attachment.url = (args: { report: string | { id: string }, revision: string | { id: string } } | [report: string | { id: string }, revision: string | { id: string } ], options?: RouteQueryOptions) => {
@@ -685,7 +774,7 @@ attachment.url = (args: { report: string | { id: string }, revision: string | { 
 
 /**
 * @see \App\Http\Controllers\MonitoringController::attachment
- * @see app/Http/Controllers/MonitoringController.php:166
+ * @see app/Http/Controllers/MonitoringController.php:182
  * @route '/monitoring/{report}/revisions/{revision}/attachment'
  */
 attachment.get = (args: { report: string | { id: string }, revision: string | { id: string } } | [report: string | { id: string }, revision: string | { id: string } ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -694,7 +783,7 @@ attachment.get = (args: { report: string | { id: string }, revision: string | { 
 })
 /**
 * @see \App\Http\Controllers\MonitoringController::attachment
- * @see app/Http/Controllers/MonitoringController.php:166
+ * @see app/Http/Controllers/MonitoringController.php:182
  * @route '/monitoring/{report}/revisions/{revision}/attachment'
  */
 attachment.head = (args: { report: string | { id: string }, revision: string | { id: string } } | [report: string | { id: string }, revision: string | { id: string } ], options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -704,7 +793,7 @@ attachment.head = (args: { report: string | { id: string }, revision: string | {
 
     /**
 * @see \App\Http\Controllers\MonitoringController::attachment
- * @see app/Http/Controllers/MonitoringController.php:166
+ * @see app/Http/Controllers/MonitoringController.php:182
  * @route '/monitoring/{report}/revisions/{revision}/attachment'
  */
     const attachmentForm = (args: { report: string | { id: string }, revision: string | { id: string } } | [report: string | { id: string }, revision: string | { id: string } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -714,7 +803,7 @@ attachment.head = (args: { report: string | { id: string }, revision: string | {
 
             /**
 * @see \App\Http\Controllers\MonitoringController::attachment
- * @see app/Http/Controllers/MonitoringController.php:166
+ * @see app/Http/Controllers/MonitoringController.php:182
  * @route '/monitoring/{report}/revisions/{revision}/attachment'
  */
         attachmentForm.get = (args: { report: string | { id: string }, revision: string | { id: string } } | [report: string | { id: string }, revision: string | { id: string } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -723,7 +812,7 @@ attachment.head = (args: { report: string | { id: string }, revision: string | {
         })
             /**
 * @see \App\Http\Controllers\MonitoringController::attachment
- * @see app/Http/Controllers/MonitoringController.php:166
+ * @see app/Http/Controllers/MonitoringController.php:182
  * @route '/monitoring/{report}/revisions/{revision}/attachment'
  */
         attachmentForm.head = (args: { report: string | { id: string }, revision: string | { id: string } } | [report: string | { id: string }, revision: string | { id: string } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -742,6 +831,7 @@ const monitoring = {
 create: Object.assign(create, create),
 store: Object.assign(store, store),
 show: Object.assign(show, show),
+destroy: Object.assign(destroy, destroy),
 draft: Object.assign(draft, draft),
 finalize: Object.assign(finalize, finalize),
 reopen: Object.assign(reopen, reopen),

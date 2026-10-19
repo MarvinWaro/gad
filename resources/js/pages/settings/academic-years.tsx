@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type AcademicYear = {
     id: string;
@@ -38,6 +39,8 @@ export default function AcademicYears({
     permissions: Permissions;
     filters: { search: string };
 }) {
+    useLiveReload(useLiveModules('academic-years'), ['academicYears']);
+
     const [editor, setEditor] = useState<AcademicYear | 'new' | null>(null);
     const [search, setSearch] = useState(filters.search);
 

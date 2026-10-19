@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { destroy, index, show, status } from '@/routes/settings/badges';
 import type { BadgePage, BadgeRow } from '@/types/badges';
 import type { DirectoryOption } from '@/types/monitoring';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Props = {
     badges: BadgePage;
@@ -42,6 +43,8 @@ export default function Badges({
     hasOffice,
     permissions,
 }: Props) {
+    useLiveReload(useLiveModules('badges'), ['badges'], { gap: 5_000 });
+
     const { values, loading, filtered, apply, change, search } =
         useRecordFilters<{ search?: string }>(index.url(), filters);
 

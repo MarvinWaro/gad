@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useStoredValue } from '@/hooks/use-stored-value';
 import type { RefObject } from 'react';
 import { scanSounds } from '@/lib/scan-sounds';
 import type { ScanSound } from '@/lib/scan-sounds';
@@ -7,14 +8,6 @@ import type { ScanSound } from '@/lib/scan-sounds';
 const STORAGE_KEY = 'scanner:sound';
 
 type AudioContextConstructor = typeof AudioContext;
-
-function savedChoice(): boolean {
-    try {
-        return window.localStorage.getItem(STORAGE_KEY) !== 'off';
-    } catch {
-        return true;
-    }
-}
 
 /**
  * The page's one audio context, made and woken on someone's touch: browsers
@@ -67,7 +60,8 @@ function play(context: AudioContext, name: ScanSound): void {
  * is silent.
  */
 export function useScanSound() {
-    const [enabled, setEnabled] = useState(savedChoice);
+    const [saved, store] = useStoredValue(STORAGE_KEY);
+    const enabled = saved !== 'off';
     const audio = useRef<AudioContext | null>(null);
 
     useEffect(() => {
@@ -85,13 +79,7 @@ export function useScanSound() {
 
     function toggle() {
         const next = !enabled;
-        setEnabled(next);
-
-        try {
-            window.localStorage.setItem(STORAGE_KEY, next ? 'on' : 'off');
-        } catch {
-            // A private window may refuse; the choice lasts for this visit.
-        }
+        store(next ? 'on' : 'off');
 
         // Turned on, it chirps once, at the volume staff will hear.
         const context = next ? wake(audio) : null;

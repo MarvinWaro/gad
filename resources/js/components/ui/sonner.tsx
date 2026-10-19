@@ -12,6 +12,9 @@ function Toaster({ ...props }: ToasterProps) {
             theme={appearance}
             className="toaster group"
             position="bottom-right"
+            // Above the phone's bottom bar, where there is one (BottomNav).
+            offset={{ bottom: 'calc(var(--app-bottom-nav, 0px) + 24px)' }}
+            mobileOffset={{ bottom: 'calc(var(--app-bottom-nav, 0px) + 16px)' }}
             richColors
             style={
                 {

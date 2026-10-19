@@ -39,6 +39,8 @@ class ActivityRecorder
     /** Longest text kept for one value of a change. */
     private const VALUE_LIMIT = 500;
 
+    public function __construct(private readonly LiveUpdates $live) {}
+
     /**
      * @param  Model|null  $subject  What was acted on; its place, name and page come from ActivitySubjects.
      * @param  array<string, array{0: mixed, 1: mixed}>  $changes  Field => [before, after]; see changesOf().
@@ -65,7 +67,7 @@ class ActivityRecorder
             // A console command has no browser or address to record.
             $request = request()->route() !== null ? request() : null;
 
-            return ActivityLog::query()->create([
+            $entry = ActivityLog::query()->create([
                 'user_id' => $actor?->getKey(),
                 'actor_name' => Str::limit($actor->name ?? $actorName ?? 'System', 250, ''),
                 'survey_region_id' => $place->region,
@@ -81,6 +83,10 @@ class ActivityRecorder
                 'ip_address' => $request?->ip(),
                 'user_agent' => Str::limit((string) $request?->userAgent(), 512, '') ?: null,
             ]);
+            // Open pages showing it catch up (docs/realtime.md).
+            $this->live->changed($entry, $subject);
+
+            return $entry;
         } catch (Throwable $exception) {
             // The change itself went through; a missing log entry must not undo it.
             report($exception);

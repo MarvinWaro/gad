@@ -36,6 +36,7 @@ import type {
     SurveyInsightFilters,
     SurveyInsights,
 } from '@/types/survey-insights';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 type Survey = {
     id: number;
@@ -79,6 +80,12 @@ export default function SurveyIndex({
     insights?: SurveyInsights;
     insightFilters: SurveyInsightFilters;
 }) {
+    useLiveReload(
+        useLiveModules('surveys', 'survey-responses'),
+        ['surveys', 'insights'],
+        { gap: 10_000 },
+    );
+
     // Publishing happens in the builder; Back must not show the old status.
     useReloadOnBack();
 

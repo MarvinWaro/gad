@@ -384,15 +384,30 @@
     }
 }
 
-/* A soft fade from the bottom-right corner of a post's photos, behind its
-   goal badges. The ellipse meets the box's top and left edges fully clear,
-   so it has no visible edge. It darkens the photo, never the SDG icons laid
-   over it. */
-@utility bg-corner-fade {
-    background-image: radial-gradient(
-        farthest-side at 100% 100%,
-        var(--media-scrim),
-        color-mix(in oklab, var(--media-scrim) 50%, transparent) 50%,
+/* The room the phone's floating bottom bar takes (bottom-nav.tsx): the 60px
+   pill, the gap under it (the iPhone home indicator or Android's gesture
+   bar, at least 12px) and a little air above; none from 1024px, where the
+   bar is not shown. Pages and toasts keep clear of it. */
+html.has-bottom-nav {
+    --app-bottom-nav: calc(
+        3.75rem + 2px + max(0.75rem, env(safe-area-inset-bottom)) + 0.75rem
+    );
+
+    @media (width >= 64rem) {
+        --app-bottom-nav: 0px;
+    }
+}
+
+/* The band along the foot of a post's photos, behind its goal badges, in
+   the colour of the photo's own lowest strip, made richer and deep
+   (--photo-tint, set by PhotoMosaic from lib/photo-tint): strongest at the
+   edge and fading up into the picture, which stays sharp. Nothing is drawn
+   over the badges. */
+@utility photo-glow {
+    background-image: linear-gradient(
+        to top,
+        color-mix(in oklab, var(--photo-tint, black) 92%, transparent),
+        color-mix(in oklab, var(--photo-tint, black) 50%, transparent) 50%,
         transparent
     );
 }

@@ -216,11 +216,14 @@ test('a GAD survey answer tells the reviewers whose office covers the HEI', func
         ->assertJsonPath('data.1.sentence.before', 'submitted the');
 });
 
-test('a registration waiting for approval tells the user managers of its region, and approval tells the person', function () {
+test('a registration waiting for approval tells the user managers of its region and its HEI\'s focal persons, and approval tells the person and them', function () {
     $manager = noticeStaff('admin', $this->region);
     $central = noticeStaff('admin');
     $elsewhere = noticeStaff('admin', $this->otherRegion);
     $employee = noticeStaff('ched-employee', $this->region);
+    $focal = noticeMember($this->hei, 'hei-focal');
+    $colleague = noticeMember($this->hei);
+    $otherFocal = noticeMember(createSurveyHei(['name' => 'Fictional Other HEI']), 'hei-focal');
 
     $this->post(route('register.store'), registrationPayload($this->hei, ['email' => 'pending@example.test']));
     auth()->logout();
@@ -229,7 +232,10 @@ test('a registration waiting for approval tells the user managers of its region,
     expect(noticesOf($manager))->toBe(['account_pending'])
         ->and(noticesOf($central))->toBe(['account_pending'])
         ->and(noticesOf($elsewhere))->toBe([])
-        ->and(noticesOf($employee))->toBe([]);
+        ->and(noticesOf($employee))->toBe([])
+        ->and(noticesOf($focal))->toBe(['account_pending'])
+        ->and(noticesOf($colleague))->toBe([])
+        ->and(noticesOf($otherFocal))->toBe([]);
 
     $this->actingAs($manager)->getJson(route('notifications.recent'))
         ->assertJsonPath('data.0.actor.name', 'Test User')
@@ -237,16 +243,41 @@ test('a registration waiting for approval tells the user managers of its region,
 
     $this->actingAs($manager)->patch(route('settings.users.status', $pending), ['status' => 'active'])->assertSessionHasNoErrors();
 
-    expect(noticesOf($pending))->toBe(['account_approved']);
+    expect(noticesOf($pending))->toBe(['account_approved'])
+        ->and(noticesOf($focal))->toBe(['account_pending', 'account_joined'])
+        ->and(noticesOf($colleague))->toBe([])
+        ->and(noticesOf($otherFocal))->toBe([]);
+
+    $this->actingAs($focal)->getJson(route('notifications.recent'))
+        ->assertJsonPath('data.0.kind.code', 'account_joined')
+        ->assertJsonPath('data.0.sentence', ['before' => 'approved the account of', 'subject' => 'Test User', 'after' => 'from Fictional Notice HEI'])
+        ->assertJsonPath('data.0.url', route('people.show', $pending))
+        // The sign-up opened their home while it waited; the account now.
+        ->assertJsonPath('data.1.url', route('people.show', $pending));
 });
 
-test('instant registration tells no one, since there is nothing to approve', function () {
+test('instant registration tells the user managers of its region and its HEI\'s focal persons that someone joined', function () {
     $manager = noticeStaff('admin', $this->region);
+    $elsewhere = noticeStaff('admin', $this->otherRegion);
+    $focal = noticeMember($this->hei, 'hei-focal');
     $this->region->update(['instant_registration' => true]);
 
     $this->post(route('register.store'), registrationPayload($this->hei, ['email' => 'instant@example.test']));
+    $joined = User::query()->where('email', 'instant@example.test')->sole();
 
-    expect(noticesOf($manager))->toBe([]);
+    expect(noticesOf($manager))->toBe(['account_joined'])
+        ->and(noticesOf($elsewhere))->toBe([])
+        ->and(noticesOf($focal))->toBe(['account_joined']);
+
+    // Staff open the account in the users list; colleagues, its profile.
+    $this->actingAs($manager)->getJson(route('notifications.recent'))
+        ->assertJsonPath('data.0.sentence.before', 'joined PHLGADIS from Fictional Notice HEI')
+        ->assertJsonPath('data.0.url', route('settings.users.index', ['search' => 'instant@example.test']));
+
+    $this->actingAs($focal)->getJson(route('notifications.recent'))
+        ->assertJsonPath('data.0.actor.name', 'Test User')
+        ->assertJsonPath('data.0.sentence.before', 'joined PHLGADIS from Fictional Notice HEI')
+        ->assertJsonPath('data.0.url', route('people.show', $joined));
 });
 
 test('a new GAD event is announced in the background', function () {

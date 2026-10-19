@@ -20,6 +20,7 @@ import type { FormSelectOption } from '@/components/ui/form-select';
 import { cn } from '@/lib/utils';
 import type { ActivityFilters, ActivityPage } from '@/types/activity';
 import type { DirectoryOption } from '@/types/monitoring';
+import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
 const emptyFilters: ActivityFilters = {
     search: '',
@@ -53,6 +54,8 @@ export default function ActivityLogs({
     };
     hasOffice: boolean;
 }) {
+    useLiveReload(useLiveModules('activity-logs'), ['logs'], { gap: 3_000 });
+
     const { values, loading, filtered, apply, change, search, pick } =
         useRecordFilters('/settings/activity-logs', filters);
     // Action, module and the two dates, then the places.
