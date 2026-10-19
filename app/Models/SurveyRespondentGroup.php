@@ -57,6 +57,9 @@ class SurveyRespondentGroup extends Model
      */
     public function followUps(): array
     {
+        // Every question's choices in one query, not one per question.
+        $this->loadMissing('followUpQuestions.activeOptions');
+
         return array_values($this->followUpQuestions->map(fn (SurveyGroupQuestion $question): array => [
             'key' => $question->key,
             'label' => $question->label,

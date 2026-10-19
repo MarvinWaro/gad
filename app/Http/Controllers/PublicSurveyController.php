@@ -6,11 +6,11 @@ use App\Enums\ActivityModule;
 use App\Models\Survey;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
-use App\Models\SurveyRegion;
 use App\Models\SurveyRespondentGroup;
 use App\Models\SurveyResponse;
 use App\Services\LiveUpdates;
 use App\Services\Notifier;
+use App\Support\PublicSurveyDirectory;
 use App\Support\RespondentDetails;
 use App\Support\RespondentFollowUps;
 use Illuminate\Database\Eloquent\Collection;
@@ -384,26 +384,14 @@ class PublicSurveyController extends Controller
      */
     private function directories(array $required): array
     {
-        // Each region with its office's email, for asking to have an HEI added.
-        $regions = SurveyRegion::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'office_email'])
-            ->map(fn (SurveyRegion $region): array => ['id' => $region->id, 'name' => $region->name, 'email' => $region->office_email]);
-        $heis = SurveyHei::query()
-            ->join('survey_clusters', 'survey_clusters.id', '=', 'survey_heis.survey_cluster_id')
-            ->where('survey_heis.is_active', true)
-            ->whereIn('survey_clusters.survey_region_id', $regions->pluck('id'))
-            ->orderBy('survey_heis.name')
-            ->get(['survey_heis.id', 'survey_heis.name', 'survey_clusters.survey_region_id'])
-            ->map(fn (SurveyHei $hei): array => [
-                'id' => $hei->id,
-                'name' => $hei->name,
-                'survey_region_id' => (int) $hei->getAttribute('survey_region_id'),
-            ]);
+        ['regions' => $regions, 'heis' => $heis] = PublicSurveyDirectory::all();
 
         if ($required['hei'] === 'required') {
-            $regions = $regions->whereIn('id', $heis->pluck('survey_region_id')->unique())->values();
+            $withHeis = array_flip(array_column($heis, 'survey_region_id'));
+            $regions = array_values(array_filter($regions, fn (array $region): bool => isset($withHeis[$region['id']])));
         }
 
-        return ['regions' => $regions, 'heis' => $heis->values()];
+        return ['regions' => $regions, 'heis' => $heis];
     }
 
     /** @param array<string, mixed> $definition

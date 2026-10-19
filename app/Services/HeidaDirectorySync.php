@@ -7,6 +7,7 @@ use App\Enums\ActivityModule;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
+use App\Support\PublicSurveyDirectory;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -88,6 +89,10 @@ class HeidaDirectorySync
         $result['calls'] = $directory['calls'];
 
         if (! $dryRun) {
+            // Once committed: deactivations are a bulk update, which fires no
+            // model events.
+            PublicSurveyDirectory::forget();
+
             $this->activity->record(
                 ActivityAction::Synced,
                 ActivityModule::Heis,

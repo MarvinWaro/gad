@@ -86,7 +86,7 @@ class PostController extends Controller
         Gate::authorize('delete', $post);
 
         $permalink = route('posts.show', $post);
-        $paths = $post->images()->pluck('path')->all();
+        $paths = $post->images()->get(['path', 'thumbnail_path'])->flatMap->files()->all();
         $post->delete();
         Storage::disk('public')->delete($paths);
         // A moderator removing someone else's post.

@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Enums\NotificationKind;
 use App\Models\Notification;
 use App\Models\User;
+use App\Support\ActivitySubjects;
 use Carbon\CarbonImmutable;
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -21,10 +23,21 @@ class NotificationInbox
     public const PAGE_SIZE = 15;
 
     /**
-     * What NotificationResource reads. The actor's email and status say
-     * where a sign-up's notice opens (Notification::linkFor).
+     * What NotificationResource reads, for a whole list at once. The actor's
+     * email and status say where a sign-up's notice opens
+     * (Notification::linkFor).
+     *
+     * @return array<int|string, string|Closure>
      */
-    public const RELATIONS = ['activity.user:id,ulid,email,status,avatar_path', 'activity.subject', 'activity.hei:id,name', 'subject'];
+    public static function relations(): array
+    {
+        return [
+            'activity.user:id,ulid,email,status,avatar_path',
+            'activity.subject' => ActivitySubjects::eagerLoad(),
+            'activity.hei:id,name',
+            'subject' => ActivitySubjects::eagerLoad(),
+        ];
+    }
 
     public function __construct(private readonly LiveUpdates $live) {}
 
@@ -55,7 +68,7 @@ class NotificationInbox
         return Notification::query()
             ->whereBelongsTo($user)
             ->filter($filters)
-            ->with(self::RELATIONS)
+            ->with(self::relations())
             ->orderByDesc('notified_at')
             ->orderByDesc('id');
     }

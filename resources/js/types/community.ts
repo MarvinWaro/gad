@@ -14,10 +14,14 @@ export type AuthorRef = PersonRef & {
 /** An institution: the official directory name plus a readable display form. */
 export type HeiRef = { id: number; name: string; display_name: string };
 
-/** A post's photo; its size is as shown (EXIF rotation applied), if known. */
+/**
+ * A post's photo; its size is as shown (EXIF rotation applied), if known.
+ * Tiles show the smaller `thumbnail_url` when there is one; the viewer, `url`.
+ */
 export type PostImage = {
     id: number;
     url: string;
+    thumbnail_url?: string | null;
     width: number | null;
     height: number | null;
 };

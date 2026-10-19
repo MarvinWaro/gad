@@ -221,6 +221,8 @@ class CommunityFeed
                     ->whereNull('parent_id')
                     ->with([
                         'author:id,ulid,name,status,avatar_path',
+                        // presentComment() names whom any comment answers.
+                        'replyTo:id,name',
                         'replies.author:id,ulid,name,status,avatar_path',
                         'replies.replyTo:id,name',
                     ])
@@ -280,12 +282,7 @@ class CommunityFeed
             // Who a staff post speaks for: its author's CHED office.
             'office' => $post->hei ? null : $post->author->chedOffice(),
             'images' => $post->images
-                ->map(fn (PostImage $image): array => [
-                    'id' => $image->id,
-                    'url' => $image->url(),
-                    'width' => $image->width,
-                    'height' => $image->height,
-                ])
+                ->map(fn (PostImage $image): array => $image->toPayload())
                 ->values(),
             'feeling' => $post->feeling ? [
                 'value' => $post->feeling->value,

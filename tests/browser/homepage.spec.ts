@@ -474,9 +474,10 @@ test('footer uses supplied institutional marks and verified contact details', as
         )
         .toEqual([
             { src: '/assets/img/ched_logo.png', loaded: true },
-            { src: '/assets/img/bagong_pilipinas.png', loaded: true },
-            { src: '/assets/img/freedom_information.png', loaded: true },
-            { src: '/assets/img/transparency_seal.png', loaded: true },
+            // The seals' scaled-down copies, sized for the footer row.
+            { src: '/assets/img/bagong_pilipinas-240.png', loaded: true },
+            { src: '/assets/img/freedom_information-240.png', loaded: true },
+            { src: '/assets/img/transparency_seal-240.png', loaded: true },
         ]);
     await expect(
         footer.getByRole('link', { name: '+63 936 616 7199' }),

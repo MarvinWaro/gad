@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RefreshesPublicSurveyDirectory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['survey_region_id', 'code', 'name', 'is_active'])]
 class SurveyCluster extends Model
 {
+    use RefreshesPublicSurveyDirectory;
+
     /** Holding cluster for institutions whose province is not known yet. */
     public const UNASSIGNED = 'Unassigned';
 

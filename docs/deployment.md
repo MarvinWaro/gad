@@ -4,20 +4,22 @@ PHLGADIS ships as one Docker image (`Dockerfile`): Nginx and PHP-FPM on port 808
 
 ## The image
 
-| Stage                   | What it does                                                                                       |
-| ----------------------- | -------------------------------------------------------------------------------------------------- |
-| `node-dependencies`     | `npm ci`                                                                                           |
-| `composer-dependencies` | `composer install --no-dev`, keeping only the AWS SDK's S3 part (`extra.aws/aws-sdk-php`)          |
-| `app`                   | The app's source and an optimized autoloader                                                       |
-| `frontend`              | `vp build`, with PHP present so Wayfinder regenerates the typed routes                             |
-| `runtime-files`         | Drops the build-only sources (`resources/js`, `resources/css`, Node config)                        |
-| `production`            | `serversideup/php:8.5-fpm-nginx-alpine` with `public/assets`, `vendor`, the app and `public/build` |
+| Stage                   | What it does                                                                                                |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `node-dependencies`     | `npm ci`                                                                                                    |
+| `composer-dependencies` | `composer install --no-dev`, keeping only the AWS SDK's S3 part (`extra.aws/aws-sdk-php`)                   |
+| `app`                   | The app's source and an optimized autoloader                                                                |
+| `frontend`              | `vp build`, with PHP present so Wayfinder regenerates the typed routes                                      |
+| `runtime-files`         | Drops the build-only sources (`resources/js`, `resources/css`, Node config)                                 |
+| `production`            | `serversideup/php:8.5-fpm-nginx-alpine` plus GD, with `public/assets`, `vendor`, the app and `public/build` |
 
 - **Nothing private goes in.** `.dockerignore` keeps `.env`, `vendor`, `node_modules`, `storage`, tests and docs out of the build.
 - **Kept small.** About 110 MB to download. `public/assets`, `vendor`, the app and `public/build` are separate layers, so a code-only release ships and stores only the last two (under 20 MB). The old system's `public/assets/files`, `post`, `slider` and `video` folders stay out: nothing links to them. To use a file from one, take its folder off `.dockerignore`.
 - **Another AWS service** (SES, SQS, …) must be added to `extra.aws/aws-sdk-php` in `composer.json`, then `composer reinstall aws/aws-sdk-php`.
 - **At each start** the container runs `storage:link` and `php artisan optimize` (config, routes, views and events). **Migrations never run by themselves** (`AUTORUN_LARAVEL_MIGRATION=false`).
 - **Health check:** Laravel's `/up`.
+- **Photos from a private bucket** (Berth, no `SPACES_URL`) go out through Laravel at `/files/…`. Nginx keeps each one it has handed out (`docker/nginx/uploads-cache.conf`, up to 1 GB, emptied by a redeploy), so PHP and the bucket are asked once per photo. The `X-Upload-Cache` header says `HIT` or `MISS`.
+- **GD** makes the feed's photo thumbnails (`App\Support\PhotoThumbnail`).
 - **Versions:** PHP 8.5 and Node 22, as in CI. OPcache keeps the code in memory, so a code change needs a new image.
 
 ## Coolify
@@ -67,5 +69,7 @@ php artisan db:seed --force
 The seed creates the roles, the first administrator (`admin@gmail.com` with `ADMIN_PASSWORD`), the regions, the HEIs and the surveys. Run it once only.
 
 **After that,** deploy, then run `php artisan migrate --force` when the release has new migrations. To have each deploy migrate by itself, set `AUTORUN_LARAVEL_MIGRATION=true` in Coolify.
+
+**Once, after the release that adds photo thumbnails** (migration `2026_10_24_000000`), run `php artisan posts:thumbnails`. It makes the feed's smaller copies of photos posted before; new posts get theirs as they are posted. Until it runs, the feed shows those photos full size, as before.
 
 **On a PC,** `docker build -t phlgadis .` builds the same image. It needs the environment above to run.

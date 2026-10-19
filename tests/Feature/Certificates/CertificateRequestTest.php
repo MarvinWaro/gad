@@ -1,6 +1,8 @@
 <?php
 
 use App\Actions\Certificates\ManageEventCertificate;
+use App\Enums\ActivityAction;
+use App\Enums\ActivityModule;
 use App\Enums\CertificateKind;
 use App\Enums\NotificationKind;
 use App\Models\Certificate;
@@ -8,6 +10,7 @@ use App\Models\CertificateRequest;
 use App\Models\GadEventCertificate;
 use App\Models\Notification;
 use App\Models\SurveyRegion;
+use App\Services\ActivityRecorder;
 use Carbon\CarbonImmutable;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Support\Facades\Storage;
@@ -154,4 +157,22 @@ test('the office declines a request with a note, which they read', function () {
     // A request of another certificate isn't reached through this one.
     $this->actingAs($this->focal)->put(route('settings.event-certificates.requests.update', [$this->appearance, $request]), ['decision' => 'approve'])
         ->assertNotFound();
+});
+
+test('the activity log lists certificate entries with their events loaded together, not one by one', function () {
+    // Lazy loading fails in tests, so a relation missed for a list shows here.
+    releaseBoth($this);
+    $recorder = app(ActivityRecorder::class);
+    foreach ([$this->appearance, $this->participation] as $use) {
+        $request = CertificateRequest::query()->create(['gad_event_certificate_id' => $use->id, 'user_id' => $this->dayOne->id, 'reason' => 'Day one only']);
+        $recorder->record(ActivityAction::Created, ActivityModule::Certificates, $request, actor: $this->dayOne);
+    }
+    $admin = certificateStaff('admin');
+
+    $this->actingAs($admin)->get(route('settings.activity-logs.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('logs.data', fn ($logs) => collect($logs)->pluck('subject.type')->intersect(['event-certificate', 'certificate', 'certificate-request'])->count() >= 4));
+    $this->actingAs($this->dayOne)->get(route('my-profile'))
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload->has('activity.data', 2)));
 });

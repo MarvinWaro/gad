@@ -152,19 +152,27 @@ export function DataState({
 }
 
 // Code-native placeholder artwork. Supply src and alt to replace an illustration.
+// `priority` is for the image a visitor sees first: fetched at once, not lazily.
 export function MediaPanel({
     media,
     className,
     label = 'Image placeholder',
+    priority = false,
 }: {
     media: MediaReference;
     className?: string;
     label?: string;
+    priority?: boolean;
 }) {
     return (
         <div className={cn('media-panel', `media-${media.variant}`, className)}>
             {media.src ? (
-                <img src={media.src} alt={media.alt} loading="lazy" />
+                <img
+                    src={media.src}
+                    alt={media.alt}
+                    loading={priority ? 'eager' : 'lazy'}
+                    fetchPriority={priority ? 'high' : undefined}
+                />
             ) : (
                 <>
                     <svg

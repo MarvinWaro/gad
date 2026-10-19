@@ -34,7 +34,7 @@ class MyProfileController extends Controller
             'activity' => Inertia::defer(fn () => ActivityLogResource::collection(
                 ActivityLog::query()
                     ->where('user_id', $user->id)
-                    ->with(['user:id,avatar_path', 'subject', 'region:id,name', 'hei:id,name'])
+                    ->withListDetails()
                     ->latest('created_at')
                     ->latest('id')
                     ->paginate(self::ACTIVITY_PER_PAGE, pageName: 'activity_page')

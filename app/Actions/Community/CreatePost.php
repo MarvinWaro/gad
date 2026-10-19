@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\ActivityRecorder;
 use App\Services\Notifier;
 use App\Support\PhotoDimensions;
+use App\Support\PhotoThumbnail;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -32,11 +33,17 @@ class CreatePost
      */
     public function handle(User $author, array $data, array $images = []): Post
     {
-        $photos = array_map(fn (UploadedFile $file): array => [
-            ...(PhotoDimensions::of((string) $file->getRealPath()) ?? ['width' => null, 'height' => null]),
-            'path' => (string) $file->store('posts', 'public'),
-        ], $images);
-        $paths = array_column($photos, 'path');
+        $photos = array_map(function (UploadedFile $file): array {
+            $path = (string) $file->store('posts', 'public');
+
+            return [
+                ...(PhotoDimensions::of((string) $file->getRealPath()) ?? ['width' => null, 'height' => null]),
+                'path' => $path,
+                // The feed's smaller copy, made while the upload is at hand.
+                'thumbnail_path' => PhotoThumbnail::fromFile((string) $file->getRealPath(), $path),
+            ];
+        }, $images);
+        $paths = array_values(array_filter([...array_column($photos, 'path'), ...array_column($photos, 'thumbnail_path')]));
 
         try {
             $post = DB::transaction(function () use ($author, $data, $photos): Post {

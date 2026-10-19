@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RefreshesPublicSurveyDirectory;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -26,6 +27,8 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 #[Fillable(['code', 'name', 'is_active', 'office_city', 'office_address', 'office_email', 'office_website', 'office_phone', 'instant_registration', 'instant_registration_until'])]
 class SurveyRegion extends Model
 {
+    use RefreshesPublicSurveyDirectory;
+
     /** Letterhead details a regional office keeps up to date. */
     public const OFFICE_FIELDS = ['office_city', 'office_address', 'office_email', 'office_website', 'office_phone'];
 

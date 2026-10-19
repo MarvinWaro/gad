@@ -57,6 +57,12 @@ PHLGADIS is to hold GAD data for all 17 CHED regions and to be usable by other s
 - [ ] **Filters and exports:** every statistic and export takes a region and HEI filter. (Clusters are kept out of sight since 2026-10-03.)
 - [ ] **Philippine time:** dates show in Asia/Manila time throughout. The app timezone stays UTC for storage.
 
+- [ ] **"Contains" searches scan their table.** These searches find text anywhere in a name (`LIKE '%…%'`), which no index can serve:
+    - Settings → Activity logs (`ActivityLog::scopeFilter`): actor name and record label. Entries are kept forever.
+    - People search (`App\Support\PeopleSearch`): names. The users table stays small enough that this is fine.
+
+    Both are fast today. Revisit the activity log search when `activity_logs` passes about a million rows: either a MySQL FULLTEXT index (fast, but it matches whole words and word starts, so "uan" no longer finds "Juan"), or a required date range so the scan stays within the `created_at` index. Kept as is on 2026-10-20 by choice.
+
 - [ ] **Email verification is not enforced.** `User` does not implement `MustVerifyEmail`, so the `verified` middleware lets every account through. That suits instant registration for launch (2026-10-07); revisit once the server's mail is proven.
 
 ## Missing for the API

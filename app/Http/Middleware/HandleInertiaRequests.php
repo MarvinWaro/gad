@@ -46,7 +46,9 @@ class HandleInertiaRequests extends Middleware
             // The office running this site, for the footer and help pages.
             'operator' => config('phlgadis.operator'),
             'auth' => [
-                'user' => $user,
+                // Its own fields only: the roles and permissions that permission
+                // checks load on it go out once, as `permissions` below.
+                'user' => fn (): ?User => $user?->withoutRelations(),
                 'roles' => fn (): array => $user?->roles()->pluck('slug')->all() ?? [],
                 'permissions' => fn (): array => $user?->permissionSlugs() ?? [],
                 // HEI roles only: the HEI home and header shell.

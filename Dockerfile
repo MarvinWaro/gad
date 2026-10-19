@@ -129,7 +129,8 @@ RUN rm -rf \
 
 # ============================================================
 # Production (the default target, so it stays the last stage)
-# Alpine, with pdo_mysql, redis, zip, pcntl and opcache built in.
+# Alpine, with pdo_mysql, redis, zip, pcntl and opcache built in, and GD
+# added below.
 # ============================================================
 FROM serversideup/php:8.5-fpm-nginx-alpine AS production
 
@@ -147,10 +148,17 @@ ENV PHP_OPCACHE_ENABLE=1 \
     NGINX_FASTCGI_BUFFER_SIZE=32k \
     NGINX_FASTCGI_BUFFERS="16 32k"
 
-# Nginx: .mjs goes out as JavaScript, and the built .mjs and .wasm files
-# are cached like the rest of public/build.
+# GD makes the feed's photo thumbnails (App\Support\PhotoThumbnail).
+USER root
+RUN install-php-extensions gd
+
+# Nginx: .mjs goes out as JavaScript, the built .mjs and .wasm files are
+# cached like the rest of public/build, and uploads handed out from the
+# bucket at /files/ are kept, so each costs PHP one request.
 COPY docker/nginx/mime-types.conf /etc/nginx/conf.d/mime-types.conf
+COPY docker/nginx/uploads-cache-zone.conf /etc/nginx/conf.d/uploads-cache-zone.conf
 COPY docker/nginx/build-assets.conf /etc/nginx/server-opts.d/build-assets.conf
+COPY docker/nginx/uploads-cache.conf /etc/nginx/server-opts.d/uploads-cache.conf
 
 # One layer each, from least to most often changed, so a deploy only
 # ships and stores the layers that changed: usually the app and its build.

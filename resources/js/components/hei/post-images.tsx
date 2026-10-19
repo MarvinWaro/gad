@@ -283,7 +283,8 @@ export function PostImages({
             <PhotoMosaic
                 images={images.map((image, index) => ({
                     key: image.id,
-                    url: image.url,
+                    // The tiles' smaller copy; the viewer opens the photo.
+                    url: image.thumbnail_url ?? image.url,
                     alt: altFor(index),
                     width: image.width,
                     height: image.height,
