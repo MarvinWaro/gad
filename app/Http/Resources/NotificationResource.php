@@ -12,7 +12,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * A notification as the bell, the Notifications page and the API show it.
- * Load NotificationInbox::RELATIONS first. Only what its reader may see: the
+ * Load NotificationInbox::relations() first. Only what its reader may see: the
  * activity entry's address and device stay on the server, and the link is
  * there only when the reader may open its page.
  *

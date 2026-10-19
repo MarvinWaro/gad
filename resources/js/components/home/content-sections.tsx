@@ -154,7 +154,7 @@ export function Stories({
 
 function storyMedia(story: HomepageStory) {
     return {
-        src: story.images[0]?.url,
+        src: story.images[0]?.thumbnail_url ?? story.images[0]?.url,
         alt: `Photo from ${story.source}`,
         variant: 'campus' as const,
     };

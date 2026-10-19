@@ -36,12 +36,7 @@ class HomepageStoryResource extends JsonResource
             'posted_at' => $this->created_at?->toIso8601String(),
             // All of them (ten at most), for the same mosaic and viewer as
             // the feed.
-            'images' => $this->images->map(fn (PostImage $image): array => [
-                'id' => $image->id,
-                'url' => $image->url(),
-                'width' => $image->width,
-                'height' => $image->height,
-            ])->values()->all(),
+            'images' => $this->images->map(fn (PostImage $image): array => $image->toPayload())->values()->all(),
             'reactions' => (int) ($this->reactions_count ?? 0),
             'comments' => (int) ($this->comments_count ?? 0),
             'sdgs' => $this->sdgs->map(fn (PostSdg $sdg): int => $sdg->sdg->value)->sort()->values()->all(),

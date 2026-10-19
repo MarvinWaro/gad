@@ -191,26 +191,29 @@ export function SiteFooter({ homeUrl }: { homeUrl?: string }) {
                             decoding="async"
                             alt="Commission on Higher Education"
                         />
+                        {/* The seals' -240 files are the official ones scaled
+                            down, nothing else, for this 60 px row; the full-size
+                            files stay for the About page and the Virtual ID. */}
                         <img
-                            src="/assets/img/bagong_pilipinas.png"
-                            width="2263"
-                            height="2263"
+                            src="/assets/img/bagong_pilipinas-240.png"
+                            width="240"
+                            height="240"
                             loading="lazy"
                             decoding="async"
                             alt="Bagong Pilipinas"
                         />
                         <img
-                            src="/assets/img/freedom_information.png"
-                            width="2299"
-                            height="2266"
+                            src="/assets/img/freedom_information-240.png"
+                            width="240"
+                            height="237"
                             loading="lazy"
                             decoding="async"
                             alt="Freedom of Information Philippines"
                         />
                         <img
-                            src="/assets/img/transparency_seal.png"
-                            width="2263"
-                            height="2263"
+                            src="/assets/img/transparency_seal-240.png"
+                            width="240"
+                            height="240"
                             loading="lazy"
                             decoding="async"
                             alt="Transparency Seal"

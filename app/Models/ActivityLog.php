@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ActivityAction;
 use App\Enums\ActivityModule;
 use App\Models\Concerns\BelongsToRegion;
+use App\Support\ActivitySubjects;
 use App\Support\PlaceFilters;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -82,6 +83,21 @@ class ActivityLog extends Model
     public function hei(): BelongsTo
     {
         return $this->belongsTo(SurveyHei::class, 'survey_hei_id');
+    }
+
+    /**
+     * What ActivityLogResource reads, for a whole list at once.
+     *
+     * @param  Builder<ActivityLog>  $query
+     */
+    public function scopeWithListDetails(Builder $query): void
+    {
+        $query->with([
+            'user:id,avatar_path',
+            'subject' => ActivitySubjects::eagerLoad(),
+            'region:id,name',
+            'hei:id,name',
+        ]);
     }
 
     /**

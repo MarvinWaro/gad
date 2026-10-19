@@ -32,6 +32,7 @@ import { Input } from '@/components/ui/input';
 import { FormSelect } from '@/components/ui/form-select';
 import { Label } from '@/components/ui/label';
 import { useLiveModules, useLiveReload } from '@/hooks/use-live';
+import { shrinkPhoto } from '@/lib/shrink-photo';
 
 type CarouselSlide = {
     id: number;
@@ -362,6 +363,21 @@ function SlideDialog({
         ...(mode === 'edit' ? { _method: 'put' as const } : {}),
     });
     const form = useForm<SlideForm>(saved());
+    const [preparing, setPreparing] = useState(false);
+
+    // A large photo is shrunk before it uploads, as post photos are: it is
+    // the homepage's first image, so its weight is every visitor's wait.
+    async function pickImage(file: File | null) {
+        if (!file) {
+            form.setData('image', null);
+
+            return;
+        }
+
+        setPreparing(true);
+        form.setData('image', await shrinkPhoto(file));
+        setPreparing(false);
+    }
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -465,10 +481,7 @@ function SlideDialog({
                             accept="image/jpeg,image/png,image/webp"
                             required={mode === 'create'}
                             onChange={(event) =>
-                                form.setData(
-                                    'image',
-                                    event.target.files?.[0] ?? null,
-                                )
+                                void pickImage(event.target.files?.[0] ?? null)
                             }
                         />
                         <p className="text-xs text-muted-foreground">
@@ -543,12 +556,17 @@ function SlideDialog({
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={form.processing}>
-                            {form.processing
-                                ? 'Saving…'
-                                : mode === 'create'
-                                  ? 'Create slide'
-                                  : 'Save changes'}
+                        <Button
+                            type="submit"
+                            disabled={form.processing || preparing}
+                        >
+                            {preparing
+                                ? 'Preparing image…'
+                                : form.processing
+                                  ? 'Saving…'
+                                  : mode === 'create'
+                                    ? 'Create slide'
+                                    : 'Save changes'}
                         </Button>
                     </DialogFooter>
                 </form>

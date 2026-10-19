@@ -27,7 +27,7 @@ class ActivityLogController extends Controller
         $logs = ActivityLog::query()
             ->withinReachOf($actor)
             ->filter($filters)
-            ->with(['user:id,avatar_path', 'subject', 'region:id,name', 'hei:id,name'])
+            ->withListDetails()
             ->latest('created_at')
             ->latest('id')
             ->paginate(20)

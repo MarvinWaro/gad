@@ -19,6 +19,7 @@ use App\Services\Notifier;
 use App\Support\CountPhrase;
 use App\Support\PageRange;
 use App\Support\PlaceFilters;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -63,7 +64,8 @@ class UserManagementController extends Controller
                 isset($validated['hei']) ? (int) $validated['hei'] : null,
             );
         $users = PageRange::within($filtered()
-            ->with(['roles:id,name,slug', 'hei:id,name,survey_cluster_id', 'hei.cluster:id,survey_region_id', 'officeRegion:id,name'])
+            // Roles with their permissions, for can_manage below.
+            ->with(['roles:id,name,slug', 'roles.permissions:id,slug', 'hei:id,name,survey_cluster_id', 'hei.cluster:id,survey_region_id', 'officeRegion:id,name'])
             ->when($status !== null, fn ($query) => $query->where('status', $status))
             // Registrations awaiting approval are the admin's to-do list.
             ->orderByRaw('case when status = ? then 0 else 1 end', [UserStatus::Pending->value])
@@ -109,35 +111,27 @@ class UserManagementController extends Controller
             ->groupBy('status')
             ->pluck('aggregate', 'status');
 
-        // Active institutions, plus any inactive one still linked to an
-        // account so editing that account keeps its current selection. The
-        // form picks the region first, so each carries its region. A
-        // regional office places accounts in its own region only.
-        $heis = $canEdit
-            ? SurveyHei::query()
-                ->join('survey_clusters', 'survey_clusters.id', '=', 'survey_heis.survey_cluster_id')
-                ->join('survey_regions', 'survey_regions.id', '=', 'survey_clusters.survey_region_id')
-                ->when(! $actor->national_access, fn ($query) => $query->where('survey_regions.id', $actor->survey_region_id))
-                ->where(fn ($query) => $query
-                    ->where('survey_heis.is_active', true)
-                    ->orWhereIn('survey_heis.id', User::query()->whereNotNull('survey_hei_id')->select('survey_hei_id')))
-                ->orderBy('survey_heis.name')
-                ->get(['survey_heis.id', 'survey_heis.name', 'survey_regions.id as region_id', 'survey_regions.name as region_name'])
-            : collect();
+        // The form's institutions, nationwide for the Central Office. Sent
+        // once: the browser keeps them while paging and filtering, so the
+        // query runs only when the page first opens.
+        $heis = null;
+        $heiOptions = function () use (&$heis, $canEdit, $actor): Collection {
+            return $heis ??= $canEdit ? $this->heiOptions($actor) : new Collection;
+        };
 
         return Inertia::render('settings/users', [
             'users' => $users,
             'roles' => $roles,
-            'heis' => $heis->map(fn (SurveyHei $hei): array => [
+            'heis' => Inertia::once(fn () => $heiOptions()->map(fn (SurveyHei $hei): array => [
                 'id' => $hei->id,
                 'name' => $hei->name,
                 'region_id' => (int) $hei->getAttribute('region_id'),
-            ])->values(),
+            ])->values()),
             // The regions those institutions are in.
-            'heiRegions' => $heis->map(fn (SurveyHei $hei): array => [
+            'heiRegions' => Inertia::once(fn () => $heiOptions()->map(fn (SurveyHei $hei): array => [
                 'id' => (int) $hei->getAttribute('region_id'),
                 'name' => (string) $hei->getAttribute('region_name'),
-            ])->unique('id')->sortBy('name')->values(),
+            ])->unique('id')->sortBy('name')->values()),
             // Offices this manager may place accounts in: every region from
             // the Central Office, otherwise only their own.
             'offices' => [
@@ -181,6 +175,27 @@ class UserManagementController extends Controller
             // What a new account signs in with, to pass on to its holder.
             'temporaryPassword' => $request->user()->can('users.create') ? config('auth.temporary_password') : null,
         ]);
+    }
+
+    /**
+     * Active institutions, plus any inactive one still linked to an account
+     * so editing that account keeps its current selection. The form picks the
+     * region first, so each carries its region. A regional office places
+     * accounts in its own region only.
+     *
+     * @return Collection<int, SurveyHei>
+     */
+    private function heiOptions(User $actor): Collection
+    {
+        return SurveyHei::query()
+            ->join('survey_clusters', 'survey_clusters.id', '=', 'survey_heis.survey_cluster_id')
+            ->join('survey_regions', 'survey_regions.id', '=', 'survey_clusters.survey_region_id')
+            ->when(! $actor->national_access, fn ($query) => $query->where('survey_regions.id', $actor->survey_region_id))
+            ->where(fn ($query) => $query
+                ->where('survey_heis.is_active', true)
+                ->orWhereIn('survey_heis.id', User::query()->whereNotNull('survey_hei_id')->select('survey_hei_id')))
+            ->orderBy('survey_heis.name')
+            ->get(['survey_heis.id', 'survey_heis.name', 'survey_regions.id as region_id', 'survey_regions.name as region_name']);
     }
 
     public function store(StoreManagedUserRequest $request, ActivityRecorder $activity): RedirectResponse

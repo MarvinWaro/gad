@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\HeiController::regions
- * @see app/Http/Controllers/Api/HeiController.php:29
+ * @see app/Http/Controllers/Api/HeiController.php:20
  * @route '/api/regions'
  */
 export const regions = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ regions.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\HeiController::regions
- * @see app/Http/Controllers/Api/HeiController.php:29
+ * @see app/Http/Controllers/Api/HeiController.php:20
  * @route '/api/regions'
  */
 regions.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ regions.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\HeiController::regions
- * @see app/Http/Controllers/Api/HeiController.php:29
+ * @see app/Http/Controllers/Api/HeiController.php:20
  * @route '/api/regions'
  */
 regions.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ regions.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\HeiController::regions
- * @see app/Http/Controllers/Api/HeiController.php:29
+ * @see app/Http/Controllers/Api/HeiController.php:20
  * @route '/api/regions'
  */
 regions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ regions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\HeiController::regions
- * @see app/Http/Controllers/Api/HeiController.php:29
+ * @see app/Http/Controllers/Api/HeiController.php:20
  * @route '/api/regions'
  */
     const regionsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ regions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\HeiController::regions
- * @see app/Http/Controllers/Api/HeiController.php:29
+ * @see app/Http/Controllers/Api/HeiController.php:20
  * @route '/api/regions'
  */
         regionsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ regions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\HeiController::regions
- * @see app/Http/Controllers/Api/HeiController.php:29
+ * @see app/Http/Controllers/Api/HeiController.php:20
  * @route '/api/regions'
  */
         regionsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ regions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     regions.form = regionsForm
 /**
 * @see \App\Http\Controllers\Api\HeiController::index
- * @see app/Http/Controllers/Api/HeiController.php:67
+ * @see app/Http/Controllers/Api/HeiController.php:26
  * @route '/api/heis'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\HeiController::index
- * @see app/Http/Controllers/Api/HeiController.php:67
+ * @see app/Http/Controllers/Api/HeiController.php:26
  * @route '/api/heis'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\HeiController::index
- * @see app/Http/Controllers/Api/HeiController.php:67
+ * @see app/Http/Controllers/Api/HeiController.php:26
  * @route '/api/heis'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\HeiController::index
- * @see app/Http/Controllers/Api/HeiController.php:67
+ * @see app/Http/Controllers/Api/HeiController.php:26
  * @route '/api/heis'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\HeiController::index
- * @see app/Http/Controllers/Api/HeiController.php:67
+ * @see app/Http/Controllers/Api/HeiController.php:26
  * @route '/api/heis'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\HeiController::index
- * @see app/Http/Controllers/Api/HeiController.php:67
+ * @see app/Http/Controllers/Api/HeiController.php:26
  * @route '/api/heis'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\HeiController::index
- * @see app/Http/Controllers/Api/HeiController.php:67
+ * @see app/Http/Controllers/Api/HeiController.php:26
  * @route '/api/heis'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

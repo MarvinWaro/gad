@@ -1,11 +1,13 @@
 <?php
 
 use App\Enums\UserStatus;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\SurveyCluster;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -75,4 +77,47 @@ test('an unknown role or place is refused', function () {
     $this->actingAs($this->admin)->get(route('settings.users.index', ['role' => 'no-such-role']))
         ->assertSessionHasErrors('role');
     $this->get(route('settings.users.index', ['region' => 99999]))->assertSessionHasErrors('region');
+});
+
+test('the form\'s institutions go out once, and the list runs no query per account', function () {
+    $this->actingAs($this->admin);
+
+    $page = fn () => $this->get(route('settings.users.index'));
+    // Queries reading permissions while the list is built.
+    $permissionQueries = function () use ($page): int {
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $page()->assertOk();
+        DB::disableQueryLog();
+
+        return collect(DB::getQueryLog())->filter(fn (array $query): bool => str_contains($query['query'], 'from "permissions"'))->count();
+    };
+
+    $page()->assertInertia(fn (Assert $page) => $page
+        // The signed-in account's own fields only, though the permission
+        // checks loaded its roles; its permissions go out on their own.
+        ->where('auth.user.name', 'Central Admin')
+        ->missing('auth.user.roles')
+        ->where('auth.permissions', fn ($permissions) => collect($permissions)->contains('users.view'))
+        ->has('heis', 2)
+        ->has('heiRegions', 2)
+        ->where('users.data', fn ($users) => collect($users)->every(fn (array $user): bool => is_bool($user['can_manage']))));
+
+    // Every listed account's roles and permissions arrive in one eager load,
+    // so more accounts on the page mean no more queries.
+    $before = $permissionQueries();
+    User::factory()->count(4)->create()->each(fn (User $user) => $user->assignRole('hei'));
+    expect($permissionQueries())->toBe($before);
+
+    // Paging or filtering, the browser already holds them: they are not sent again.
+    $this->get(route('settings.users.index', ['page' => 1]), [
+        'X-Inertia' => 'true',
+        'X-Requested-With' => 'XMLHttpRequest',
+        'X-Inertia-Version' => (string) app(HandleInertiaRequests::class)->version(request()),
+        'X-Inertia-Except-Once-Props' => 'heis,heiRegions',
+    ])
+        ->assertOk()
+        ->assertJsonMissingPath('props.heis')
+        ->assertJsonMissingPath('props.heiRegions')
+        ->assertJsonPath('props.users.data.0.name', 'Twelve Focal');
 });

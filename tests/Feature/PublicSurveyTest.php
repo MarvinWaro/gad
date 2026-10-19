@@ -249,6 +249,28 @@ test('a region whose institutions are all deactivated drops out of the list too'
             ->has('directories.heis', 0));
 });
 
+test('the cached region and HEI lists follow changes to the directory', function () {
+    publishOptionalHeiRa7877();
+    $show = fn () => $this->get(route('surveys.show', ['law' => 'ra-7877']))->assertOk();
+
+    $show()->assertInertia(fn (Assert $page) => $page->has('directories.heis', 1));
+
+    // Added, renamed and deactivated institutions show on the next visit.
+    $added = SurveyHei::query()->create([
+        'survey_cluster_id' => SurveyCluster::query()->sole()->id, 'name' => 'Added HEI', 'is_active' => true,
+    ]);
+    $show()->assertInertia(fn (Assert $page) => $page->has('directories.heis', 2));
+
+    $added->update(['name' => 'Renamed HEI']);
+    $show()->assertInertia(fn (Assert $page) => $page->where('directories.heis.0.name', 'Renamed HEI'));
+
+    $added->update(['is_active' => false]);
+    $show()->assertInertia(fn (Assert $page) => $page->has('directories.heis', 1));
+
+    SurveyRegion::query()->sole()->update(['office_email' => 'new@example.test']);
+    $show()->assertInertia(fn (Assert $page) => $page->where('directories.regions.0.email', 'new@example.test'));
+});
+
 test('when the HEI is optional an empty region stays available', function () {
     $survey = publishOptionalHeiRa7877();
     SurveyRegion::query()->create(['name' => 'BARMM B', 'is_active' => true, 'office_email' => 'barmm-b@example.test']);

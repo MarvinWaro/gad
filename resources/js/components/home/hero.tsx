@@ -166,6 +166,7 @@ export function Hero({ slides }: { slides: HeroSlideRecord[] }) {
                             <MediaPanel
                                 media={slide.media}
                                 label={`${slide.title} image placeholder`}
+                                priority={index === 0}
                             />
                         </div>
                     ))}

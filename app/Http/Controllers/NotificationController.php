@@ -109,7 +109,7 @@ class NotificationController extends Controller
         $this->inbox->setRead($notification, $request->boolean('read'));
 
         return response()->json([
-            'notification' => (new NotificationResource($notification->load(NotificationInbox::RELATIONS)))->resolve($request),
+            'notification' => (new NotificationResource($notification->load(NotificationInbox::relations())))->resolve($request),
             'inbox' => $this->inbox->summary($user),
         ]);
     }

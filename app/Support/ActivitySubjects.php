@@ -29,7 +29,10 @@ use App\Models\SurveyRegion;
 use App\Models\SurveyRespondentGroup;
 use App\Models\SurveyResponse;
 use App\Models\User;
+use Closure;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 
 /**
@@ -73,6 +76,36 @@ class ActivitySubjects
         'event-guest' => GadEventGuest::class,
         'certificate-request' => CertificateRequest::class,
     ];
+
+    /**
+     * What label() and url(), and the policies url() asks, read from each
+     * kind of record: loaded with a list of entries, not one entry at a time.
+     *
+     * @var array<class-string<Model>, list<string>>
+     */
+    public const RELATIONS = [
+        GadEventCheckIn::class => ['user', 'event'],
+        GadEventRegistration::class => ['event'],
+        GadEventGuest::class => ['event'],
+        GadEventCertificate::class => ['design', 'event'],
+        CertificateRequest::class => ['eventCertificate.design', 'eventCertificate.event'],
+        Certificate::class => ['eventCertificate.event'],
+    ];
+
+    /**
+     * The `subject` relation of a list of entries, with what each kind of
+     * record needs (RELATIONS).
+     *
+     * @return Closure(Relation<*, *, *>): void
+     */
+    public static function eagerLoad(): Closure
+    {
+        return function (Relation $subject): void {
+            if ($subject instanceof MorphTo) {
+                $subject->morphWith(self::RELATIONS);
+            }
+        };
+    }
 
     /** The kind of record, as the entry's sentence names it. */
     public static function noun(?string $type): string

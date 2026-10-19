@@ -1,18 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\HeiController;
-// use App\Http\Controllers\Api\HeidaStatisticsController;
 use Illuminate\Support\Facades\Route;
 
-// Route::get(
-//     '/heida/statistics',
-//     [HeidaStatisticsController::class, 'index']
-// );
-
-// Route::get(
-//     '/heida/programs',
-//     [HeidaStatisticsController::class, 'programs']
-// );
-
-Route::get('/regions', [HeiController::class, 'regions']);
-Route::get('/heis', [HeiController::class, 'index']);
+// The public /hei page's HEIDA browser: throttled, and cached by
+// HeidaDirectoryBrowser so visitors never flood HEIDA.
+Route::get('/regions', [HeiController::class, 'regions'])->middleware('throttle:60,1');
+Route::get('/heis', [HeiController::class, 'index'])->middleware('throttle:60,1');

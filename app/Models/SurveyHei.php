@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RefreshesPublicSurveyDirectory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,8 @@ use Illuminate\Support\Carbon;
 #[Fillable(['survey_cluster_id', 'uii', 'name', 'ownership', 'is_active', 'portal_synced_at'])]
 class SurveyHei extends Model
 {
+    use RefreshesPublicSurveyDirectory;
+
     /** Who runs an institution, as the directory stores it. */
     public const OWNERSHIPS = ['public', 'private'];
 

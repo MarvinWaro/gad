@@ -13,6 +13,7 @@ use App\Models\SurveyRegion;
 use App\Models\User;
 use App\Support\CommunityFeed;
 use App\Support\InstitutionName;
+use App\Support\PhotoThumbnail;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -98,6 +99,72 @@ test('a phone photo turned by its Exif tag is stored with its upright size', fun
     expect([$image->width, $image->height])->toBe([800, 1200]);
 
     unlink($path);
+});
+
+test('a large photo gets a smaller copy for the feed\'s tiles, and the viewer keeps the photo', function () {
+    $user = communityMember();
+
+    $this->actingAs($user)
+        ->post(route('posts.store'), ['images' => [
+            UploadedFile::fake()->image('wide.jpg', 2048, 1365),
+            // Already small enough: shown as it is.
+            UploadedFile::fake()->image('small.jpg', 800, 600),
+        ]])
+        ->assertSessionHasNoErrors();
+
+    [$large, $small] = Post::query()->with('images')->sole()->images->all();
+
+    expect($large->thumbnail_path)->toStartWith('posts/thumbs/')
+        ->and($small->thumbnail_path)->toBeNull();
+    $size = getimagesizefromstring((string) Storage::disk('public')->get($large->thumbnail_path));
+    expect([$size[0], $size[1]])->toBe([PhotoThumbnail::LONGEST_SIDE, 853]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+            ->where('posts.data.0.images.0.url', Storage::disk('public')->url($large->path))
+            ->where('posts.data.0.images.0.thumbnail_url', Storage::disk('public')->url($large->thumbnail_path))
+            ->where('posts.data.0.images.1.thumbnail_url', null)));
+});
+
+test('a photo turned by its Exif tag gets an upright thumbnail', function () {
+    $path = exifJpeg(2400, 1600, 6);
+
+    $this->actingAs(communityMember())
+        ->post(route('posts.store'), ['images' => [new UploadedFile($path, 'portrait.jpg', 'image/jpeg', null, true)]])
+        ->assertSessionHasNoErrors();
+
+    $image = Post::query()->with('images')->sole()->images->sole();
+    $size = getimagesizefromstring((string) Storage::disk('public')->get((string) $image->thumbnail_path));
+
+    expect([$size[0], $size[1]])->toBe([853, PhotoThumbnail::LONGEST_SIDE]);
+
+    unlink($path);
+});
+
+test('removing a post removes its photos and their thumbnails', function () {
+    $user = communityMember();
+    $this->actingAs($user)
+        ->post(route('posts.store'), ['images' => [UploadedFile::fake()->image('wide.jpg', 2048, 1365)]]);
+    $image = Post::query()->with('images')->sole()->images->sole();
+    Storage::disk('public')->assertExists($image->files());
+
+    $this->actingAs($user)->delete(route('posts.destroy', $image->post_id))->assertRedirect();
+
+    Storage::disk('public')->assertMissing($image->files());
+});
+
+test('photos posted before thumbnails get theirs from the command', function () {
+    $post = communityPost(communityMember());
+    $path = UploadedFile::fake()->image('old.jpg', 2048, 1365)->store('posts', 'public');
+    $image = $post->images()->create(['path' => $path, 'width' => 2048, 'height' => 1365, 'sort_order' => 0]);
+
+    $this->artisan('posts:thumbnails')->expectsOutputToContain('Made 1 thumbnails')->assertSuccessful();
+
+    expect($image->refresh()->thumbnail_path)->toStartWith('posts/thumbs/');
+    Storage::disk('public')->assertExists((string) $image->thumbnail_path);
+    // Run again, it has nothing left to do.
+    $this->artisan('posts:thumbnails')->expectsOutputToContain('Made 0 thumbnails')->assertSuccessful();
 });
 
 test('a post can be text only or photo only', function () {
@@ -836,6 +903,24 @@ test('the feed nests replies under their comment', function () {
             ->where('posts.data.0.comments.0.replies.0.body', 'Thank you!')
             ->where('posts.data.0.comments.0.replies.0.is_post_author', true)
             ->where('posts.data.0.comments.0.replies.0.reply_to.name', $ana->name)));
+});
+
+test('the feed loads every post\'s comments and whom they answer together, not one by one', function () {
+    // Lazy loading fails in tests, so a relation missed for a list shows here.
+    $author = communityMember();
+    $ana = communityMember();
+    foreach ([communityPost($author), communityPost($author)] as $post) {
+        $first = $post->comments()->create(['user_id' => $ana->id, 'body' => 'Great work!']);
+        $post->comments()->create(['user_id' => $author->id, 'body' => 'Thanks for coming.']);
+        $post->comments()->create(['user_id' => $author->id, 'parent_id' => $first->id, 'reply_to_user_id' => $ana->id, 'body' => 'Thank you!']);
+    }
+
+    $this->actingAs($ana)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+            ->has('posts.data', 2)
+            ->where('posts.data', fn ($posts) => collect($posts)->every(fn (array $post): bool => count($post['comments']) === 2
+                && collect($post['comments'])->flatMap(fn (array $comment): array => $comment['replies'])->pluck('reply_to.name')->all() === [$ana->name]))));
 });
 
 test('replies must answer a comment on the same post', function () {

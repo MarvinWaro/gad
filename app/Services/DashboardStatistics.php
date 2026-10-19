@@ -126,23 +126,51 @@ class DashboardStatistics
     /**
      * Survey responses and original posts per chart point. Responses come
      * from the tallies' Philippine days; posts are counted between each
-     * point's UTC bounds (at most twelve indexed counts, cached with the rest).
+     * point's UTC bounds, every point in one query (cached with the rest).
      *
      * @return list<array{label: string, title: string, responses: int, posts: int}>
      */
     private function trend(DashboardScope $scope, ReportingPeriod $period): array
     {
         $days = $this->surveys->responsesPerDay($scope, $period);
+        $buckets = $period->buckets();
+        $posts = $this->postsPerBucket($scope, $period, $buckets);
 
-        return array_map(fn (array $bucket): array => [
+        return array_map(fn (array $bucket, int $index): array => [
             'label' => $bucket['label'],
             'title' => $bucket['title'],
             'responses' => $this->surveys->responsesBetween($days, $bucket['starts_on'], $bucket['ends_on']),
-            'posts' => $scope->posts($period)
-                ->where('p.created_at', '>=', CarbonImmutable::parse($bucket['starts_on'], GadEvent::TIMEZONE)->utc())
-                ->where('p.created_at', '<', CarbonImmutable::parse($bucket['ends_on'], GadEvent::TIMEZONE)->addDay()->utc())
-                ->count(),
-        ], $period->buckets());
+            'posts' => $posts[$index],
+        ], $buckets, array_keys($buckets));
+    }
+
+    /**
+     * Original posts in each chart point, by its Philippine days.
+     *
+     * @param  list<array{starts_on: string, ends_on: string}>  $buckets
+     * @return list<int>
+     */
+    private function postsPerBucket(DashboardScope $scope, ReportingPeriod $period, array $buckets): array
+    {
+        if ($buckets === []) {
+            return [];
+        }
+
+        // Each post falls in the first point it ends before; the points run
+        // on from one another. Every date and index is bound.
+        $bindings = [CarbonImmutable::parse($buckets[0]['starts_on'], GadEvent::TIMEZONE)->utc()];
+        foreach ($buckets as $index => $bucket) {
+            $bindings[] = CarbonImmutable::parse($bucket['ends_on'], GadEvent::TIMEZONE)->addDay()->utc();
+            $bindings[] = $index;
+        }
+        $cases = implode(' ', array_fill(0, count($buckets), 'when p.created_at < ? then ?'));
+
+        $counts = $scope->posts($period)
+            ->selectRaw("case when p.created_at < ? then null {$cases} end as bucket, count(*) as posts", $bindings)
+            ->groupBy('bucket')
+            ->pluck('posts', 'bucket');
+
+        return array_map(fn (int $index): int => (int) ($counts[$index] ?? 0), array_keys($buckets));
     }
 
     /**

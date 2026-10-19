@@ -7,11 +7,13 @@ use App\Services\LiveUpdates;
 use App\Support\ActivitySubjects;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -84,6 +86,17 @@ class AppServiceProvider extends ServiceProvider
         DB::prohibitDestructiveCommands(
             app()->isProduction(),
         );
+
+        // N+1 queries: a relation read on records loaded in a list must be
+        // eager loaded. Tests fail on one; while developing it is logged, so
+        // the page still opens; production is left alone.
+        Model::preventLazyLoading(! app()->isProduction());
+
+        if (app()->isLocal()) {
+            Model::handleLazyLoadingViolationUsing(fn (Model $model, string $relation) => Log::warning(
+                sprintf('N+1 query: lazy loaded [%s] on [%s]. Eager load it.', $relation, $model::class),
+            ));
+        }
 
         // Any 8 characters for now, so HEIs register at events without
         // trouble. Afterwards production goes back to also requiring
