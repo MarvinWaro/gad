@@ -183,6 +183,7 @@ test('an HEI account needs its institution, and a CHED account has none', functi
         'password' => 'password',
         'password_confirmation' => 'password',
         'role_ids' => $roleIds,
+        'password_delivery' => 'temporary',
         ...$overrides,
     ];
 

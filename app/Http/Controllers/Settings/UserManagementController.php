@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Enums\ActivityAction;
 use App\Enums\ActivityModule;
+use App\Enums\PasswordDelivery;
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\StoreManagedUserRequest;
@@ -14,9 +15,11 @@ use App\Models\Role;
 use App\Models\SurveyHei;
 use App\Models\SurveyRegion;
 use App\Models\User;
+use App\Notifications\AccountCreated;
 use App\Services\ActivityRecorder;
 use App\Services\Notifier;
 use App\Support\CountPhrase;
+use App\Support\OneTimePassword;
 use App\Support\PageRange;
 use App\Support\PlaceFilters;
 use Illuminate\Database\Eloquent\Collection;
@@ -27,6 +30,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class UserManagementController extends Controller
 {
@@ -208,15 +212,19 @@ class UserManagementController extends Controller
         $heiId = $this->heiFrom($slugs, $validated);
         $this->ensureInstitutionIsAssignable($request->user(), $heiId);
 
-        $user = DB::transaction(function () use ($validated, $heiId, $office): User {
-            // It starts with the temporary password, which its holder must
-            // change the first time they sign in.
+        $delivery = PasswordDelivery::from($validated['password_delivery']);
+        // A random password to email, or the shared temporary one.
+        $password = $delivery === PasswordDelivery::Email ? OneTimePassword::generate() : null;
+
+        $user = DB::transaction(function () use ($validated, $heiId, $office, $password): User {
+            // Either password is temporary: its holder must change it the
+            // first time they sign in.
             $user = (new User)->fill([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'survey_hei_id' => $heiId,
                 'status' => UserStatus::Active,
-            ])->giveTemporaryPassword();
+            ])->giveTemporaryPassword($password);
 
             // Neither is mass assignable, so a form elsewhere cannot set them.
             $user->forceFill(['email_verified_at' => now(), ...($office ?? [])])->save();
@@ -230,12 +238,40 @@ class UserManagementController extends Controller
             'roles' => Role::query()->whereKey($validated['role_ids'])->orderBy('name')->pluck('name')->all(),
         ]);
 
-        Inertia::flash('toast', [
-            'type' => 'success',
-            'message' => __('User created. Their temporary password is “:password”.', ['password' => config('auth.temporary_password')]),
-        ]);
+        Inertia::flash('toast', $password !== null
+            ? $this->emailPassword($user, $password)
+            : [
+                'type' => 'success',
+                'message' => __('User created. Their temporary password is “:password”.', ['password' => config('auth.temporary_password')]),
+            ]);
 
         return $this->backToList('settings.users.index');
+    }
+
+    /**
+     * Emails a new account its password, and says how that went. Should the
+     * mail fail, the account stays: the manager sets a password on it with
+     * Edit and passes it on.
+     *
+     * @return array{type: string, message: string}
+     */
+    private function emailPassword(User $user, string $password): array
+    {
+        try {
+            $user->notify(new AccountCreated($password));
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return [
+                'type' => 'warning',
+                'message' => __('User created, but the email to :email could not be sent. Edit the account to set a password, then tell them.', ['email' => $user->email]),
+            ];
+        }
+
+        return [
+            'type' => 'success',
+            'message' => __('User created. Their password was emailed to :email.', ['email' => $user->email]),
+        ];
     }
 
     public function update(UpdateManagedUserRequest $request, User $user, ActivityRecorder $activity): RedirectResponse

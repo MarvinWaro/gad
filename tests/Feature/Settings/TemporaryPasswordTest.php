@@ -4,8 +4,11 @@ use App\Enums\ActivityAction;
 use App\Models\ActivityLog;
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\AccountCreated;
+use App\Support\OneTimePassword;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -27,6 +30,7 @@ function temporaryPasswordPayload(User|array $user, array $overrides = []): arra
         'password_confirmation' => '',
         'role_ids' => [Role::query()->where('slug', 'hei')->value('id')],
         'survey_hei_id' => test()->hei->id,
+        'password_delivery' => 'temporary',
         ...$overrides,
     ];
 }
@@ -43,6 +47,78 @@ test('an account created in Settings → Users starts with the temporary passwor
     $user = User::query()->where('email', 'new-member@example.test')->sole();
     expect(Hash::check('password', $user->password))->toBeTrue()
         ->and($user->must_change_password)->toBeTrue();
+});
+
+test('by default a new account gets a random password by email, which it replaces at its first sign-in', function () {
+    Notification::fake();
+
+    $this->actingAs($this->admin)
+        ->post(route('settings.users.store'), temporaryPasswordPayload([], ['password_delivery' => 'email']))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'User created. Their password was emailed to new-member@example.test.']);
+
+    $user = User::query()->where('email', 'new-member@example.test')->sole();
+    $emailed = null;
+    Notification::assertSentTo($user, AccountCreated::class, function (AccountCreated $notification) use ($user, &$emailed): bool {
+        $mail = $notification->toMail($user);
+        preg_match('/\*\*([A-Za-z0-9]+)\*\*/', implode(' ', $mail->introLines), $match);
+        $emailed = $match[1] ?? null;
+
+        return $mail->actionUrl === route('login');
+    });
+
+    expect($emailed)->toHaveLength(OneTimePassword::LENGTH)
+        ->and(Hash::check((string) $emailed, $user->password))->toBeTrue()
+        ->and(Hash::check('password', $user->password))->toBeFalse()
+        ->and($user->must_change_password)->toBeTrue();
+
+    // They sign in with it, and must choose their own before anything opens.
+    $this->post(route('logout'));
+    $this->post(route('login.store'), ['email' => $user->email, 'password' => $emailed]);
+    $this->assertAuthenticatedAs($user);
+    $this->get(route('dashboard'))->assertRedirect(route('password.change'));
+});
+
+test('a new account must say how it gets its first password', function () {
+    $this->actingAs($this->admin)
+        ->post(route('settings.users.store'), temporaryPasswordPayload([], ['password_delivery' => null]))
+        ->assertSessionHasErrors(['password_delivery' => 'Choose how they get their first password.']);
+    $this->post(route('settings.users.store'), temporaryPasswordPayload([], ['password_delivery' => 'sms']))
+        ->assertSessionHasErrors('password_delivery');
+
+    expect(User::query()->where('email', 'new-member@example.test')->exists())->toBeFalse();
+});
+
+test('when the email cannot go out, the account stays and the manager is told to set a password', function () {
+    Notification::shouldReceive('send')->andThrow(new RuntimeException('SMTP is down'));
+
+    $this->actingAs($this->admin)
+        ->post(route('settings.users.store'), temporaryPasswordPayload([], ['password_delivery' => 'email']))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('inertia.flash_data.toast.type', 'warning')
+        ->assertSessionHas('inertia.flash_data.toast.message', 'User created, but the email to new-member@example.test could not be sent. Edit the account to set a password, then tell them.');
+
+    expect(User::query()->where('email', 'new-member@example.test')->exists())->toBeTrue();
+});
+
+test('emailed passwords are ten letters and digits, with both, and without look-alikes', function () {
+    foreach (range(1, 200) as $ignored) {
+        expect(OneTimePassword::generate())->toMatch('/^(?=.*[2-9])(?=.*[A-Za-z])[A-HJ-NP-Za-km-z2-9]{10}$/');
+    }
+});
+
+test('the account email carries the site\'s branding and no stray formatting in the address', function () {
+    $user = User::factory()->create(['name' => 'Ana Cruz', 'email' => 'ana_cruz@example.test']);
+
+    $html = (string) (new AccountCreated('Ab3dEf7hJk'))->toMail($user)->render();
+
+    expect($html)
+        ->toContain('Ana Cruz')
+        ->toContain('ana_cruz@example.test')
+        ->toMatch('/<strong[^>]*>Ab3dEf7hJk<\/strong>/')
+        ->toContain(route('login'))
+        ->toContain(asset('assets/img/email/ched-seal.png'))
+        ->not->toContain('<em');
 });
 
 test('until it chooses its own password, the account opens nothing else', function () {
