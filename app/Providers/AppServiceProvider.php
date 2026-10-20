@@ -7,6 +7,8 @@ use App\Models\User;
 use App\Services\LiveUpdates;
 use App\Support\ActivitySubjects;
 use Carbon\CarbonImmutable;
+use Illuminate\Broadcasting\Broadcasters\Broadcaster;
+use Illuminate\Broadcasting\Broadcasters\NullBroadcaster;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Model;
@@ -44,8 +46,12 @@ class AppServiceProvider extends ServiceProvider
         Relation::morphMap(ActivitySubjects::TYPES);
 
         // Live updates through Berth's Soketi: a signal it turns away is an
-        // error to report, not a silent success (SoketiBroadcaster).
-        Broadcast::extend('pusher', fn (Application $app, array $config): SoketiBroadcaster => new SoketiBroadcaster(Broadcast::pusher($config)));
+        // error to report, not a silent success (SoketiBroadcaster). Without
+        // its key, secret or app id they stay off rather than stop the whole
+        // app from starting; `php artisan realtime:check` names what is missing.
+        Broadcast::extend('pusher', fn (Application $app, array $config): Broadcaster => blank($config['key'] ?? null) || blank($config['secret'] ?? null) || blank($config['app_id'] ?? null)
+            ? new NullBroadcaster
+            : new SoketiBroadcaster(Broadcast::pusher($config)));
 
         Gate::before(
             fn (User $user, string $ability): ?bool => $user->hasPermissionTo($ability)
