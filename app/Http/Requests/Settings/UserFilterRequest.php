@@ -9,7 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 
-/** The filters of Settings → Users: status, search, role and place. */
+/** The filters of Settings → Users: status, search, role, place and who is online. */
 class UserFilterRequest extends FormRequest
 {
     public function authorize(): bool
@@ -24,6 +24,8 @@ class UserFilterRequest extends FormRequest
             ...Arr::only(PlaceFilters::rules(), ['region', 'hei', 'search', 'page']),
             'status' => ['nullable', Rule::enum(UserStatus::class)],
             'role' => ['nullable', 'string', Rule::exists('roles', 'slug')],
+            // Only the accounts online now (User::scopeOnline).
+            'online' => ['nullable', 'boolean'],
         ];
     }
 }

@@ -44,15 +44,25 @@ Pages where someone types into a saved draft (the monitoring report and GAD surv
 
 ## Setting it up
 
-Take the `BROADCAST_*`, `PUSHER_*` and `VITE_PUSHER_*` lines from Berth: open the system, **WebSocket** tab, **Copy as .env**. The secret stays on the server; only the key (public by design) and the public host reach browsers. The `VITE_PUSHER_*` values are read by the server at run time and sent to the page, so the image needs no rebuild when they change.
+Take the `BROADCAST_*` and `PUSHER_*` lines from Berth: open the system, **WebSocket** tab, **Copy as .env**, plus `VITE_PUSHER_HOST`, `VITE_PUSHER_PORT` and `VITE_PUSHER_SCHEME` (the public endpoint browsers connect to). The secret stays on the server; only the app key (public by design) and the public host reach browsers. They are read by the server at run time and sent to the page, so the image needs no rebuild when they change.
 
-- **On a laptop:** `BROADCAST_CONNECTION=pusher`, and the backend uses the public endpoint, because Soketi's internal name does not resolve outside Coolify: `PUSHER_HOST` = the `VITE_PUSHER_HOST` value, `PUSHER_PORT=443`, `PUSHER_SCHEME=https`. Then `php artisan config:clear`.
-- **On Coolify:** the lines as Berth gives them (internal Soketi host, port 6001, http), as ordinary runtime variables. The app must run on the same server and Docker network as Soketi.
-- **Off:** `BROADCAST_CONNECTION=log` (or leave the `VITE_PUSHER_*` lines out). Pages then work as before, and the bell checks every 30 seconds.
+- **Write every value out.** A `.env` file expands a reference such as `"${PUSHER_HOST}"`, but Coolify passes it on as written. A reference in a `VITE_PUSHER_*` variable counts as unset (live updates stay off rather than break), and browsers always use `PUSHER_APP_KEY` itself, so `VITE_PUSHER_APP_KEY` and `VITE_PUSHER_APP_CLUSTER` are not needed.
+- **On Coolify:** `PUSHER_HOST` is Soketi's internal name with `PUSHER_PORT=6001` and `PUSHER_SCHEME=http`; the app must run on the same server and Docker network as Soketi. If it cannot reach that name, use the public endpoint instead (below). `VITE_PUSHER_HOST` is the public host (for example `ws.chedro12.com`), with 443 and https. Redeploy after changing any of them.
+- **On a laptop:** the backend uses the public endpoint, because Soketi's internal name does not resolve outside Coolify: `PUSHER_HOST` = the `VITE_PUSHER_HOST` value, `PUSHER_PORT=443`, `PUSHER_SCHEME=https`. Then `php artisan config:clear`. A laptop pointed at production's Soketi app shares its channel names, so its signals make production pages reload; give development its own Berth app, or `BROADCAST_CONNECTION=log`. Tests (PHP and browser) never broadcast.
+- **Off:** `BROADCAST_CONNECTION=log` (or leave `VITE_PUSHER_HOST` out). Pages then work as before, and the bell checks every 30 seconds.
+
+**Refused signals are errors.** Soketi, through Berth, turns a signal away (a wrong secret, an unknown app id) with the error in a 200 reply, which the Pusher SDK hands back instead of throwing. `App\Broadcasting\SoketiBroadcaster` (registered as the `pusher` driver in `AppServiceProvider`) throws instead, so `LiveUpdates` reports it to the log, as "Soketi refused the signal: …".
 
 ## Checking it
 
-1. From the application's terminal: `curl -s "http://$PUSHER_HOST:$PUSHER_PORT"` answers `OK`.
-2. `php artisan tinker --execute="dump(Broadcast::connection('pusher')->getPusher()->trigger('berth-check', 'ping', ['ok' => true]));"` answers an empty object. "The secret authentication failed" means `PUSHER_APP_SECRET` was rotated in Berth.
-3. In the browser, DevTools → Network → WS shows `wss://<host>/app/<key>…` with `pusher:connection_established`, then `pusher:subscription_succeeded` for each channel.
-4. With two browsers signed in, comment on someone's post: their bell and the post's page update without a refresh.
+1. **From the application's terminal** (Coolify → the app → Terminal):
+
+    ```bash
+    php artisan realtime:check
+    ```
+
+    It checks the settings, opens a WebSocket at the public endpoint as a browser does (the app key must be let in), reaches Soketi the way the server publishes, and sends a test signal the way every live update goes out. Each line says OK or FAIL with what to change; it ends with "Live updates work" (exit code 0) or a reminder to redeploy after changing a variable (exit code 1).
+
+2. **In the browser,** signed in: DevTools → Network → WS (reload the page) shows `wss://<host>/app/<key>…`. Its Messages show `pusher:connection_established`, then `pusher_internal:subscription_succeeded` for each channel. A `pusher:error` with code 4001 means the key is wrong; no WS line at all means the page was told nothing (`VITE_PUSHER_HOST` is empty or a reference).
+3. **For real:** with two browsers signed in as different people, comment on the other person's post. Their bell and the post's page update within a second or two, without a refresh. With live updates off, the bell takes up to 30 seconds.
+4. **In the log:** `grep -i "soketi refused\|pusher error" storage/logs/laravel.log | tail` shows signals that did not go out, and why.

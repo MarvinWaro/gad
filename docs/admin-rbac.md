@@ -115,16 +115,30 @@ more roles, and define custom roles from the permissions registered by the
 application. Permission definitions remain code-owned so the interface cannot
 invent abilities that have no protected route or behavior.
 
-**Temporary passwords.** An account created in Settings → Users starts with the
-temporary password (`auth.temporary_password`, from `AUTH_TEMPORARY_PASSWORD`;
-"password" unless set), which the form and the "User created" toast name for
-the admin to pass on. A password an admin types for someone else in Edit user
+**First passwords.** An account created in Settings → Users gets its first
+password one of two ways (`App\Enums\PasswordDelivery`). By default a random
+ten-character one (`OneTimePassword`) is emailed to it (`AccountCreated`); if
+the email cannot be sent, the account stays and the toast says to set a
+password in Edit user. Otherwise it starts with the temporary password
+(`auth.temporary_password`, from `AUTH_TEMPORARY_PASSWORD`; "password" unless
+set), which the form and the "User created" toast name for the admin to pass
+on. Either way it is temporary. A password an admin types for someone else in Edit user
 is temporary too; one they type for their own account is not. Until its holder
 chooses their own (`/password/change`, `TemporaryPasswordController`), the
 account opens nothing else (`EnsurePasswordIsChanged`): the new password must
 meet the password rules and differ from the temporary one. A forgotten-password
 reset also replaces it. The flag is `users.must_change_password`, set only by
 `User::giveTemporaryPassword()`.
+
+**Who is online.** Settings → Users shows "Online" beside each account here in
+the last five minutes (`User::ONLINE_MINUTES`), and "Last seen …" or "No visit
+recorded" beside the others. "Online now" lists only those online, and its
+count, like the status tabs, is within the other filters. An open page checks
+in at least every two minutes while its tab is in view, so it stays online.
+`RecordLastSeen` keeps `users.last_seen_at` after each signed-in request, at
+most once a minute a person, without touching `updated_at` or the activity
+log. The column is hidden from every other serialization. The list refreshes
+itself every minute.
 
 The Administrator role is system locked. The application also prevents users
 from deleting their own account, deleting an assigned role, or removing the

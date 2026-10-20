@@ -1,5 +1,14 @@
 <?php
 
+// Coolify hands its variables to the app as written, so a reference such
+// as "${PUSHER_HOST}" (as Berth's "Copy as .env" lines have them) arrives
+// unexpanded; only a .env file expands it. Such a value counts as unset.
+$plain = static function (string $name, mixed $default = null): mixed {
+    $value = env($name);
+
+    return is_string($value) && str_contains($value, '${') ? $default : ($value ?? $default);
+};
+
 return [
 
     /*
@@ -41,13 +50,14 @@ return [
             ],
             // How browsers listen: the public endpoint. Sent to signed-in
             // pages at run time (HandleInertiaRequests), so one image works
-            // wherever it runs. The key is public by design; never the secret.
+            // wherever it runs. The key is the app's own, public by design;
+            // never the secret. Without a public host, live updates are off.
             'client' => [
-                'key' => env('VITE_PUSHER_APP_KEY') ?: env('PUSHER_APP_KEY'),
-                'host' => env('VITE_PUSHER_HOST'),
-                'port' => (int) env('VITE_PUSHER_PORT', 443),
-                'scheme' => env('VITE_PUSHER_SCHEME', 'https'),
-                'cluster' => env('VITE_PUSHER_APP_CLUSTER') ?: env('PUSHER_APP_CLUSTER', 'mt1'),
+                'key' => env('PUSHER_APP_KEY'),
+                'host' => $plain('VITE_PUSHER_HOST'),
+                'port' => (int) $plain('VITE_PUSHER_PORT', 443),
+                'scheme' => $plain('VITE_PUSHER_SCHEME', 'https'),
+                'cluster' => env('PUSHER_APP_CLUSTER', 'mt1'),
             ],
         ],
 

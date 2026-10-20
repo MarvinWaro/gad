@@ -54,6 +54,8 @@ $environment = [
     'SESSION_DRIVER' => 'database', 'SESSION_CONNECTION' => 'sqlite',
     'SESSION_DOMAIN' => 'null', 'SESSION_SECURE_COOKIE' => 'false',
     'CACHE_STORE' => 'array', 'QUEUE_CONNECTION' => 'sync', 'MAIL_MAILER' => 'array',
+    // Never a developer's WebSocket app: its channel names are production's too.
+    'BROADCAST_CONNECTION' => 'null',
     'BCRYPT_ROUNDS' => '4',
     // Uploads stay in this run's folder, never a Spaces bucket a developer's .env names.
     'FILESYSTEM_UPLOADS' => 'local',
