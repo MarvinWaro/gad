@@ -59,6 +59,7 @@ test('adding and deleting users keep the list as it was', function () {
             'email' => 'new-member@example.test',
             'survey_hei_id' => createSurveyHei()->id,
             'role_ids' => [$hei->id],
+            'password_delivery' => 'temporary',
         ])
         ->assertRedirect($filtered);
 

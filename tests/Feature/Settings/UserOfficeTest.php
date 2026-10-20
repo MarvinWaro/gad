@@ -26,6 +26,7 @@ function officeUserPayload(array $roleIds, array $overrides = []): array
         'password' => 'password',
         'password_confirmation' => 'password',
         'role_ids' => $roleIds,
+        'password_delivery' => 'temporary',
         ...$overrides,
     ];
 }

@@ -111,7 +111,11 @@ type UserForm = {
     role_ids: number[];
     /** '' for no office, 'national' for the Central Office, or a region's id. */
     office: string;
+    /** A new account's first password (App\Enums\PasswordDelivery). */
+    password_delivery: PasswordDelivery;
 };
+
+type PasswordDelivery = 'email' | 'temporary';
 
 const NATIONAL_OFFICE = 'national';
 
@@ -691,6 +695,7 @@ function UserDialog({
             password_confirmation: '',
             role_ids: user?.roles.map((role) => role.id) ?? [],
             office: officeValue(user?.office),
+            password_delivery: 'email',
         };
     };
     const form = useForm<UserForm>(saved());
@@ -765,20 +770,24 @@ function UserDialog({
         };
 
         // The region only narrowed the list; the institution is what is kept.
-        form.transform(({ office, region: _region, ...data }) => ({
-            ...data,
-            // Staff accounts have no institution; their office places them.
-            survey_hei_id: heiAccount ? data.survey_hei_id : '',
-            national_access:
-                administrator || (staff && office === NATIONAL_OFFICE),
-            survey_region_id:
-                !administrator &&
-                staff &&
-                office !== '' &&
-                office !== NATIONAL_OFFICE
-                    ? Number(office)
-                    : null,
-        }));
+        form.transform(
+            ({ office, region: _region, password_delivery, ...data }) => ({
+                ...data,
+                // Only a new account is given a first password.
+                ...(mode === 'create' ? { password_delivery } : {}),
+                // Staff accounts have no institution; their office places them.
+                survey_hei_id: heiAccount ? data.survey_hei_id : '',
+                national_access:
+                    administrator || (staff && office === NATIONAL_OFFICE),
+                survey_region_id:
+                    !administrator &&
+                    staff &&
+                    office !== '' &&
+                    office !== NATIONAL_OFFICE
+                        ? Number(office)
+                        : null,
+            }),
+        );
 
         if (mode === 'create') {
             form.post('/settings/users', options);
@@ -955,24 +964,66 @@ function UserDialog({
                         </div>
                     )}
                     {mode === 'create' ? (
-                        // New accounts start with the temporary password and
-                        // choose their own at first sign-in.
-                        <p
-                            data-test="temporary-password-note"
-                            className="flex gap-2.5 rounded-lg bg-muted px-3 py-2.5 text-sm text-muted-foreground"
+                        // Either first password is replaced at the first
+                        // sign-in; emailing a random one is the default.
+                        <fieldset
+                            data-test="password-delivery"
+                            className="grid gap-2"
                         >
-                            <KeyRound
-                                aria-hidden
-                                className="mt-0.5 size-4 shrink-0"
+                            <legend className="mb-1 flex items-center gap-2 text-sm font-medium">
+                                <KeyRound
+                                    aria-hidden
+                                    className="size-4 text-muted-foreground"
+                                />
+                                First password
+                            </legend>
+                            {passwordDeliveries(
+                                form.data.email,
+                                temporaryPassword,
+                            ).map((option) => (
+                                <label
+                                    key={option.value}
+                                    htmlFor={`${fieldId}-delivery-${option.value}`}
+                                    className="flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm has-[:checked]:border-brand has-[:checked]:bg-brand-soft"
+                                >
+                                    <input
+                                        id={`${fieldId}-delivery-${option.value}`}
+                                        type="radio"
+                                        name={`${fieldId}-delivery`}
+                                        value={option.value}
+                                        checked={
+                                            form.data.password_delivery ===
+                                            option.value
+                                        }
+                                        onChange={() =>
+                                            form.setData(
+                                                'password_delivery',
+                                                option.value,
+                                            )
+                                        }
+                                        aria-describedby={`${fieldId}-delivery-${option.value}-help`}
+                                        className="mt-0.5 size-4 shrink-0 accent-foreground"
+                                    />
+                                    <span className="grid gap-0.5">
+                                        <span className="font-medium">
+                                            {option.label}
+                                        </span>
+                                        {/* Read as the option's description,
+                                            not as part of its name. */}
+                                        <span
+                                            id={`${fieldId}-delivery-${option.value}-help`}
+                                            aria-hidden
+                                            className="text-muted-foreground"
+                                        >
+                                            {option.description}
+                                        </span>
+                                    </span>
+                                </label>
+                            ))}
+                            <InputError
+                                message={form.errors.password_delivery}
                             />
-                            <span>
-                                They sign in with the temporary password{' '}
-                                <span className="font-medium text-foreground">
-                                    {temporaryPassword}
-                                </span>
-                                , then choose their own the first time.
-                            </span>
-                        </p>
+                        </fieldset>
                     ) : (
                         <div className="grid gap-2">
                             <div className="grid gap-2 sm:grid-cols-2">
@@ -1049,6 +1100,27 @@ function UserDialog({
             </DialogContent>
         </Dialog>
     );
+}
+
+/** The ways a new account gets its first password, the default first. */
+function passwordDeliveries(
+    email: string,
+    temporaryPassword?: string | null,
+): { value: PasswordDelivery; label: string; description: string }[] {
+    const to = email.trim() || 'them';
+
+    return [
+        {
+            value: 'email',
+            label: 'Email a password',
+            description: `A random password is emailed to ${to}. They choose their own the first time they sign in.`,
+        },
+        {
+            value: 'temporary',
+            label: 'Use the temporary password',
+            description: `They sign in with “${temporaryPassword}”, which you tell them, then choose their own the first time.`,
+        },
+    ];
 }
 
 function DeleteUserDialog({ user }: { user: ManagedUser }) {

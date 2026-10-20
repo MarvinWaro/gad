@@ -35,6 +35,7 @@ function chedFocalPayload(array $roleSlugs, array $overrides = []): array
         'name' => 'New Member',
         'email' => 'new@example.test',
         'role_ids' => Role::query()->whereIn('slug', $roleSlugs)->pluck('id')->all(),
+        'password_delivery' => 'temporary',
         ...$overrides,
     ];
 }

@@ -66,6 +66,7 @@ test('administrators can create update and delete users with roles', function ()
             'password_confirmation' => 'password',
             'survey_hei_id' => $institution->id,
             'role_ids' => [$hei->id],
+            'password_delivery' => 'temporary',
         ])
         ->assertRedirect(route('settings.users.index'));
 

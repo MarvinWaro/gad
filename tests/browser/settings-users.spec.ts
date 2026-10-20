@@ -17,11 +17,17 @@ test('the user form asks where an account belongs by its roles', async ({
     // Contact details are the account holder's to add on their Profile.
     await expect(dialog.getByLabel(/Mobile number/)).toHaveCount(0);
     await expect(dialog.getByLabel(/^Sex/)).toHaveCount(0);
-    // New accounts start with the temporary password; no password to type.
+    // No password to type: by default a random one is emailed; the shared
+    // temporary password is the other choice.
     await expect(dialog.getByLabel('Password', { exact: true })).toHaveCount(0);
+    const delivery = dialog.getByRole('group', { name: 'First password' });
     await expect(
-        dialog.locator('[data-test="temporary-password-note"]'),
-    ).toContainText('temporary password password');
+        delivery.getByRole('radio', { name: 'Email a password' }),
+    ).toBeChecked();
+    await expect(
+        delivery.getByRole('radio', { name: 'Use the temporary password' }),
+    ).not.toBeChecked();
+    await expect(delivery).toContainText('They sign in with “password”');
     // Nothing to place until a role says what kind of account it is.
     await expect(dialog.getByLabel('Institution')).toHaveCount(0);
     await expect(dialog.getByLabel('Office')).toHaveCount(0);
