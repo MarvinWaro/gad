@@ -191,7 +191,10 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
             />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">
-                <aside className="w-full max-w-xl lg:w-56">
+                {/* Beside the page, the menu stays in view under the header
+                    while long pages scroll; taller than the screen, it
+                    scrolls on its own. */}
+                <aside className="w-full max-w-xl lg:sticky lg:top-below-header lg:-mx-1 lg:max-h-[calc(100svh-var(--app-header,0px)-3rem)] lg:w-56 lg:shrink-0 lg:self-start lg:overflow-y-auto lg:px-1">
                     <nav
                         className="flex flex-col space-y-1 space-x-0"
                         aria-label="Settings"
