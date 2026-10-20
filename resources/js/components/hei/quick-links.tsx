@@ -7,6 +7,7 @@ import {
     FileSpreadsheet,
     Folder,
     LayoutGrid,
+    Map,
     MessageSquareText,
     Star,
     VenusAndMars,
@@ -25,6 +26,7 @@ const icons: Record<string, LucideIcon> = {
     faq: CircleHelp,
     feedback: MessageSquareText,
     rate: Star,
+    tour: Map,
 };
 
 /**
@@ -35,10 +37,13 @@ const icons: Record<string, LucideIcon> = {
 export function QuickLinks({
     links,
     title = 'Quick links',
+    tour,
     className,
 }: {
     links: QuickLink[];
     title?: string;
+    /** Where the HEI home's guided tour points (data-tour; lib/hei-tour.ts). */
+    tour?: string;
     className?: string;
 }) {
     const titleId = useId();
@@ -50,6 +55,7 @@ export function QuickLinks({
     return (
         <section
             aria-labelledby={titleId}
+            data-tour={tour}
             className={cn('rounded-[10px] border bg-card', className)}
         >
             <h2 id={titleId} className="px-4 pt-4 text-base font-medium">

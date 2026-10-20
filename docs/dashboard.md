@@ -1,6 +1,6 @@
 # Staff dashboard
 
-`/dashboard` gives CHED staff the network's figures for the places their office covers. HEI accounts get the HEI home on the same route instead.
+`/dashboard` gives CHED staff the network's figures for the places their office covers. HEI accounts get the HEI home on the same route instead. The first time an HEI account opens it, a short guided tour (driver.js) shows them around; see DESIGN.md, "Guided tour". It needs the `users.tour_seen_at` column (migration `2026_10_26_000000`).
 
 **Where things live**
 

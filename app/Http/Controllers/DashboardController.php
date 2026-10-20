@@ -36,6 +36,8 @@ class DashboardController extends Controller
                 'name' => $user->hei->name,
                 'display_name' => InstitutionName::display($user->hei->name),
             ] : null,
+            // The guided tour starts by itself until it is finished or closed once.
+            'tourPending' => $user->tour_seen_at === null,
             'surveys' => fn (): array => $this->surveys($user->survey_hei_id),
             'calendar' => fn (): array => EventCalendar::month($user, $request->string('month')->toString() ?: null),
             'upcoming' => fn (): array => EventCalendar::upcoming($user),

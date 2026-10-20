@@ -308,6 +308,7 @@ export function PostComposer({
     return (
         <section
             aria-label="Create a post"
+            data-tour="composer"
             className="rounded-[10px] border bg-card"
         >
             <input

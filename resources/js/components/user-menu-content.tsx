@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings, UserRound } from 'lucide-react';
+import { LogOut, Map, Settings, UserRound } from 'lucide-react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -8,16 +8,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
+import { withTour } from '@/lib/hei-tour';
 import { myProfileHref } from '@/lib/my-profile';
-import { logout } from '@/routes';
+import { dashboard, logout } from '@/routes';
 import { edit } from '@/routes/profile';
 import type { User } from '@/types';
 
 type Props = {
     user: User;
+    /** Offer the HEI home's guided tour again (HEI accounts). */
+    tour?: boolean;
 };
 
-export function UserMenuContent({ user }: Props) {
+export function UserMenuContent({ user, tour = false }: Props) {
     const cleanup = useMobileNavigation();
 
     const handleLogout = () => {
@@ -56,6 +59,18 @@ export function UserMenuContent({ user }: Props) {
                         Settings
                     </Link>
                 </DropdownMenuItem>
+                {tour && (
+                    <DropdownMenuItem asChild>
+                        <Link
+                            className="block w-full cursor-pointer"
+                            href={withTour(dashboard.url())}
+                            onClick={cleanup}
+                        >
+                            <Map className="mr-2" />
+                            Take the tour
+                        </Link>
+                    </DropdownMenuItem>
+                )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>

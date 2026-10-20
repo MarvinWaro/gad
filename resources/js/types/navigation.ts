@@ -15,6 +15,8 @@ export type NavItem = {
     beta?: boolean;
     /** A one-word name for the phone's bottom bar, where the title is too long. */
     shortTitle?: string;
+    /** Where the HEI home's guided tour points (data-tour; lib/hei-tour.ts). */
+    tour?: string;
 };
 
 /** Navigation items under one label, as the sidebar groups them. */
@@ -24,4 +26,6 @@ export type NavGroup = {
     /** The top navigation shows the group as one menu, named by its label. */
     menu?: boolean;
     icon?: LucideIcon | null;
+    /** Where the HEI home's guided tour points (data-tour; lib/hei-tour.ts). */
+    tour?: string;
 };

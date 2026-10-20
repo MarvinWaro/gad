@@ -375,6 +375,15 @@ foreach (range(1, 12) as $index) {
     ]);
 }
 
+// The HEI home's guided tour starts by itself once per account: every
+// account above has seen it, so no spec is interrupted, and two new ones
+// have not (tests/browser/hei-tour.spec.ts).
+User::query()->update(['tour_seen_at' => now()]);
+User::factory()->create(['name' => 'Fictional Tour Member', 'email' => 'browser-tour@example.test', 'password' => 'browser-password', 'survey_hei_id' => $hei->id])
+    ->assignRole('hei');
+User::factory()->create(['name' => 'Fictional Tour Focal', 'email' => 'browser-tour-focal@example.test', 'password' => 'browser-password', 'survey_hei_id' => $hei->id])
+    ->assignRole('hei-focal');
+
 $server = new Process([PHP_BINARY, '-S', '127.0.0.1:8016', '-t', 'public', 'tests/browser/router.php'], dirname(__DIR__, 2));
 $server->setTimeout(null);
 try {

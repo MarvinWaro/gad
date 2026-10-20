@@ -20,6 +20,7 @@ import {
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { resources } from '@/data/phlgadis-demo';
+import { withTour } from '@/lib/hei-tour';
 import { resourceIcons } from '@/lib/resource-icons';
 import { cn } from '@/lib/utils';
 import { about, dashboard, home, myProfile } from '@/routes';
@@ -108,6 +109,7 @@ export function HomeRail({
                 id="law-surveys"
                 title="Law surveys"
                 icon={ClipboardList}
+                tour="surveys"
                 defaultOpen
             >
                 <ul className="space-y-3 pt-1 pb-2">
@@ -226,19 +228,22 @@ function Group({
     id,
     title,
     icon,
+    tour,
     defaultOpen = false,
     children,
 }: {
     id: string;
     title: string;
     icon: LucideIcon;
+    /** Where the guided tour points (data-tour; lib/hei-tour.ts). */
+    tour?: string;
     defaultOpen?: boolean;
     children: ReactNode;
 }) {
     const [open, setOpen] = useRememberedOpen(id, defaultOpen);
 
     return (
-        <Collapsible open={open} onOpenChange={setOpen}>
+        <Collapsible open={open} onOpenChange={setOpen} data-tour={tour}>
             <CollapsibleTrigger className={cn(rowClass, 'group/fold')}>
                 <IconTile icon={icon} />
                 <span className="flex-1">{title}</span>
@@ -265,6 +270,7 @@ function RailFooter() {
         { label: 'Feedback', href: feedback.url() },
         // The homepage opens its Rate PHLGADIS card for #rate.
         { label: 'Rate PHLGADIS', href: `${home.url()}#rate` },
+        { label: 'Take the tour', href: withTour(dashboard.url()) },
     ];
 
     return (
