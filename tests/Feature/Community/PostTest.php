@@ -246,6 +246,8 @@ test('authors add a feeling and tag active people, and the feed shows both', fun
             ->where('posts.data.0.feeling', ['value' => 'proud', 'label' => 'proud', 'emoji' => '🏅'])
             ->has('posts.data.0.tags', 2)
             ->where('posts.data.0.tags.0.name', 'Ana Cruz')
+            // For the link to their profile.
+            ->where('posts.data.0.tags.0.ulid', $colleague->ulid)
             ->where('posts.data.0.tags.0.affiliation', InstitutionName::display($colleague->hei->name))
             ->where('posts.data.0.tags.1.name', 'Ben Reyes')
             ->where('posts.data.0.tags.1.affiliation', 'CHED Central Office')));
@@ -673,6 +675,10 @@ test('a CHED post speaks for the office of its author, never one fixed region', 
     communityPost($school, ['body' => 'From a school.']);
     communityPost($regional, ['body' => 'From Region IV.', 'survey_hei_id' => null]);
     communityPost($central, ['body' => 'From the Central Office.', 'survey_hei_id' => null]);
+    // An Administrator who names a regional office speaks for it, still covering every region.
+    $regionalAdmin = User::factory()->nationalOffice()->create(['survey_region_id' => $region->id]);
+    $regionalAdmin->assignRole('admin');
+    communityPost($regionalAdmin, ['body' => 'From an administrator in Region IV.', 'survey_hei_id' => null]);
     // Tagging the regional staff member names their office too.
     Post::query()->where('body', 'From a school.')->sole()->tags()->attach($regional->id);
 
@@ -683,6 +689,7 @@ test('a CHED post speaks for the office of its author, never one fixed region', 
 
                 return $by['From Region IV.']['office'] === 'CHED Regional Office IV'
                     && $by['From the Central Office.']['office'] === 'CHED Central Office'
+                    && $by['From an administrator in Region IV.']['office'] === 'CHED Regional Office IV'
                     && $by['From a school.']['office'] === null
                     && $by['From a school.']['hei']['display_name'] === InstitutionName::display($school->hei->name)
                     && $by['From a school.']['tags'][0]['affiliation'] === 'CHED Regional Office IV';

@@ -2,7 +2,7 @@ import { Heart, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent, PointerEvent, RefObject } from 'react';
 import { PersonAvatar } from '@/components/person-avatar';
-import { PersonLink } from '@/components/people/person-link';
+import { PersonLink, PersonPhotoLink } from '@/components/people/person-link';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -644,11 +644,13 @@ function ReactorRow({ person }: { person: Reactor }) {
     return (
         <li className="flex items-center gap-3 px-4 py-2 sm:px-5">
             <span className="relative shrink-0">
-                <PersonAvatar
-                    name={person.name}
-                    src={person.avatar}
-                    className="size-10"
-                />
+                <PersonPhotoLink person={person}>
+                    <PersonAvatar
+                        name={person.name}
+                        src={person.avatar}
+                        className="size-10"
+                    />
+                </PersonPhotoLink>
                 <span
                     aria-hidden
                     className="absolute -right-1 -bottom-1 grid size-5 place-items-center rounded-full bg-card text-xs leading-none ring-2 ring-card"

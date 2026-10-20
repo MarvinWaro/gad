@@ -402,3 +402,31 @@ test('saving an account keeps the filtered list, and Edit shows what is saved', 
         'List State Saved',
     );
 });
+
+test('an Administrator names the office they work from, and still covers every region', async ({
+    page,
+}) => {
+    // Only the Central Office makes Administrators.
+    await page.goto('/login');
+    await page
+        .getByLabel('Email address')
+        .fill('browser-national@example.test');
+    await page.getByLabel('Password', { exact: true }).fill('browser-password');
+    await page.getByRole('button', { name: 'Log in', exact: true }).click();
+    await expect(page).toHaveURL(/dashboard/);
+    await page.goto('/settings/users');
+
+    await page.getByRole('button', { name: 'Add user' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Create user' });
+    await dialog.getByRole('checkbox', { name: 'Administrator' }).click();
+    const office = dialog.getByRole('combobox', { name: 'Office' });
+    await expect(office).toHaveText('Central Office — all regions');
+    await expect(dialog).toContainText(
+        'Administrators manage every region wherever they work.',
+    );
+    await office.click();
+    await expect(
+        page.getByRole('option', { name: 'Regional Office XII' }),
+    ).toBeVisible();
+    await page.keyboard.press('Escape');
+});

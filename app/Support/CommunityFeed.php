@@ -203,7 +203,7 @@ class CommunityFeed
                 'author.officeRegion:id,name',
                 'hei:id,name',
                 'images',
-                'tags:id,name,survey_hei_id,survey_region_id,avatar_path',
+                'tags:id,ulid,name,survey_hei_id,survey_region_id,avatar_path',
                 'tags.hei:id,name',
                 'tags.officeRegion:id,name',
                 'sdgs',
@@ -212,7 +212,7 @@ class CommunityFeed
                 'sharedPost.author.officeRegion:id,name',
                 'sharedPost.hei:id,name',
                 'sharedPost.images',
-                'sharedPost.tags:id,name,survey_hei_id,survey_region_id,avatar_path',
+                'sharedPost.tags:id,ulid,name,survey_hei_id,survey_region_id,avatar_path',
                 'sharedPost.tags.hei:id,name',
                 'sharedPost.tags.officeRegion:id,name',
                 'sharedPost.sdgs',
@@ -292,6 +292,7 @@ class CommunityFeed
             'tags' => $post->tags
                 ->map(fn (User $user): array => [
                     'id' => $user->id,
+                    'ulid' => $user->ulid,
                     'name' => $user->name,
                     'avatar' => $user->avatar,
                     'affiliation' => $user->affiliation(),

@@ -32,6 +32,8 @@ export type PostFeeling = { value: string; label: string; emoji: string };
 /** Someone tagged on a post (or offered for tagging): an active account. */
 export type TaggedUser = {
     id: number;
+    /** For their profile link. */
+    ulid: string;
     name: string;
     avatar: string | null;
     /** Their institution, or their CHED office (User::affiliation). */

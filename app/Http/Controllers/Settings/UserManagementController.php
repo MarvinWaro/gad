@@ -553,11 +553,12 @@ class UserManagementController extends Controller
      * The office a create or update sets, or null to keep the current one.
      * HEI-only accounts never hold one: their region comes through the HEI.
      * Administrators run the whole system, so they always cover every
-     * region, whatever office the form sends.
+     * region; the office they work from is theirs to name (it is the one
+     * their name and posts speak for), or the Central Office.
      *
      * @param  list<string>  $slugs
      * @param  array<string, mixed>  $validated
-     * @return array{national_access: bool, survey_region_id: int|null}|null
+     * @return array{national_access: bool, survey_region_id?: int|null}|null
      */
     private function officeFrom(array $slugs, array $validated): ?array
     {
@@ -565,11 +566,20 @@ class UserManagementController extends Controller
             return ['national_access' => false, 'survey_region_id' => null];
         }
 
+        $officeSent = array_key_exists('national_access', $validated) || array_key_exists('survey_region_id', $validated);
+
         if (in_array('admin', $slugs, true)) {
-            return ['national_access' => true, 'survey_region_id' => null];
+            if (! $officeSent) {
+                // Left out, the office they named stays.
+                return ['national_access' => true];
+            }
+
+            $region = $validated['survey_region_id'] ?? null;
+
+            return ['national_access' => true, 'survey_region_id' => $region === null ? null : (int) $region];
         }
 
-        if (! array_key_exists('national_access', $validated) && ! array_key_exists('survey_region_id', $validated)) {
+        if (! $officeSent) {
             return null;
         }
 
@@ -586,7 +596,7 @@ class UserManagementController extends Controller
      * Only Central Office staff grant national access or place accounts in
      * any region; regional staff may place them only in their own office.
      *
-     * @param  array{national_access: bool, survey_region_id: int|null}|null  $office
+     * @param  array{national_access: bool, survey_region_id?: int|null}|null  $office
      */
     private function ensureOfficeIsAssignable(User $actor, ?array $office): void
     {
@@ -600,7 +610,7 @@ class UserManagementController extends Controller
             ]);
         }
 
-        if ($office['survey_region_id'] !== null && ! $actor->reachesRegion($office['survey_region_id'])) {
+        if (($office['survey_region_id'] ?? null) !== null && ! $actor->reachesRegion($office['survey_region_id'])) {
             throw ValidationException::withMessages([
                 'survey_region_id' => __('You can only place accounts in your own regional office.'),
             ]);
