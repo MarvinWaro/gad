@@ -184,6 +184,76 @@ test('the users list filters by role and place as soon as they change', async ({
     });
 });
 
+test('the users list shows who is online, and lists only them on request', async ({
+    page,
+}, testInfo) => {
+    await page.goto('/login');
+    await page.getByLabel('Email address').fill('browser-admin@example.test');
+    await page.getByLabel('Password', { exact: true }).fill('browser-password');
+    await page.getByRole('button', { name: 'Log in', exact: true }).click();
+    await expect(page).toHaveURL(/dashboard/);
+    await page.goto('/settings/users');
+
+    const rows = page.getByRole('table').locator('tbody tr');
+    // Each account says whether it is here, or when it last was.
+    for (const row of await rows.all()) {
+        await expect(row).toContainText(/Online|Last seen|No visit recorded/);
+    }
+    await expect(
+        rows.filter({ hasText: /Last seen|No visit recorded/ }).first(),
+    ).toBeVisible();
+    const own = rows.filter({ has: page.getByText('You', { exact: true }) });
+
+    const toggle = page.getByRole('button', { name: /^Online now/ });
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await toggle.click();
+    await expect(page).toHaveURL(/online=1/);
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    // Signing in counts as being here.
+    await expect(own).toContainText('Online');
+    for (const row of await rows.all()) {
+        await expect(row).toContainText('Online');
+    }
+
+    for (const theme of ['light', 'dark'] as const) {
+        await page.evaluate(
+            (dark) => document.documentElement.classList.toggle('dark', dark),
+            theme === 'dark',
+        );
+        await page.waitForTimeout(300);
+        await page.screenshot({
+            path: testInfo.outputPath(`users-online-${theme}.png`),
+            fullPage: true,
+        });
+        expect(
+            (
+                await new AxeBuilder({ page })
+                    .include('main')
+                    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+                    .analyze()
+            ).violations,
+        ).toEqual([]);
+    }
+    await page.evaluate(() =>
+        document.documentElement.classList.remove('dark'),
+    );
+
+    await toggle.click();
+    await expect(page).toHaveURL(/\/settings\/users$/);
+    await expect(
+        rows.filter({ hasText: /Last seen|No visit recorded/ }).first(),
+    ).toBeVisible();
+
+    await page.setViewportSize({ width: 375, height: 800 });
+    expect(
+        await page.evaluate(
+            () =>
+                document.documentElement.scrollWidth <=
+                document.documentElement.clientWidth,
+        ),
+    ).toBe(true);
+});
+
 test('long region and institution names wrap inside the user dialog', async ({
     page,
 }, testInfo) => {

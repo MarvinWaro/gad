@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RecordLastSeen;
 use App\Http\Middleware\ThrottleAccountForms;
 use App\Http\Middleware\ThrottleEachRoute;
 use App\Support\ErrorPage;
@@ -51,6 +52,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             EnsureUserIsActive::class,
+            RecordLastSeen::class,
             EnsurePasswordIsChanged::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,

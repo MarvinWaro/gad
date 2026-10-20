@@ -40,6 +40,7 @@ class UserManagementController extends Controller
         $search = trim((string) ($validated['search'] ?? ''));
         $status = UserStatus::tryFrom((string) ($validated['status'] ?? ''));
         $role = (string) ($validated['role'] ?? '');
+        $online = (bool) ($validated['online'] ?? false);
         $actorPermissions = $request->user()->grantablePermissionSlugs();
         $canEdit = $request->user()->can('users.create') || $request->user()->can('users.update');
 
@@ -56,6 +57,7 @@ class UserManagementController extends Controller
                 });
             })
             ->when($role !== '', fn ($query) => $query->whereHas('roles', fn ($query) => $query->where('slug', $role)))
+            ->when($online, fn ($query) => $query->online())
             // A regional office lists its own region's accounts (staff by
             // office, HEI accounts through their HEI) and those placed nowhere.
             ->when(! $actor->national_access, fn ($query) => $query
@@ -90,6 +92,8 @@ class UserManagementController extends Controller
                     'region' => $user->officeRegion?->only(['id', 'name']),
                 ],
                 'created_at' => $user->created_at?->toISOString(),
+                'last_seen_at' => $user->last_seen_at?->toISOString(),
+                'online' => $user->isOnline(),
                 'is_current_user' => $user->is($actor),
                 // A registration waiting for approval has no profile yet.
                 'has_profile' => $actor->can('viewProfile', $user),
@@ -159,12 +163,15 @@ class UserManagementController extends Controller
                 : [],
             'statusCounts' => collect(UserStatus::cases())
                 ->mapWithKeys(fn (UserStatus $case): array => [$case->value => (int) ($counts[$case->value] ?? 0)]),
+            // Within the same filters as the status tabs.
+            'onlineCount' => $filtered()->online()->count(),
             'filters' => [
                 'search' => $search,
                 'status' => $status->value ?? '',
                 'role' => $role,
                 'region' => (string) ($validated['region'] ?? ''),
                 'hei' => (string) ($validated['hei'] ?? ''),
+                'online' => $online ? '1' : '',
             ],
             // Every role, to filter by, including any this manager cannot assign.
             'roleOptions' => Role::query()->orderBy('name')->get(['name', 'slug']),

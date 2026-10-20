@@ -70,6 +70,8 @@ The seed creates the roles, the first administrator (`admin@gmail.com` with `ADM
 
 **After that,** deploy, then run `php artisan migrate --force` when the release has new migrations. To have each deploy migrate by itself, set `AUTORUN_LARAVEL_MIGRATION=true` in Coolify.
 
+**To check live updates** (the WebSocket), run `php artisan realtime:check` in the app's terminal. It ends with "Live updates work", or says what to change (`docs/realtime.md`, "Checking it").
+
 **Once, after the release that adds photo thumbnails** (migration `2026_10_24_000000`), run `php artisan posts:thumbnails`. It makes the feed's smaller copies of photos posted before; new posts get theirs as they are posted. Until it runs, the feed shows those photos full size, as before.
 
 **On a PC,** `docker build -t phlgadis .` builds the same image. It needs the environment above to run.

@@ -1,4 +1,4 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePoll } from '@inertiajs/react';
 import {
     Check,
     History,
@@ -46,6 +46,7 @@ import {
 import { FormSelect } from '@/components/ui/form-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { formatFull, formatRelative } from '@/lib/relative-time';
 import { cn } from '@/lib/utils';
 import { useLiveModules, useLiveReload } from '@/hooks/use-live';
 
@@ -69,6 +70,10 @@ type ManagedUser = {
     roles: Role[];
     office: { national: boolean; region: Region | null };
     created_at: string | null;
+    /** When the account was last here; null until its first visit once this was kept. */
+    last_seen_at: string | null;
+    /** Here in the last few minutes (User::ONLINE_MINUTES). */
+    online: boolean;
     is_current_user: boolean;
     /** False while the registration waits for approval. */
     has_profile: boolean;
@@ -97,6 +102,8 @@ type Filters = {
     role: string;
     region: string;
     hei: string;
+    /** '1' for only the accounts online now. */
+    online: '' | '1';
 };
 /** The places to filter by, as the monitoring lists offer them. */
 type Places = { regions: Region[]; heis: HeiOption[] };
@@ -166,6 +173,7 @@ export default function Users({
     offices,
     registration,
     statusCounts,
+    onlineCount,
     filters,
     roleOptions,
     places,
@@ -179,6 +187,8 @@ export default function Users({
     offices: Offices;
     registration: RegionRegistration[];
     statusCounts: Record<UserStatus, number>;
+    /** Accounts online now, within the filters the status tabs count in. */
+    onlineCount: number;
     filters: Filters;
     roleOptions: Pick<Role, 'name' | 'slug'>[];
     places: Places;
@@ -191,6 +201,9 @@ export default function Users({
         'statusCounts',
         'registration',
     ]);
+    // Who is online changes by the minute; Inertia slows this right down
+    // while the tab is out of view.
+    usePoll(60_000, { only: ['users', 'onlineCount'] });
 
     const [search, setSearch] = useState(filters.search);
     const totalUsers =
@@ -224,20 +237,24 @@ export default function Users({
 
     const showActions =
         permissions.update || permissions.delete || permissions.activity;
-    const emptyTitle = narrowed
-        ? 'No users match these filters'
-        : filters.search
-          ? 'No matching users'
-          : filters.status === 'pending'
-            ? 'No pending registrations'
-            : 'No users found';
-    const emptyDescription = narrowed
-        ? 'Try another role or place, or clear the filters to see every account.'
-        : filters.search
-          ? 'Try another name, email, role, or institution.'
-          : filters.status === 'pending'
-            ? 'New registrations will appear here for approval.'
-            : 'Create the first managed account.';
+    const emptyTitle = filters.online
+        ? 'No one is online right now'
+        : narrowed
+          ? 'No users match these filters'
+          : filters.search
+            ? 'No matching users'
+            : filters.status === 'pending'
+              ? 'No pending registrations'
+              : 'No users found';
+    const emptyDescription = filters.online
+        ? 'Accounts show here while they have PHLGADIS open.'
+        : narrowed
+          ? 'Try another role or place, or clear the filters to see every account.'
+          : filters.search
+            ? 'Try another name, email, role, or institution.'
+            : filters.status === 'pending'
+              ? 'New registrations will appear here for approval.'
+              : 'Create the first managed account.';
 
     return (
         <>
@@ -303,6 +320,26 @@ export default function Users({
                             );
                         })}
                     </nav>
+
+                    <button
+                        type="button"
+                        aria-pressed={filters.online === '1'}
+                        onClick={() =>
+                            visit({ online: filters.online ? '' : '1' })
+                        }
+                        className={cn(
+                            'flex shrink-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors',
+                            filters.online
+                                ? 'border-emerald-600 bg-emerald-50 text-emerald-800 dark:border-emerald-500 dark:bg-emerald-950 dark:text-emerald-200'
+                                : 'text-muted-foreground hover:text-foreground',
+                        )}
+                    >
+                        <OnlineDot />
+                        Online now
+                        <span className="rounded-full bg-foreground/10 px-1.5 text-xs tabular-nums">
+                            {onlineCount}
+                        </span>
+                    </button>
 
                     <form
                         onSubmit={submitSearch}
@@ -433,6 +470,7 @@ export default function Users({
                                                         )}
                                                     </p>
                                                 )}
+                                                <LastSeen user={user} />
                                             </td>
                                             <td className="min-w-40 px-4 py-4">
                                                 {user.hei ? (
@@ -592,6 +630,45 @@ export default function Users({
                 </div>
             </div>
         </>
+    );
+}
+
+function OnlineDot() {
+    return (
+        <span
+            aria-hidden="true"
+            className="size-2 shrink-0 rounded-full bg-emerald-500"
+        />
+    );
+}
+
+/** "Online", or when the account was last here. */
+function LastSeen({ user }: { user: ManagedUser }) {
+    if (user.online) {
+        return (
+            <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                <OnlineDot />
+                Online
+            </p>
+        );
+    }
+
+    return (
+        <p className="mt-1.5 text-xs text-muted-foreground">
+            {user.last_seen_at ? (
+                <>
+                    Last seen{' '}
+                    <time
+                        dateTime={user.last_seen_at}
+                        title={formatFull(user.last_seen_at)}
+                    >
+                        {formatRelative(user.last_seen_at)}
+                    </time>
+                </>
+            ) : (
+                'No visit recorded'
+            )}
+        </p>
     );
 }
 

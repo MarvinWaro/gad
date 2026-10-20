@@ -49,11 +49,12 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
  * @property string|null $remember_token
+ * @property Carbon|null $last_seen_at Kept by RecordLastSeen; shown only in Settings → Users.
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
 #[Fillable(['name', 'email', 'password', 'survey_hei_id', 'mobile_number', 'sex', 'status'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'avatar_path', 'search_name', 'search_sounds', 'participant_code'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'avatar_path', 'search_name', 'search_sounds', 'participant_code', 'last_seen_at'])]
 #[Appends(['avatar'])]
 // Email verification is temporarily optional. Restore MustVerifyEmail here to
 // require verification again; keep the verification routes and stored status.
@@ -64,6 +65,13 @@ class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasUlids, PasskeyAuthenticatable, RoutesNotifications, TwoFactorAuthenticatable;
+
+    /**
+     * Seen this many minutes ago or less counts as online. An open page
+     * checks in at least every two minutes (POLL_LIVE_MS in
+     * resources/js/lib/notifications.ts), while its tab is in view.
+     */
+    public const ONLINE_MINUTES = 5;
 
     /**
      * Mirror the column default so unsaved models agree with the database.
@@ -97,6 +105,7 @@ class User extends Authenticatable implements PasskeyUser
             'password' => 'hashed',
             'must_change_password' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
+            'last_seen_at' => 'datetime',
             'status' => UserStatus::class,
             'survey_region_id' => 'integer',
             'national_access' => 'boolean',
@@ -212,6 +221,16 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
+     * Accounts here in the last few minutes (ONLINE_MINUTES).
+     *
+     * @param  Builder<User>  $query
+     */
+    public function scopeOnline(Builder $query): void
+    {
+        $query->where('last_seen_at', '>=', now()->subMinutes(self::ONLINE_MINUTES));
+    }
+
+    /**
      * Accounts that may sign in now.
      *
      * @param  Builder<User>  $query
@@ -297,6 +316,12 @@ class User extends Authenticatable implements PasskeyUser
     public function isActive(): bool
     {
         return $this->status === UserStatus::Active;
+    }
+
+    /** Whether the account was here in the last few minutes (ONLINE_MINUTES). */
+    public function isOnline(): bool
+    {
+        return $this->last_seen_at?->gte(now()->subMinutes(self::ONLINE_MINUTES)) ?? false;
     }
 
     /**

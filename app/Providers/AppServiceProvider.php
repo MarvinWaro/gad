@@ -2,14 +2,17 @@
 
 namespace App\Providers;
 
+use App\Broadcasting\SoketiBroadcaster;
 use App\Models\User;
 use App\Services\LiveUpdates;
 use App\Support\ActivitySubjects;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -39,6 +42,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Activity logs store what they point at by these codes, not class names.
         Relation::morphMap(ActivitySubjects::TYPES);
+
+        // Live updates through Berth's Soketi: a signal it turns away is an
+        // error to report, not a silent success (SoketiBroadcaster).
+        Broadcast::extend('pusher', fn (Application $app, array $config): SoketiBroadcaster => new SoketiBroadcaster(Broadcast::pusher($config)));
 
         Gate::before(
             fn (User $user, string $ability): ?bool => $user->hasPermissionTo($ability)
