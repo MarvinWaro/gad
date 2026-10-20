@@ -4,6 +4,7 @@ use App\Broadcasting\SoketiBroadcaster;
 use App\Enums\ActivityModule;
 use App\Services\LiveUpdates;
 use App\Support\SoketiProbe;
+use Illuminate\Broadcasting\Broadcasters\NullBroadcaster;
 use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Exceptions;
@@ -145,4 +146,17 @@ test('a Soketi server answers OK at its root', function () {
 
     expect(app(SoketiProbe::class)->answers('http://soketi:6001'))->toBeTrue()
         ->and(app(SoketiProbe::class)->answers('https://elsewhere.test'))->toBeFalse();
+});
+
+test('a missing key, secret or app id leaves live updates off instead of stopping the app from starting', function () {
+    config([
+        'broadcasting.default' => 'pusher',
+        'broadcasting.connections.pusher.key' => null,
+        'broadcasting.connections.pusher.secret' => 'app-secret',
+        'broadcasting.connections.pusher.app_id' => 'phlgadis',
+    ]);
+
+    expect(Broadcast::connection('pusher'))->toBeInstanceOf(NullBroadcaster::class)
+        // Starting up registers the channels, which reaches the broadcaster.
+        ->and(fn () => require base_path('routes/channels.php'))->not->toThrow(Throwable::class);
 });
