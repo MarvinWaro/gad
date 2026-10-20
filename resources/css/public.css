@@ -4553,6 +4553,330 @@
     }
 }
 
+/* About: the GAD Herstory flight (components/public/herstory-flight*.tsx),
+   after the BrewedOps "Camera along a path". The stage sticks under the
+   header for 75svh of scroll a milestone while the camera flies a dotted
+   route past one card each; that milestone's caption shows. Wider than
+   tall, the caption sits left and the cards are framed right (.flight-art);
+   taller than wide, the cards are framed in the top half and the caption
+   sits at the foot on the page colour. The still timeline above is its
+   fallback. */
+.flight {
+    --flight-top: 88px;
+    position: relative;
+    height: calc(
+        (var(--flight-stops) - 1) * 75svh + 100svh - var(--flight-top)
+    );
+    margin-bottom: 64px;
+}
+.flight-stage {
+    position: sticky;
+    top: var(--flight-top);
+    height: calc(100svh - var(--flight-top));
+    overflow: hidden;
+}
+.flight-canvas,
+.flight-canvas canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+.flight-canvas {
+    opacity: 0;
+    transition: opacity 600ms ease;
+}
+.flight-canvas[data-ready] {
+    opacity: 1;
+}
+.flight-inner {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 32px;
+    width: min(100% - 64px, 1280px);
+    height: 100%;
+    margin-inline: auto;
+}
+.flight-art {
+    grid-column: 2;
+    grid-row: 1;
+}
+/* The milestones share one place; the one in step shows. Screen readers
+   read the whole list. */
+.flight-captions {
+    display: grid;
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    margin: 0;
+    padding: 0 0 72px;
+    list-style: none;
+}
+.flight-caption {
+    grid-area: 1 / 1;
+    align-self: end;
+    margin: -24px;
+    padding: 24px;
+    border-radius: 16px;
+    /* Cards fly behind the text; the page colour keeps it readable. */
+    background: color-mix(in srgb, var(--background) 88%, transparent);
+    box-shadow: 0 0 32px 16px
+        color-mix(in srgb, var(--background) 88%, transparent);
+    opacity: var(--o, 0);
+    translate: 0 var(--y, 0);
+    pointer-events: none;
+}
+.flight-caption.is-current {
+    pointer-events: auto;
+}
+.flight-eyebrow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 10px;
+    color: var(--brand);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+}
+.flight-eyebrow > span::after {
+    content: '·';
+    margin-left: 10px;
+}
+.flight-caption h2 {
+    margin-top: 12px;
+    font-size: clamp(28px, 3.4vw, 44px);
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+}
+.flight-caption h2 + p {
+    max-width: 46ch;
+    margin-top: 14px;
+    color: var(--muted-foreground);
+    font-size: 15px;
+    line-height: 1.65;
+}
+/* The route so far: a brand line down the right edge, a tick a milestone. */
+.flight-rail {
+    position: absolute;
+    top: 50%;
+    right: 28px;
+    width: 2px;
+    height: min(44%, 340px);
+    border-radius: 2px;
+    background: var(--border);
+    translate: 0 -50%;
+}
+.flight-rail::before {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--brand);
+    content: '';
+    transform-origin: top;
+    scale: 1 var(--flight-progress, 0);
+}
+.flight-rail > i {
+    position: absolute;
+    top: calc(var(--i) / (var(--flight-stops) - 1) * 100%);
+    left: 50%;
+    width: 7px;
+    height: 7px;
+    margin: -3.5px 0 0 -3.5px;
+    border-radius: 50%;
+    background: var(--background);
+    box-shadow: 0 0 0 1.5px var(--border);
+    transition:
+        scale 300ms ease,
+        background-color 300ms ease,
+        box-shadow 300ms ease;
+}
+.flight-rail > i.is-current {
+    background: var(--brand);
+    box-shadow: 0 0 0 1.5px var(--brand);
+    scale: 1.5;
+}
+.flight-hint {
+    position: absolute;
+    right: 56px;
+    bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--subtle-foreground);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: var(--flight-hint, 1);
+}
+.flight-hint svg {
+    width: 14px;
+    height: 14px;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .flight-hint svg {
+        animation: flight-hint 1.8s ease-in-out infinite;
+    }
+}
+@keyframes flight-hint {
+    50% {
+        translate: 0 3px;
+    }
+}
+@media (max-width: 900px) {
+    .flight {
+        --flight-top: 76px;
+    }
+    .flight-inner {
+        width: calc(100% - 48px);
+    }
+}
+@media (max-width: 600px) {
+    .flight {
+        --flight-top: 70px;
+    }
+    .flight-inner {
+        width: calc(100% - 32px);
+    }
+}
+/* Taller than wide (phones, tablets upright): the cards in the top half,
+   the caption at the foot, the route along the top. */
+@media (max-aspect-ratio: 1/1) {
+    .flight-inner {
+        display: block;
+    }
+    .flight-art {
+        position: absolute;
+        inset: 16px 0 42%;
+    }
+    .flight-captions {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        padding-bottom: 0;
+    }
+    .flight-caption {
+        margin: 0 -24px;
+        padding: 56px 24px 32px;
+        border-radius: 0;
+        background: linear-gradient(
+            to bottom,
+            transparent,
+            var(--background) 48px
+        );
+        box-shadow: none;
+    }
+    .flight-caption h2 {
+        margin-top: 8px;
+        font-size: clamp(24px, 6.4vw, 32px);
+    }
+    .flight-caption h2 + p {
+        margin-top: 10px;
+        line-height: 1.6;
+    }
+    .flight-rail {
+        top: 14px;
+        right: 24px;
+        left: 24px;
+        width: auto;
+        height: 2px;
+        translate: none;
+    }
+    .flight-rail::before {
+        transform-origin: left;
+        scale: var(--flight-progress, 0) 1;
+    }
+    .flight-rail > i {
+        top: 50%;
+        left: calc(var(--i) / (var(--flight-stops) - 1) * 100%);
+    }
+    .flight-hint {
+        top: 32px;
+        right: 24px;
+        bottom: auto;
+    }
+}
+@media (max-aspect-ratio: 1/1) and (max-width: 600px) {
+    .flight-caption {
+        margin-inline: -16px;
+        padding-inline: 16px;
+    }
+    .flight-rail {
+        right: 16px;
+        left: 16px;
+    }
+    .flight-hint {
+        right: 16px;
+    }
+}
+/* Short screens (phones on their side): smaller type, so the longest
+   milestone still fits. */
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) {
+    .flight-inner {
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+        gap: 24px;
+    }
+    .flight-captions {
+        padding-bottom: 20px;
+    }
+    .flight-caption {
+        margin: -16px;
+        padding: 16px;
+    }
+    .flight-caption h2 {
+        margin-top: 8px;
+        font-size: 22px;
+    }
+    .flight-caption h2 + p {
+        max-width: none;
+        margin-top: 8px;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+    .flight-hint {
+        display: none;
+    }
+}
+/* On paper: the milestones as a list. */
+@media print {
+    .flight {
+        height: auto;
+    }
+    .flight-stage {
+        position: static;
+        height: auto;
+        overflow: visible;
+    }
+    .flight-canvas,
+    .flight-art,
+    .flight-rail,
+    .flight-hint {
+        display: none;
+    }
+    .flight-inner,
+    .flight-captions {
+        display: block;
+        position: static;
+        padding: 0;
+    }
+    .flight-caption {
+        margin: 0 0 32px;
+        padding: 0;
+        background: none;
+        box-shadow: none;
+        opacity: 1;
+        translate: none;
+        break-inside: avoid;
+    }
+}
+
 /* Homepage: the "Rate PHLGADIS" button and card
    (components/home/rate-widget.tsx). The button floats at the bottom-left;
    the card opens above it. Stars fill in brand purple. */

@@ -202,6 +202,9 @@ test('the GAD Herstory timeline lists the old milestones and fills as you scroll
     page,
 }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
+    // The still timeline: reduced motion, or a device without the 3D flight
+    // (herstory-flight.spec.ts).
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/about/gad-herstory');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
         'GAD Herstory',
