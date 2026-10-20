@@ -129,14 +129,18 @@ const NATIONAL_OFFICE = 'national';
 /** CHED roles that always belong to one region (`Role::REGIONAL_SLUGS`). */
 const REGIONAL_ROLES = ['ched-focal', 'ched-employee'];
 
+// An Administrator covers every region and may also name the regional
+// office they work from, so a region comes first.
 function officeValue(office: ManagedUser['office'] | undefined): string {
-    if (office?.national) return NATIONAL_OFFICE;
+    if (office?.region) return String(office.region.id);
 
-    return office?.region ? String(office.region.id) : '';
+    return office?.national ? NATIONAL_OFFICE : '';
 }
 
 function officeLabel(office: ManagedUser['office']): string | null {
-    if (office.national) return 'Central Office · all regions';
+    if (office.national) {
+        return `${office.region?.name ?? 'Central Office'} · all regions`;
+    }
 
     return office.region?.name ?? null;
 }
@@ -782,8 +786,8 @@ function UserDialog({
     // their institution, CHED staff by their office.
     const heiAccount = roles.some((role) => role.hei && chosen(role));
     const staff = roles.some((role) => !role.hei && chosen(role));
-    // Administrators run the whole system: the server always makes them
-    // Central Office, so there is no office to pick.
+    // Administrators run the whole system: they cover every region, and
+    // their office is only the one they speak for.
     const administrator = roles.some(
         (role) => role.slug === 'admin' && chosen(role),
     );
@@ -848,22 +852,26 @@ function UserDialog({
 
         // The region only narrowed the list; the institution is what is kept.
         form.transform(
-            ({ office, region: _region, password_delivery, ...data }) => ({
-                ...data,
-                // Only a new account is given a first password.
-                ...(mode === 'create' ? { password_delivery } : {}),
-                // Staff accounts have no institution; their office places them.
-                survey_hei_id: heiAccount ? data.survey_hei_id : '',
-                national_access:
-                    administrator || (staff && office === NATIONAL_OFFICE),
-                survey_region_id:
-                    !administrator &&
-                    staff &&
-                    office !== '' &&
-                    office !== NATIONAL_OFFICE
-                        ? Number(office)
-                        : null,
-            }),
+            ({ office, region: _region, password_delivery, ...data }) => {
+                const regionOffice =
+                    office !== '' && office !== NATIONAL_OFFICE;
+
+                return {
+                    ...data,
+                    // Only a new account is given a first password.
+                    ...(mode === 'create' ? { password_delivery } : {}),
+                    // Staff accounts have no institution; their office places them.
+                    survey_hei_id: heiAccount ? data.survey_hei_id : '',
+                    // An Administrator without a region is the Central
+                    // Office; the server keeps their national access either way.
+                    national_access:
+                        staff &&
+                        !regionOffice &&
+                        (administrator || office === NATIONAL_OFFICE),
+                    survey_region_id:
+                        staff && regionOffice ? Number(office) : null,
+                };
+            },
         );
 
         if (mode === 'create') {
@@ -1004,12 +1012,7 @@ function UserDialog({
                             </div>
                         </div>
                     )}
-                    {administrator && (
-                        <p className="text-sm text-muted-foreground">
-                            Administrators cover every region.
-                        </p>
-                    )}
-                    {staff && !administrator && (
+                    {staff && (
                         <div className="grid gap-2">
                             <Label htmlFor={`${fieldId}-office`}>Office</Label>
                             <FormSelect
@@ -1019,11 +1022,15 @@ function UserDialog({
                                     form.setData('office', value)
                                 }
                                 placeholder={
-                                    regional ? 'Choose a region' : 'No office'
+                                    regional
+                                        ? 'Choose a region'
+                                        : administrator
+                                          ? 'Central Office — all regions'
+                                          : 'No office'
                                 }
                                 options={officeOptions}
                                 wrap
-                                allowEmpty={!regional}
+                                allowEmpty={!regional && !administrator}
                                 aria-required={regional}
                                 aria-describedby={`${fieldId}-office-help`}
                                 aria-invalid={Boolean(officeError)}
@@ -1035,7 +1042,9 @@ function UserDialog({
                             >
                                 {regional
                                     ? 'CHED Focal and CHED Employee accounts belong to one regional office: they see, and are told about, that region’s reports only. Only Administrators cover every region.'
-                                    : "Staff see monitoring reports from their office's region. The Central Office sees every region."}
+                                    : administrator
+                                      ? 'Administrators manage every region wherever they work. Their office is the one they speak for: it shows under their name and on their posts.'
+                                      : "Staff see monitoring reports from their office's region. The Central Office sees every region."}
                             </p>
                             <InputError message={officeError} />
                         </div>

@@ -14,7 +14,7 @@ import {
     ReactionsSummary,
 } from '@/components/hei/post-reactions';
 import { SourceAvatar } from '@/components/hei/source-avatar';
-import { PersonLink } from '@/components/people/person-link';
+import { PersonLink, PersonPhotoLink } from '@/components/people/person-link';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -39,7 +39,9 @@ export function sourceOf(post: PostContent): string {
 
 /**
  * Avatar, school, author, time, and the feeling/tag line. The feed card, the
- * post modal, and a shared original all introduce a post this way.
+ * post modal, and a shared original all introduce a post this way. The
+ * photo, the school and the author's name all open the author's profile;
+ * the name is the one keyboards stop at.
  */
 export function PostByline({
     post,
@@ -59,11 +61,13 @@ export function PostByline({
 
     return (
         <div className="flex items-start gap-3">
-            <SourceAvatar
-                name={source}
-                official={!post.hei}
-                photo={post.author.avatar}
-            />
+            <PersonPhotoLink person={post.author}>
+                <SourceAvatar
+                    name={source}
+                    official={!post.hei}
+                    photo={post.author.avatar}
+                />
+            </PersonPhotoLink>
             <div className="min-w-0 flex-1">
                 <p
                     id={titleId}
@@ -72,7 +76,9 @@ export function PostByline({
                         action ? 'line-clamp-2' : 'truncate',
                     )}
                 >
-                    {source}
+                    <PersonLink person={post.author} tabIndex={-1}>
+                        {source}
+                    </PersonLink>
                     {action && (
                         <span className="font-normal text-muted-foreground">
                             {' '}
@@ -146,11 +152,11 @@ function PostStatus({ post }: { post: PostContent }) {
                                 others.length === 0
                                     ? ' and '
                                     : ', ')}
-                            <span
-                                className="text-foreground"
-                                title={personLabel(person)}
-                            >
-                                {person.name}
+                            <span title={personLabel(person)}>
+                                <PersonLink
+                                    person={person}
+                                    className="text-foreground"
+                                />
                             </span>
                         </span>
                     ))}

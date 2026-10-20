@@ -36,8 +36,10 @@ list sees it too, whatever their region.
 
 A staff account's **office** is one region, or the Central Office for all
 regions (Settings → Users → Office), and it decides whose reports the account
-sees. Administrators have no office to pick: they always cover every region
-(since 2026-10-07; Settings → Users saves them as Central Office). CHED Focal
+sees. Administrators always cover every region (since 2026-10-07). Since
+2026-10-20 they also name the office they work from, the Central Office or a
+region (Settings → Users → Office): it is the office their name, posts and
+Virtual ID speak for, and it never narrows what they see. CHED Focal
 and CHED Employee accounts always belong to exactly one regional office
 (`Role::REGIONAL_SLUGS`, `Role::needsRegion`, since 2026-10-05): the form offers
 no "Central Office" or empty office for them, and the server refuses both, so

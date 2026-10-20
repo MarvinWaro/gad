@@ -192,3 +192,58 @@ test("the person followed is told, and opens the follower's profile", async ({
         }),
     ).toBeVisible();
 });
+
+test("a post's photo, school and author, and a comment's photo, open their profiles", async ({
+    page,
+}, testInfo) => {
+    await logIn(page, 'browser-admin@example.test');
+    await page.goto('/community');
+    const post = page
+        .getByRole('article')
+        .filter({ hasText: 'Browser Test Member' })
+        .first();
+    // Other specs post first: older posts load as the feed scrolls.
+    for (let tries = 0; tries < 15 && (await post.count()) === 0; tries++) {
+        await page.mouse.wheel(0, 4000);
+        await page.waitForTimeout(400);
+    }
+
+    // The author's name is the link keyboards stop at; the school and the
+    // photo lead to the same profile, for the pointer.
+    const profile = await post
+        .getByRole('link', { name: 'Browser Test Member', exact: true })
+        .getAttribute('href');
+    expect(profile).toMatch(/\/people\//);
+    const school = post.getByRole('link', {
+        name: 'Browser Test HEI',
+        exact: true,
+    });
+    await expect(school).toHaveAttribute('href', profile!);
+    await expect(school).toHaveAttribute('tabindex', '-1');
+    const photo = post.locator(`header a[aria-hidden="true"]`).first();
+    await expect(photo).toHaveAttribute('href', profile!);
+    await expect(photo).toHaveAttribute('tabindex', '-1');
+    await checkBothThemes(page, testInfo, 'post-profile-links');
+    await page.setViewportSize({ width: 1280, height: 900 });
+
+    await school.click();
+    await expect(page).toHaveURL(new RegExp(`${profile}$`));
+    await page.goBack();
+    await photo.click();
+    await expect(page).toHaveURL(new RegExp(`${profile}$`));
+    await page.goBack();
+
+    // A comment's photo opens its author's profile, as their name does.
+    await post.getByRole('button', { name: /^Comment/ }).click();
+    const dialog = page.getByRole('dialog');
+    const commenter = await dialog
+        .getByRole('link', { name: 'Fictional Monitoring Member' })
+        .first()
+        .getAttribute('href');
+    const commenterPhoto = dialog
+        .locator(`a[aria-hidden="true"][href="${commenter}"]`)
+        .first();
+    await expect(commenterPhoto).toHaveAttribute('tabindex', '-1');
+    await commenterPhoto.click();
+    await expect(page).toHaveURL(new RegExp(`${commenter}$`));
+});

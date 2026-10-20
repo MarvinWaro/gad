@@ -153,15 +153,44 @@ test('a regional office lists and manages only its own region\'s HEI accounts', 
     expect($ours->fresh()->status)->toBe(UserStatus::Inactive);
 });
 
-test('an Administrator always covers every region, whatever office is sent', function () {
+test('an Administrator covers every region and names the office they work from', function () {
     $adminRole = Role::query()->where('slug', 'admin')->sole();
+    $this->actingAs(officeAdmin());
 
-    $this->actingAs(officeAdmin())
-        ->post(route('settings.users.store'), officeUserPayload([$adminRole->id], ['email' => 'second-admin@example.test', 'survey_region_id' => $this->xi->id]))
+    // A region: still every region, now speaking for that office.
+    $this->post(route('settings.users.store'), officeUserPayload([$adminRole->id], ['email' => 'second-admin@example.test', 'survey_region_id' => $this->xi->id]))
         ->assertSessionHasNoErrors();
-
     $second = User::query()->where('email', 'second-admin@example.test')->sole();
-    expect($second->national_access)->toBeTrue()->and($second->survey_region_id)->toBeNull();
+    expect($second->national_access)->toBeTrue()
+        ->and($second->survey_region_id)->toBe($this->xi->id)
+        ->and($second->reachesRegion($this->xii->id))->toBeTrue()
+        ->and($second->load('officeRegion')->chedOffice())->toBe('CHED Regional Office XI');
+
+    // Saved without an office, theirs stays; the Central Office clears it.
+    $update = fn (array $office) => $this->put(route('settings.users.update', $second), officeUserPayload([$adminRole->id], [
+        'email' => $second->email, 'password' => '', 'password_confirmation' => '', ...$office,
+    ]));
+    $update([])->assertSessionHasNoErrors();
+    expect($second->fresh()->survey_region_id)->toBe($this->xi->id);
+    $update(['national_access' => true])->assertSessionHasNoErrors();
+    expect($second->fresh()->national_access)->toBeTrue()
+        ->and($second->fresh()->survey_region_id)->toBeNull();
+});
+
+test('a regional office never lists or manages an Administrator who works from its region', function () {
+    $admin = officeAdmin();
+    $admin->forceFill(['survey_region_id' => $this->xii->id])->save();
+    $focal = User::factory()->regionalOffice($this->xii)->create();
+    $focal->assignRole('ched-focal');
+
+    $this->actingAs($focal)->get(route('settings.users.index'))
+        ->assertInertia(fn (Assert $page) => $page->where('users.data', fn ($users) => collect($users)->doesntContain('id', $admin->id)));
+    $this->put(route('settings.users.update', $admin), officeUserPayload([$this->focalRole->id], [
+        'email' => $admin->email, 'password' => '', 'password_confirmation' => '', 'survey_region_id' => $this->xii->id,
+    ]))->assertSessionHasErrors();
+
+    expect($admin->fresh()->hasRole('admin'))->toBeTrue()
+        ->and($admin->fresh()->national_access)->toBeTrue();
 });
 
 test('admins given a regional office before become Central Office', function () {
@@ -223,4 +252,13 @@ test('every page tells the account where it belongs', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('auth.affiliation', 'CHED Central Office')
             ->where('auth.officeRegion', null));
+
+    // An Administrator working from a region speaks for it, and still covers all.
+    $regionalAdmin = officeAdmin();
+    $regionalAdmin->forceFill(['survey_region_id' => $this->xii->id])->save();
+    $this->actingAs($regionalAdmin)->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('auth.affiliation', 'CHED Regional Office XII')
+            ->where('auth.officeRegion', 'Regional Office XII')
+            ->where('auth.user.national_access', true));
 });
