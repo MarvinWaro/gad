@@ -1,6 +1,6 @@
 # Event certificates
 
-People checked in at a GAD event (`docs/event-check-in.md`) on every one of its days get a soft-copy certificate. Their office designs it and uses it on the event, and it goes out by itself when the event ends. People are notified and download a PDF from **Settings → My certificates**, to print at home or school, and anyone can check a certificate's number on the public verify page. Someone who missed a day asks for one; guests without an account get theirs from staff. This is the fourth step of event registration by QR, after the Virtual ID, Join (`docs/event-registration.md`) and the scanner.
+People checked in at a GAD event (`docs/event-check-in.md`) on every one of its days get a soft-copy certificate. Their office designs it and uses it on the event, and it goes out by itself when the event ends. People are notified and download a PDF from **Settings → My certificates**, to print at home or school, and anyone can check a certificate's number on the public verify page (`/verify`, linked from the homepage's Events section as "Verify a certificate"). Someone who missed a day asks for one; guests without an account get theirs from staff. This is the fourth step of event registration by QR, after the Virtual ID, Join (`docs/event-registration.md`) and the scanner.
 
 ## Who does what
 

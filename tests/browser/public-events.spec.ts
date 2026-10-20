@@ -119,6 +119,19 @@ test('the homepage lists GAD events on now first, by region, and never how many 
     ).toBeVisible();
 });
 
+test("the homepage's events lead to checking a certificate", async ({
+    page,
+}) => {
+    await page.goto('/');
+
+    const strip = page.locator('#events');
+    await strip.getByRole('link', { name: 'Verify a certificate' }).click();
+    await expect(page).toHaveURL(/\/verify$/);
+    await expect(
+        page.getByRole('heading', { level: 1, name: 'Verify a certificate' }),
+    ).toBeVisible();
+});
+
 test('the header opens GAD events, by region, with past ones under Past', async ({
     page,
 }, testInfo) => {
