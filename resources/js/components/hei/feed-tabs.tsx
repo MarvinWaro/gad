@@ -29,7 +29,11 @@ export function FeedTabs({
     );
 
     return (
-        <nav aria-label="Feed" className="flex gap-1 border-b">
+        <nav
+            aria-label="Feed"
+            data-tour="feed-tabs"
+            className="flex gap-1 border-b"
+        >
             {shown.map((option) => (
                 <Link
                     key={option.value}

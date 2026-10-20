@@ -36,6 +36,7 @@ use App\Http\Controllers\PublicEventController;
 use App\Http\Controllers\PublicSurveyController;
 use App\Http\Controllers\SiteFeedbackController;
 use App\Http\Controllers\SiteRatingController;
+use App\Http\Controllers\TourSeenController;
 use App\Http\Resources\PublicEventResource;
 use App\Models\CarouselSlide;
 use App\Models\GadEvent;
@@ -216,6 +217,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:60,1')
         ->name('notifications.summary');
     Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    // The HEI home's guided tour, finished or closed (TourSeenController).
+    Route::post('tour/seen', TourSeenController::class)->middleware('throttle:20,1')->name('tour.seen');
     Route::whereUlid('notification')->group(function () {
         Route::get('notifications/{notification}', [NotificationController::class, 'open'])->name('notifications.open');
         Route::patch('notifications/{notification}', [NotificationController::class, 'update'])->name('notifications.update');

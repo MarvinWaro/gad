@@ -7,6 +7,7 @@ use App\Support\InstitutionName;
 use App\Support\ParticipantCode;
 use App\Support\PeopleSearch;
 use App\Support\PublicUpload;
+use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -49,12 +50,13 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
  * @property string|null $remember_token
- * @property Carbon|null $last_seen_at Kept by RecordLastSeen; shown only in Settings → Users.
+ * @property CarbonImmutable|null $last_seen_at Kept by RecordLastSeen; shown only in Settings → Users.
+ * @property CarbonImmutable|null $tour_seen_at When the HEI home's guided tour was finished or closed.
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
 #[Fillable(['name', 'email', 'password', 'survey_hei_id', 'mobile_number', 'sex', 'status'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'avatar_path', 'search_name', 'search_sounds', 'participant_code', 'last_seen_at'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'avatar_path', 'search_name', 'search_sounds', 'participant_code', 'last_seen_at', 'tour_seen_at'])]
 #[Appends(['avatar'])]
 // Email verification is temporarily optional. Restore MustVerifyEmail here to
 // require verification again; keep the verification routes and stored status.
@@ -106,6 +108,7 @@ class User extends Authenticatable implements PasskeyUser
             'must_change_password' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
             'last_seen_at' => 'datetime',
+            'tour_seen_at' => 'datetime',
             'status' => UserStatus::class,
             'survey_region_id' => 'integer',
             'national_access' => 'boolean',
@@ -316,6 +319,17 @@ class User extends Authenticatable implements PasskeyUser
     public function isActive(): bool
     {
         return $this->status === UserStatus::Active;
+    }
+
+    /**
+     * Note that the HEI home's guided tour was finished or closed, so it no
+     * longer starts by itself. Straight to the column: no model events, no
+     * updated_at and no activity log entry.
+     */
+    public function markTourSeen(): void
+    {
+        $this->tour_seen_at = now();
+        self::query()->whereKey($this->getKey())->toBase()->update(['tour_seen_at' => $this->tour_seen_at]);
     }
 
     /** Whether the account was here in the last few minutes (ONLINE_MINUTES). */

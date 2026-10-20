@@ -22,6 +22,8 @@ type Tab = {
     href: NavItem['href'];
     /** The pages that light it: one, or a group's (Monitoring). */
     items: NavItem[];
+    /** Where the HEI home's guided tour points. */
+    tour?: string;
 };
 
 /** Text fields that open the phone's keyboard. */
@@ -101,6 +103,7 @@ export function BottomNav({
                             aria-current={
                                 index === current ? 'page' : undefined
                             }
+                            data-tour={tab.tour}
                             className={tabClass(index === current)}
                         >
                             <TabIcon
@@ -194,6 +197,7 @@ function tabsOf(groups: NavGroup[]): Tab[] {
                           icon: group.icon,
                           href: group.items[0].href,
                           items: group.items,
+                          tour: group.tour,
                       },
                   ]
                 : []
@@ -204,6 +208,7 @@ function tabsOf(groups: NavGroup[]): Tab[] {
                       toUrl(item.href) === home ? House : (item.icon ?? House),
                   href: item.href,
                   items: [item],
+                  tour: item.tour,
               })),
     );
 }

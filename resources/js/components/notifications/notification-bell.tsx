@@ -258,6 +258,7 @@ export function NotificationBell({ className }: { className?: string }) {
                                 variant="ghost"
                                 size="icon"
                                 aria-label={bellLabel(inbox.unread)}
+                                data-tour="bell"
                                 className={cn('relative', className)}
                             >
                                 <Bell className="size-4" />

@@ -153,6 +153,7 @@ function Tab({ item, current }: { item: NavItem; current: boolean }) {
                             item.beta ? `${item.title} (Beta)` : item.title
                         }
                         aria-current={current ? 'page' : undefined}
+                        data-tour={item.tour}
                         className={cn(
                             tabClass,
                             current
@@ -190,6 +191,7 @@ function TabMenu({
                     <TooltipTrigger asChild>
                         <DropdownMenuTrigger
                             aria-label={group.label}
+                            data-tour={group.tour}
                             className={cn(
                                 tabClass,
                                 'group/menu data-[state=open]:bg-muted data-[state=open]:text-foreground',
@@ -286,7 +288,11 @@ function AccountMenu() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="size-10 rounded-full p-1">
+                <Button
+                    variant="ghost"
+                    data-tour="account"
+                    className="size-10 rounded-full p-1"
+                >
                     <Avatar
                         aria-hidden
                         className="size-8 overflow-hidden rounded-full"
@@ -306,7 +312,9 @@ function AccountMenu() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end">
-                {auth.user && <UserMenuContent user={auth.user} />}
+                {auth.user && (
+                    <UserMenuContent user={auth.user} tour={auth.heiOnly} />
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     );

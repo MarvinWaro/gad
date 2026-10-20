@@ -15,6 +15,7 @@ import PersonProfileController from './PersonProfileController'
 import FollowController from './FollowController'
 import PeopleSearchController from './PeopleSearchController'
 import NotificationController from './NotificationController'
+import TourSeenController from './TourSeenController'
 import PostController from './PostController'
 import PostTagSuggestionController from './PostTagSuggestionController'
 import NewerPostsController from './NewerPostsController'
@@ -49,6 +50,7 @@ PersonProfileController: Object.assign(PersonProfileController, PersonProfileCon
 FollowController: Object.assign(FollowController, FollowController),
 PeopleSearchController: Object.assign(PeopleSearchController, PeopleSearchController),
 NotificationController: Object.assign(NotificationController, NotificationController),
+TourSeenController: Object.assign(TourSeenController, TourSeenController),
 PostController: Object.assign(PostController, PostController),
 PostTagSuggestionController: Object.assign(PostTagSuggestionController, PostTagSuggestionController),
 NewerPostsController: Object.assign(NewerPostsController, NewerPostsController),

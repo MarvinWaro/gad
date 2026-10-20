@@ -13,7 +13,9 @@ import type { QuickLink } from '@/components/hei/quick-links';
 import { SurveyPanel } from '@/components/hei/survey-panel';
 import { UpcomingEvents } from '@/components/hei/upcoming-events';
 import { WelcomeBand } from '@/components/hei/welcome-band';
+import { useHeiTour } from '@/hooks/use-hei-tour';
 import { useStickyRail } from '@/hooks/use-sticky-rail';
+import { withTour } from '@/lib/hei-tour';
 import { dashboard, home } from '@/routes';
 import { create as feedback } from '@/routes/feedback';
 import { faq } from '@/routes/help';
@@ -45,6 +47,8 @@ type Props = {
     people: InstitutionPeopleSummary;
     /** The GAD Quest card's quest: the newest open to them. */
     quest: QuestCard | null;
+    /** Not finished or closed yet: the guided tour starts by itself. */
+    tourPending: boolean;
 };
 
 /** Where to find help: the FAQ, the feedback form and the rating card. */
@@ -53,6 +57,7 @@ const helpLinks: QuickLink[] = [
     { key: 'feedback', label: 'Send feedback', href: feedback.url() },
     // The homepage opens its Rate PHLGADIS card for #rate.
     { key: 'rate', label: 'Rate PHLGADIS', href: `${home.url()}#rate` },
+    { key: 'tour', label: 'Take the tour', href: withTour(dashboard.url()) },
 ];
 
 /** Where the rails stick: under AppHeader's 57px bar, by 24px. */
@@ -76,7 +81,9 @@ export default function HeiHome({
     quickLinks,
     people,
     quest,
+    tourPending,
 }: Props) {
+    useHeiTour(tourPending);
     useLiveReload(useLiveModules('events'), ['calendar', 'upcoming'], {
         gap: 5_000,
     });
@@ -127,7 +134,7 @@ export default function HeiHome({
                                     title="Later"
                                 />
                             )}
-                            <QuickLinks links={quickLinks} />
+                            <QuickLinks links={quickLinks} tour="quick-links" />
                         </div>
 
                         <section
@@ -165,7 +172,7 @@ export default function HeiHome({
                         )}
                         {/* What's on now, beside the events. */}
                         <GadQuestCard quest={quest} />
-                        <QuickLinks links={quickLinks} />
+                        <QuickLinks links={quickLinks} tour="quick-links" />
                         {/* Everyone at the HEI: people to ask. */}
                         <InstitutionPeople summary={people} />
                         {/* From 1280px the left rail's footer links to

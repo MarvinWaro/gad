@@ -91,6 +91,7 @@ export function SurveyPanel({ surveys }: { surveys: HeiSurvey[] }) {
     return (
         <section
             aria-labelledby={titleId}
+            data-tour="surveys"
             className="overflow-hidden rounded-xl border bg-card"
         >
             <header className="px-5 pt-5 sm:px-6">

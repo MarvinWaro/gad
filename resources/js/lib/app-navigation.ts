@@ -36,6 +36,7 @@ export function appNavigationGroups(
         label: 'Monitoring',
         icon: ClipboardCheck,
         menu: true,
+        tour: 'monitoring',
         items: can(heiOnly ? 'monitoring.submit' : 'monitoring.view')
             ? [
                   heiOnly
@@ -66,6 +67,7 @@ export function appNavigationGroups(
                       href: playsQuests ? '/quests' : '/quests/manage',
                       icon: Gamepad2,
                       beta: true,
+                      tour: 'quest',
                   },
               ]
             : [];
@@ -83,7 +85,12 @@ export function appNavigationGroups(
                           href: dashboard(),
                           icon: Users,
                       },
-                      { title: 'Events', href: '/events', icon: CalendarDays },
+                      {
+                          title: 'Events',
+                          href: '/events',
+                          icon: CalendarDays,
+                          tour: 'events',
+                      },
                       ...quest,
                   ],
               },
