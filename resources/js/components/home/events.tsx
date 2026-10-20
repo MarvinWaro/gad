@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { withQueryValue } from '@/lib/query';
 import { cn } from '@/lib/utils';
 import { index as publicEvents } from '@/routes/public-events';
+import { index as verifyCertificate } from '@/routes/verify';
 import type { HomepageEvents } from '@/types/events';
 
 /**
@@ -92,10 +93,19 @@ export function Events({ region, regions, events }: HomepageEvents) {
                 )}
             </div>
 
-            <div className="mt-6">
+            {/* A certificate from a GAD event carries a number and a QR
+                that the verify page checks; certificates outlive their
+                events, so the link stays when none are listed. */}
+            <div className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-1">
                 <Button asChild variant="ghost" className="text-action">
                     <Link href={publicEvents.url({ query })}>
                         See all events
+                        <ArrowUpRight />
+                    </Link>
+                </Button>
+                <Button asChild variant="ghost" className="text-action">
+                    <Link href={verifyCertificate.url()}>
+                        Verify a certificate
                         <ArrowUpRight />
                     </Link>
                 </Button>
