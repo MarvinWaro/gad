@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { faqIntro } from '@/data/faq';
+import { canAnimate3d } from '@/lib/scroll-scenes';
 import { cn } from '@/lib/utils';
 
 // Three.js comes in its own chunk, only when the section is near.
@@ -8,32 +9,6 @@ const LogoGatherCanvas = lazy(() => import('./logo-gather-canvas'));
 
 /** The old site's first four objectives, word for word (data/faq.ts). */
 const steps = faqIntro.objectives.slice(0, 4);
-
-function canAnimate(): boolean {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        return false;
-    }
-    // A browser that would draw WebGL in software (no graphics chip, or
-    // hardware acceleration off) gets the still version too.
-    const probe = document.createElement('canvas');
-    const options: WebGLContextAttributes = {
-        failIfMajorPerformanceCaveat: true,
-    };
-    const gl: WebGLRenderingContext | WebGL2RenderingContext | null =
-        probe.getContext('webgl2', options) ??
-        probe.getContext('webgl', options);
-    if (gl === null) return false;
-
-    // Not every browser raises that flag, so known software drivers are
-    // caught by name as well.
-    const info = gl.getExtension('WEBGL_debug_renderer_info');
-    const driver = info
-        ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL))
-        : '';
-    gl.getExtension('WEBGL_lose_context')?.loseContext();
-
-    return !/swiftshader|llvmpipe|softpipe|software|basic render/i.test(driver);
-}
 
 /**
  * Points scattered like data from many schools gather, as the page
@@ -46,7 +21,7 @@ function canAnimate(): boolean {
 export function LogoGather() {
     const [live, setLive] = useState<boolean | null>(null);
 
-    useEffect(() => setLive(canAnimate()), []);
+    useEffect(() => setLive(canAnimate3d()), []);
 
     if (live === false) return <StillObjectives />;
 

@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useCallback, useLayoutEffect, useState } from 'react';
 import {
     Award,
     FileText,
@@ -7,9 +7,11 @@ import {
     Scale,
     Users,
 } from 'lucide-react';
+import { HerstoryFlight } from '@/components/public/herstory-flight';
 import { PublicPage } from '@/components/public/public-page';
 import { herstory, herstorySpan, type HerstoryEntry } from '@/data/herstory';
 import { useScrollProgress } from '@/hooks/use-scroll-progress';
+import { canAnimate3d } from '@/lib/scroll-scenes';
 import '../../../css/public.css';
 
 const kindIcons = {
@@ -22,8 +24,12 @@ const kindIcons = {
 } satisfies Record<HerstoryEntry['kind'], typeof Globe>;
 
 export default function GadHerstory() {
-    // The centre line fills in as the reader moves down the timeline.
-    const timeline = useScrollProgress<HTMLOListElement>();
+    // The flight where the device can run it; the still timeline under
+    // reduced motion, without WebGL, or where it would draw in software.
+    // Decided before the first paint, so the page never swaps in view.
+    const [live, setLive] = useState<boolean | null>(null);
+    useLayoutEffect(() => setLive(canAnimate3d()), []);
+    const showStill = useCallback(() => setLive(false), []);
 
     return (
         <PublicPage
@@ -34,18 +40,35 @@ export default function GadHerstory() {
             summary={`${herstory.length} milestones`}
             metaDescription={`A timeline of gender and development milestones in the Philippines and at CHED, from ${herstorySpan}.`}
         >
-            <div className="public-container timeline-frame">
-                <ol ref={timeline} className="timeline">
-                    {herstory.map((entry, index) => (
-                        <TimelineStep
-                            key={entry.id}
-                            entry={entry}
-                            side={index % 2 === 0 ? 'start' : 'end'}
-                        />
-                    ))}
-                </ol>
-            </div>
+            {live === false ? (
+                <StillTimeline />
+            ) : (
+                <HerstoryFlight
+                    entries={herstory}
+                    animate={live === true}
+                    onUnavailable={showStill}
+                />
+            )}
         </PublicPage>
+    );
+}
+
+function StillTimeline() {
+    // The centre line fills in as the reader moves down the timeline.
+    const timeline = useScrollProgress<HTMLOListElement>();
+
+    return (
+        <div className="public-container timeline-frame">
+            <ol ref={timeline} className="timeline">
+                {herstory.map((entry, index) => (
+                    <TimelineStep
+                        key={entry.id}
+                        entry={entry}
+                        side={index % 2 === 0 ? 'start' : 'end'}
+                    />
+                ))}
+            </ol>
+        </div>
     );
 }
 

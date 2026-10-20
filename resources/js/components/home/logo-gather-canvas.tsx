@@ -11,6 +11,7 @@ import {
     SRGBColorSpace,
     WebGLRenderer,
 } from 'three';
+import { deviceTier, smoothstep, type DeviceTier } from '@/lib/scroll-scenes';
 
 const LOGO = '/assets/img/gadicon.png';
 /** The logo's height in the scene. */
@@ -149,29 +150,17 @@ async function sampleLogo(count: number) {
 }
 
 /**
- * How much to draw, from what the device says about itself: weak or
- * low-memory devices get fewer points and fewer pixels from the start.
+ * How much to draw, by device: weak or low-memory devices get fewer points
+ * and fewer pixels from the start.
  */
-function startingBudget(): { count: number; maxPixelRatio: number } {
-    const memory =
-        (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
-    const cores = navigator.hardwareConcurrency || 8;
-
-    if (memory <= 4 || cores <= 4) return { count: 6000, maxPixelRatio: 1 };
-    if (window.matchMedia('(max-width: 900px)').matches) {
-        return { count: 8000, maxPixelRatio: 1.5 };
-    }
-
-    return { count: 20000, maxPixelRatio: 2 };
-}
+const budgets = {
+    low: { count: 6000, maxPixelRatio: 1 },
+    mid: { count: 8000, maxPixelRatio: 1.5 },
+    high: { count: 20000, maxPixelRatio: 2 },
+} satisfies Record<DeviceTier, { count: number; maxPixelRatio: number }>;
 
 /** Slower than this on average (about 45 frames a second) steps down. */
 const SLOW_FRAME = 1 / 45;
-
-const smoothstep = (from: number, to: number, value: number) => {
-    const x = Math.min(1, Math.max(0, (value - from) / (to - from)));
-    return x * x * (3 - 2 * x);
-};
 
 /**
  * The WebGL half of LogoGather: follows `progress`, from 0 (scattered)
@@ -191,7 +180,7 @@ export default function LogoGatherCanvas({
         const element = host.current;
         if (!element) return;
 
-        const budget = startingBudget();
+        const budget = budgets[deviceTier()];
         const renderer = new WebGLRenderer({
             alpha: true,
             antialias: false,

@@ -6,6 +6,8 @@
 //   shorter one is left out because the longer one repeats its sentence.
 // The old page captioned every photo "Event Image"; the alt text here says
 // what each photo shows.
+// The photos are 1200 × 600 WebP copies of the old site's 4167 × 2084 PNGs
+// (still in public/assets/img), scaled only: 0.3 MB for all five, not 3.2.
 
 export type HerstoryEntry = {
     id: string;
@@ -31,7 +33,10 @@ export const herstory: HerstoryEntry[] = [
             'The Philippines as a member of the United Nations, conforms to the Convention on the Elimination of all Forms of Discrimination Against Women (CEDAW).',
         ],
         kind: 'convention',
-        image: { src: '/assets/img/cedaw.png', alt: 'The CEDAW emblem' },
+        image: {
+            src: '/assets/img/herstory/cedaw.webp',
+            alt: 'The CEDAW emblem',
+        },
     },
     {
         id: 'ra-7192',
@@ -73,7 +78,7 @@ export const herstory: HerstoryEntry[] = [
         ],
         kind: 'convention',
         image: {
-            src: '/assets/img/beijing.png',
+            src: '/assets/img/herstory/beijing.webp',
             alt: 'Delegates under the Fourth World Conference on Women banner, Beijing, 4–15 September 1995',
         },
     },
@@ -141,7 +146,7 @@ export const herstory: HerstoryEntry[] = [
         ],
         kind: 'event',
         image: {
-            src: '/assets/img/october.png',
+            src: '/assets/img/herstory/october.webp',
             alt: 'Participants under the 1st Higher Education Summit on Gender Issues banner, UP Bahay ng Alumni',
         },
     },
@@ -155,7 +160,7 @@ export const herstory: HerstoryEntry[] = [
         ],
         kind: 'event',
         image: {
-            src: '/assets/img/nov.png',
+            src: '/assets/img/herstory/nov.webp',
             alt: 'Participants on stage under the Conference on Gender Mainstreaming in Higher Education in ASEAN banner',
         },
     },
@@ -169,7 +174,7 @@ export const herstory: HerstoryEntry[] = [
         ],
         kind: 'award',
         image: {
-            src: '/assets/img/aug.png',
+            src: '/assets/img/herstory/aug.webp',
             alt: 'A group on stage under the “MCW @ 10: Empowering the Filipino Women” banner',
         },
     },

@@ -29,6 +29,13 @@ public/assets/files
 public/assets/post
 public/assets/slider
 public/assets/video
+# The GAD Herstory photos' originals; the site shows their WebP copies in
+# public/assets/img/herstory.
+public/assets/img/cedaw.png
+public/assets/img/beijing.png
+public/assets/img/october.png
+public/assets/img/nov.png
+public/assets/img/aug.png
 database/*.sqlite*
 
 tests
