@@ -254,4 +254,5 @@ export default function Register({
 Register.layout = {
     title: 'Create an account',
     description: 'Register with your HEI.',
+    partners: true,
 };

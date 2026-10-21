@@ -175,3 +175,66 @@ test('a region opens registration without approval for an event, then closes it'
     await registrantContext.close();
     await laterContext.close();
 });
+
+for (const path of ['/login', '/register']) {
+    test(`${path} opens with CHED's, Bagong Pilipinas', ACHIEVE's and PHLGADIS's marks`, async ({
+        page,
+    }, testInfo) => {
+        for (const colorScheme of ['light', 'dark'] as const) {
+            await page.emulateMedia({ colorScheme });
+            for (const width of [360, 1280]) {
+                await page.setViewportSize({ width, height: 800 });
+                await page.goto(path);
+                for (const name of [
+                    'Commission on Higher Education',
+                    'Bagong Pilipinas',
+                    'ACHIEVE',
+                ]) {
+                    await expect(
+                        page.getByRole('img', { name, exact: true }),
+                    ).toBeVisible();
+                }
+                await expect(
+                    page.getByRole('link', { name: 'PHLGADIS home' }),
+                ).toHaveAttribute('href', /\/$/);
+                expect(
+                    await page.evaluate(
+                        () =>
+                            document.documentElement.scrollWidth <=
+                            document.documentElement.clientWidth,
+                    ),
+                ).toBe(true);
+                await page.screenshot({
+                    path: testInfo.outputPath(
+                        `${path.slice(1)}-${colorScheme}-${width}.png`,
+                    ),
+                });
+            }
+            const scan = await new AxeBuilder({ page })
+                .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+                .analyze();
+            expect(scan.violations).toEqual([]);
+        }
+
+        // Signing in is by email for now.
+        await expect(
+            page.getByRole('button', { name: 'Sign in with a passkey' }),
+        ).toHaveCount(0);
+
+        // Light or dark from the page itself.
+        await page.emulateMedia({ colorScheme: 'light' });
+        await page.goto(path);
+        const html = page.locator('html');
+        await expect(html).not.toHaveClass(/dark/);
+        await page.getByRole('button', { name: 'Toggle dark mode' }).click();
+        await expect(html).toHaveClass(/dark/);
+        await page.getByRole('button', { name: 'Toggle dark mode' }).click();
+        await expect(html).not.toHaveClass(/dark/);
+
+        // Any of the marks leads to the landing page.
+        await page
+            .getByRole('img', { name: 'Commission on Higher Education' })
+            .click();
+        await expect(page).toHaveURL(/\/$/);
+    });
+}

@@ -20,4 +20,6 @@ export type AuthLayoutProps = {
     name?: string;
     title?: string;
     description?: string;
+    /** Show CHED's and its partners' marks beside PHLGADIS (log in, register). */
+    partners?: boolean;
 };
